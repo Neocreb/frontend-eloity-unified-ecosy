@@ -262,13 +262,28 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
     const loadProfile = async () => {
       setIsLoading(true);
       try {
+        let profileData: UserProfile | null = null;
+
         if (isOwnProfile && user?.profile) {
+          profileData = user.profile;
           setProfileUser(user.profile);
           setNotifications(mockNotifications);
         } else if (targetUsername) {
           const profile = await profileService.getUserByUsername(targetUsername);
           if (profile) {
+            profileData = profile;
             setProfileUser(profile);
+          }
+        }
+
+        // Fetch posts for the user
+        if (profileData?.id) {
+          try {
+            const userPosts = await postService.getUserPosts(profileData.id, 20);
+            setPosts(userPosts || []);
+          } catch (postError) {
+            console.error("Error loading posts:", postError);
+            setPosts([]);
           }
         }
       } catch (error) {
