@@ -32,7 +32,7 @@ const BuyGiftCards = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
   const { walletBalance } = useWalletContext();
-  const { selectedCurrency, formatCurrency } = useCurrency();
+  const { selectedCurrency, formatCurrency, convertAmount } = useCurrency();
 
   const [step, setStep] = useState<"retailer" | "amount" | "review" | "success">("retailer");
   const [searchQuery, setSearchQuery] = useState("");
