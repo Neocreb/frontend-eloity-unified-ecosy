@@ -274,11 +274,11 @@ const BuyGiftCards = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  Amount ({selectedCard?.currencyCode})
+                  Amount ({selectedCurrency?.code || 'USD'})
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-600">
-                    {selectedCard?.currencyCode}
+                    {selectedCurrency?.symbol || '$'}
                   </span>
                   <Input
                     type="number"
@@ -289,8 +289,8 @@ const BuyGiftCards = () => {
                   />
                 </div>
                 <div className="mt-3 flex justify-between text-xs text-gray-600">
-                  <span>Min: {selectedCard?.minAmount}</span>
-                  <span>Max: {selectedCard?.maxAmount}</span>
+                  <span>Min: {formatCurrency(convertAmount(selectedCard?.minAmount || 10, selectedCard?.currencyCode || 'USD', selectedCurrency?.code || 'USD'))}</span>
+                  <span>Max: {formatCurrency(convertAmount(selectedCard?.maxAmount || 500, selectedCard?.currencyCode || 'USD', selectedCurrency?.code || 'USD'))}</span>
                 </div>
               </div>
 
