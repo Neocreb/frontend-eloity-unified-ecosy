@@ -43,6 +43,8 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
     try {
       setIsLoading(true);
 
+      // Get active stories with profile data and filter by expiration date
+      const now = new Date().toISOString();
       const { data, error } = await supabase
         .from("stories")
         .select(
@@ -50,6 +52,7 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
           id,
           user_id,
           created_at,
+          expires_at,
           media_url,
           profiles:user_id(
             username,
@@ -58,12 +61,24 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
           )
         `
         )
-        .order("created_at", { ascending: false })
-        .limit(10);
+        .gt("expires_at", now)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
-      const fetchedStories: Story[] = (data || []).map((story: any) => ({
+      // Group stories by user_id to avoid duplicates
+      const groupedByUser: Record<string, any> = {};
+
+      (data || []).forEach((story: any) => {
+        const userId = story.user_id;
+
+        // Only keep the first (most recent) story for each user
+        if (!groupedByUser[userId]) {
+          groupedByUser[userId] = story;
+        }
+      });
+
+      const fetchedStories: Story[] = Object.values(groupedByUser).map((story: any) => ({
         id: story.id,
         user: {
           id: story.user_id,
