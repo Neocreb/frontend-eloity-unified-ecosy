@@ -360,6 +360,20 @@ const Data = () => {
                   onClick={async () => {
                     try {
                       const token = session?.access_token;
+                      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+                      const userCurrencyCode = selectedCurrency?.code || 'USD';
+
+                      // Get exchange rate for conversion
+                      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+                      // Prepare amount for commission calculation (in operator currency)
+                      const amountForApi = prepareAmountForCommissionCalculation({
+                        userCurrencyCode,
+                        operatorCurrencyCode,
+                        userAmount: numAmount,
+                        exchangeRate
+                      });
+
                       const response = await fetch('/api/commission/calculate', {
                         method: 'POST',
                         headers: {
@@ -368,14 +382,25 @@ const Data = () => {
                         },
                         body: JSON.stringify({
                           service_type: 'data',
-                          amount: numAmount,
+                          amount: amountForApi.amountForCalculation,
                           operator_id: selectedProvider?.id
                         })
                       });
 
                       const result = await response.json();
                       if (result.success) {
-                        setCommissionData(result.data);
+                        // Convert commission result back to user currency
+                        const processedResult = processCommissionResult(result.data, {
+                          userCurrencyCode,
+                          operatorCurrencyCode,
+                          userAmount: numAmount,
+                          exchangeRate
+                        });
+
+                        setCommissionData({
+                          ...result.data,
+                          final_amount: processedResult.finalAmountUserCurrency
+                        });
                         setStep("review");
                       } else {
                         toast.error('Failed to calculate price');
