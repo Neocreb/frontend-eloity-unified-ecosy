@@ -187,6 +187,11 @@ const BuyGiftCards = () => {
                     <p className="text-3xl font-bold text-gray-900 mt-1">
                       {formatCurrency(walletBalance?.total || 0)}
                     </p>
+                    {selectedCurrency && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Currency: {selectedCurrency.flag} {selectedCurrency.code}
+                      </p>
+                    )}
                   </div>
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
                     <span className="text-2xl font-bold text-white">🎁</span>
