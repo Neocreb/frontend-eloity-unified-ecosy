@@ -279,8 +279,31 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
         // Fetch posts for the user
         if (profileData?.id) {
           try {
-            const userPosts = await postService.getUserPosts(profileData.id, 20);
-            setPosts(userPosts || []);
+            const userPosts = await profileService.getUserPosts(profileData.id).catch(() => []);
+
+            // Transform raw post data to match UI Post type
+            const transformedPosts = (userPosts || []).map((post: any) => {
+              const authorProfile = post.profiles || profileData;
+              return {
+                id: String(post.id ?? post.post_id ?? post.uuid),
+                content: post.content || post.text || "",
+                image: post.image_url || post.image,
+                createdAt: post.created_at || post.timestamp || new Date().toISOString(),
+                likes: post.likes || post.interactions?.likes || 0,
+                comments: post.comments || post.interactions?.comments || 0,
+                shares: post.shares || post.interactions?.shares || 0,
+                author: {
+                  name: authorProfile.full_name || "User",
+                  username: authorProfile.username || "user",
+                  avatar: authorProfile.avatar_url || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+                  verified: !!authorProfile.is_verified,
+                },
+                liked: false,
+                bookmarked: false,
+              };
+            });
+
+            setPosts(transformedPosts);
           } catch (postError) {
             console.error("Error loading posts:", postError);
             setPosts([]);
