@@ -96,8 +96,8 @@ import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/user";
 import { Product } from "@/types/marketplace";
 import { profileService } from "@/services/profileService";
-import { postService } from "@/services/postService";
 import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
+import { Post } from "@/components/feed/PostCard";
 
 interface UnifiedProfileProps {
   username?: string;
@@ -120,7 +120,7 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("posts");
