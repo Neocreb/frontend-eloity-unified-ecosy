@@ -143,6 +143,19 @@ const Data = () => {
     setIsLoading(true);
     try {
       const token = session?.access_token;
+      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+      const userCurrencyCode = selectedCurrency?.code || 'USD';
+
+      // Get exchange rate for conversion
+      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+      // Prepare amount for API (convert to operator currency)
+      const amountForApi = prepareAmountForCommissionCalculation({
+        userCurrencyCode,
+        operatorCurrencyCode,
+        userAmount: numAmount,
+        exchangeRate
+      });
 
       const response = await fetch('/api/reloadly/data/bundle', {
         method: 'POST',
@@ -152,7 +165,7 @@ const Data = () => {
         },
         body: JSON.stringify({
           operatorId: selectedProvider?.id,
-          amount: parseFloat(customAmount),
+          amount: amountForApi.amountForCalculation,
           recipientPhone: phoneNumber
         })
       });
