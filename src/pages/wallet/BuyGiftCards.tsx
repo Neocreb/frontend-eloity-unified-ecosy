@@ -313,19 +313,22 @@ const BuyGiftCards = () => {
             {/* Quick Amounts */}
             <div>
               <p className="text-xs font-semibold text-gray-600 mb-2 uppercase">
-                Quick Amount
+                Quick Amount ({selectedCurrency?.code || 'USD'})
               </p>
               <div className="grid grid-cols-3 gap-2">
-                {[10, 25, 50].map((quickAmount) => (
-                  <Button
-                    key={quickAmount}
-                    variant="outline"
-                    onClick={() => setAmount(quickAmount.toString())}
-                    className="h-10 text-sm font-semibold"
-                  >
-                    {quickAmount}
-                  </Button>
-                ))}
+                {[10, 25, 50].map((quickAmount) => {
+                  const convertedAmount = convertAmount(quickAmount, 'USD', selectedCurrency?.code || 'USD');
+                  return (
+                    <Button
+                      key={quickAmount}
+                      variant="outline"
+                      onClick={() => setAmount(convertedAmount.toString())}
+                      className="h-10 text-sm font-semibold"
+                    >
+                      {convertedAmount.toFixed(0)}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 
