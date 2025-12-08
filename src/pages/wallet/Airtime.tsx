@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, CheckCircle2, AlertCircle, Phone } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { prepareAmountForCommissionCalculation, processCommissionResult } from "@/utils/commissionCurrencyHelper";
 
 interface Provider {
   id: number;
