@@ -235,7 +235,7 @@ const BuyGiftCards = () => {
                         <span className="text-4xl">🎁</span>
                         <p className="font-semibold text-gray-900 text-sm">{card.brandName}</p>
                         <p className="text-xs text-gray-600">
-                          {card.currencyCode} {card.minAmount}-{card.maxAmount}
+                          {card.currencyCode} {card.minAmount.toFixed(0)}-{card.maxAmount.toFixed(0)}
                         </p>
                       </CardContent>
                     </Card>
