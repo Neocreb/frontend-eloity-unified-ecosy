@@ -94,6 +94,20 @@ const Electricity = () => {
     setIsLoading(true);
     try {
       const token = session?.access_token;
+      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+      const userCurrencyCode = selectedCurrency?.code || 'USD';
+      const numAmount = parseFloat(amount) || 0;
+
+      // Get exchange rate for conversion
+      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+      // Prepare amount for API (convert to operator currency)
+      const amountForApi = prepareAmountForCommissionCalculation({
+        userCurrencyCode,
+        operatorCurrencyCode,
+        userAmount: numAmount,
+        exchangeRate
+      });
 
       const response = await fetch('/api/reloadly/bills/pay', {
         method: 'POST',
@@ -103,7 +117,7 @@ const Electricity = () => {
         },
         body: JSON.stringify({
           operatorId: selectedProvider?.id,
-          amount: parseFloat(amount),
+          amount: amountForApi.amountForCalculation,
           recipientPhone: meterNumber
         })
       });
