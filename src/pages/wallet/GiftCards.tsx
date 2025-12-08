@@ -36,7 +36,7 @@ const GiftCards = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
   const { walletBalance } = useWalletContext();
-  const { selectedCurrency, formatCurrency } = useCurrency();
+  const { selectedCurrency, formatCurrency, convertAmount } = useCurrency();
   const [step, setStep] = useState<"products" | "select" | "review" | "success">("products");
   const [products, setProducts] = useState<GiftCardProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<GiftCardProduct | null>(null);
