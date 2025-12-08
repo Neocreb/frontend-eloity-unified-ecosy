@@ -115,8 +115,13 @@ const GiftCards = () => {
               <CardContent className="pt-6">
                 <p className="text-sm text-gray-600">Available Balance</p>
                 <p className="text-4xl font-bold text-gray-900 mt-2">
-                  ${walletBalance?.total.toFixed(2) || "0.00"}
+                  {formatCurrency(walletBalance?.total || 0)}
                 </p>
+                {selectedCurrency && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Currency: {selectedCurrency.flag} {selectedCurrency.code}
+                  </p>
+                )}
               </CardContent>
             </Card>
 
