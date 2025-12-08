@@ -96,7 +96,7 @@ import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/user";
 import { Product } from "@/types/marketplace";
 import { profileService } from "@/services/profileService";
-import { EnhancedPostCard } from "@/components/feed/EnhancedPostCard";
+import EnhancedPostCard from "@/components/feed/EnhancedPostCard";
 import { Post } from "@/components/feed/PostCard";
 
 interface UnifiedProfileProps {
