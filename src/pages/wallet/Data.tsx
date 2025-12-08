@@ -40,7 +40,7 @@ const Data = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
   const { walletBalance } = useWalletContext();
-  const { selectedCurrency, formatCurrency, convertAmount } = useCurrency();
+  const { selectedCurrency, formatCurrency, convertAmount, getExchangeRate: getExchangeRateFromContext } = useCurrency();
   
   const [step, setStep] = useState<"provider" | "amount" | "phone" | "review" | "success">("provider");
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
