@@ -763,17 +763,25 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
 
               <div className="p-6">
                 <TabsContent value="posts" className="mt-0">
-                  <div className="text-center py-12">
-                    <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No posts yet</h3>
-                    <p className="text-muted-foreground mb-4">Start sharing your thoughts with the community</p>
-                    {isOwnProfile && (
-                      <Button onClick={() => navigate("/app/create")}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Post
-                      </Button>
-                    )}
-                  </div>
+                  {posts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No posts yet</h3>
+                      <p className="text-muted-foreground mb-4">Start sharing your thoughts with the community</p>
+                      {isOwnProfile && (
+                        <Button onClick={() => navigate("/app/create")}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Post
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {posts.map((post) => (
+                        <EnhancedPostCard key={post.id} post={post} />
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0">
