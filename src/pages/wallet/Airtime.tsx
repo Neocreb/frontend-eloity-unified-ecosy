@@ -360,7 +360,7 @@ const Airtime = () => {
                       const userCurrencyCode = selectedCurrency?.code || 'USD';
 
                       // Get exchange rate for conversion
-                      const exchangeRate = getExchangeRate(userCurrencyCode, operatorCurrencyCode);
+                      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
 
                       // Prepare amount for commission calculation (in operator currency)
                       const amountForApi = prepareAmountForCommissionCalculation({
