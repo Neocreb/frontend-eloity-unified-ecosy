@@ -58,14 +58,14 @@ export const CreateGroup: React.FC = () => {
         // Get the user's contacts from the profiles table
         const { data: profiles, error } = await supabase
           .from('profiles')
-          .select('id, full_name, username, avatar_url')
-          .neq('id', user.id)
+          .select('user_id, full_name, username, avatar_url')
+          .neq('user_id', user.id)
           .limit(100);
 
         if (error) throw error;
 
         const transformedContacts: ChatParticipant[] = (profiles || []).map(profile => ({
-          id: profile.id,
+          id: profile.user_id,
           name: profile.full_name || profile.username || 'Unknown User',
           avatar: profile.avatar_url,
           username: profile.username,

@@ -28,7 +28,7 @@ export const useStories = () => {
     try {
       setLoading(true);
       const activeStories = await storiesService.getActiveStories(user.id);
-      
+
       // Group stories by user
       const groupedStories: Record<string, UserStory[]> = {};
       activeStories.forEach(story => {
@@ -38,14 +38,19 @@ export const useStories = () => {
         groupedStories[story.user_id].push(story);
       });
 
-      // Convert to Story format (this would need user data from a user service)
-      const formattedStories: Story[] = Object.entries(groupedStories).map(([userId, userStories]) => ({
-        id: userId,
-        username: 'User', // Would be fetched from user service
-        avatar: '', // Would be fetched from user service
-        stories: userStories,
-        hasNewStory: true
-      }));
+      // Convert to Story format with proper user data from profiles
+      const formattedStories: Story[] = Object.entries(groupedStories).map(([userId, userStories]) => {
+        const firstStory = userStories[0];
+        const profile = firstStory.profiles;
+
+        return {
+          id: userId,
+          username: profile?.full_name || profile?.username || 'Unknown User',
+          avatar: profile?.avatar_url || '/placeholder.svg',
+          stories: userStories,
+          hasNewStory: true
+        };
+      });
 
       setStories(formattedStories);
       setError(null);

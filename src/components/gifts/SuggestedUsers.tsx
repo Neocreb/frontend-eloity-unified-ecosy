@@ -41,13 +41,22 @@ export const SuggestedUsers: React.FC<SuggestedUsersProps> = ({
       // Fetch users with highest follower counts
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, username, display_name, avatar_url, followers_count')
+        .select('user_id, username, full_name, avatar_url, followers_count')
         .order('followers_count', { ascending: false })
         .limit(maxUsers);
 
       if (error) throw error;
-      
-      setSuggestedUsers(data || []);
+
+      // Transform data to map user_id to id and full_name to display_name
+      const transformedData = (data || []).map(user => ({
+        id: user.user_id,
+        username: user.username,
+        display_name: user.full_name,
+        avatar_url: user.avatar_url,
+        followers_count: user.followers_count,
+      }));
+
+      setSuggestedUsers(transformedData);
     } catch (error) {
       console.error('Error fetching suggested users:', error);
       // Fallback to empty array

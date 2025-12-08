@@ -96,6 +96,8 @@ import { cn } from "@/lib/utils";
 import { UserProfile } from "@/types/user";
 import { Product } from "@/types/marketplace";
 import { profileService } from "@/services/profileService";
+import EnhancedPostCard from "@/components/feed/EnhancedPostCard";
+import { Post } from "@/components/feed/PostCard";
 
 interface UnifiedProfileProps {
   username?: string;
@@ -118,7 +120,7 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
-  const [posts, setPosts] = useState<any[]>([]);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [services, setServices] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("posts");
@@ -260,13 +262,51 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
     const loadProfile = async () => {
       setIsLoading(true);
       try {
+        let profileData: UserProfile | null = null;
+
         if (isOwnProfile && user?.profile) {
+          profileData = user.profile;
           setProfileUser(user.profile);
           setNotifications(mockNotifications);
         } else if (targetUsername) {
           const profile = await profileService.getUserByUsername(targetUsername);
           if (profile) {
+            profileData = profile;
             setProfileUser(profile);
+          }
+        }
+
+        // Fetch posts for the user
+        if (profileData?.id) {
+          try {
+            const userPosts = await profileService.getUserPosts(profileData.id).catch(() => []);
+
+            // Transform raw post data to match UI Post type
+            const transformedPosts = (userPosts || []).map((post: any) => {
+              const authorProfile = post.profiles || profileData;
+              return {
+                id: String(post.id ?? post.post_id ?? post.uuid),
+                content: post.content || post.text || "",
+                image: post.image_url || post.image,
+                createdAt: post.created_at || post.timestamp || new Date().toISOString(),
+                likes: post.likes || post.interactions?.likes || 0,
+                comments: post.comments || post.interactions?.comments || 0,
+                shares: post.shares || post.interactions?.shares || 0,
+                author: {
+                  name: authorProfile.full_name || "User",
+                  username: authorProfile.username || "user",
+                  avatar: authorProfile.avatar_url || "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
+                  verified: !!authorProfile.is_verified,
+                },
+                liked: false,
+                bookmarked: false,
+              };
+            });
+
+            setPosts(transformedPosts);
+          } catch (postError) {
+            console.error("Error loading posts:", postError);
+            setPosts([]);
           }
         }
       } catch (error) {
@@ -746,17 +786,25 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
 
               <div className="p-6">
                 <TabsContent value="posts" className="mt-0">
-                  <div className="text-center py-12">
-                    <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">No posts yet</h3>
-                    <p className="text-muted-foreground mb-4">Start sharing your thoughts with the community</p>
-                    {isOwnProfile && (
-                      <Button onClick={() => navigate("/app/create")}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Post
-                      </Button>
-                    )}
-                  </div>
+                  {posts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <MessageSquare className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No posts yet</h3>
+                      <p className="text-muted-foreground mb-4">Start sharing your thoughts with the community</p>
+                      {isOwnProfile && (
+                        <Button onClick={() => navigate("/app/create")}>
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create Post
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {posts.map((post) => (
+                        <EnhancedPostCard key={post.id} post={post} />
+                      ))}
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0">
