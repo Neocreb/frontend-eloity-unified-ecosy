@@ -1,6 +1,13 @@
 import { SupabaseClient } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 
+export interface UserProfile {
+  id: string;
+  username: string;
+  full_name: string;
+  avatar_url: string | null;
+}
+
 export interface UserStory {
   id: string;
   user_id: string;
@@ -11,6 +18,7 @@ export interface UserStory {
   views_count: number;
   likes_count: number;
   created_at: string;
+  profiles?: UserProfile;
 }
 
 export interface StoryView {
@@ -34,9 +42,30 @@ class StoriesService {
     this.supabase = supabase;
   }
 
+  // Clean up expired stories from the database
+  private async cleanupExpiredStories(): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .from('stories')
+        .delete()
+        .lt('expires_at', new Date().toISOString());
+
+      if (error) {
+        console.error('Error during cleanup of expired stories:', error);
+      }
+    } catch (error) {
+      console.error('Error cleaning up expired stories:', error);
+    }
+  }
+
   // Get all active stories for users that the current user follows
   async getActiveStories(currentUserId: string): Promise<UserStory[]> {
     try {
+      // Run cleanup in the background (don't wait for it)
+      this.cleanupExpiredStories().catch(err =>
+        console.error('Background cleanup failed:', err)
+      );
+
       // First get the users that the current user follows
       const { data: following, error: followingError } = await this.supabase
         .from('user_follows')
@@ -49,10 +78,18 @@ class StoriesService {
       // Include the current user's own stories
       followingIds.push(currentUserId);
 
-      // Get active stories from followed users
+      // Get active stories from followed users with profile data
       const { data, error } = await this.supabase
         .from('stories')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id(
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
         .in('user_id', followingIds)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
@@ -70,7 +107,15 @@ class StoriesService {
     try {
       const { data, error } = await this.supabase
         .from('stories')
-        .select('*')
+        .select(`
+          *,
+          profiles:user_id(
+            id,
+            username,
+            full_name,
+            avatar_url
+          )
+        `)
         .eq('user_id', userId)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
