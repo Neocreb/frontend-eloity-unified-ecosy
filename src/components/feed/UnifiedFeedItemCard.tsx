@@ -234,16 +234,39 @@ const UnifiedFeedItemCardComponent: React.FC<{
     }
   };
 
-  const handleRepost = (originalPostId: string, content: string) => {
-    // This would integrate with the feed context to create reposts
-    console.log('Repost:', originalPostId, content);
-    notification.success('Post reposted successfully!');
+  const handleRepost = async (originalPostId: string, content: string) => {
+    if (!user?.id) {
+      notification.error('Please sign in to repost');
+      return;
+    }
+
+    try {
+      await feedService.createRepost(originalPostId, user.id, content);
+      notification.success('Post reposted successfully!');
+    } catch (error) {
+      console.error('Error reposting:', error);
+      notification.error('Failed to repost. Please try again.');
+    }
   };
 
-  const handleQuotePost = (originalPostId: string, content: string) => {
-    // This would integrate with the feed context to create quote posts
-    console.log('Quote post:', originalPostId, content);
-    notification.success('Quote post created successfully!');
+  const handleQuotePost = async (originalPostId: string, content: string) => {
+    if (!user?.id) {
+      notification.error('Please sign in to quote');
+      return;
+    }
+
+    if (!content.trim()) {
+      notification.error('Please add a comment to your quote');
+      return;
+    }
+
+    try {
+      await feedService.createQuotePost(originalPostId, user.id, content);
+      notification.success('Quote post created successfully!');
+    } catch (error) {
+      console.error('Error creating quote post:', error);
+      notification.error('Failed to create quote. Please try again.');
+    }
   };
 
   const InteractionBar = () => (
