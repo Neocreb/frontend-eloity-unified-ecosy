@@ -53,6 +53,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/hooks/use-notification';
 import EnhancedShareDialog from './EnhancedShareDialog';
 import QuickActionButton from './QuickActionButton';
+import { feedService } from '@/services/feedService';
 // import { FeedUserCard, FeedGroupCard, FeedPageCard } from './FeedEntityCards';
 // import { groups, pages } from '@/data/mockExploreData';
 // import { getRandomMockUsers } from '@/data/mockUsers';
@@ -105,7 +106,8 @@ interface UnifiedFeedItem {
 const UnifiedFeedItemCardComponent: React.FC<{
   item: UnifiedFeedItem;
   onInteraction: (itemId: string, type: string) => void;
-}> = ({ item, onInteraction }) => {
+  onRefresh?: () => void;
+}> = ({ item, onInteraction, onRefresh }) => {
   const { toast } = useToast();
   const { addToCart } = useEnhancedMarketplace();
   const navigate = useNavigate();
@@ -243,6 +245,10 @@ const UnifiedFeedItemCardComponent: React.FC<{
     try {
       await feedService.createRepost(originalPostId, user.id, content);
       notification.success('Post reposted successfully!');
+      // Refresh the feed to show the new repost
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (error) {
       console.error('Error reposting:', error);
       notification.error('Failed to repost. Please try again.');
@@ -263,6 +269,10 @@ const UnifiedFeedItemCardComponent: React.FC<{
     try {
       await feedService.createQuotePost(originalPostId, user.id, content);
       notification.success('Quote post created successfully!');
+      // Refresh the feed to show the new quote post
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (error) {
       console.error('Error creating quote post:', error);
       notification.error('Failed to create quote. Please try again.');

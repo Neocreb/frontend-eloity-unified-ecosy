@@ -243,6 +243,7 @@ const UnifiedFeedContentComponent: React.FC<{ feedType: string }> = ({ feedType 
             key={item.id}
             item={item}
             onInteraction={handleInteraction}
+            onRefresh={refreshFeed}
           />
         );
       }).filter(Boolean); // Remove any null items
