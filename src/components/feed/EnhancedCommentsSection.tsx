@@ -74,11 +74,11 @@ export function EnhancedCommentsSection({
   };
 
   const handleAddComment = async () => {
-    if (!newComment.trim() || isSubmitting) return;
+    if (!newComment.trim() || isSubmitting || !user?.id) return;
 
     setIsSubmitting(true);
     try {
-      const comment = await feedService.addComment(postId, newComment);
+      const comment = await feedService.addComment(postId, user.id, newComment);
       setComments((prev) => [...prev, comment]);
       setNewComment("");
       onCommentsCountChange(commentsCount + 1);
