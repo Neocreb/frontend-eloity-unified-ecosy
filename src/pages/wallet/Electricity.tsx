@@ -9,12 +9,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, CheckCircle2, Zap } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { prepareAmountForCommissionCalculation, processCommissionResult } from "@/utils/commissionCurrencyHelper";
 
 interface Provider {
   id: number;
   name: string;
   icon: string;
   description: string;
+  currencyCode?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
 interface CommissionData {
@@ -29,15 +33,14 @@ interface CommissionData {
 const Electricity = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
-  const { walletBalance, deductBalance } = useWalletContext();
-  const { selectedCurrency, formatCurrency } = useCurrency();
+  const { walletBalance } = useWalletContext();
+  const { selectedCurrency, formatCurrency, convertAmount, getExchangeRate: getExchangeRateFromContext } = useCurrency();
+  
   const [step, setStep] = useState<"provider" | "meterNumber" | "amount" | "review" | "success">("provider");
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [meterNumber, setMeterNumber] = useState("");
   const [amount, setAmount] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [operators, setOperators] = useState<any[]>([]);
-  const [selectedOperatorId, setSelectedOperatorId] = useState<number | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [operatorsLoading, setOperatorsLoading] = useState(true);
   const [commissionData, setCommissionData] = useState<CommissionData | null>(null);
@@ -60,18 +63,20 @@ const Electricity = () => {
 
         const result = await response.json();
         if (result.success && result.operators) {
-          // Map operators to provider format, filter for those supporting utility payments
           const mappedProviders = result.operators
-            .filter((op: any) => op.pin || op.bundle) // Filter for utility-capable operators
+            .filter((op: any) => op.pin || op.bundle)
             .map((op: any) => ({
               id: op.id,
               name: op.name,
               icon: '⚡',
-              description: op.name
+              description: op.name,
+              currencyCode: op.destinationCurrencyCode || 'NGN',
+              minAmount: op.minAmount,
+              maxAmount: op.maxAmount
             }));
           setProviders(mappedProviders);
           if (mappedProviders.length > 0) {
-            setSelectedOperatorId(mappedProviders[0].id);
+            setSelectedProvider(mappedProviders[0]);
           }
         }
       } catch (error) {
@@ -89,6 +94,20 @@ const Electricity = () => {
     setIsLoading(true);
     try {
       const token = session?.access_token;
+      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+      const userCurrencyCode = selectedCurrency?.code || 'USD';
+      const numAmount = parseFloat(amount) || 0;
+
+      // Get exchange rate for conversion
+      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+      // Prepare amount for API (convert to operator currency)
+      const amountForApi = prepareAmountForCommissionCalculation({
+        userCurrencyCode,
+        operatorCurrencyCode,
+        userAmount: numAmount,
+        exchangeRate
+      });
 
       const response = await fetch('/api/reloadly/bills/pay', {
         method: 'POST',
@@ -97,8 +116,8 @@ const Electricity = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          operatorId: selectedOperatorId,
-          amount: parseFloat(amount),
+          operatorId: selectedProvider?.id,
+          amount: amountForApi.amountForCalculation,
           recipientPhone: meterNumber
         })
       });
@@ -119,7 +138,7 @@ const Electricity = () => {
     }
   };
 
-  const numAmount = parseInt(amount) || 0;
+  const numAmount = parseFloat(amount) || 0;
   const canProceed = selectedProvider && meterNumber.length >= 11 && numAmount > 0 && numAmount <= (walletBalance?.total || 0);
 
   if (step === "success") {
@@ -133,7 +152,7 @@ const Electricity = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Payment Successful!</h2>
             <p className="text-gray-600">
-              ₦{numAmount.toLocaleString()} paid to {selectedProvider?.name}
+              {formatCurrency(numAmount)} paid to {selectedProvider?.name}
             </p>
             <p className="text-sm text-gray-500">Meter: {meterNumber}</p>
             <Button onClick={() => navigate("/app/wallet")} className="w-full mt-6">
@@ -156,6 +175,11 @@ const Electricity = () => {
               <p className="text-4xl font-bold text-gray-900 mt-2">
                 {formatCurrency(walletBalance?.total || 0)}
               </p>
+              {selectedCurrency && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Currency: {selectedCurrency.flag} {selectedCurrency.code}
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -178,7 +202,6 @@ const Electricity = () => {
                       key={provider.id}
                       onClick={() => {
                         setSelectedProvider(provider);
-                        setSelectedOperatorId(provider.id);
                         setStep("meterNumber");
                       }}
                       className="p-4 rounded-lg border-2 border-gray-200 hover:border-yellow-500 hover:bg-yellow-50 transition text-center"
@@ -239,24 +262,46 @@ const Electricity = () => {
               </Button>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Amount to Pay
+                  Amount to Pay ({selectedCurrency?.code})
                 </label>
                 <Input
                   type="number"
-                  placeholder="Enter amount"
+                  placeholder={`Enter amount in ${selectedCurrency?.code}`}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   className="text-lg"
+                  min="0"
+                  step="0.01"
                 />
                 <p className="text-xs text-gray-600 mt-2">
-                  Max available: ₦{(walletBalance?.total || 0).toLocaleString()}
+                  Max available: {formatCurrency(walletBalance?.total || 0)}
                 </p>
+                {selectedProvider?.minAmount && selectedProvider?.maxAmount && (
+                  <p className="text-xs text-gray-600">
+                    Min: {formatCurrency(convertAmount(selectedProvider.minAmount, selectedProvider.currencyCode || 'NGN', selectedCurrency?.code || 'USD'))} - 
+                    Max: {formatCurrency(convertAmount(selectedProvider.maxAmount, selectedProvider.currencyCode || 'NGN', selectedCurrency?.code || 'USD'))}
+                  </p>
+                )}
               </div>
               {canProceed && (
                 <Button
                   onClick={async () => {
                     try {
                       const token = session?.access_token;
+                      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+                      const userCurrencyCode = selectedCurrency?.code || 'USD';
+
+                      // Get exchange rate for conversion
+                      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+                      // Prepare amount for commission calculation (in operator currency)
+                      const amountForApi = prepareAmountForCommissionCalculation({
+                        userCurrencyCode,
+                        operatorCurrencyCode,
+                        userAmount: numAmount,
+                        exchangeRate
+                      });
+
                       const response = await fetch('/api/commission/calculate', {
                         method: 'POST',
                         headers: {
@@ -265,14 +310,25 @@ const Electricity = () => {
                         },
                         body: JSON.stringify({
                           service_type: 'utilities',
-                          amount: parseFloat(amount),
-                          operator_id: selectedOperatorId
+                          amount: amountForApi.amountForCalculation,
+                          operator_id: selectedProvider?.id
                         })
                       });
 
                       const result = await response.json();
                       if (result.success) {
-                        setCommissionData(result.data);
+                        // Convert commission result back to user currency
+                        const processedResult = processCommissionResult(result.data, {
+                          userCurrencyCode,
+                          operatorCurrencyCode,
+                          userAmount: numAmount,
+                          exchangeRate
+                        });
+
+                        setCommissionData({
+                          ...result.data,
+                          final_amount: processedResult.finalAmountUserCurrency
+                        });
                         setStep("review");
                       } else {
                         toast.error('Failed to calculate price');
@@ -312,12 +368,14 @@ const Electricity = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Amount</span>
-                    <span className="font-semibold">{formatCurrency(parseInt(amount) || 0)}</span>
+                    <span className="font-semibold">{formatCurrency(numAmount)}</span>
                   </div>
 
                   <div className="border-t pt-4 flex justify-between items-center">
                     <span className="font-semibold text-gray-900">Total to Pay</span>
-                    <span className="text-xl font-bold text-yellow-600">{formatCurrency(commissionData?.final_amount || 0)}</span>
+                    <span className="text-xl font-bold text-yellow-600">
+                      {formatCurrency(commissionData?.final_amount || 0)}
+                    </span>
                   </div>
                 </CardContent>
               </Card>

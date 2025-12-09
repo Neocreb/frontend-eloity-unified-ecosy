@@ -9,20 +9,22 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { prepareAmountForCommissionCalculation, processCommissionResult } from "@/utils/commissionCurrencyHelper";
 
 interface Provider {
   id: number;
   name: string;
   icon: string;
   description: string;
+  currencyCode?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
-interface DataPlan {
-  id: string;
-  name: string;
-  volume: string;
-  validity: string;
-  price: number;
+interface Denomination {
+  id?: string;
+  value: number;
+  displayValue?: string;
 }
 
 interface CommissionData {
@@ -37,16 +39,18 @@ interface CommissionData {
 const Data = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
-  const { walletBalance, deductBalance } = useWalletContext();
-  const { selectedCurrency, formatCurrency } = useCurrency();
-  const [step, setStep] = useState<"provider" | "plan" | "phone" | "review" | "success">("provider");
+  const { walletBalance } = useWalletContext();
+  const { selectedCurrency, formatCurrency, convertAmount, getExchangeRate: getExchangeRateFromContext } = useCurrency();
+  
+  const [step, setStep] = useState<"provider" | "amount" | "phone" | "review" | "success">("provider");
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<DataPlan | null>(null);
+  const [customAmount, setCustomAmount] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [operators, setOperators] = useState<any[]>([]);
-  const [selectedOperatorId, setSelectedOperatorId] = useState<number | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [providersLoading, setProvidersLoading] = useState(true);
+  const [denominations, setDenominations] = useState<Denomination[]>([]);
+  const [denominationsLoading, setDenominationsLoading] = useState(false);
   const [commissionData, setCommissionData] = useState<CommissionData | null>(null);
 
   // Fetch operators on component mount
@@ -67,41 +71,91 @@ const Data = () => {
 
         const result = await response.json();
         if (result.success && result.operators) {
-          // Map operators to provider format, filter for those supporting data
           const mappedProviders = result.operators
             .filter((op: any) => op.data)
             .map((op: any) => ({
               id: op.id,
               name: op.name + ' Data',
               icon: '📊',
-              description: op.name
+              description: op.name,
+              currencyCode: op.destinationCurrencyCode || 'NGN',
+              minAmount: op.minAmount,
+              maxAmount: op.maxAmount
             }));
           setProviders(mappedProviders);
           if (mappedProviders.length > 0) {
-            setSelectedOperatorId(mappedProviders[0].id);
+            setSelectedProvider(mappedProviders[0]);
+            fetchDenominations(mappedProviders[0].id);
           }
         }
       } catch (error) {
         console.error('Failed to fetch operators:', error);
         toast.error('Failed to load service providers');
+      } finally {
+        setProvidersLoading(false);
       }
     };
 
     fetchOperators();
   }, [user, session]);
 
-  const dataPlans: DataPlan[] = [
-    { id: "d500mb", name: "500MB", volume: "500MB", validity: "1 day", price: 100 },
-    { id: "d1gb", name: "1GB", volume: "1GB", validity: "7 days", price: 250 },
-    { id: "d2gb", name: "2GB", volume: "2GB", validity: "7 days", price: 400 },
-    { id: "d5gb", name: "5GB", volume: "5GB", validity: "30 days", price: 800 },
-    { id: "d10gb", name: "10GB", volume: "10GB", validity: "30 days", price: 1500 },
-  ];
+  // Fetch denominations when provider changes
+  const fetchDenominations = async (operatorId: number) => {
+    setDenominationsLoading(true);
+    try {
+      const token = session?.access_token;
+      const response = await fetch(`/api/reloadly/operators/${operatorId}/denominations`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.denominations && Array.isArray(result.denominations)) {
+          const sortedDenominations = result.denominations
+            .map((d: any) => ({
+              id: d.id || d.value,
+              value: typeof d === 'object' ? d.value : d,
+              displayValue: typeof d === 'object' ? d.displayValue : d
+            }))
+            .sort((a: Denomination, b: Denomination) => a.value - b.value);
+          setDenominations(sortedDenominations);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch denominations:', error);
+      setDenominations([]);
+    } finally {
+      setDenominationsLoading(false);
+    }
+  };
+
+  const handleProviderSelect = (provider: Provider) => {
+    setSelectedProvider(provider);
+    setCustomAmount("");
+    fetchDenominations(provider.id);
+    setStep("amount");
+  };
 
   const handlePurchase = async () => {
     setIsLoading(true);
     try {
       const token = session?.access_token;
+      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+      const userCurrencyCode = selectedCurrency?.code || 'USD';
+
+      // Get exchange rate for conversion
+      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+      // Prepare amount for API (convert to operator currency)
+      const amountForApi = prepareAmountForCommissionCalculation({
+        userCurrencyCode,
+        operatorCurrencyCode,
+        userAmount: numAmount,
+        exchangeRate
+      });
 
       const response = await fetch('/api/reloadly/data/bundle', {
         method: 'POST',
@@ -110,8 +164,8 @@ const Data = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          operatorId: selectedOperatorId,
-          amount: selectedPlan?.price,
+          operatorId: selectedProvider?.id,
+          amount: amountForApi.amountForCalculation,
           recipientPhone: phoneNumber
         })
       });
@@ -132,7 +186,8 @@ const Data = () => {
     }
   };
 
-  const canProceed = selectedProvider && selectedPlan && phoneNumber.length >= 10;
+  const numAmount = parseFloat(customAmount) || 0;
+  const canProceed = selectedProvider && numAmount > 0 && phoneNumber.length >= 10;
 
   if (step === "success") {
     return (
@@ -145,7 +200,7 @@ const Data = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Purchase Successful!</h2>
             <p className="text-gray-600">
-              {selectedPlan?.volume} {selectedPlan?.validity} plan activated on {phoneNumber}
+              {formatCurrency(numAmount)} data bundle activated on {phoneNumber}
             </p>
             <Button onClick={() => navigate("/app/wallet")} className="w-full mt-6">
               Back to Wallet
@@ -167,27 +222,33 @@ const Data = () => {
               <p className="text-4xl font-bold text-gray-900 mt-2">
                 {formatCurrency(walletBalance?.total || 0)}
               </p>
+              {selectedCurrency && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Currency: {selectedCurrency.flag} {selectedCurrency.code}
+                </p>
+              )}
             </CardContent>
           </Card>
 
           {step === "provider" && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-900">Select Network</h3>
-              {providers.length === 0 ? (
+              {providersLoading ? (
                 <div className="text-center py-8 text-gray-500">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
                   Loading providers...
+                </div>
+              ) : providers.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                  <p>No providers available</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {providers.map((provider) => (
                     <button
                       key={provider.id}
-                      onClick={() => {
-                        setSelectedProvider(provider);
-                        setSelectedOperatorId(provider.id);
-                        setStep("plan");
-                      }}
+                      onClick={() => handleProviderSelect(provider)}
                       className="p-4 rounded-lg border-2 border-gray-200 hover:border-cyan-500 hover:bg-cyan-50 transition text-center"
                     >
                       <div className="text-3xl mb-2">{provider.icon}</div>
@@ -200,7 +261,7 @@ const Data = () => {
             </div>
           )}
 
-          {step === "plan" && (
+          {step === "amount" && (
             <div className="space-y-4">
               <Button
                 variant="ghost"
@@ -209,31 +270,67 @@ const Data = () => {
               >
                 ← Change Network
               </Button>
-              <h3 className="text-sm font-semibold text-gray-900">Select Plan</h3>
-              <div className="grid grid-cols-1 gap-3 sm:gap-4">
-                {dataPlans.map((plan) => (
-                  <button
-                    key={plan.id}
-                    onClick={() => {
-                      setSelectedPlan(plan);
-                      setStep("phone");
-                    }}
-                    className={`p-4 rounded-lg border-2 transition ${
-                      selectedPlan?.id === plan.id
-                        ? "border-cyan-500 bg-cyan-50"
-                        : "border-gray-200 hover:border-cyan-500 hover:bg-cyan-50"
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <div className="text-left">
-                        <p className="font-semibold text-gray-900">{plan.volume}</p>
-                        <p className="text-xs text-gray-600">{plan.validity}</p>
-                      </div>
-                      <p className="font-semibold text-gray-900">₦{plan.price.toLocaleString()}</p>
-                    </div>
-                  </button>
-                ))}
+              <h3 className="text-sm font-semibold text-gray-900">Enter Amount</h3>
+              
+              {/* Suggested Denominations */}
+              {!denominationsLoading && denominations.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-600">Suggested amounts:</p>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    {denominations.slice(0, 6).map((denom) => {
+                      const displayValue = typeof denom.value === 'number' ? denom.value : parseFloat(denom.value);
+                      return (
+                        <button
+                          key={denom.id}
+                          onClick={() => setCustomAmount(displayValue.toString())}
+                          className={`p-3 rounded-lg border-2 transition text-sm font-medium ${
+                            parseFloat(customAmount) === displayValue
+                              ? "border-cyan-500 bg-cyan-50 text-cyan-600"
+                              : "border-gray-200 hover:border-cyan-500 hover:bg-cyan-50 text-gray-900"
+                          }`}
+                        >
+                          {selectedProvider?.currencyCode === selectedCurrency?.code 
+                            ? `${selectedProvider?.currencyCode} ${displayValue.toLocaleString()}`
+                            : formatCurrency(convertAmount(displayValue, selectedProvider?.currencyCode || 'NGN', selectedCurrency?.code || 'USD'))
+                          }
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Custom Amount Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Or enter custom amount ({selectedCurrency?.code})
+                </label>
+                <Input
+                  type="number"
+                  placeholder={`Enter amount in ${selectedCurrency?.code}`}
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                  className="text-lg"
+                  min="0"
+                  step="0.01"
+                />
+                {selectedProvider?.minAmount && selectedProvider?.maxAmount && (
+                  <p className="text-xs text-gray-600">
+                    Min: {formatCurrency(convertAmount(selectedProvider.minAmount, selectedProvider.currencyCode || 'NGN', selectedCurrency?.code || 'USD'))} - 
+                    Max: {formatCurrency(convertAmount(selectedProvider.maxAmount, selectedProvider.currencyCode || 'NGN', selectedCurrency?.code || 'USD'))}
+                  </p>
+                )}
               </div>
+
+              {customAmount && (
+                <Button
+                  onClick={() => setStep("phone")}
+                  className="w-full bg-cyan-600 hover:bg-cyan-700"
+                  size="lg"
+                >
+                  Continue
+                </Button>
+              )}
             </div>
           )}
 
@@ -241,7 +338,7 @@ const Data = () => {
             <div className="space-y-4">
               <Button
                 variant="ghost"
-                onClick={() => setStep("plan")}
+                onClick={() => setStep("amount")}
                 className="text-blue-600"
               >
                 ← Back
@@ -263,6 +360,20 @@ const Data = () => {
                   onClick={async () => {
                     try {
                       const token = session?.access_token;
+                      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+                      const userCurrencyCode = selectedCurrency?.code || 'USD';
+
+                      // Get exchange rate for conversion
+                      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+                      // Prepare amount for commission calculation (in operator currency)
+                      const amountForApi = prepareAmountForCommissionCalculation({
+                        userCurrencyCode,
+                        operatorCurrencyCode,
+                        userAmount: numAmount,
+                        exchangeRate
+                      });
+
                       const response = await fetch('/api/commission/calculate', {
                         method: 'POST',
                         headers: {
@@ -271,14 +382,25 @@ const Data = () => {
                         },
                         body: JSON.stringify({
                           service_type: 'data',
-                          amount: selectedPlan?.price,
-                          operator_id: selectedOperatorId
+                          amount: amountForApi.amountForCalculation,
+                          operator_id: selectedProvider?.id
                         })
                       });
 
                       const result = await response.json();
                       if (result.success) {
-                        setCommissionData(result.data);
+                        // Convert commission result back to user currency
+                        const processedResult = processCommissionResult(result.data, {
+                          userCurrencyCode,
+                          operatorCurrencyCode,
+                          userAmount: numAmount,
+                          exchangeRate
+                        });
+
+                        setCommissionData({
+                          ...result.data,
+                          final_amount: processedResult.finalAmountUserCurrency
+                        });
                         setStep("review");
                       } else {
                         toast.error('Failed to calculate price');
@@ -313,25 +435,19 @@ const Data = () => {
                     <span className="font-semibold">{selectedProvider?.name}</span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Plan</span>
-                    <span className="font-semibold">{selectedPlan?.volume}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">Validity</span>
-                    <span className="font-semibold">{selectedPlan?.validity}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
                     <span className="text-gray-600">Phone</span>
                     <span className="font-semibold">{phoneNumber}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Amount</span>
-                    <span className="font-semibold">{formatCurrency(selectedPlan?.price || 0)}</span>
+                    <span className="font-semibold">{formatCurrency(numAmount)}</span>
                   </div>
 
                   <div className="border-t pt-4 flex justify-between items-center">
                     <span className="font-semibold text-gray-900">Total to Pay</span>
-                    <span className="text-xl font-bold text-cyan-600">{formatCurrency(commissionData?.final_amount || 0)}</span>
+                    <span className="text-xl font-bold text-cyan-600">
+                      {formatCurrency(commissionData?.final_amount || 0)}
+                    </span>
                   </div>
                 </CardContent>
               </Card>

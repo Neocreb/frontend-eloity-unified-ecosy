@@ -31,6 +31,19 @@ router.get('/operators/id/:operatorId', authenticateToken, async (req, res) => {
   }
 });
 
+// Get operator denominations
+router.get('/operators/:operatorId/denominations', authenticateToken, async (req, res) => {
+  try {
+    const { operatorId } = req.params;
+    const denominations = await reloadlyService.getOperatorDenominations(parseInt(operatorId));
+    res.json({ success: true, denominations });
+  } catch (error: unknown) {
+    logger.error('Get operator denominations error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    res.status(500).json({ success: false, error: errorMessage });
+  }
+});
+
 // Send airtime topup
 router.post('/airtime/topup', authenticateToken, async (req, res) => {
   try {

@@ -479,11 +479,41 @@ export async function getTransactionStatus(transactionId: string) {
   }
 }
 
+// Get operator denominations
+export async function getOperatorDenominations(operatorId: number) {
+  try {
+    const token = await getReloadlyAccessToken();
+
+    const response = await fetch(`${RELOADLY_BASE_URL}/operators/${operatorId}/denominations`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/com.reloadly.topups-v1+json'
+      }
+    });
+
+    if (!response.ok) {
+      // If denominations endpoint is not available, return empty array
+      logger.warn('RELOADLY get denominations failed:', {
+        status: response.status,
+        operatorId
+      });
+      return [];
+    }
+
+    const denominations = await response.json();
+    return Array.isArray(denominations) ? denominations : [];
+  } catch (error: unknown) {
+    logger.error('RELOADLY get denominations error:', error);
+    // Return empty array if denominations are not available
+    return [];
+  }
+}
+
 // Get balance
 export async function getBalance() {
   try {
     const token = await getReloadlyAccessToken();
-    
+
     const response = await fetch(`${RELOADLY_BASE_URL}/accounts/balance`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -513,5 +543,6 @@ export default {
   getGiftCardProductById,
   purchaseGiftCard,
   getTransactionStatus,
+  getOperatorDenominations,
   getBalance
 };

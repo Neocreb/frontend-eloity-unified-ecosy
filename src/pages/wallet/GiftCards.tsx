@@ -36,7 +36,7 @@ const GiftCards = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
   const { walletBalance } = useWalletContext();
-  const { selectedCurrency, formatCurrency } = useCurrency();
+  const { selectedCurrency, formatCurrency, convertAmount } = useCurrency();
   const [step, setStep] = useState<"products" | "select" | "review" | "success">("products");
   const [products, setProducts] = useState<GiftCardProduct[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<GiftCardProduct | null>(null);
@@ -115,8 +115,13 @@ const GiftCards = () => {
               <CardContent className="pt-6">
                 <p className="text-sm text-gray-600">Available Balance</p>
                 <p className="text-4xl font-bold text-gray-900 mt-2">
-                  ${walletBalance?.total.toFixed(2) || "0.00"}
+                  {formatCurrency(walletBalance?.total || 0)}
                 </p>
+                {selectedCurrency && (
+                  <p className="text-xs text-gray-500 mt-2">
+                    Currency: {selectedCurrency.flag} {selectedCurrency.code}
+                  </p>
+                )}
               </CardContent>
             </Card>
 

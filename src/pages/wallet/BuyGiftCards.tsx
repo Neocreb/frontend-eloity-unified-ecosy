@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Search, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { prepareAmountForCommissionCalculation, processCommissionResult } from "@/utils/commissionCurrencyHelper";
 
 interface GiftCard {
   id: number;
@@ -32,7 +33,7 @@ const BuyGiftCards = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
   const { walletBalance } = useWalletContext();
-  const { selectedCurrency, formatCurrency } = useCurrency();
+  const { selectedCurrency, formatCurrency, convertAmount, getExchangeRate: getExchangeRateFromContext } = useCurrency();
 
   const [step, setStep] = useState<"retailer" | "amount" | "review" | "success">("retailer");
   const [searchQuery, setSearchQuery] = useState("");
@@ -106,6 +107,21 @@ const BuyGiftCards = () => {
 
     try {
       const token = session?.access_token;
+      const cardCurrencyCode = selectedCard?.currencyCode || 'USD';
+      const userCurrencyCode = selectedCurrency?.code || 'USD';
+      const numAmount = parseFloat(amount);
+
+      // Get exchange rate for conversion
+      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, cardCurrencyCode);
+
+      // Prepare amount for commission calculation (in card currency)
+      const amountForApi = prepareAmountForCommissionCalculation({
+        userCurrencyCode,
+        operatorCurrencyCode: cardCurrencyCode,
+        userAmount: numAmount,
+        exchangeRate
+      });
+
       const response = await fetch('/api/commission/calculate', {
         method: 'POST',
         headers: {
@@ -114,14 +130,25 @@ const BuyGiftCards = () => {
         },
         body: JSON.stringify({
           service_type: 'gift_cards',
-          amount: parseFloat(amount),
+          amount: amountForApi.amountForCalculation,
           operator_id: selectedCard?.id
         })
       });
 
       const result = await response.json();
       if (result.success) {
-        setCommissionData(result.data);
+        // Convert commission result back to user currency
+        const processedResult = processCommissionResult(result.data, {
+          userCurrencyCode,
+          operatorCurrencyCode: cardCurrencyCode,
+          userAmount: numAmount,
+          exchangeRate
+        });
+
+        setCommissionData({
+          ...result.data,
+          final_amount: processedResult.finalAmountUserCurrency
+        });
         setStep("review");
       } else {
         toast.error('Failed to calculate price');
@@ -187,6 +214,11 @@ const BuyGiftCards = () => {
                     <p className="text-3xl font-bold text-gray-900 mt-1">
                       {formatCurrency(walletBalance?.total || 0)}
                     </p>
+                    {selectedCurrency && (
+                      <p className="text-xs text-gray-500 mt-2">
+                        Currency: {selectedCurrency.flag} {selectedCurrency.code}
+                      </p>
+                    )}
                   </div>
                   <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 to-rose-600 flex items-center justify-center">
                     <span className="text-2xl font-bold text-white">🎁</span>
@@ -230,7 +262,7 @@ const BuyGiftCards = () => {
                         <span className="text-4xl">🎁</span>
                         <p className="font-semibold text-gray-900 text-sm">{card.brandName}</p>
                         <p className="text-xs text-gray-600">
-                          {card.currencyCode} {card.minAmount}-{card.maxAmount}
+                          {card.currencyCode} {card.minAmount.toFixed(0)}-{card.maxAmount.toFixed(0)}
                         </p>
                       </CardContent>
                     </Card>
@@ -269,11 +301,11 @@ const BuyGiftCards = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  Amount ({selectedCard?.currencyCode})
+                  Amount ({selectedCurrency?.code || 'USD'})
                 </label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-2xl font-bold text-gray-600">
-                    {selectedCard?.currencyCode}
+                    {selectedCurrency?.symbol || '$'}
                   </span>
                   <Input
                     type="number"
@@ -284,8 +316,8 @@ const BuyGiftCards = () => {
                   />
                 </div>
                 <div className="mt-3 flex justify-between text-xs text-gray-600">
-                  <span>Min: {selectedCard?.minAmount}</span>
-                  <span>Max: {selectedCard?.maxAmount}</span>
+                  <span>Min: {formatCurrency(convertAmount(selectedCard?.minAmount || 10, selectedCard?.currencyCode || 'USD', selectedCurrency?.code || 'USD'))}</span>
+                  <span>Max: {formatCurrency(convertAmount(selectedCard?.maxAmount || 500, selectedCard?.currencyCode || 'USD', selectedCurrency?.code || 'USD'))}</span>
                 </div>
               </div>
 
@@ -308,19 +340,22 @@ const BuyGiftCards = () => {
             {/* Quick Amounts */}
             <div>
               <p className="text-xs font-semibold text-gray-600 mb-2 uppercase">
-                Quick Amount
+                Quick Amount ({selectedCurrency?.code || 'USD'})
               </p>
               <div className="grid grid-cols-3 gap-2">
-                {[10, 25, 50].map((quickAmount) => (
-                  <Button
-                    key={quickAmount}
-                    variant="outline"
-                    onClick={() => setAmount(quickAmount.toString())}
-                    className="h-10 text-sm font-semibold"
-                  >
-                    {quickAmount}
-                  </Button>
-                ))}
+                {[10, 25, 50].map((quickAmount) => {
+                  const convertedAmount = convertAmount(quickAmount, 'USD', selectedCurrency?.code || 'USD');
+                  return (
+                    <Button
+                      key={quickAmount}
+                      variant="outline"
+                      onClick={() => setAmount(convertedAmount.toString())}
+                      className="h-10 text-sm font-semibold"
+                    >
+                      {convertedAmount.toFixed(0)}
+                    </Button>
+                  );
+                })}
               </div>
             </div>
 

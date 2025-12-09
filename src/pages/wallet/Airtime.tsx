@@ -10,19 +10,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, CheckCircle2, AlertCircle, Phone } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
-import { formatCurrencyAmount } from "@/utils/currencyUtils";
+import { prepareAmountForCommissionCalculation, processCommissionResult } from "@/utils/commissionCurrencyHelper";
 
 interface Provider {
   id: number;
   name: string;
   icon: string;
   description: string;
+  currencyCode?: string;
+  minAmount?: number;
+  maxAmount?: number;
 }
 
-interface Plan {
-  id: string;
-  name: string;
-  price: number;
+interface Denomination {
+  id?: string;
+  value: number;
+  displayValue?: string;
 }
 
 interface CommissionData {
@@ -37,16 +40,18 @@ interface CommissionData {
 const Airtime = () => {
   const navigate = useNavigate();
   const { user, session } = useAuth();
-  const { walletBalance, deductBalance } = useWalletContext();
-  const { selectedCurrency, formatCurrency } = useCurrency();
+  const { walletBalance } = useWalletContext();
+  const { selectedCurrency, formatCurrency, convertAmount, getExchangeRate: getExchangeRateFromContext } = useCurrency();
+  
   const [step, setStep] = useState<"provider" | "amount" | "phone" | "review" | "success">("provider");
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
+  const [customAmount, setCustomAmount] = useState<string>("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [operators, setOperators] = useState<any[]>([]);
-  const [selectedOperatorId, setSelectedOperatorId] = useState<number | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [providersLoading, setProvidersLoading] = useState(true);
+  const [denominations, setDenominations] = useState<Denomination[]>([]);
+  const [denominationsLoading, setDenominationsLoading] = useState(false);
   const [commissionData, setCommissionData] = useState<CommissionData | null>(null);
 
   // Fetch operators on component mount
@@ -65,7 +70,6 @@ const Airtime = () => {
           }
         });
 
-        // Check if response is OK and is JSON
         if (!response.ok) {
           throw new Error(`API Error: ${response.status} ${response.statusText}`);
         }
@@ -77,59 +81,90 @@ const Airtime = () => {
 
         const result = await response.json();
         if (result.success && result.operators) {
-          // Map operators to provider format
           const mappedProviders = result.operators.map((op: any) => ({
             id: op.id,
             name: op.name,
             icon: '🟡',
-            description: op.name
+            description: op.name,
+            currencyCode: op.destinationCurrencyCode || 'NGN',
+            minAmount: op.minAmount,
+            maxAmount: op.maxAmount
           }));
           setProviders(mappedProviders);
           if (mappedProviders.length > 0) {
-            setSelectedOperatorId(mappedProviders[0].id);
+            setSelectedProvider(mappedProviders[0]);
+            fetchDenominations(mappedProviders[0].id);
           }
-        } else {
-          // Fallback to demo data if API doesn't return expected format
-          console.warn('API did not return operators in expected format. Using fallback data.');
-          const fallbackProviders: Provider[] = [
-            { id: 1, name: 'MTN', icon: '🟡', description: 'MTN Airtime' },
-            { id: 2, name: 'Airtel', icon: '🔴', description: 'Airtel Airtime' },
-            { id: 3, name: 'Glo', icon: '🟢', description: 'Glo Airtime' },
-            { id: 4, name: '9mobile', icon: '🟠', description: '9mobile Airtime' },
-          ];
-          setProviders(fallbackProviders);
-          setSelectedOperatorId(fallbackProviders[0].id);
         }
       } catch (error) {
         console.error('Failed to fetch operators:', error);
-        // Use fallback data so app still works
-        const fallbackProviders: Provider[] = [
-          { id: 1, name: 'MTN', icon: '🟡', description: 'MTN Airtime' },
-          { id: 2, name: 'Airtel', icon: '🔴', description: 'Airtel Airtime' },
-          { id: 3, name: 'Glo', icon: '🟢', description: 'Glo Airtime' },
-          { id: 4, name: '9mobile', icon: '🟠', description: '9mobile Airtime' },
-        ];
-        setProviders(fallbackProviders);
-        setSelectedOperatorId(fallbackProviders[0].id);
-        toast.error('Using demo service providers. Live data unavailable.');
+        toast.error('Failed to load service providers');
+        setProviders([]);
+      } finally {
+        setProvidersLoading(false);
       }
     };
 
     fetchOperators();
   }, [user, session]);
 
-  const amounts: Plan[] = [
-    { id: "500", name: "₦500", price: 500 },
-    { id: "1000", name: "₦1,000", price: 1000 },
-    { id: "2000", name: "₦2,000", price: 2000 },
-    { id: "5000", name: "₦5,000", price: 5000 },
-    { id: "10000", name: "₦10,000", price: 10000 },
-  ];
+  // Fetch denominations when provider changes
+  const fetchDenominations = async (operatorId: number) => {
+    setDenominationsLoading(true);
+    try {
+      const token = session?.access_token;
+      const response = await fetch(`/api/reloadly/operators/${operatorId}/denominations`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.denominations && Array.isArray(result.denominations)) {
+          const sortedDenominations = result.denominations
+            .map((d: any) => ({
+              id: d.id || d.value,
+              value: typeof d === 'object' ? d.value : d,
+              displayValue: typeof d === 'object' ? d.displayValue : d
+            }))
+            .sort((a: Denomination, b: Denomination) => a.value - b.value);
+          setDenominations(sortedDenominations);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch denominations:', error);
+      setDenominations([]);
+    } finally {
+      setDenominationsLoading(false);
+    }
+  };
+
+  const handleProviderSelect = (provider: Provider) => {
+    setSelectedProvider(provider);
+    setCustomAmount("");
+    fetchDenominations(provider.id);
+    setStep("amount");
+  };
 
   const handlePurchase = async () => {
     setIsLoading(true);
     try {
       const token = session?.access_token;
+      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+      const userCurrencyCode = selectedCurrency?.code || 'USD';
+
+      // Get exchange rate for conversion
+      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+      // Prepare amount for API (convert to operator currency)
+      const amountForApi = prepareAmountForCommissionCalculation({
+        userCurrencyCode,
+        operatorCurrencyCode,
+        userAmount: numAmount,
+        exchangeRate
+      });
 
       const response = await fetch('/api/reloadly/airtime/topup', {
         method: 'POST',
@@ -138,8 +173,8 @@ const Airtime = () => {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          operatorId: selectedOperatorId,
-          amount: selectedAmount,
+          operatorId: selectedProvider?.id,
+          amount: amountForApi.amountForCalculation,
           recipientPhone: phoneNumber
         })
       });
@@ -160,7 +195,8 @@ const Airtime = () => {
     }
   };
 
-  const canProceed = selectedProvider && selectedAmount && phoneNumber.length >= 10;
+  const numAmount = parseFloat(customAmount) || 0;
+  const canProceed = selectedProvider && numAmount > 0 && phoneNumber.length >= 10;
 
   if (step === "success") {
     return (
@@ -173,7 +209,7 @@ const Airtime = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-900">Purchase Successful!</h2>
             <p className="text-gray-600">
-              {selectedAmount} sent to {selectedProvider?.name} {phoneNumber}
+              {formatCurrency(numAmount)} sent to {selectedProvider?.name} {phoneNumber}
             </p>
             <Button onClick={() => navigate("/app/wallet")} className="w-full mt-6">
               Back to Wallet
@@ -195,27 +231,33 @@ const Airtime = () => {
               <p className="text-4xl font-bold text-gray-900 mt-2">
                 {formatCurrency(walletBalance?.total || 0)}
               </p>
+              {selectedCurrency && (
+                <p className="text-xs text-gray-500 mt-2">
+                  Currency: {selectedCurrency.flag} {selectedCurrency.code}
+                </p>
+              )}
             </CardContent>
           </Card>
 
           {step === "provider" && (
             <div className="space-y-4">
               <h3 className="text-sm font-semibold text-gray-900">Select Network</h3>
-              {providers.length === 0 ? (
+              {providersLoading ? (
                 <div className="text-center py-8 text-gray-500">
                   <Loader2 className="h-8 w-8 animate-spin mx-auto mb-2" />
                   Loading providers...
+                </div>
+              ) : providers.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  <AlertCircle className="h-8 w-8 mx-auto mb-2" />
+                  <p>No providers available</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-3 sm:gap-4">
                   {providers.map((provider) => (
                     <button
                       key={provider.id}
-                      onClick={() => {
-                        setSelectedProvider(provider);
-                        setSelectedOperatorId(provider.id);
-                        setStep("amount");
-                      }}
+                      onClick={() => handleProviderSelect(provider)}
                       className="p-4 rounded-lg border-2 border-gray-200 hover:border-blue-500 hover:bg-blue-50 transition text-center"
                     >
                       <div className="text-3xl mb-2">{provider.icon}</div>
@@ -237,25 +279,67 @@ const Airtime = () => {
               >
                 ← Change Network
               </Button>
-              <h3 className="text-sm font-semibold text-gray-900">Select Amount</h3>
-              <div className="grid grid-cols-2 gap-3 sm:gap-4">
-                {amounts.map((amount) => (
-                  <button
-                    key={amount.id}
-                    onClick={() => {
-                      setSelectedAmount(amount.price);
-                      setStep("phone");
-                    }}
-                    className={`p-4 rounded-lg border-2 transition ${
-                      selectedAmount === amount.price
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-blue-500 hover:bg-blue-50"
-                    }`}
-                  >
-                    <p className="font-semibold text-gray-900">{amount.name}</p>
-                  </button>
-                ))}
+              <h3 className="text-sm font-semibold text-gray-900">Enter Amount</h3>
+              
+              {/* Suggested Denominations */}
+              {!denominationsLoading && denominations.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-xs font-medium text-gray-600">Suggested amounts:</p>
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    {denominations.slice(0, 6).map((denom) => {
+                      const displayValue = typeof denom.value === 'number' ? denom.value : parseFloat(denom.value);
+                      return (
+                        <button
+                          key={denom.id}
+                          onClick={() => setCustomAmount(displayValue.toString())}
+                          className={`p-3 rounded-lg border-2 transition text-sm font-medium ${
+                            parseFloat(customAmount) === displayValue
+                              ? "border-blue-500 bg-blue-50 text-blue-600"
+                              : "border-gray-200 hover:border-blue-500 hover:bg-blue-50 text-gray-900"
+                          }`}
+                        >
+                          {selectedProvider?.currencyCode === selectedCurrency?.code 
+                            ? `${selectedProvider?.currencyCode} ${displayValue.toLocaleString()}`
+                            : formatCurrency(convertAmount(displayValue, selectedProvider?.currencyCode || 'NGN', selectedCurrency?.code || 'USD'))
+                          }
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Custom Amount Input */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Or enter custom amount ({selectedCurrency?.code})
+                </label>
+                <Input
+                  type="number"
+                  placeholder={`Enter amount in ${selectedCurrency?.code}`}
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                  className="text-lg"
+                  min="0"
+                  step="0.01"
+                />
+                {selectedProvider?.minAmount && selectedProvider?.maxAmount && (
+                  <p className="text-xs text-gray-600">
+                    Min: {formatCurrency(convertAmount(selectedProvider.minAmount, selectedProvider.currencyCode || 'NGN', selectedCurrency?.code || 'USD'))} - 
+                    Max: {formatCurrency(convertAmount(selectedProvider.maxAmount, selectedProvider.currencyCode || 'NGN', selectedCurrency?.code || 'USD'))}
+                  </p>
+                )}
               </div>
+
+              {customAmount && (
+                <Button
+                  onClick={() => setStep("phone")}
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  size="lg"
+                >
+                  Continue
+                </Button>
+              )}
             </div>
           )}
 
@@ -285,6 +369,20 @@ const Airtime = () => {
                   onClick={async () => {
                     try {
                       const token = session?.access_token;
+                      const operatorCurrencyCode = selectedProvider?.currencyCode || 'NGN';
+                      const userCurrencyCode = selectedCurrency?.code || 'USD';
+
+                      // Get exchange rate for conversion
+                      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, operatorCurrencyCode);
+
+                      // Prepare amount for commission calculation (in operator currency)
+                      const amountForApi = prepareAmountForCommissionCalculation({
+                        userCurrencyCode,
+                        operatorCurrencyCode,
+                        userAmount: numAmount,
+                        exchangeRate
+                      });
+
                       const response = await fetch('/api/commission/calculate', {
                         method: 'POST',
                         headers: {
@@ -293,14 +391,25 @@ const Airtime = () => {
                         },
                         body: JSON.stringify({
                           service_type: 'airtime',
-                          amount: selectedAmount,
-                          operator_id: selectedOperatorId
+                          amount: amountForApi.amountForCalculation,
+                          operator_id: selectedProvider?.id
                         })
                       });
 
                       const result = await response.json();
                       if (result.success) {
-                        setCommissionData(result.data);
+                        // Convert commission result back to user currency
+                        const processedResult = processCommissionResult(result.data, {
+                          userCurrencyCode,
+                          operatorCurrencyCode,
+                          userAmount: numAmount,
+                          exchangeRate
+                        });
+
+                        setCommissionData({
+                          ...result.data,
+                          final_amount: processedResult.finalAmountUserCurrency
+                        });
                         setStep("review");
                       } else {
                         toast.error('Failed to calculate price');
@@ -340,12 +449,14 @@ const Airtime = () => {
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Amount</span>
-                    <span className="font-semibold">{formatCurrency(selectedAmount || 0)}</span>
+                    <span className="font-semibold">{formatCurrency(numAmount)}</span>
                   </div>
 
                   <div className="border-t pt-4 flex justify-between items-center">
                     <span className="font-semibold text-gray-900">Total to Pay</span>
-                    <span className="text-xl font-bold text-blue-600">{formatCurrency(commissionData?.final_amount || 0)}</span>
+                    <span className="text-xl font-bold text-blue-600">
+                      {formatCurrency(commissionData?.final_amount || 0)}
+                    </span>
                   </div>
                 </CardContent>
               </Card>

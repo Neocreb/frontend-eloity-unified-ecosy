@@ -333,6 +333,135 @@ class FeedService {
     }
   }
 
+  // Create a repost
+  async createRepost(
+    originalPostId: string,
+    userId: string,
+    additionalContent?: string,
+    signal?: AbortSignal,
+  ): Promise<Post> {
+    try {
+      // Fetch the original post to include reference
+      const { data: originalPost, error: fetchError } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', originalPostId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Create a new post that's a repost of the original
+      const { data, error } = await supabase
+        .from('posts')
+        .insert({
+          user_id: userId,
+          content: additionalContent || '',
+          original_post_id: originalPostId,
+          post_type: 'repost',
+          privacy: 'public',
+          likes_count: 0,
+          comments_count: 0,
+          shares_count: 0,
+          is_boosted: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        user: {
+          id: data.user_id,
+          name: 'User',
+          username: 'user',
+          avatar: '/placeholder.svg',
+          isVerified: false,
+        },
+        content: data.content,
+        media: [],
+        timestamp: new Date(data.created_at).toLocaleString(),
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        isLiked: false,
+        isSaved: false,
+      };
+    } catch (error) {
+      console.error("Error creating repost:", error);
+      throw error;
+    }
+  }
+
+  // Create a quote post
+  async createQuotePost(
+    originalPostId: string,
+    userId: string,
+    quoteContent: string,
+    signal?: AbortSignal,
+  ): Promise<Post> {
+    try {
+      // Validate quote content
+      if (!quoteContent || !quoteContent.trim()) {
+        throw new Error("Quote content cannot be empty");
+      }
+
+      // Fetch the original post to include reference
+      const { data: originalPost, error: fetchError } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', originalPostId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Create a new post that's a quote of the original
+      const { data, error } = await supabase
+        .from('posts')
+        .insert({
+          user_id: userId,
+          content: quoteContent,
+          original_post_id: originalPostId,
+          post_type: 'quote',
+          privacy: 'public',
+          likes_count: 0,
+          comments_count: 0,
+          shares_count: 0,
+          is_boosted: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        user: {
+          id: data.user_id,
+          name: 'User',
+          username: 'user',
+          avatar: '/placeholder.svg',
+          isVerified: false,
+        },
+        content: data.content,
+        media: [],
+        timestamp: new Date(data.created_at).toLocaleString(),
+        likes: 0,
+        comments: 0,
+        shares: 0,
+        isLiked: false,
+        isSaved: false,
+      };
+    } catch (error) {
+      console.error("Error creating quote post:", error);
+      throw error;
+    }
+  }
+
   // Get comments for a post
   async getComments(postId: string, signal?: AbortSignal): Promise<Comment[]> {
     try {
