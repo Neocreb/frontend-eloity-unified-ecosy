@@ -864,12 +864,12 @@ app.use((err: any, req: any, res: any, next: any) => {
 
 // Catch-all handler: send back the frontend's index.html file (only in production)
 if (process.env.NODE_ENV === 'production') {
-  app.get('*', (req, res) => {
+  app.get(/.*/, (req, res) => {
     res.sendFile(join(__dirname, '../dist/index.html'));
   });
 } else {
   // In development, just return a simple message for non-API routes
-  app.get('*', (req, res) => {
+  app.get(/.*/, (req, res) => {
     res.json({
       message: 'Eloity Backend API server running in development mode',
       version: '2.0.0',
