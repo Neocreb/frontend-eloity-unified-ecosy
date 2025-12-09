@@ -98,10 +98,14 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
           polkadot: 'DOT',
           dogecoin: 'DOGE'
         };
-
-        const assetId = assetMap[lower] || lower.toUpperCase();
+        // Only allow supported assets to avoid SSRF/path abuse
+        if (!Object.prototype.hasOwnProperty.call(assetMap, lower)) {
+          logger.warn(`Symbol "${symbol}" is not supported for price lookup. Skipping.`);
+          result[lower] = { usd: 0, usd_24h_change: 0, usd_market_cap: 0, usd_24h_vol: 0 };
+          return;
+        }
+        const assetId = assetMap[lower];
         const url = `${cryptoapisBase}/market-data/exchange-rates/realtime/${assetId}/USD`;
-
         logger.info(`Fetching CryptoAPIs data for ${lower} from ${url}`);
         const resp = await axios.get(url, {
           timeout: 10000,
