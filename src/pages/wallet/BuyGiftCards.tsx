@@ -107,6 +107,21 @@ const BuyGiftCards = () => {
 
     try {
       const token = session?.access_token;
+      const cardCurrencyCode = selectedCard?.currencyCode || 'USD';
+      const userCurrencyCode = selectedCurrency?.code || 'USD';
+      const numAmount = parseFloat(amount);
+
+      // Get exchange rate for conversion
+      const exchangeRate = getExchangeRateFromContext(userCurrencyCode, cardCurrencyCode);
+
+      // Prepare amount for commission calculation (in card currency)
+      const amountForApi = prepareAmountForCommissionCalculation({
+        userCurrencyCode,
+        operatorCurrencyCode: cardCurrencyCode,
+        userAmount: numAmount,
+        exchangeRate
+      });
+
       const response = await fetch('/api/commission/calculate', {
         method: 'POST',
         headers: {
@@ -115,14 +130,25 @@ const BuyGiftCards = () => {
         },
         body: JSON.stringify({
           service_type: 'gift_cards',
-          amount: parseFloat(amount),
+          amount: amountForApi.amountForCalculation,
           operator_id: selectedCard?.id
         })
       });
 
       const result = await response.json();
       if (result.success) {
-        setCommissionData(result.data);
+        // Convert commission result back to user currency
+        const processedResult = processCommissionResult(result.data, {
+          userCurrencyCode,
+          operatorCurrencyCode: cardCurrencyCode,
+          userAmount: numAmount,
+          exchangeRate
+        });
+
+        setCommissionData({
+          ...result.data,
+          final_amount: processedResult.finalAmountUserCurrency
+        });
         setStep("review");
       } else {
         toast.error('Failed to calculate price');
