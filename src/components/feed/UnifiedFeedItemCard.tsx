@@ -53,6 +53,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/hooks/use-notification';
 import EnhancedShareDialog from './EnhancedShareDialog';
 import QuickActionButton from './QuickActionButton';
+import { feedService } from '@/services/feedService';
 // import { FeedUserCard, FeedGroupCard, FeedPageCard } from './FeedEntityCards';
 // import { groups, pages } from '@/data/mockExploreData';
 // import { getRandomMockUsers } from '@/data/mockUsers';
