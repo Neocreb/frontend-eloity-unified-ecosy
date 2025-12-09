@@ -106,7 +106,8 @@ interface UnifiedFeedItem {
 const UnifiedFeedItemCardComponent: React.FC<{
   item: UnifiedFeedItem;
   onInteraction: (itemId: string, type: string) => void;
-}> = ({ item, onInteraction }) => {
+  onRefresh?: () => void;
+}> = ({ item, onInteraction, onRefresh }) => {
   const { toast } = useToast();
   const { addToCart } = useEnhancedMarketplace();
   const navigate = useNavigate();
