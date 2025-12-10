@@ -1006,14 +1006,17 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           {/* Live Content */}
-          <div className="relative">
+          <div
+            className="relative cursor-pointer group"
+            onClick={handleContentClick}
+          >
             <img
               src={item.content.thumbnail}
               alt={item.content.title}
-              className="w-full h-64 object-cover"
+              className="w-full h-64 object-cover group-hover:brightness-75 transition-all"
             />
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-              <Button size="lg" className="rounded-full bg-white bg-opacity-20 hover:bg-opacity-30">
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center group-hover:bg-opacity-50 transition-all">
+              <Button size="lg" className="rounded-full bg-white bg-opacity-20 hover:bg-opacity-40">
                 <Play className="w-8 h-8 text-white fill-white" />
               </Button>
             </div>
@@ -1027,7 +1030,12 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-2">{item.content.title}</h3>
+            <h3
+              className="font-semibold text-lg mb-2 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={handleContentClick}
+            >
+              {item.content.title}
+            </h3>
             <InteractionBar />
 
             {/* Comments Section */}
