@@ -82,31 +82,37 @@ const ProfessionalCrypto = () => {
     setIsLoading(true);
     try {
       // 1) Fetch live prices from backend (using CoinGecko via CryptoAPIs)
+      console.log('[Crypto] Starting price fetch from /api/crypto/prices');
       const pricesRes = await fetch(`/api/crypto/prices?symbols=bitcoin,ethereum,tether,binancecoin,solana,cardano,polkadot,avalanche`, {
         headers: {
           'Content-Type': 'application/json'
         }
       });
 
+      console.log('[Crypto] Response status:', pricesRes.status, pricesRes.statusText);
+
       // Read body once to avoid "body stream already read" errors
       const pricesText = await pricesRes.text();
+      console.log('[Crypto] Response text length:', pricesText.length, 'First 200 chars:', pricesText.substring(0, 200));
 
       if (!pricesRes.ok) {
-        console.error(`HTTP error! status: ${pricesRes.status}`, pricesText);
+        console.error(`[Crypto] HTTP error! status: ${pricesRes.status}`, pricesText);
         throw new Error(`HTTP error! status: ${pricesRes.status}`);
       }
 
       const contentType = pricesRes.headers.get('content-type');
+      console.log('[Crypto] Content-Type:', contentType);
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('Non-JSON response received:', pricesText.substring(0, 500));
+        console.error('[Crypto] Non-JSON response received:', pricesText.substring(0, 500));
         throw new Error(`Received non-JSON response from API: ${pricesText.substring(0, 100)}`);
       }
 
       let pricesPayload;
       try {
         pricesPayload = pricesText ? JSON.parse(pricesText) : null;
+        console.log('[Crypto] Successfully parsed prices:', pricesPayload);
       } catch (parseError) {
-        console.error('Failed to parse JSON response:', pricesText);
+        console.error('[Crypto] Failed to parse JSON response:', pricesText);
         throw new Error('Failed to parse API response as JSON');
       }
       const prices: Record<string, any> = {};
