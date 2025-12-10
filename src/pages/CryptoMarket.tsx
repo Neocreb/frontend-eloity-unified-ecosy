@@ -71,11 +71,15 @@ const CryptoMarket = () => {
         setIsLoading(false);
       } catch (error) {
         console.error("Error fetching crypto data:", error);
+        // Still show page with mock data as fallback
+        const fallbackData = cryptoSymbols.map(symbol => getMockCryptoData(symbol));
+        setCryptos(fallbackData);
+        setSelectedCrypto(fallbackData[0]);
         toast({
-          title: "Error",
+          title: "Using Mock Data",
           description:
-            "Failed to fetch cryptocurrency data. Please try again later.",
-          variant: "destructive",
+            "Real cryptocurrency data unavailable. Showing mock prices.",
+          variant: "default",
         });
         setIsLoading(false);
       }
