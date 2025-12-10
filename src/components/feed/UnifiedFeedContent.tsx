@@ -57,10 +57,7 @@ import EnhancedShareDialog from './EnhancedShareDialog';
 import QuickActionButton from './QuickActionButton';
 import FeedSkeleton from './FeedSkeleton';
 import UnifiedFeedItemCard from './UnifiedFeedItemCard';
-// import { FeedUserCard, FeedGroupCard, FeedPageCard } from './FeedEntityCards';
-// import { groups, pages } from '@/data/mockExploreData';
-// import { getRandomMockUsers } from '@/data/mockUsers';
-// import { useEntityFollowHandlers } from './UnifiedFeedHandlers';
+import FeedCarousel from './FeedCarousel';
 
 // Unified content type interface
 interface UnifiedFeedItem {
