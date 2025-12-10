@@ -226,10 +226,11 @@ const ProfessionalCrypto = () => {
       setTotalChangePct(sumUSDPrev > 0 ? (delta / sumUSDPrev) * 100 : 0);
       setPrimaryAsset(top);
     } catch (error) {
-      console.error("Error loading crypto prices:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("[Crypto] Error loading crypto prices:", errorMessage, error);
       toast({
         title: "Error",
-        description: "Failed to load cryptocurrency prices. Please try again later.",
+        description: `Failed to load cryptocurrency prices: ${errorMessage}`,
         variant: "destructive",
       });
     } finally {
