@@ -417,7 +417,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
   // Regular post rendering
   if (item.type === "post") {
     return (
-      <Card className="mb-4 sm:mb-6 mx-2 sm:mx-0">
+      <Card className="mb-4 sm:mb-6 mx-2 sm:mx-0 hover:shadow-md transition-shadow">
         <CardContent className="p-0">
           {/* Header */}
           <div className="p-4 flex items-center justify-between gap-3">
@@ -508,15 +508,23 @@ const UnifiedFeedItemCardComponent: React.FC<{
             </div>
           </div>
 
-          {/* Content */}
-          <div className="px-4 pb-3">
-            <p className="text-sm mb-3">{item.content.text}</p>
+          {/* Content - Clickable area */}
+          <div
+            className="px-4 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            onClick={handleContentClick}
+          >
+            <PostContentRenderer
+              content={item.content.text || ''}
+              maxLines={4}
+              className="mb-3"
+              onSeeMore={handleContentClick}
+            />
             {item.content.media && item.content.media.length > 0 && (
-              <div className="relative">
+              <div className="relative rounded-lg overflow-hidden">
                 <img
                   src={item.content.media[0].url}
-                  alt={item.content.media[0].alt}
-                  className="w-full max-h-96 object-cover rounded-lg"
+                  alt={item.content.media[0].alt || 'Post media'}
+                  className="w-full max-h-96 object-cover"
                 />
               </div>
             )}
