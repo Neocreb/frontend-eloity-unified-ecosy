@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  ArrowLeft, 
-  Heart, 
-  MessageCircle, 
-  Share2, 
+import {
+  ArrowLeft,
+  Heart,
+  MessageCircle,
+  Share2,
   Bookmark,
   Gift,
   Image as ImageIcon,
@@ -21,6 +21,7 @@ import { cn } from '@/lib/utils';
 import VirtualGiftsAndTips from '@/components/premium/VirtualGiftsAndTips';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { PostService } from '@/services/postService';
 
 interface TwitterPost {
   id: string;
