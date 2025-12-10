@@ -220,12 +220,16 @@ const ProfessionalCrypto = () => {
       setPrimaryAsset(top);
     } catch (error) {
       console.error("Error loading crypto data:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load cryptocurrency data.",
-        variant: "destructive",
-      });
-      throw error; // No fallback to mock data
+      // If we have prices but wallet failed, show prices anyway
+      if (cryptos.length > 0) {
+        console.warn("Prices loaded but wallet balance failed - showing prices without balance data");
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to load cryptocurrency data.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
