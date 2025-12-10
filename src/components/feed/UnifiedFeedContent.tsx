@@ -230,12 +230,15 @@ const UnifiedFeedContentComponent: React.FC<{ feedType: string }> = ({ feedType 
         return null;
       }
 
-      return feedItems.map((item) => {
+      const renderedItems: React.ReactNode[] = [];
+
+      feedItems.forEach((item, index) => {
         // Safety check for each item
         if (!item || !item.id) {
-          return null;
+          return;
         }
-        return (
+
+        renderedItems.push(
           <UnifiedFeedItemCard
             key={item.id}
             item={item}
@@ -243,7 +246,26 @@ const UnifiedFeedContentComponent: React.FC<{ feedType: string }> = ({ feedType 
             onRefresh={refreshFeed}
           />
         );
-      }).filter(Boolean); // Remove any null items
+
+        // Add carousel after every 5 items
+        if ((index + 1) % 5 === 0 && index + 1 < feedItems.length) {
+          const carouselItems = feedItems.slice(index + 1, Math.min(index + 11, feedItems.length));
+          if (carouselItems.length > 0) {
+            renderedItems.push(
+              <FeedCarousel
+                key={`carousel-${index}`}
+                posts={carouselItems as any}
+                onPostClick={(postId) => {
+                  // Handle post click
+                  console.log('Carousel post clicked:', postId);
+                }}
+              />
+            );
+          }
+        }
+      });
+
+      return renderedItems.filter(Boolean);
     } catch (error) {
       console.error('Error rendering feed items:', error);
       return null;
