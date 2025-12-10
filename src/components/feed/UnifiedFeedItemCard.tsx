@@ -1096,18 +1096,26 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           {/* Event Content */}
-          <div className="relative">
+          <div
+            className="relative cursor-pointer group"
+            onClick={handleContentClick}
+          >
             <img
               src={item.content.image}
               alt={item.content.title}
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-cover group-hover:brightness-75 transition-all"
             />
           </div>
 
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-2">{item.content.title}</h3>
+            <h3
+              className="font-semibold text-lg mb-2 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={handleContentClick}
+            >
+              {item.content.title}
+            </h3>
             <p className="text-sm text-gray-600 mb-3">{item.content.description}</p>
-            
+
             <div className="grid grid-cols-2 gap-4 mb-3">
               <div>
                 <span className="text-sm font-medium">Date & Time:</span>
@@ -1123,7 +1131,14 @@ const UnifiedFeedItemCardComponent: React.FC<{
             </div>
 
             <div className="flex items-center gap-2 mb-3">
-              <Button size="sm" className="flex-1">
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/app/events/${item.id}`);
+                }}
+              >
                 <Users className="w-4 h-4 mr-2" />
                 Join Event
               </Button>
