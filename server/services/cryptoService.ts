@@ -52,18 +52,32 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
 
         const r = await axios.get(cgUrl, {
           timeout: 10000,
-          validateStatus: (status) => status >= 200 && status < 300
+          validateStatus: () => true, // Handle all status codes
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'Eloity-Crypto-Service/1.0'
+          }
         });
+
+        // Validate HTTP status
+        if (r.status !== 200) {
+          logger.error(`CoinGecko returned HTTP ${r.status}`);
+          throw new Error(`CoinGecko HTTP ${r.status}`);
+        }
 
         // Validate response is JSON
         const contentType = r.headers['content-type'];
         if (contentType && !contentType.includes('application/json')) {
           logger.error(`CoinGecko returned non-JSON content-type: ${contentType}`);
+          // If we got HTML, it's likely an error page
+          if (typeof r.data === 'string' && r.data.includes('<html')) {
+            throw new Error('CoinGecko returned HTML error page');
+          }
           throw new Error('CoinGecko returned non-JSON response');
         }
 
         // Process CoinGecko response
-        if (typeof r.data === 'object' && r.data !== null) {
+        if (typeof r.data === 'object' && r.data !== null && !Array.isArray(r.data)) {
           for (const symbol of symbols) {
             const lower = symbol.toLowerCase();
             const id = cgIdMap[lower];
@@ -82,6 +96,7 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
           }
         } else {
           logger.warn('CoinGecko response is not a valid object');
+          throw new Error('Invalid CoinGecko response format');
         }
       }
     } catch (cgErr) {
