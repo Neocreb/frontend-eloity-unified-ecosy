@@ -895,10 +895,13 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           {/* Freelancer Content */}
-          <div className="px-4 pb-3">
+          <div
+            className="px-4 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            onClick={handleContentClick}
+          >
             <h3 className="font-semibold text-lg mb-2">{item.content.title}</h3>
             <p className="text-sm text-gray-600 mb-3">{item.content.description}</p>
-            
+
             {/* Portfolio preview */}
             <div className="grid grid-cols-2 gap-2 mb-3">
               {item.content.portfolio.map((image: string, index: number) => (
@@ -906,7 +909,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
                   key={index}
                   src={image}
                   alt={`Portfolio ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg"
+                  className="w-full h-32 object-cover rounded-lg cursor-pointer"
                 />
               ))}
             </div>
