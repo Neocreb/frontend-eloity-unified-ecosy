@@ -343,17 +343,62 @@ const PostDetail: React.FC = () => {
   useEffect(() => {
     if (!postId) return;
 
-    // Simulate loading
-    setIsLoading(true);
-    setTimeout(() => {
-      const foundPost = allPosts[postId];
-      if (foundPost) {
-        setPost(foundPost);
-        setComments(getCommentsForPost(postId));
+    const fetchPost = async () => {
+      setIsLoading(true);
+      try {
+        // Try to fetch the real post from the database first
+        const realPost = await PostService.getPostById(postId, user?.id);
+
+        if (realPost) {
+          // Transform real post data to match our TwitterPost interface
+          const transformedPost: TwitterPost = {
+            id: realPost.id,
+            content: realPost.content || '',
+            author: {
+              name: realPost.author?.name || realPost.author?.full_name || 'Unknown User',
+              username: realPost.author?.username || 'unknown',
+              avatar: realPost.author?.avatar || realPost.author?.avatar_url || 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
+              verified: realPost.author?.is_verified || false,
+            },
+            createdAt: new Date(realPost.created_at).toLocaleString(),
+            likes: realPost.likes_count || 0,
+            comments: realPost.comments_count || 0,
+            shares: 0,
+            gifts: 0,
+            liked: realPost.liked_by_user || false,
+            media: realPost.image ? [{
+              type: 'image' as const,
+              url: realPost.image,
+              alt: 'Post image'
+            }] : [],
+          };
+
+          setPost(transformedPost);
+          // For real posts, we'll show comments from the database when integrated
+          setComments([]);
+        } else {
+          // Fall back to mock data if post ID matches a mock ID
+          const foundPost = allPosts[postId];
+          if (foundPost) {
+            setPost(foundPost);
+            setComments(getCommentsForPost(postId));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching post:', error);
+        // Fall back to mock data
+        const foundPost = allPosts[postId];
+        if (foundPost) {
+          setPost(foundPost);
+          setComments(getCommentsForPost(postId));
+        }
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }, 500);
-  }, [postId]);
+    };
+
+    fetchPost();
+  }, [postId, user?.id]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
