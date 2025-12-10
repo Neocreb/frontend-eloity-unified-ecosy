@@ -1205,18 +1205,26 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           {/* Sponsored Content */}
-          <div className="relative">
+          <div
+            className="relative cursor-pointer group"
+            onClick={handleContentClick}
+          >
             <img
               src={item.content.image}
               alt={item.content.title}
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-cover group-hover:brightness-75 transition-all"
             />
           </div>
 
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-2">{item.content.title}</h3>
+            <h3
+              className="font-semibold text-lg mb-2 cursor-pointer hover:text-blue-700 transition-colors"
+              onClick={handleContentClick}
+            >
+              {item.content.title}
+            </h3>
             <p className="text-sm text-gray-600 mb-3">{item.content.description}</p>
-            
+
             <div className="mb-3">
               <span className="text-sm font-medium mb-2 block">Features:</span>
               <div className="grid grid-cols-2 gap-2">
@@ -1231,7 +1239,14 @@ const UnifiedFeedItemCardComponent: React.FC<{
 
             <div className="flex items-center gap-3 mb-3">
               <span className="text-lg font-bold text-blue-600">{item.content.price}</span>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleContentClick(e as any);
+                }}
+              >
                 <Crown className="w-4 h-4 mr-2" />
                 {item.content.ctaText}
               </Button>
