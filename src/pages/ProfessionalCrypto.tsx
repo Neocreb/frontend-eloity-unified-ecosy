@@ -81,7 +81,7 @@ const ProfessionalCrypto = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // 1) Fetch live prices from backend (using CryptoAPIs)
+      // 1) Fetch live prices from backend (using CoinGecko via CryptoAPIs)
       const pricesRes = await fetch(`/api/crypto/prices?symbols=bitcoin,ethereum,tether,binancecoin,solana,cardano,polkadot,avalanche`, {
         headers: {
           'Content-Type': 'application/json'
@@ -98,7 +98,7 @@ const ProfessionalCrypto = () => {
 
       const contentType = pricesRes.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('Non-JSON response received:', pricesText.substring(0, 500)); // Limit log size
+        console.error('Non-JSON response received:', pricesText.substring(0, 500));
         throw new Error(`Received non-JSON response from API: ${pricesText.substring(0, 100)}`);
       }
 
@@ -148,7 +148,7 @@ const ProfessionalCrypto = () => {
       const btcDominance = totalMarketCap > 0 && btc ? (btc.market_cap / totalMarketCap) * 100 : 0;
       setMarketStats({ totalMarketCap, totalVolume24h, bitcoinDominance: btcDominance, activeCoins: list.length });
 
-      // 2) Fetch user crypto holdings from Supabase (per-currency), fallback to unified wallet API
+      // 2) Try to fetch user crypto holdings (gracefully fail if not available)
       let perCurrency: { currency: string; balance: number }[] = [];
       try {
         if (!user?.id) throw new Error("No user");
@@ -160,7 +160,7 @@ const ProfessionalCrypto = () => {
         perCurrency = (data || [])
           .filter((r: any) => r.currency && typeof r.balance !== "undefined")
           .map((r: any) => ({ currency: String(r.currency).toUpperCase(), balance: Number(r.balance) || 0 }));
-      } catch (_) {
+      } catch (walletError) {
         // Fallback: use aggregated unified wallet balance
         try {
           if (user?.id) {
@@ -176,7 +176,7 @@ const ProfessionalCrypto = () => {
 
             const contentType = r.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-              console.error('Non-JSON response received:', walletText.substring(0, 500)); // Limit log size
+              console.error('Non-JSON response received:', walletText.substring(0, 500));
               throw new Error(`Received non-JSON response from wallet balance API: ${walletText.substring(0, 100)}`);
             }
 
@@ -190,9 +190,10 @@ const ProfessionalCrypto = () => {
             const total = Number(j?.data?.balances?.crypto || 0);
             perCurrency = total > 0 ? [{ currency: "USDT", balance: total }] : [];
           }
-        } catch (error) {
-          console.error("Error fetching wallet balance:", error);
-          throw error; // No fallback to mock data
+        } catch (fallbackError) {
+          console.warn("Wallet balance unavailable, showing prices only:", fallbackError);
+          // Continue without wallet data - prices are still loaded and displayed
+          perCurrency = [];
         }
       }
 
@@ -219,17 +220,12 @@ const ProfessionalCrypto = () => {
       setTotalChangePct(sumUSDPrev > 0 ? (delta / sumUSDPrev) * 100 : 0);
       setPrimaryAsset(top);
     } catch (error) {
-      console.error("Error loading crypto data:", error);
-      // If we have prices but wallet failed, show prices anyway
-      if (cryptos.length > 0) {
-        console.warn("Prices loaded but wallet balance failed - showing prices without balance data");
-      } else {
-        toast({
-          title: "Error",
-          description: "Failed to load cryptocurrency data.",
-          variant: "destructive",
-        });
-      }
+      console.error("Error loading crypto prices:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load cryptocurrency prices. Please try again later.",
+        variant: "destructive",
+      });
     } finally {
       setIsLoading(false);
     }
