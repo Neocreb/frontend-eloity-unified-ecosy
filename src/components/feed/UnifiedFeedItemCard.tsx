@@ -262,6 +262,32 @@ const UnifiedFeedItemCardComponent: React.FC<{
     }
   };
 
+  const handleToggleFollow = async () => {
+    if (!user?.id || !item.author?.id) return;
+
+    try {
+      setIsLoadingInteractions(true);
+      await profileService.toggleFollow(user.id, item.author.id, isFollowing);
+      setIsFollowing(!isFollowing);
+
+      toast({
+        title: isFollowing ? 'Unfollowed!' : 'Following!',
+        description: isFollowing
+          ? `You have unfollowed ${item.author.name}.`
+          : `You are now following ${item.author.name}.`,
+      });
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update follow status. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoadingInteractions(false);
+    }
+  };
+
   const handleToggleBookmark = async () => {
     if (!user?.id || item.type !== 'post') return;
 
