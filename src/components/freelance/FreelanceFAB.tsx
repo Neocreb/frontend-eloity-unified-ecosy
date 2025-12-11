@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Briefcase,
@@ -25,42 +25,21 @@ interface FreelanceFABProps {
   className?: string;
 }
 
-// Safe currency hook that falls back to simple formatting if context is unavailable
-const useSafeCurrency = () => {
-  try {
-    return useCurrency();
-  } catch (error) {
-    // Return a minimal context-like object for fallback
-    return {
-      formatCurrency: (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      selectedCurrency: null,
-      userCurrency: null,
-      isLoading: false,
-      error: null,
-      exchangeRates: new Map(),
-      autoDetectEnabled: false,
-      detectedCountry: null,
-      detectedCurrency: null,
-      lastUpdated: null,
-      setCurrency: async () => {},
-      setUserCurrency: async () => {},
-      toggleAutoDetect: async () => {},
-      convertAmount: () => 0,
-      convert: () => ({ amount: 0, rate: 1, timestamp: new Date(), formattedAmount: '' }),
-      getExchangeRate: () => null,
-      getSupportedCurrencies: () => [],
-      getCurrenciesByCategory: () => [],
-      refreshExchangeRates: async () => {},
-      refreshRates: async () => {},
-    };
-  }
-};
-
 const FreelanceFAB: React.FC<FreelanceFABProps> = ({ className }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { formatCurrency } = useSafeCurrency();
+
+  // Safely handle currency context
+  let formatCurrency: (amount: number) => string = (amount: number) =>
+    `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  try {
+    const currency = useCurrency();
+    formatCurrency = currency.formatCurrency;
+  } catch (error) {
+    // Currency context not available - use fallback formatting above
+  }
 
   // Don't show on freelance pages to avoid duplication
   const hiddenPaths = ["/app/freelance", "/auth", "/"];
