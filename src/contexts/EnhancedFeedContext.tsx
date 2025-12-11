@@ -141,47 +141,6 @@ export const EnhancedFeedProvider: React.FC<EnhancedFeedProviderProps> = ({ chil
 
       if (savedPostsData) {
         setSavedPosts(JSON.parse(savedPostsData));
-      } else {
-        // Initialize with demo saved posts if empty - show user the feature works
-        const demoSavedPosts: Post[] = [
-          {
-            id: '1',
-            content: 'Just launched my new project! Excited to share it with everyone 🚀',
-            author: {
-              name: 'Sarah Chen',
-              username: 'sarahc_dev',
-              avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
-              verified: true,
-            },
-            type: 'post',
-            createdAt: '2h',
-            likes: 45,
-            comments: 12,
-            shares: 8,
-            gifts: 3,
-            bookmarked: true,
-            image: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500',
-          },
-          {
-            id: '2',
-            content: 'The design choices here are incredible! Love the attention to detail.',
-            author: {
-              name: 'Maya Patel',
-              username: 'maya_design',
-              avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150',
-              verified: true,
-            },
-            type: 'post',
-            createdAt: '45m',
-            likes: 8,
-            comments: 1,
-            shares: 2,
-            gifts: 0,
-            bookmarked: true,
-          },
-        ];
-        setSavedPosts(demoSavedPosts);
-        localStorage.setItem('eloity_saved_posts', JSON.stringify(demoSavedPosts));
       }
 
       if (viewHistoryData) {
