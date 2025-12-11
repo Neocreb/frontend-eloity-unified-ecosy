@@ -124,6 +124,28 @@ const UnifiedFeedItemCardComponent: React.FC<{
 
   const formatTime = (date: Date) => formatTimeAgo(date);
 
+  // Load user interactions on mount
+  React.useEffect(() => {
+    const loadUserInteractions = async () => {
+      if (!user?.id || item.type !== 'post') return;
+
+      try {
+        setIsLoadingInteractions(true);
+        const reaction = await PostService.getUserReactionOnPost(item.id, user.id);
+        setUserReaction(reaction);
+
+        const saved = await PostService.isPostSavedByUser(item.id, user.id);
+        setIsBookmarked(saved);
+      } catch (error) {
+        console.warn('Error loading user interactions:', error);
+      } finally {
+        setIsLoadingInteractions(false);
+      }
+    };
+
+    loadUserInteractions();
+  }, [item.id, user?.id]);
+
   const handleInteraction = (type: string) => {
     switch (type) {
       case "like":
