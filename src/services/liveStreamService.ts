@@ -159,7 +159,8 @@ export const liveStreamService = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching battles:', error);
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        console.error('Error fetching battles:', errorMsg);
         // Return empty array as fallback
         return [];
       }
@@ -173,7 +174,8 @@ export const liveStreamService = {
         .in('id', streamIds);
 
       if (streamsError) {
-        console.error('Error fetching live streams:', streamsError);
+        const errorMsg = streamsError instanceof Error ? streamsError.message : JSON.stringify(streamsError);
+        console.error('Error fetching live streams:', errorMsg);
         // Return empty array as fallback
         return [];
       }
@@ -187,7 +189,8 @@ export const liveStreamService = {
         .in('user_id', userIds);
 
       if (profilesError) {
-        console.error('Error fetching profiles:', profilesError);
+        const errorMsg = profilesError instanceof Error ? profilesError.message : JSON.stringify(profilesError);
+        console.error('Error fetching profiles:', errorMsg);
         // Continue without profiles
       }
 
@@ -223,7 +226,8 @@ export const liveStreamService = {
         };
       }).filter(Boolean) as (LiveStream & { battle: Battle })[];
     } catch (err) {
-      console.error('Network error fetching battles:', err);
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      console.error('Network error fetching battles:', errorMsg);
       // Return empty array as fallback for network errors
       return [];
     }
