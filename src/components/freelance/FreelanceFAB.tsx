@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Briefcase,
@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useCurrencySafe } from "@/contexts/CurrencyContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface FreelanceFABProps {
   className?: string;
@@ -29,12 +29,7 @@ const FreelanceFAB: React.FC<FreelanceFABProps> = ({ className }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Use safe currency context - falls back to simple formatting if unavailable
-  const currencyContext = useCurrencySafe();
-  const formatCurrency = currencyContext?.formatCurrency || ((amount: number) =>
-    `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  );
+  const { formatCurrency } = useCurrency();
 
   // Don't show on freelance pages to avoid duplication
   const hiddenPaths = ["/app/freelance", "/auth", "/"];
