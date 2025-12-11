@@ -363,6 +363,126 @@ export class PostService {
     }
   }
 
+  // Add reaction to post
+  static async addReaction(postId: string, userId: string, reactionType: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("post_reactions")
+        .insert({
+          post_id: postId,
+          user_id: userId,
+          reaction_type: reactionType
+        });
+
+      if (error) {
+        console.error("Error adding reaction:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in addReaction:", error);
+      return false;
+    }
+  }
+
+  // Remove reaction from post
+  static async removeReaction(postId: string, userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("post_reactions")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Error removing reaction:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in removeReaction:", error);
+      return false;
+    }
+  }
+
+  // Toggle reaction on post
+  static async toggleReaction(postId: string, userId: string, reactionType: string): Promise<boolean> {
+    try {
+      // Check if user already has a reaction
+      const { data: existingReaction, error: checkError } = await supabase
+        .from("post_reactions")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking reaction:", checkError);
+        return false;
+      }
+
+      if (existingReaction) {
+        // Remove existing reaction
+        return this.removeReaction(postId, userId);
+      } else {
+        // Add new reaction
+        return this.addReaction(postId, userId, reactionType);
+      }
+    } catch (error) {
+      console.error("Error in toggleReaction:", error);
+      return false;
+    }
+  }
+
+  // Get user's reaction on post
+  static async getUserReactionOnPost(postId: string, userId: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from("post_reactions")
+        .select("reaction_type")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching user reaction:", error);
+        return null;
+      }
+
+      return data?.reaction_type || null;
+    } catch (error) {
+      console.error("Error in getUserReactionOnPost:", error);
+      return null;
+    }
+  }
+
+  // Get reaction counts for post grouped by type
+  static async getPostReactionCounts(postId: string): Promise<Record<string, number>> {
+    try {
+      const { data, error } = await supabase
+        .from("post_reactions")
+        .select("reaction_type")
+        .eq("post_id", postId);
+
+      if (error) {
+        console.error("Error fetching reaction counts:", error);
+        return {};
+      }
+
+      const counts: Record<string, number> = {};
+      data?.forEach((reaction: any) => {
+        counts[reaction.reaction_type] = (counts[reaction.reaction_type] || 0) + 1;
+      });
+
+      return counts;
+    } catch (error) {
+      console.error("Error in getPostReactionCounts:", error);
+      return {};
+    }
+  }
+
   // Get post comments count
   static async getPostCommentsCount(postId: string): Promise<number> {
     try {
@@ -380,6 +500,161 @@ export class PostService {
     } catch (error) {
       console.error("Error in getPostCommentsCount:", error);
       return 0;
+    }
+  }
+
+  // Save/bookmark a post
+  static async savePost(postId: string, userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("user_saved_posts")
+        .insert({
+          post_id: postId,
+          user_id: userId
+        });
+
+      if (error) {
+        console.error("Error saving post:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in savePost:", error);
+      return false;
+    }
+  }
+
+  // Unsave/unbookmark a post
+  static async unsavePost(postId: string, userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("user_saved_posts")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Error unsaving post:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in unsavePost:", error);
+      return false;
+    }
+  }
+
+  // Toggle save on post
+  static async toggleSavePost(postId: string, userId: string): Promise<boolean> {
+    try {
+      // Check if post is already saved
+      const { data: existingSave, error: checkError } = await supabase
+        .from("user_saved_posts")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking save:", checkError);
+        throw new Error("Failed to check save status");
+      }
+
+      if (existingSave) {
+        // Unsave - post will no longer be saved
+        const success = await this.unsavePost(postId, userId);
+        if (!success) throw new Error("Failed to unsave post");
+        return false;  // Return the new state: not saved
+      } else {
+        // Save - post will now be saved
+        const success = await this.savePost(postId, userId);
+        if (!success) throw new Error("Failed to save post");
+        return true;  // Return the new state: saved
+      }
+    } catch (error) {
+      console.error("Error in toggleSavePost:", error);
+      throw error;  // Throw error so UI can handle it
+    }
+  }
+
+  // Check if post is saved by user
+  static async isPostSavedByUser(postId: string, userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from("user_saved_posts")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking if post is saved:", error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error("Error in isPostSavedByUser:", error);
+      return false;
+    }
+  }
+
+  // Get user's saved posts
+  static async getUserSavedPosts(userId: string, limit = 10, offset = 0): Promise<PostWithAuthor[]> {
+    try {
+      const { data, error } = await supabase
+        .from("user_saved_posts")
+        .select("post_id")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) {
+        console.error("Error fetching saved posts:", error);
+        return [];
+      }
+
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      const postIds = data.map((item: any) => item.post_id);
+
+      // Fetch the full post data for each saved post
+      const { data: posts, error: postsError } = await supabase
+        .from("posts")
+        .select("*")
+        .in("id", postIds);
+
+      if (postsError) {
+        console.error("Error fetching saved posts data:", postsError);
+        return [];
+      }
+
+      // Enhance posts with author and engagement data
+      const enhancedPosts = await Promise.all(
+        posts?.map(async (post: any) => {
+          const author = await UserService.getUserById(post.user_id);
+          const likesCount = await this.getPostLikesCount(post.id);
+          const commentsCount = await this.getPostCommentsCount(post.id);
+          const likedByUser = await this.isPostLikedByUser(post.id, userId);
+
+          return {
+            ...post,
+            author,
+            likes_count: likesCount,
+            comments_count: commentsCount,
+            liked_by_user: likedByUser
+          };
+        }) || []
+      );
+
+      return enhancedPosts as PostWithAuthor[];
+    } catch (error) {
+      console.error("Error in getUserSavedPosts:", error);
+      return [];
     }
   }
 

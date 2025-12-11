@@ -6,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
-import { 
-  ArrowLeft, 
-  Heart, 
-  MessageCircle, 
-  Share2, 
+import {
+  ArrowLeft,
+  Heart,
+  MessageCircle,
+  Share2,
   Bookmark,
   Gift,
   Image as ImageIcon,
@@ -21,6 +21,8 @@ import { cn } from '@/lib/utils';
 import VirtualGiftsAndTips from '@/components/premium/VirtualGiftsAndTips';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { PostService } from '@/services/postService';
+import ReactionPicker from '@/components/feed/ReactionPicker';
 
 interface TwitterPost {
   id: string;
@@ -77,6 +79,9 @@ const PostDetail: React.FC = () => {
   const [commentText, setCommentText] = useState('');
   const [commentImages, setCommentImages] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userReaction, setUserReaction] = useState<string | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
 
   // Mock data repository - in real app this would come from API
   const allPosts: Record<string, TwitterPost> = {
@@ -342,17 +347,78 @@ const PostDetail: React.FC = () => {
   useEffect(() => {
     if (!postId) return;
 
-    // Simulate loading
-    setIsLoading(true);
-    setTimeout(() => {
-      const foundPost = allPosts[postId];
-      if (foundPost) {
-        setPost(foundPost);
-        setComments(getCommentsForPost(postId));
+    const fetchPost = async () => {
+      setIsLoading(true);
+      try {
+        // Try to fetch the real post from the database first
+        const realPost = await PostService.getPostById(postId, user?.id);
+
+        if (realPost) {
+          // Transform real post data to match our TwitterPost interface
+          const transformedPost: TwitterPost = {
+            id: realPost.id,
+            content: realPost.content || '',
+            author: {
+              name: realPost.author?.name || realPost.author?.full_name || 'Unknown User',
+              username: realPost.author?.username || 'unknown',
+              avatar: realPost.author?.avatar || realPost.author?.avatar_url || 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
+              verified: realPost.author?.is_verified || false,
+            },
+            createdAt: new Date(realPost.created_at).toLocaleString(),
+            likes: realPost.likes_count || 0,
+            comments: realPost.comments_count || 0,
+            shares: 0,
+            gifts: 0,
+            liked: realPost.liked_by_user || false,
+            media: realPost.image ? [{
+              type: 'image' as const,
+              url: realPost.image,
+              alt: 'Post image'
+            }] : [],
+          };
+
+          setPost(transformedPost);
+          // For real posts, we'll show comments from the database when integrated
+          setComments([]);
+
+          // Load user's reaction if logged in
+          if (user?.id) {
+            try {
+              const userReactionType = await PostService.getUserReactionOnPost(postId, user.id);
+              setUserReaction(userReactionType);
+
+              const counts = await PostService.getPostReactionCounts(postId);
+              setReactionCounts(counts);
+
+              const saved = await PostService.isPostSavedByUser(postId, user.id);
+              setIsBookmarked(saved);
+            } catch (error) {
+              console.warn('Error loading user interaction state:', error);
+            }
+          }
+        } else {
+          // Fall back to mock data if post ID matches a mock ID
+          const foundPost = allPosts[postId];
+          if (foundPost) {
+            setPost(foundPost);
+            setComments(getCommentsForPost(postId));
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching post:', error);
+        // Fall back to mock data
+        const foundPost = allPosts[postId];
+        if (foundPost) {
+          setPost(foundPost);
+          setComments(getCommentsForPost(postId));
+        }
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
-    }, 500);
-  }, [postId]);
+    };
+
+    fetchPost();
+  }, [postId, user?.id]);
 
   const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(event.target.files || []);
@@ -399,6 +465,79 @@ const PostDetail: React.FC = () => {
   const handleCommentClick = (commentId: string) => {
     // Navigate to comment as a post
     navigate(`/app/post/${commentId}`);
+  };
+
+  const handleReaction = async (reactionType: string) => {
+    if (!user?.id || !post) return;
+
+    try {
+      // If clicking the same reaction, toggle it off
+      if (userReaction === reactionType) {
+        await PostService.removeReaction(post.id, user.id);
+        setUserReaction(null);
+        setPost(prev => prev ? {
+          ...prev,
+          liked: false,
+          likes: prev.likes > 0 ? prev.likes - 1 : 0,
+        } : null);
+        setReactionCounts(prev => ({
+          ...prev,
+          [reactionType]: Math.max(0, (prev[reactionType] || 1) - 1)
+        }));
+      } else {
+        // Remove previous reaction if any
+        if (userReaction) {
+          await PostService.removeReaction(post.id, user.id);
+          setReactionCounts(prev => ({
+            ...prev,
+            [userReaction]: Math.max(0, (prev[userReaction] || 1) - 1)
+          }));
+        }
+        // Add new reaction
+        await PostService.addReaction(post.id, user.id, reactionType);
+        setUserReaction(reactionType);
+
+        // Update counts
+        const newCounts = { ...reactionCounts };
+        newCounts[reactionType] = (newCounts[reactionType] || 0) + 1;
+        setReactionCounts(newCounts);
+
+        // Update post likes count
+        setPost(prev => prev ? {
+          ...prev,
+          liked: reactionType === 'like',
+          likes: (reactionCounts['like'] || 0) + (reactionType === 'like' ? 1 : 0),
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save reaction',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleToggleBookmark = async () => {
+    if (!user?.id || !post) return;
+
+    try {
+      const newBookmarkedState = await PostService.toggleSavePost(post.id, user.id);
+      setIsBookmarked(newBookmarkedState);
+
+      toast({
+        title: newBookmarkedState ? 'Saved!' : 'Removed from saved',
+        description: newBookmarkedState ? 'Post added to your saved posts.' : 'Post removed from saved posts.',
+      });
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save post',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleLike = (targetId: string, isPost = false) => {
@@ -592,18 +731,17 @@ const PostDetail: React.FC = () => {
 
             {/* Post Actions */}
             <div className="flex items-center justify-between pt-4 border-t">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleLike(post.id, true)}
-                className={cn(
-                  "flex items-center gap-2",
-                  post.liked && "text-red-500"
-                )}
-              >
-                <Heart className={cn("h-5 w-5", post.liked && "fill-current")} />
-                <span>{post.likes}</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <ReactionPicker
+                  onSelectReaction={handleReaction}
+                  currentReaction={userReaction}
+                  showLabel={true}
+                  size="md"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {Object.values(reactionCounts).reduce((sum, count) => sum + count, 0)}
+                </span>
+              </div>
 
               <Button variant="ghost" size="sm" className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
@@ -642,9 +780,9 @@ const PostDetail: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleBookmark(post.id, true)}
+                onClick={handleToggleBookmark}
               >
-                <Bookmark className={cn("h-5 w-5", post.bookmarked && "fill-current")} />
+                <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-blue-500")} />
               </Button>
             </div>
           </CardContent>

@@ -54,10 +54,10 @@ import { useNotification } from '@/hooks/use-notification';
 import EnhancedShareDialog from './EnhancedShareDialog';
 import QuickActionButton from './QuickActionButton';
 import { feedService } from '@/services/feedService';
-// import { FeedUserCard, FeedGroupCard, FeedPageCard } from './FeedEntityCards';
-// import { groups, pages } from '@/data/mockExploreData';
-// import { getRandomMockUsers } from '@/data/mockUsers';
-// import { useEntityFollowHandlers } from './UnifiedFeedHandlers';
+import PostContentRenderer from './PostContentRenderer';
+import { FeedUserCard, FeedGroupCard, FeedPageCard } from './FeedEntityCards';
+import ReactionPicker from './ReactionPicker';
+import { PostService } from '@/services/postService';
 
 // Unified content type interface
 interface UnifiedFeedItem {
@@ -118,8 +118,33 @@ const UnifiedFeedItemCardComponent: React.FC<{
   // Modal states
   const [showComments, setShowComments] = React.useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [userReaction, setUserReaction] = React.useState<string | null>(null);
+  const [isBookmarked, setIsBookmarked] = React.useState(false);
+  const [isLoadingInteractions, setIsLoadingInteractions] = React.useState(false);
 
   const formatTime = (date: Date) => formatTimeAgo(date);
+
+  // Load user interactions on mount
+  React.useEffect(() => {
+    const loadUserInteractions = async () => {
+      if (!user?.id || item.type !== 'post') return;
+
+      try {
+        setIsLoadingInteractions(true);
+        const reaction = await PostService.getUserReactionOnPost(item.id, user.id);
+        setUserReaction(reaction);
+
+        const saved = await PostService.isPostSavedByUser(item.id, user.id);
+        setIsBookmarked(saved);
+      } catch (error) {
+        console.warn('Error loading user interactions:', error);
+      } finally {
+        setIsLoadingInteractions(false);
+      }
+    };
+
+    loadUserInteractions();
+  }, [item.id, user?.id]);
 
   const handleInteraction = (type: string) => {
     switch (type) {
@@ -184,6 +209,54 @@ const UnifiedFeedItemCardComponent: React.FC<{
         break;
       default:
         onInteraction(item.id, type);
+    }
+  };
+
+  const handleReaction = async (reactionType: string) => {
+    if (!user?.id || item.type !== 'post') return;
+
+    try {
+      // If clicking the same reaction, toggle it off
+      if (userReaction === reactionType) {
+        await PostService.removeReaction(item.id, user.id);
+        setUserReaction(null);
+      } else {
+        // Remove previous reaction if any
+        if (userReaction) {
+          await PostService.removeReaction(item.id, user.id);
+        }
+        // Add new reaction
+        await PostService.addReaction(item.id, user.id, reactionType);
+        setUserReaction(reactionType);
+      }
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save reaction',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleToggleBookmark = async () => {
+    if (!user?.id || item.type !== 'post') return;
+
+    try {
+      const newBookmarkedState = await PostService.toggleSavePost(item.id, user.id);
+      setIsBookmarked(newBookmarkedState);
+
+      toast({
+        title: newBookmarkedState ? 'Saved!' : 'Removed from saved',
+        description: newBookmarkedState ? 'Post added to your saved posts.' : 'Post removed from saved posts.',
+      });
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save post',
+        variant: 'destructive'
+      });
     }
   };
 
@@ -282,23 +355,38 @@ const UnifiedFeedItemCardComponent: React.FC<{
   const InteractionBar = () => (
     <div className="flex items-center justify-between pt-3 border-t">
       <div className="flex items-center gap-1 sm:gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleInteraction("like")}
-          className={cn(
-            "flex items-center gap-1 px-2 py-1.5 h-auto",
-            item.userInteracted.liked && "text-red-500"
-          )}
-        >
-          <Heart
+        {item.type === 'post' && (
+          <div className="flex items-center gap-1">
+            <ReactionPicker
+              onSelectReaction={handleReaction}
+              currentReaction={userReaction}
+              showLabel={false}
+              size="sm"
+            />
+            <span className="text-xs sm:text-sm text-muted-foreground">
+              {formatNumber(item.interactions.likes)}
+            </span>
+          </div>
+        )}
+        {item.type !== 'post' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleInteraction("like")}
             className={cn(
-              "w-4 h-4",
-              item.userInteracted.liked && "fill-current"
+              "flex items-center gap-1 px-2 py-1.5 h-auto",
+              item.userInteracted.liked && "text-red-500"
             )}
-          />
-          <span className="text-xs sm:text-sm">{formatNumber(item.interactions.likes)}</span>
-        </Button>
+          >
+            <Heart
+              className={cn(
+                "w-4 h-4",
+                item.userInteracted.liked && "fill-current"
+              )}
+            />
+            <span className="text-xs sm:text-sm">{formatNumber(item.interactions.likes)}</span>
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
@@ -394,29 +482,50 @@ const UnifiedFeedItemCardComponent: React.FC<{
           />
         )}
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleInteraction("save")}
-        className={cn(
-          "px-2 py-1.5 h-auto",
-          item.userInteracted.saved && "text-blue-500"
-        )}
-      >
-        <Bookmark
+      {item.type === 'post' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleToggleBookmark}
+          disabled={isLoadingInteractions}
           className={cn(
-            "w-4 h-4",
-            item.userInteracted.saved && "fill-current"
+            "px-2 py-1.5 h-auto",
+            isBookmarked && "text-blue-500"
           )}
-        />
-      </Button>
+        >
+          <Bookmark
+            className={cn(
+              "w-4 h-4",
+              isBookmarked && "fill-current"
+            )}
+          />
+        </Button>
+      )}
+      {item.type !== 'post' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleInteraction("save")}
+          className={cn(
+            "px-2 py-1.5 h-auto",
+            item.userInteracted.saved && "text-blue-500"
+          )}
+        >
+          <Bookmark
+            className={cn(
+              "w-4 h-4",
+              item.userInteracted.saved && "fill-current"
+            )}
+          />
+        </Button>
+      )}
     </div>
   );
 
   // Regular post rendering
   if (item.type === "post") {
     return (
-      <Card className="mb-4 sm:mb-6 mx-2 sm:mx-0">
+      <Card className="mb-4 sm:mb-6 mx-2 sm:mx-0 hover:shadow-md transition-shadow">
         <CardContent className="p-0">
           {/* Header */}
           <div className="p-4 flex items-center justify-between gap-3">
@@ -507,15 +616,23 @@ const UnifiedFeedItemCardComponent: React.FC<{
             </div>
           </div>
 
-          {/* Content */}
-          <div className="px-4 pb-3">
-            <p className="text-sm mb-3">{item.content.text}</p>
+          {/* Content - Clickable area */}
+          <div
+            className="px-4 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            onClick={handleContentClick}
+          >
+            <PostContentRenderer
+              content={item.content.text || ''}
+              maxLines={4}
+              className="mb-3"
+              onSeeMore={handleContentClick}
+            />
             {item.content.media && item.content.media.length > 0 && (
-              <div className="relative">
+              <div className="relative rounded-lg overflow-hidden">
                 <img
                   src={item.content.media[0].url}
-                  alt={item.content.media[0].alt}
-                  className="w-full max-h-96 object-cover rounded-lg"
+                  alt={item.content.media[0].alt || 'Post media'}
+                  className="w-full max-h-96 object-cover"
                 />
               </div>
             )}
@@ -889,10 +1006,13 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           {/* Freelancer Content */}
-          <div className="px-4 pb-3">
+          <div
+            className="px-4 pb-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
+            onClick={handleContentClick}
+          >
             <h3 className="font-semibold text-lg mb-2">{item.content.title}</h3>
             <p className="text-sm text-gray-600 mb-3">{item.content.description}</p>
-            
+
             {/* Portfolio preview */}
             <div className="grid grid-cols-2 gap-2 mb-3">
               {item.content.portfolio.map((image: string, index: number) => (
@@ -900,7 +1020,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
                   key={index}
                   src={image}
                   alt={`Portfolio ${index + 1}`}
-                  className="w-full h-32 object-cover rounded-lg"
+                  className="w-full h-32 object-cover rounded-lg cursor-pointer"
                 />
               ))}
             </div>
@@ -997,14 +1117,17 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           {/* Live Content */}
-          <div className="relative">
+          <div
+            className="relative cursor-pointer group"
+            onClick={handleContentClick}
+          >
             <img
               src={item.content.thumbnail}
               alt={item.content.title}
-              className="w-full h-64 object-cover"
+              className="w-full h-64 object-cover group-hover:brightness-75 transition-all"
             />
-            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-              <Button size="lg" className="rounded-full bg-white bg-opacity-20 hover:bg-opacity-30">
+            <div className="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center group-hover:bg-opacity-50 transition-all">
+              <Button size="lg" className="rounded-full bg-white bg-opacity-20 hover:bg-opacity-40">
                 <Play className="w-8 h-8 text-white fill-white" />
               </Button>
             </div>
@@ -1018,7 +1141,12 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-2">{item.content.title}</h3>
+            <h3
+              className="font-semibold text-lg mb-2 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={handleContentClick}
+            >
+              {item.content.title}
+            </h3>
             <InteractionBar />
 
             {/* Comments Section */}
@@ -1079,18 +1207,26 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           {/* Event Content */}
-          <div className="relative">
+          <div
+            className="relative cursor-pointer group"
+            onClick={handleContentClick}
+          >
             <img
               src={item.content.image}
               alt={item.content.title}
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-cover group-hover:brightness-75 transition-all"
             />
           </div>
 
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-2">{item.content.title}</h3>
+            <h3
+              className="font-semibold text-lg mb-2 cursor-pointer hover:text-blue-600 transition-colors"
+              onClick={handleContentClick}
+            >
+              {item.content.title}
+            </h3>
             <p className="text-sm text-gray-600 mb-3">{item.content.description}</p>
-            
+
             <div className="grid grid-cols-2 gap-4 mb-3">
               <div>
                 <span className="text-sm font-medium">Date & Time:</span>
@@ -1106,7 +1242,14 @@ const UnifiedFeedItemCardComponent: React.FC<{
             </div>
 
             <div className="flex items-center gap-2 mb-3">
-              <Button size="sm" className="flex-1">
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigate(`/app/events/${item.id}`);
+                }}
+              >
                 <Users className="w-4 h-4 mr-2" />
                 Join Event
               </Button>
@@ -1173,18 +1316,26 @@ const UnifiedFeedItemCardComponent: React.FC<{
           </div>
 
           {/* Sponsored Content */}
-          <div className="relative">
+          <div
+            className="relative cursor-pointer group"
+            onClick={handleContentClick}
+          >
             <img
               src={item.content.image}
               alt={item.content.title}
-              className="w-full h-48 object-cover"
+              className="w-full h-48 object-cover group-hover:brightness-75 transition-all"
             />
           </div>
 
           <div className="p-4">
-            <h3 className="font-semibold text-lg mb-2">{item.content.title}</h3>
+            <h3
+              className="font-semibold text-lg mb-2 cursor-pointer hover:text-blue-700 transition-colors"
+              onClick={handleContentClick}
+            >
+              {item.content.title}
+            </h3>
             <p className="text-sm text-gray-600 mb-3">{item.content.description}</p>
-            
+
             <div className="mb-3">
               <span className="text-sm font-medium mb-2 block">Features:</span>
               <div className="grid grid-cols-2 gap-2">
@@ -1199,7 +1350,14 @@ const UnifiedFeedItemCardComponent: React.FC<{
 
             <div className="flex items-center gap-3 mb-3">
               <span className="text-lg font-bold text-blue-600">{item.content.price}</span>
-              <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <Button
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleContentClick(e as any);
+                }}
+              >
                 <Crown className="w-4 h-4 mr-2" />
                 {item.content.ctaText}
               </Button>
