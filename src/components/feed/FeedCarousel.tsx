@@ -332,44 +332,56 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
                   </div>
 
                   {/* Footer - Interactions */}
-                  <div className="p-3 border-t bg-gray-50 dark:bg-gray-900">
-                    <div className="flex items-center justify-between gap-2">
+                  <div className="p-2 sm:p-3 border-t bg-gray-50 dark:bg-gray-900">
+                    <div className="flex items-center justify-between gap-1 sm:gap-2">
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={(e) => handleLikeClick(e, post)}
                         className={cn(
-                          'flex-1 h-8 text-xs gap-1',
-                          post.userInteracted.liked && 'text-red-500'
+                          'flex-1 h-8 text-xs gap-1 hover:bg-red-50 dark:hover:bg-red-950 transition-colors',
+                          postInteractions[post.id]?.liked || post.userInteracted.liked ? 'text-red-500' : 'text-gray-600'
                         )}
                       >
                         <Heart
                           className={cn(
                             'w-3 h-3',
-                            post.userInteracted.liked && 'fill-current'
+                            postInteractions[post.id]?.liked || post.userInteracted.liked ? 'fill-current' : ''
                           )}
                         />
-                        <span>{formatNumber(post.interactions.likes)}</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="flex-1 h-8 text-xs gap-1">
-                        <MessageCircle className="w-3 h-3" />
-                        <span>{formatNumber(post.interactions.comments)}</span>
-                      </Button>
-                      <Button variant="ghost" size="sm" className="flex-1 h-8 text-xs gap-1">
-                        <Share2 className="w-3 h-3" />
-                        <span>{formatNumber(post.interactions.shares)}</span>
+                        <span className="hidden xs:inline">{formatNumber(post.interactions.likes)}</span>
                       </Button>
                       <Button
                         variant="ghost"
                         size="sm"
+                        onClick={(e) => handleCommentClick(e, post)}
+                        className="flex-1 h-8 text-xs gap-1 text-gray-600 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors"
+                      >
+                        <MessageCircle className="w-3 h-3" />
+                        <span className="hidden xs:inline">{formatNumber(post.interactions.comments)}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleShareClick(e, post)}
+                        className="flex-1 h-8 text-xs gap-1 text-gray-600 hover:bg-green-50 dark:hover:bg-green-950 transition-colors"
+                      >
+                        <Share2 className="w-3 h-3" />
+                        <span className="hidden xs:inline">{formatNumber(post.interactions.shares)}</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => handleSaveClick(e, post)}
                         className={cn(
-                          'h-8 w-8 p-0',
-                          post.userInteracted.saved && 'text-blue-500'
+                          'h-8 w-8 p-0 hover:bg-blue-50 dark:hover:bg-blue-950 transition-colors',
+                          postInteractions[post.id]?.saved || post.userInteracted.saved ? 'text-blue-500' : 'text-gray-600'
                         )}
                       >
                         <Bookmark
                           className={cn(
                             'w-3 h-3',
-                            post.userInteracted.saved && 'fill-current'
+                            postInteractions[post.id]?.saved || post.userInteracted.saved ? 'fill-current' : ''
                           )}
                         />
                       </Button>
