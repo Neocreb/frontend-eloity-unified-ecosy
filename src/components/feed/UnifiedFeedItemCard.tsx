@@ -242,19 +242,21 @@ const UnifiedFeedItemCardComponent: React.FC<{
   const handleToggleBookmark = async () => {
     if (!user?.id || item.type !== 'post') return;
 
+    const previousBookmarkedState = isBookmarked;
+
     try {
       const newBookmarkedState = await PostService.toggleSavePost(item.id, user.id);
       setIsBookmarked(newBookmarkedState);
 
       toast({
-        title: newBookmarkedState ? 'Saved!' : 'Removed from saved',
-        description: newBookmarkedState ? 'Post added to your saved posts.' : 'Post removed from saved posts.',
+        title: newBookmarkedState ? 'Saved!' : 'Removed from Saved',
+        description: newBookmarkedState ? 'Post added to your saved posts.' : 'Post removed from your saved posts.',
       });
     } catch (error) {
       console.error('Error toggling bookmark:', error);
       toast({
         title: 'Error',
-        description: 'Failed to save post',
+        description: previousBookmarkedState ? 'Failed to remove from saved posts' : 'Failed to save post',
         variant: 'destructive'
       });
     }

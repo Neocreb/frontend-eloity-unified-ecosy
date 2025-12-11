@@ -27,9 +27,86 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
   try {
     const result: any = {};
 
-    // First, try CoinGecko as primary source for cryptocurrency prices
+    // Check if CryptoAPIs API key is available
+    const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
+
+    // If CryptoAPIs is configured, use it as PRIMARY source for reliability
+    if (cryptoapisKey) {
+      logger.info('CRYPTOAPIS_API_KEY configured - using CryptoAPIs as primary source');
+
+      const cryptoapisBase = 'https://rest.cryptoapis.io';
+      const assetMap: Record<string, string> = {
+        bitcoin: 'BTC',
+        ethereum: 'ETH',
+        tether: 'USDT',
+        binancecoin: 'BNB',
+        solana: 'SOL',
+        cardano: 'ADA',
+        chainlink: 'LINK',
+        polygon: 'MATIC',
+        avalanche: 'AVAX',
+        polkadot: 'DOT',
+        dogecoin: 'DOGE'
+      };
+
+      const fetchPromises = symbols.map(async (symbol) => {
+        const lower = symbol.toLowerCase();
+
+        try {
+          if (!Object.prototype.hasOwnProperty.call(assetMap, lower)) {
+            logger.warn(`Symbol "${symbol}" is not supported for price lookup.`);
+            return;
+          }
+
+          const assetId = assetMap[lower];
+          const url = `${cryptoapisBase}/market-data/exchange-rates/realtime/${assetId}/USD`;
+          logger.info(`Fetching CryptoAPIs data for ${lower}`);
+
+          const resp = await axios.get(url, {
+            timeout: 10000,
+            validateStatus: () => true,
+            headers: {
+              'X-API-Key': cryptoapisKey,
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            }
+          });
+
+          if (resp.status === 200 && resp.data && resp.data.data && typeof resp.data.data.rate === 'number') {
+            const rate = parseFloat(String(resp.data.data.rate));
+            if (rate > 0) {
+              result[lower] = {
+                usd: rate,
+                usd_24h_change: 0,
+                usd_market_cap: null,
+                usd_24h_vol: null
+              };
+              logger.info(`Successfully fetched CryptoAPIs data for ${lower}: $${rate}`);
+              return;
+            }
+          }
+          logger.warn(`CryptoAPIs returned invalid data for ${lower}: status=${resp.status}`);
+        } catch (err) {
+          logger.error('CryptoAPIs price fetch failed for', lower, {
+            message: err instanceof Error ? err.message : String(err)
+          });
+        }
+      });
+
+      await Promise.all(fetchPromises);
+
+      // If we got data from CryptoAPIs, return it
+      if (Object.keys(result).length > 0) {
+        logger.info('Successfully fetched prices from CryptoAPIs', { symbolCount: Object.keys(result).length });
+        return result;
+      }
+
+      logger.warn('CryptoAPIs returned no valid data, falling back to CoinGecko');
+    }
+
+    // Fallback to CoinGecko only if CryptoAPIs is not configured or failed
     try {
-      logger.info('Attempting to fetch data from CoinGecko as primary source');
+      logger.info('Attempting to fetch data from CoinGecko as fallback');
       const cgIdMap: Record<string, string> = {
         bitcoin: 'bitcoin',
         ethereum: 'ethereum',
@@ -100,114 +177,23 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
         }
       }
     } catch (cgErr) {
-      logger.error('CoinGecko primary fetch failed:', {
+      logger.error('CoinGecko fallback fetch failed:', {
         message: cgErr instanceof Error ? cgErr.message : String(cgErr),
         type: cgErr instanceof Error ? cgErr.constructor.name : typeof cgErr
       });
     }
 
-    // If we got data from CoinGecko, return it
+    // If we got data from either source, return it
     if (Object.keys(result).length > 0) {
-      logger.info('Returning data from CoinGecko');
+      logger.info('Returning data from fetched sources');
       return result;
     }
 
-    // Fallback to CryptoAPIs if CoinGecko didn't work
-    logger.info('Falling back to CryptoAPIs for missing prices');
-    const cryptoapisBase = 'https://rest.cryptoapis.io';
-    const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
-
-    if (!cryptoapisKey) {
-      logger.warn('CRYPTOAPIS_API_KEY not configured, using fallback prices');
-      // Use fallback prices for all requested symbols
-      for (const symbol of symbols) {
-        const lower = symbol.toLowerCase();
-        result[lower] = FALLBACK_PRICES[lower] || {
-          usd: 0,
-          usd_24h_change: 0,
-          usd_market_cap: 0,
-          usd_24h_vol: 0
-        };
-      }
-      logger.info('Using fallback prices due to missing CRYPTOAPIS_API_KEY');
-      return result;
-    }
-
-    const fetchPromises = symbols.map(async (symbol) => {
+    // Final fallback: Use hardcoded fallback prices for all requested symbols
+    logger.warn('All API sources failed, using hardcoded fallback prices');
+    for (const symbol of symbols) {
       const lower = symbol.toLowerCase();
-
-      // Skip if we already have data for this symbol
-      if (result[lower]) {
-        return;
-      }
-
-      try {
-        // Use CryptoAPIs exchange rates endpoint
-        // Map symbols to asset IDs used by CryptoAPIs
-        const assetMap: Record<string, string> = {
-          bitcoin: 'BTC',
-          ethereum: 'ETH',
-          tether: 'USDT',
-          binancecoin: 'BNB',
-          solana: 'SOL',
-          cardano: 'ADA',
-          chainlink: 'LINK',
-          polygon: 'MATIC',
-          avalanche: 'AVAX',
-          polkadot: 'DOT',
-          dogecoin: 'DOGE'
-        };
-        // Only allow supported assets to avoid SSRF/path abuse
-        if (!Object.prototype.hasOwnProperty.call(assetMap, lower)) {
-          logger.warn(`Symbol "${symbol}" is not supported for price lookup. Using fallback.`);
-          result[lower] = FALLBACK_PRICES[lower] || {
-            usd: 0,
-            usd_24h_change: 0,
-            usd_market_cap: 0,
-            usd_24h_vol: 0
-          };
-          return;
-        }
-        const assetId = assetMap[lower];
-        const url = `${cryptoapisBase}/market-data/exchange-rates/realtime/${assetId}/USD`;
-        logger.info(`Fetching CryptoAPIs data for ${lower} from ${url}`);
-        const resp = await axios.get(url, {
-          timeout: 10000,
-          validateStatus: () => true, // Handle all status codes
-          headers: {
-            'X-API-Key': cryptoapisKey,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        // Check if response is successful
-        if (resp.status !== 200) {
-          logger.error(`CryptoAPIs returned status ${resp.status} for ${lower}`);
-          throw new Error(`CryptoAPIs HTTP ${resp.status}`);
-        }
-
-        if (resp.data && resp.data.data && typeof resp.data.data.rate === 'number') {
-          const rate = parseFloat(String(resp.data.data.rate));
-          if (rate > 0) {
-            result[lower] = {
-              usd: rate,
-              usd_24h_change: 0, // CryptoAPIs exchange rates don't include 24h change
-              usd_market_cap: null,
-              usd_24h_vol: null
-            };
-            logger.info(`Successfully fetched CryptoAPIs data for ${lower}: $${rate}`);
-            return;
-          }
-        }
-      } catch (err) {
-        logger.error('CryptoAPIs price fetch failed for', lower, {
-          message: err instanceof Error ? err.message : String(err)
-        });
-      }
-
-      // Final fallback: use hardcoded fallback price or zero
       if (!result[lower]) {
-        logger.warn(`Using fallback price for ${lower}`);
         result[lower] = FALLBACK_PRICES[lower] || {
           usd: 0,
           usd_24h_change: 0,
@@ -215,10 +201,8 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
           usd_24h_vol: 0
         };
       }
-    });
-
-    await Promise.all(fetchPromises);
-    logger.info('Final crypto prices result:', {
+    }
+    logger.info('Returning fallback prices', {
       symbolCount: Object.keys(result).length,
       symbols: Object.keys(result)
     });
