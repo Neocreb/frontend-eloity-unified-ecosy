@@ -58,6 +58,8 @@ import PostContentRenderer from './PostContentRenderer';
 import { FeedUserCard, FeedGroupCard, FeedPageCard } from './FeedEntityCards';
 import ReactionPicker from './ReactionPicker';
 import { PostService } from '@/services/postService';
+import { profileService } from '@/services/profileService';
+import { supabase } from '@/integrations/supabase/client';
 
 // Unified content type interface
 interface UnifiedFeedItem {
