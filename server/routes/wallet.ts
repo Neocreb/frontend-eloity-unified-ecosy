@@ -76,11 +76,17 @@ router.get('/balance', async (req: Request, res: Response) => {
         .from(crypto_wallets)
         .where(eq(crypto_wallets.user_id, userId));
 
-      for (const wallet of cryptoWallets) {
-        balances.crypto += parseFloat(wallet.balance.toString()) || 0;
+      if (Array.isArray(cryptoWallets)) {
+        for (const wallet of cryptoWallets) {
+          balances.crypto += parseFloat(wallet.balance.toString()) || 0;
+        }
+      } else if (cryptoWallets) {
+        // Handle case where result is a single object
+        balances.crypto += parseFloat((cryptoWallets as any).balance?.toString() || '0');
       }
     } catch (err) {
-      logger.warn('Failed to fetch crypto balance:', err);
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      logger.warn('Failed to fetch crypto balance:', errorMsg);
     }
 
     // Get marketplace (orders) balance
