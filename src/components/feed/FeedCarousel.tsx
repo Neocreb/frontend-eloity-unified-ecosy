@@ -45,19 +45,29 @@ interface CarouselPost {
 interface FeedCarouselProps {
   posts: CarouselPost[];
   onPostClick?: (postId: string) => void;
+  onLike?: (postId: string) => void;
+  onComment?: (postId: string) => void;
+  onShare?: (postId: string) => void;
+  onSave?: (postId: string) => void;
   className?: string;
 }
 
 const FeedCarousel: React.FC<FeedCarouselProps> = ({
   posts,
   onPostClick,
+  onLike,
+  onComment,
+  onShare,
+  onSave,
   className,
 }) => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(posts.length > 1);
+  const [postInteractions, setPostInteractions] = useState<Record<string, any>>({});
 
   const checkScroll = () => {
     if (scrollContainerRef.current) {
