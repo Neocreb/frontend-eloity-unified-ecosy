@@ -380,6 +380,22 @@ const PostDetail: React.FC = () => {
           setPost(transformedPost);
           // For real posts, we'll show comments from the database when integrated
           setComments([]);
+
+          // Load user's reaction if logged in
+          if (user?.id) {
+            try {
+              const userReactionType = await PostService.getUserReactionOnPost(postId, user.id);
+              setUserReaction(userReactionType);
+
+              const counts = await PostService.getPostReactionCounts(postId);
+              setReactionCounts(counts);
+
+              const saved = await PostService.isPostSavedByUser(postId, user.id);
+              setIsBookmarked(saved);
+            } catch (error) {
+              console.warn('Error loading user interaction state:', error);
+            }
+          }
         } else {
           // Fall back to mock data if post ID matches a mock ID
           const foundPost = allPosts[postId];
