@@ -731,18 +731,17 @@ const PostDetail: React.FC = () => {
 
             {/* Post Actions */}
             <div className="flex items-center justify-between pt-4 border-t">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => handleLike(post.id, true)}
-                className={cn(
-                  "flex items-center gap-2",
-                  post.liked && "text-red-500"
-                )}
-              >
-                <Heart className={cn("h-5 w-5", post.liked && "fill-current")} />
-                <span>{post.likes}</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <ReactionPicker
+                  onSelectReaction={handleReaction}
+                  currentReaction={userReaction}
+                  showLabel={true}
+                  size="md"
+                />
+                <span className="text-sm text-muted-foreground">
+                  {Object.values(reactionCounts).reduce((sum, count) => sum + count, 0)}
+                </span>
+              </div>
 
               <Button variant="ghost" size="sm" className="flex items-center gap-2">
                 <MessageCircle className="h-5 w-5" />
