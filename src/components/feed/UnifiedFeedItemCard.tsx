@@ -355,23 +355,38 @@ const UnifiedFeedItemCardComponent: React.FC<{
   const InteractionBar = () => (
     <div className="flex items-center justify-between pt-3 border-t">
       <div className="flex items-center gap-1 sm:gap-3">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => handleInteraction("like")}
-          className={cn(
-            "flex items-center gap-1 px-2 py-1.5 h-auto",
-            item.userInteracted.liked && "text-red-500"
-          )}
-        >
-          <Heart
+        {item.type === 'post' && (
+          <div className="flex items-center gap-1">
+            <ReactionPicker
+              onSelectReaction={handleReaction}
+              currentReaction={userReaction}
+              showLabel={false}
+              size="sm"
+            />
+            <span className="text-xs sm:text-sm text-muted-foreground">
+              {formatNumber(item.interactions.likes)}
+            </span>
+          </div>
+        )}
+        {item.type !== 'post' && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => handleInteraction("like")}
             className={cn(
-              "w-4 h-4",
-              item.userInteracted.liked && "fill-current"
+              "flex items-center gap-1 px-2 py-1.5 h-auto",
+              item.userInteracted.liked && "text-red-500"
             )}
-          />
-          <span className="text-xs sm:text-sm">{formatNumber(item.interactions.likes)}</span>
-        </Button>
+          >
+            <Heart
+              className={cn(
+                "w-4 h-4",
+                item.userInteracted.liked && "fill-current"
+              )}
+            />
+            <span className="text-xs sm:text-sm">{formatNumber(item.interactions.likes)}</span>
+          </Button>
+        )}
         <Button
           variant="ghost"
           size="sm"
