@@ -124,6 +124,8 @@ const UnifiedFeedItemCardComponent: React.FC<{
   const [userReaction, setUserReaction] = React.useState<string | null>(null);
   const [isBookmarked, setIsBookmarked] = React.useState(false);
   const [isLoadingInteractions, setIsLoadingInteractions] = React.useState(false);
+  const [giftsReceivedValue, setGiftsReceivedValue] = React.useState(0);
+  const [giftsReceivedCount, setGiftsReceivedCount] = React.useState(0);
 
   const formatTime = (date: Date) => formatTimeAgo(date);
 
