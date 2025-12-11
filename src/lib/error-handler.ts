@@ -64,3 +64,26 @@ export function withAbortHandling<T extends (...args: any[]) => Promise<any>>(
     }
   }) as T;
 }
+
+// Utility function to format errors for logging
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  if (typeof error === 'string') {
+    return error;
+  }
+  if (error && typeof error === 'object') {
+    // Handle Supabase errors
+    if ('message' in error) {
+      return (error as any).message;
+    }
+    // Handle other object errors
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return String(error);
+    }
+  }
+  return String(error);
+}
