@@ -30,7 +30,8 @@ export class MarketplaceService {
         .order('name');
 
       if (error) {
-        console.error("Error fetching categories:", error);
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        console.error("Error fetching categories:", errorMsg);
         return [];
       }
 

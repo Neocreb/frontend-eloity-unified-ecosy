@@ -98,7 +98,8 @@ export function useLiveContent() {
 
       setLiveContent([...liveStreams, ...battleStreams]);
     } catch (error) {
-      console.error('Failed to load live content:', error);
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Failed to load live content:', errorMsg);
     } finally {
       setLoading(false);
     }

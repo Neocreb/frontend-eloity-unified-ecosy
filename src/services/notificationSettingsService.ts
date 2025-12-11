@@ -44,7 +44,8 @@ class NotificationSettingsService {
 
       return data as NotificationPreferences;
     } catch (error) {
-      console.error('Error getting notification preferences:', error);
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Error getting notification preferences:', errorMsg);
       return null;
     }
   }

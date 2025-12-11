@@ -44,6 +44,12 @@ export const useCurrency = () => {
   return context;
 };
 
+// Safe version that returns null if context is unavailable
+export const useCurrencySafe = () => {
+  const context = useContext(CurrencyContext);
+  return context || null;
+};
+
 interface ConversionOptions {
   decimals?: number;
   showSymbol?: boolean;

@@ -94,13 +94,15 @@ export const rewardsBattlesService = {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching battles:', error);
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        console.error('Error fetching battles:', errorMsg);
         return [];
       }
 
       return data || [];
     } catch (err) {
-      console.error('Error fetching battles:', err);
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      console.error('Error fetching battles:', errorMsg);
       return [];
     }
   },
@@ -149,7 +151,8 @@ export const rewardsBattlesService = {
       
       return battlesWithVotes;
     } catch (err) {
-      console.error('Error fetching battles with votes:', err);
+      const errorMsg = err instanceof Error ? err.message : JSON.stringify(err);
+      console.error('Error fetching battles with votes:', errorMsg);
       return [];
     }
   },

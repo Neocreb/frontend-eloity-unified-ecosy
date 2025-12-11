@@ -118,7 +118,8 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             .neq("sender_id", user.id);
 
           if (countError) {
-            console.error("Error getting unread count:", countError);
+            const errorMsg = countError instanceof Error ? countError.message : JSON.stringify(countError);
+            console.error("Error getting unread count:", errorMsg);
           }
 
           // Get the last message for this conversation

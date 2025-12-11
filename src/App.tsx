@@ -963,8 +963,8 @@ const App = () => {
             }
           >
             <SafeI18nProvider>
-              <SafeCurrencyProvider>
-                <AuthProvider>
+              <AuthProvider>
+                <SafeCurrencyProvider>
                   <UserCollectionsProvider>
                     <UnifiedNotificationProvider>
                       <AdminProvider>
@@ -992,8 +992,8 @@ const App = () => {
                       </AdminProvider>
                     </UnifiedNotificationProvider>
                   </UserCollectionsProvider>
-                </AuthProvider>
-              </SafeCurrencyProvider>
+                </SafeCurrencyProvider>
+              </AuthProvider>
             </SafeI18nProvider>
           </ErrorBoundary>
         </SafeThemeProvider>
