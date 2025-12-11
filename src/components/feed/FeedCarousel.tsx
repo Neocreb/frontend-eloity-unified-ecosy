@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
+import { useToast } from '@/components/ui/use-toast';
 import PostContentRenderer from './PostContentRenderer';
 import { formatNumber, formatTimeAgo } from '@/utils/feedUtils';
+import { PostService } from '@/services/postService';
 
 interface CarouselPost {
   id: string;
