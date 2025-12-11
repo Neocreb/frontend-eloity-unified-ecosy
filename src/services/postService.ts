@@ -559,19 +559,23 @@ export class PostService {
 
       if (checkError) {
         console.error("Error checking save:", checkError);
-        return false;
+        throw new Error("Failed to check save status");
       }
 
       if (existingSave) {
-        // Unsave
-        return this.unsavePost(postId, userId);
+        // Unsave - post will no longer be saved
+        const success = await this.unsavePost(postId, userId);
+        if (!success) throw new Error("Failed to unsave post");
+        return false;  // Return the new state: not saved
       } else {
-        // Save
-        return this.savePost(postId, userId);
+        // Save - post will now be saved
+        const success = await this.savePost(postId, userId);
+        if (!success) throw new Error("Failed to save post");
+        return true;  // Return the new state: saved
       }
     } catch (error) {
       console.error("Error in toggleSavePost:", error);
-      return false;
+      throw error;  // Throw error so UI can handle it
     }
   }
 
