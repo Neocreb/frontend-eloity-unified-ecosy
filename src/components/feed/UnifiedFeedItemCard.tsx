@@ -126,18 +126,36 @@ const UnifiedFeedItemCardComponent: React.FC<{
 
   const formatTime = (date: Date) => formatTimeAgo(date);
 
-  // Load user interactions on mount
+  // Load user interactions and follow status on mount
   React.useEffect(() => {
     const loadUserInteractions = async () => {
-      if (!user?.id || item.type !== 'post') return;
+      if (!user?.id) return;
 
       try {
         setIsLoadingInteractions(true);
-        const reaction = await PostService.getUserReactionOnPost(item.id, user.id);
-        setUserReaction(reaction);
 
-        const saved = await PostService.isPostSavedByUser(item.id, user.id);
-        setIsBookmarked(saved);
+        // Check follow status for non-self items
+        if (item.type === 'post' && item.author?.id && !item.author.id.startsWith(user.id)) {
+          try {
+            const { data: followData } = await supabase
+              .from('followers')
+              .select('id')
+              .eq('follower_id', user.id)
+              .eq('following_id', item.author.id)
+              .maybeSingle();
+            setIsFollowing(!!followData);
+          } catch (error) {
+            console.warn('Error checking follow status:', error);
+          }
+        }
+
+        if (item.type === 'post') {
+          const reaction = await PostService.getUserReactionOnPost(item.id, user.id);
+          setUserReaction(reaction);
+
+          const saved = await PostService.isPostSavedByUser(item.id, user.id);
+          setIsBookmarked(saved);
+        }
       } catch (error) {
         console.warn('Error loading user interactions:', error);
       } finally {
@@ -146,7 +164,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
     };
 
     loadUserInteractions();
-  }, [item.id, user?.id]);
+  }, [item.id, item.author?.id, user?.id]);
 
   const handleInteraction = (type: string) => {
     switch (type) {
