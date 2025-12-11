@@ -158,6 +158,17 @@ const UnifiedFeedItemCardComponent: React.FC<{
 
           const saved = await PostService.isPostSavedByUser(item.id, user.id);
           setIsBookmarked(saved);
+
+          // Load gift count for the post author
+          if (item.author?.id) {
+            try {
+              const giftStats = await virtualGiftsService.getTotalGiftsValueReceived(item.author.id);
+              setGiftsReceivedValue(giftStats.totalValue);
+              setGiftsReceivedCount(giftStats.totalCount);
+            } catch (error) {
+              console.warn('Error loading gift stats:', error);
+            }
+          }
         }
       } catch (error) {
         console.warn('Error loading user interactions:', error);
