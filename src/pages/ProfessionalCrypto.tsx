@@ -83,11 +83,33 @@ const ProfessionalCrypto = () => {
     try {
       // 1) Fetch live prices from backend (using CoinGecko via CryptoAPIs)
       console.log('[Crypto] Starting price fetch from /api/crypto/prices');
-      const pricesRes = await fetch(`/api/crypto/prices?symbols=bitcoin,ethereum,tether,binancecoin,solana,cardano,polkadot,avalanche`, {
-        headers: {
-          'Content-Type': 'application/json'
+
+      let pricesRes;
+      let retries = 3;
+      let lastError: Error | null = null;
+
+      // Retry logic for better resilience
+      while (retries > 0) {
+        try {
+          pricesRes = await fetch(`/api/crypto/prices?symbols=bitcoin,ethereum,tether,binancecoin,solana,cardano,polkadot,avalanche`, {
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          });
+          break;
+        } catch (fetchError) {
+          lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
+          retries--;
+          if (retries > 0) {
+            console.warn(`[Crypto] Fetch failed, retrying... (${retries} attempts left)`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         }
-      });
+      }
+
+      if (!pricesRes) {
+        throw lastError || new Error('Failed to fetch cryptocurrency prices after retries');
+      }
 
       console.log('[Crypto] Response status:', pricesRes.status, pricesRes.statusText);
 
@@ -97,23 +119,32 @@ const ProfessionalCrypto = () => {
 
       if (!pricesRes.ok) {
         console.error(`[Crypto] HTTP error! status: ${pricesRes.status}`, pricesText);
-        throw new Error(`HTTP error! status: ${pricesRes.status}`);
+        throw new Error(`API returned HTTP ${pricesRes.status}: ${pricesText.substring(0, 100)}`);
       }
 
       const contentType = pricesRes.headers.get('content-type');
       console.log('[Crypto] Content-Type:', contentType);
-      if (!contentType || !contentType.includes('application/json')) {
-        console.error('[Crypto] Non-JSON response received:', pricesText.substring(0, 500));
-        throw new Error(`Received non-JSON response from API: ${pricesText.substring(0, 100)}`);
-      }
 
+      // Validate JSON response
       let pricesPayload;
-      try {
-        pricesPayload = pricesText ? JSON.parse(pricesText) : null;
-        console.log('[Crypto] Successfully parsed prices:', pricesPayload);
-      } catch (parseError) {
-        console.error('[Crypto] Failed to parse JSON response:', pricesText);
-        throw new Error('Failed to parse API response as JSON');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('[Crypto] Non-JSON response received. Content-Type:', contentType);
+        // Try to parse anyway in case content-type header is wrong
+        try {
+          pricesPayload = pricesText ? JSON.parse(pricesText) : null;
+          console.warn('[Crypto] Successfully parsed JSON despite incorrect content-type');
+        } catch (parseError) {
+          console.error('[Crypto] Non-JSON response received:', pricesText.substring(0, 500));
+          throw new Error(`API returned non-JSON response: ${pricesText.substring(0, 100)}`);
+        }
+      } else {
+        try {
+          pricesPayload = pricesText ? JSON.parse(pricesText) : null;
+          console.log('[Crypto] Successfully parsed prices:', pricesPayload);
+        } catch (parseError) {
+          console.error('[Crypto] Failed to parse JSON response:', pricesText);
+          throw new Error('Failed to parse API response as JSON');
+        }
       }
       const prices: Record<string, any> = {};
 
