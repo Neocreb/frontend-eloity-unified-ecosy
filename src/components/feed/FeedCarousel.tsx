@@ -232,9 +232,9 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
               >
                 <CardContent className="p-0 flex flex-col h-full">
                   {/* Header */}
-                  <div className="p-3 border-b">
+                  <div className="p-2 sm:p-3 border-b">
                     <div className="flex items-center gap-2 mb-2">
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-7 w-7 sm:h-8 sm:w-8">
                         <AvatarImage src={post.author?.avatar} />
                         <AvatarFallback>
                           {post.author?.name.charAt(0) || 'U'}
@@ -242,7 +242,7 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
                       </Avatar>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-1">
-                          <span className="font-semibold text-sm truncate">
+                          <span className="font-semibold text-xs sm:text-sm truncate">
                             {post.author?.name || 'Unknown'}
                           </span>
                           {post.author?.verified && (
