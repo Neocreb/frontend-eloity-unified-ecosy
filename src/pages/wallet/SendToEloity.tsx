@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWalletContext } from "@/contexts/WalletContext";
@@ -15,6 +15,8 @@ import {
   CheckCircle2,
   Loader2,
 } from "lucide-react";
+import { UserService } from "@/services/userService";
+import { virtualGiftsService } from "@/services/virtualGiftsService";
 
 interface Recipient {
   id: string;
@@ -43,34 +45,63 @@ const SendToEloity = () => {
   const [amount, setAmount] = useState("");
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [recentRecipients, setRecentRecipients] = useState<Recipient[]>([]);
+  const [searchResults, setSearchResults] = useState<Recipient[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [loadingRecipients, setLoadingRecipients] = useState(true);
 
-  // Mock recent recipients
-  const recentRecipients: Recipient[] = [
-    {
-      id: "1",
-      name: "John Doe",
-      username: "johndoe",
-      avatar: "/placeholder.svg",
-    },
-    {
-      id: "2",
-      name: "Sarah Smith",
-      username: "sarahsmith",
-      avatar: "/placeholder.svg",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      username: "mikej",
-      avatar: "/placeholder.svg",
-    },
-  ];
+  useEffect(() => {
+    loadRecentRecipients();
+  }, []);
 
-  const filteredRecipients = recentRecipients.filter(
-    (r) =>
-      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const loadRecentRecipients = async () => {
+    try {
+      setLoadingRecipients(true);
+      if (!user?.id) return;
+
+      const recipients = await virtualGiftsService.getRecentRecipients(user.id, 10);
+      const mappedRecipients: Recipient[] = recipients.map((r) => ({
+        id: r.id,
+        name: r.display_name || r.username,
+        username: r.username,
+        avatar: r.avatar_url,
+      }));
+      setRecentRecipients(mappedRecipients);
+    } catch (error) {
+      console.error("Error loading recent recipients:", error);
+    } finally {
+      setLoadingRecipients(false);
+    }
+  };
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      searchForUsers();
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  const searchForUsers = async () => {
+    try {
+      setIsSearching(true);
+      const results = await UserService.searchUsers(searchQuery, 20);
+      const mappedResults: Recipient[] = results.map((u) => ({
+        id: u.id,
+        name: u.full_name || u.name || u.username || "Unknown",
+        username: u.username || "unknown",
+        avatar: u.avatar_url || u.avatar,
+      }));
+      setSearchResults(mappedResults);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const filteredRecipients = searchQuery.trim() ? searchResults : recentRecipients;
 
   const handleContinueAmount = () => {
     if (!amount || parseFloat(amount) <= 0) {
