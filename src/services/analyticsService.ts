@@ -434,7 +434,8 @@ export const fetchPlatformAnalytics = async (): Promise<FeatureAnalytics[]> => {
 
     return result;
   } catch (error) {
-    console.error('Error fetching platform analytics:', error);
+    const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Error fetching platform analytics:', errorMsg);
     throw error;
   }
 };
