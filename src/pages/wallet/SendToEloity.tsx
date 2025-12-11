@@ -168,7 +168,7 @@ const SendToEloity = () => {
               </div>
             </div>
 
-            {searchQuery === "" && (
+            {!searchQuery && (
               <div>
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">
                   Recent Recipients
@@ -177,7 +177,17 @@ const SendToEloity = () => {
             )}
 
             <div className="space-y-2">
-              {filteredRecipients.length > 0 ? (
+              {loadingRecipients && !searchQuery ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-600" />
+                  <p className="text-sm text-gray-500 mt-2">Loading recent recipients...</p>
+                </div>
+              ) : isSearching && searchQuery ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-600" />
+                  <p className="text-sm text-gray-500 mt-2">Searching users...</p>
+                </div>
+              ) : filteredRecipients.length > 0 ? (
                 filteredRecipients.map((rec) => (
                   <button
                     key={rec.id}
@@ -213,7 +223,7 @@ const SendToEloity = () => {
                 ))
               ) : (
                 <div className="text-center py-8 text-gray-500">
-                  No users found
+                  {searchQuery ? "No users found matching your search" : "No recent recipients yet"}
                 </div>
               )}
             </div>
