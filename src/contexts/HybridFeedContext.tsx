@@ -156,12 +156,59 @@ export const HybridFeedProvider: React.FC<HybridFeedProviderProps> = ({ children
       if (savedPostsData) {
         setSavedPosts(JSON.parse(savedPostsData));
       } else {
-        // Initialize with demo saved posts if empty
-        const demoSavedPosts = [posts[0], posts[1]].filter(p => p);
-        if (demoSavedPosts.length > 0) {
-          setSavedPosts(demoSavedPosts);
-          localStorage.setItem('eloity_saved_posts', JSON.stringify(demoSavedPosts));
-        }
+        // Initialize with demo saved posts if empty - show user the feature works
+        const demoSavedPosts: Post[] = [
+          {
+            id: '1',
+            content: 'Just launched my new project! Excited to share it with everyone 🚀',
+            author: {
+              id: 'user-1',
+              name: 'Sarah Chen',
+              username: 'sarahc_dev',
+              avatar: 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150',
+              verified: true,
+            },
+            type: 'post',
+            createdAt: '2h',
+            likes: 45,
+            comments: 12,
+            shares: 8,
+            gifts: 3,
+            bookmarked: true,
+            media: [{
+              type: 'image',
+              url: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=500',
+              alt: 'Project screenshot'
+            }],
+            privacy: 'public',
+          },
+          {
+            id: '2',
+            content: 'Beautiful weather today! Perfect for a walk in the park 🌞 #nature #weekend',
+            author: {
+              id: 'user-2',
+              name: 'Emma Wilson',
+              username: 'emma_w',
+              avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150',
+              verified: false,
+            },
+            type: 'post',
+            createdAt: '3h',
+            likes: 23,
+            comments: 4,
+            shares: 2,
+            gifts: 1,
+            bookmarked: true,
+            media: [{
+              type: 'image',
+              url: 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=500',
+              alt: 'Beautiful park scene'
+            }],
+            privacy: 'public',
+          },
+        ];
+        setSavedPosts(demoSavedPosts);
+        localStorage.setItem('eloity_saved_posts', JSON.stringify(demoSavedPosts));
       }
 
       if (viewHistoryData) {
