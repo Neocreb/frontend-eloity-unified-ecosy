@@ -393,15 +393,16 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
           ))}
         </div>
 
-        {/* Navigation Buttons */}
+        {/* Navigation Buttons - Hidden on mobile, visible on larger screens */}
         {canScrollLeft && (
           <Button
             variant="outline"
             size="icon"
-            className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-12 h-10 w-10 rounded-full shadow-lg z-10"
+            className="absolute left-0 top-1/2 -translate-y-1/2 h-9 w-9 sm:h-10 sm:w-10 rounded-full shadow-lg z-20 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 -ml-4 sm:-ml-6 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => scroll('left')}
+            aria-label="Scroll carousel left"
           >
-            <ChevronLeft className="h-5 w-5" />
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         )}
 
@@ -409,10 +410,11 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
           <Button
             variant="outline"
             size="icon"
-            className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-12 h-10 w-10 rounded-full shadow-lg z-10"
+            className="absolute right-0 top-1/2 -translate-y-1/2 h-9 w-9 sm:h-10 sm:w-10 rounded-full shadow-lg z-20 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 -mr-4 sm:-mr-6 opacity-0 group-hover:opacity-100 transition-opacity"
             onClick={() => scroll('right')}
+            aria-label="Scroll carousel right"
           >
-            <ChevronRight className="h-5 w-5" />
+            <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
           </Button>
         )}
       </div>
