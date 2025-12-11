@@ -54,13 +54,23 @@ router.get('/prices', async (req, res) => {
       symbols: symbolList
     });
 
-    const prices = await getCryptoPrices(
-      symbolList.map((s: string) => String(s).toLowerCase().trim()),
-      String(vs_currency)
-    );
+    let prices;
+    try {
+      prices = await getCryptoPrices(
+        symbolList.map((s: string) => String(s).toLowerCase().trim()),
+        String(vs_currency)
+      );
+    } catch (innerError) {
+      logger.error('getCryptoPrices function threw error:', {
+        message: innerError instanceof Error ? innerError.message : String(innerError),
+        errorType: innerError instanceof Error ? innerError.constructor.name : typeof innerError
+      });
+      // Continue to return fallback prices instead of failing
+      prices = {};
+    }
 
     logger.info('Successfully fetched crypto prices', {
-      symbolCount: Object.keys(prices).length
+      symbolCount: prices ? Object.keys(prices).length : 0
     });
 
     // Always return valid JSON response
