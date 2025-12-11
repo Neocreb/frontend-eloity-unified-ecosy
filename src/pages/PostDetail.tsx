@@ -79,6 +79,9 @@ const PostDetail: React.FC = () => {
   const [commentText, setCommentText] = useState('');
   const [commentImages, setCommentImages] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [userReaction, setUserReaction] = useState<string | null>(null);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [reactionCounts, setReactionCounts] = useState<Record<string, number>>({});
 
   // Mock data repository - in real app this would come from API
   const allPosts: Record<string, TwitterPost> = {
