@@ -22,6 +22,7 @@ import VirtualGiftsAndTips from '@/components/premium/VirtualGiftsAndTips';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { PostService } from '@/services/postService';
+import ReactionPicker from '@/components/feed/ReactionPicker';
 
 interface TwitterPost {
   id: string;
