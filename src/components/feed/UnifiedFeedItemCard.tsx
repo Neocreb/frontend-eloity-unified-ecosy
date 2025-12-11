@@ -56,6 +56,8 @@ import QuickActionButton from './QuickActionButton';
 import { feedService } from '@/services/feedService';
 import PostContentRenderer from './PostContentRenderer';
 import { FeedUserCard, FeedGroupCard, FeedPageCard } from './FeedEntityCards';
+import ReactionPicker from './ReactionPicker';
+import { PostService } from '@/services/postService';
 
 // Unified content type interface
 interface UnifiedFeedItem {
