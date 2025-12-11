@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, CheckCircle2, Search } from "lucide-react";
+import { UserService } from "@/services/userService";
 
 interface User {
   id: string;
   name: string;
   username: string;
-  email: string;
+  email?: string;
   avatar?: string;
 }
 
@@ -26,26 +27,29 @@ const MoneyRequest = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [searchResults, setSearchResults] = useState<User[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
 
-  // Mock user search
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     setHasSearched(true);
+    setIsSearching(true);
 
-    const mockUsers: User[] = [
-      { id: "1", name: "John Doe", username: "johndoe", email: "john@example.com", avatar: "👤" },
-      { id: "2", name: "Jane Smith", username: "janesmith", email: "jane@example.com", avatar: "👩" },
-      { id: "3", name: "Mike Johnson", username: "mikej", email: "mike@example.com", avatar: "👨" },
-    ];
-
-    const results = mockUsers.filter(
-      (u) =>
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    setSearchResults(results);
+    try {
+      const results = await UserService.searchUsers(searchQuery, 20);
+      const mappedResults: User[] = results.map((u) => ({
+        id: u.id,
+        name: u.full_name || u.name || u.username || "Unknown",
+        username: u.username || "unknown",
+        email: u.email,
+        avatar: u.avatar_url || u.avatar,
+      }));
+      setSearchResults(mappedResults);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
   };
 
   const handleSendRequest = async () => {
