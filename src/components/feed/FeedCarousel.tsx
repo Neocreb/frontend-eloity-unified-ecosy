@@ -318,7 +318,7 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
                       <img
                         src={post.content.media[0].url}
                         alt="Post media"
-                        className="w-full h-40 object-cover rounded-lg mt-2"
+                        className="w-full h-32 sm:h-40 object-cover rounded-lg mt-2"
                       />
                     )}
 
@@ -326,7 +326,7 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
                       <img
                         src={post.content.images[0]}
                         alt="Post media"
-                        className="w-full h-40 object-cover rounded-lg mt-2"
+                        className="w-full h-32 sm:h-40 object-cover rounded-lg mt-2"
                       />
                     )}
                   </div>
