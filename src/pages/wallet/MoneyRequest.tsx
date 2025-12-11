@@ -118,7 +118,14 @@ const MoneyRequest = () => {
                 </div>
               </div>
 
-              {hasSearched && searchResults.length === 0 && (
+              {isSearching && (
+                <div className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-blue-600" />
+                  <p className="text-sm text-gray-500 mt-2">Searching users...</p>
+                </div>
+              )}
+
+              {hasSearched && !isSearching && searchResults.length === 0 && (
                 <Card className="border-0 shadow-sm bg-blue-50">
                   <CardContent className="pt-6">
                     <p className="text-center text-gray-600">No users found</p>
@@ -144,7 +151,7 @@ const MoneyRequest = () => {
                           <div className="flex-1">
                             <p className="font-semibold text-gray-900">{u.name}</p>
                             <p className="text-xs text-gray-600">@{u.username}</p>
-                            <p className="text-xs text-gray-500">{u.email}</p>
+                            {u.email && <p className="text-xs text-gray-500">{u.email}</p>}
                           </div>
                         </div>
                       </button>
