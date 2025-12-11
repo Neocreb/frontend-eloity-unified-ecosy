@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,10 @@ import {
   Store,
   Users,
   Clock,
+  Send,
+  Loader2,
 } from "lucide-react";
+import { virtualGiftsService } from "@/services/virtualGiftsService";
 
 interface ActionItem {
   id: string;
@@ -39,13 +43,35 @@ interface RecentRecipient {
 
 const QuickActionsWidget = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { walletBalance, transactions, getTotalEarnings } = useWalletContext();
+  const [recentRecipients, setRecentRecipients] = useState<RecentRecipient[]>([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(true);
 
-  const [recentRecipients] = useState<RecentRecipient[]>([
-    { id: "1", name: "John Doe", lastAmount: 250, frequency: 5 },
-    { id: "2", name: "Sarah Smith", lastAmount: 100, frequency: 3 },
-    { id: "3", name: "Mike Johnson", lastAmount: 75, frequency: 2 },
-  ]);
+  useEffect(() => {
+    loadRecentRecipients();
+  }, []);
+
+  const loadRecentRecipients = async () => {
+    try {
+      setLoadingRecipients(true);
+      if (!user?.id) return;
+
+      const recipients = await virtualGiftsService.getRecentRecipients(user.id, 5);
+      const mappedRecipients: RecentRecipient[] = recipients.map((r) => ({
+        id: r.id,
+        name: r.display_name || r.username,
+        avatar: r.avatar_url,
+        lastAmount: 0,
+        frequency: 1,
+      }));
+      setRecentRecipients(mappedRecipients);
+    } catch (error) {
+      console.error("Error loading recent recipients:", error);
+    } finally {
+      setLoadingRecipients(false);
+    }
+  };
 
   // Modal states
   const [showSendModal, setShowSendModal] = useState(false);
