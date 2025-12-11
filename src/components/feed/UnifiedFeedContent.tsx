@@ -198,10 +198,15 @@ const UnifiedFeedContentComponent: React.FC<{ feedType: string }> = ({ feedType 
         if (item.id === itemId) {
           const updatedItem = { ...item };
           if (type === "like") {
-            updatedItem.userInteracted.liked = !item.userInteracted.liked;
-            updatedItem.interactions.likes += item.userInteracted.liked ? -1 : 1;
+            // Toggle the liked state and update count
+            const wasLiked = item.userInteracted.liked;
+            updatedItem.userInteracted.liked = !wasLiked;
+            updatedItem.interactions.likes += wasLiked ? -1 : 1;
           } else if (type === "save") {
             updatedItem.userInteracted.saved = !item.userInteracted.saved;
+          } else if (type === "refresh-likes") {
+            // Refresh likes count - already handled by API call
+            // Just ensure the UI reflects current state
           }
           return updatedItem;
         }
