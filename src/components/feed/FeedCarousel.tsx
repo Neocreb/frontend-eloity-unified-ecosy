@@ -112,6 +112,72 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
     }
   };
 
+  const handleLikeClick = (e: React.MouseEvent, post: CarouselPost) => {
+    e.stopPropagation();
+    if (onLike) {
+      onLike(post.id);
+    }
+    // Update local interaction state
+    setPostInteractions(prev => ({
+      ...prev,
+      [post.id]: {
+        ...prev[post.id],
+        liked: !prev[post.id]?.liked
+      }
+    }));
+    toast({
+      title: !postInteractions[post.id]?.liked ? 'Liked!' : 'Unliked',
+      description: !postInteractions[post.id]?.liked ? 'Thanks for the love!' : 'Post removed from likes',
+    });
+  };
+
+  const handleCommentClick = (e: React.MouseEvent, post: CarouselPost) => {
+    e.stopPropagation();
+    if (onComment) {
+      onComment(post.id);
+    }
+    navigate(`/app/post/${post.id}#comments`);
+  };
+
+  const handleShareClick = (e: React.MouseEvent, post: CarouselPost) => {
+    e.stopPropagation();
+    if (onShare) {
+      onShare(post.id);
+    }
+    if (navigator.share) {
+      navigator.share({
+        title: 'Check out this post!',
+        text: post.content.text || post.content.title || 'Check this out',
+        url: window.location.href,
+      });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      toast({
+        title: 'Link copied!',
+        description: 'Post link copied to clipboard.',
+      });
+    }
+  };
+
+  const handleSaveClick = (e: React.MouseEvent, post: CarouselPost) => {
+    e.stopPropagation();
+    if (onSave) {
+      onSave(post.id);
+    }
+    // Update local interaction state
+    setPostInteractions(prev => ({
+      ...prev,
+      [post.id]: {
+        ...prev[post.id],
+        saved: !prev[post.id]?.saved
+      }
+    }));
+    toast({
+      title: !postInteractions[post.id]?.saved ? 'Saved!' : 'Removed from Saved',
+      description: !postInteractions[post.id]?.saved ? 'Post added to your saved items.' : 'Post removed from saved items.',
+    });
+  };
+
   const navigateToPost = (post: CarouselPost) => {
     switch (post.type) {
       case 'product':
