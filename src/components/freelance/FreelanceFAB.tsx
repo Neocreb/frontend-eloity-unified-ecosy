@@ -25,22 +25,41 @@ interface FreelanceFABProps {
   className?: string;
 }
 
+// Safe currency hook that falls back to simple formatting if context is unavailable
+const useSafeCurrency = () => {
+  try {
+    return useCurrency();
+  } catch (error) {
+    // Return a minimal context-like object for fallback
+    return {
+      formatCurrency: (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      selectedCurrency: null,
+      userCurrency: null,
+      isLoading: false,
+      error: null,
+      exchangeRates: new Map(),
+      autoDetectEnabled: false,
+      detectedCountry: null,
+      detectedCurrency: null,
+      lastUpdated: null,
+      setCurrency: async () => {},
+      setUserCurrency: async () => {},
+      toggleAutoDetect: async () => {},
+      convertAmount: () => 0,
+      convert: () => ({ amount: 0, rate: 1, timestamp: new Date(), formattedAmount: '' }),
+      getExchangeRate: () => null,
+      getSupportedCurrencies: () => [],
+      getCurrenciesByCategory: () => [],
+      refreshExchangeRates: async () => {},
+      refreshRates: async () => {},
+    };
+  }
+};
+
 const FreelanceFAB: React.FC<FreelanceFABProps> = ({ className }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Use safe currency formatting - fall back to simple formatting if context unavailable
-  const useSafeCurrency = () => {
-    try {
-      return useCurrency();
-    } catch {
-      return {
-        formatCurrency: (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-      };
-    }
-  };
-
   const { formatCurrency } = useSafeCurrency();
 
   // Don't show on freelance pages to avoid duplication
