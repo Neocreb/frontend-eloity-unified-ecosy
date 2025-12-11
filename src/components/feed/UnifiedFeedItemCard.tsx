@@ -118,6 +118,9 @@ const UnifiedFeedItemCardComponent: React.FC<{
   // Modal states
   const [showComments, setShowComments] = React.useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [userReaction, setUserReaction] = React.useState<string | null>(null);
+  const [isBookmarked, setIsBookmarked] = React.useState(false);
+  const [isLoadingInteractions, setIsLoadingInteractions] = React.useState(false);
 
   const formatTime = (date: Date) => formatTimeAgo(date);
 
