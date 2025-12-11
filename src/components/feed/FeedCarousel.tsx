@@ -216,16 +216,16 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
         <p className="text-sm text-gray-500">Swipe through posts from your network</p>
       </div>
 
-      <div className="relative">
+      <div className="relative group">
         {/* Carousel Container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-4 overflow-x-auto scroll-smooth pb-2"
-          style={{ scrollBehavior: 'smooth' }}
+          className="flex gap-3 sm:gap-4 overflow-x-auto scroll-smooth pb-2 snap-x snap-mandatory"
+          style={{ scrollBehavior: 'smooth', scrollPaddingLeft: '8px' }}
           onScroll={checkScroll}
         >
           {posts.map((post) => (
-            <div key={post.id} className="flex-shrink-0 w-80">
+            <div key={post.id} className="flex-shrink-0 w-full sm:w-80 snap-start" style={{ minWidth: 'min(100%, 320px)' }}>
               <Card
                 className="cursor-pointer hover:shadow-lg transition-shadow h-full"
                 onClick={() => handlePostClick(post)}
