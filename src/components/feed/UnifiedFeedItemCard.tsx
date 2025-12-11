@@ -641,7 +641,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
                 <CompactFollowButton
                   type="user"
                   isFollowing={isFollowing}
-                  onToggleFollow={() => setIsFollowing(!isFollowing)}
+                  onToggleFollow={handleToggleFollow}
                 />
               )}
               <PostOptionsModal
@@ -764,7 +764,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
                 <CompactFollowButton
                   type="user"
                   isFollowing={isFollowing}
-                  onToggleFollow={() => setIsFollowing(!isFollowing)}
+                  onToggleFollow={handleToggleFollow}
                 />
               )}
               <PostOptionsModal
