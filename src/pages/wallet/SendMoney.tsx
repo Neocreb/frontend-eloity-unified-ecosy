@@ -55,39 +55,68 @@ const SendMoney = () => {
   const [note, setNote] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [userCountry, setUserCountry] = useState("NG");
+  const [recentRecipients, setRecentRecipients] = useState<Recipient[]>([]);
+  const [searchResults, setSearchResults] = useState<Recipient[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [loadingRecipients, setLoadingRecipients] = useState(true);
 
   useEffect(() => {
     const country = (user?.user_metadata?.country_code as string) || "NG";
     setUserCountry(country);
   }, [user]);
 
-  // Mock recent recipients
-  const recentRecipients: Recipient[] = [
-    {
-      id: "1",
-      name: "John Doe",
-      username: "johndoe",
-      avatar: "/placeholder.svg",
-    },
-    {
-      id: "2",
-      name: "Sarah Smith",
-      username: "sarahsmith",
-      avatar: "/placeholder.svg",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      username: "mikej",
-      avatar: "/placeholder.svg",
-    },
-  ];
+  useEffect(() => {
+    loadRecentRecipients();
+  }, []);
 
-  const filteredRecipients = recentRecipients.filter(
-    (r) =>
-      r.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const loadRecentRecipients = async () => {
+    try {
+      setLoadingRecipients(true);
+      if (!user?.id) return;
+
+      const recipients = await virtualGiftsService.getRecentRecipients(user.id, 10);
+      const mappedRecipients: Recipient[] = recipients.map((r) => ({
+        id: r.id,
+        name: r.display_name || r.username,
+        username: r.username,
+        avatar: r.avatar_url,
+      }));
+      setRecentRecipients(mappedRecipients);
+    } catch (error) {
+      console.error("Error loading recent recipients:", error);
+    } finally {
+      setLoadingRecipients(false);
+    }
+  };
+
+  useEffect(() => {
+    if (searchQuery.trim() && recipientType === "username") {
+      searchForUsers();
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery, recipientType]);
+
+  const searchForUsers = async () => {
+    try {
+      setIsSearching(true);
+      const results = await UserService.searchUsers(searchQuery, 20);
+      const mappedResults: Recipient[] = results.map((u) => ({
+        id: u.id,
+        name: u.full_name || u.name || u.username || "Unknown",
+        username: u.username || "unknown",
+        avatar: u.avatar_url || u.avatar,
+      }));
+      setSearchResults(mappedResults);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const filteredRecipients = searchQuery.trim() ? searchResults : recentRecipients;
 
   const validateRecipient = () => {
     if (recipientType === "bank" && !recipient.bankAccount) {
