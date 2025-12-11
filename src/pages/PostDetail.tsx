@@ -467,6 +467,79 @@ const PostDetail: React.FC = () => {
     navigate(`/app/post/${commentId}`);
   };
 
+  const handleReaction = async (reactionType: string) => {
+    if (!user?.id || !post) return;
+
+    try {
+      // If clicking the same reaction, toggle it off
+      if (userReaction === reactionType) {
+        await PostService.removeReaction(post.id, user.id);
+        setUserReaction(null);
+        setPost(prev => prev ? {
+          ...prev,
+          liked: false,
+          likes: prev.likes > 0 ? prev.likes - 1 : 0,
+        } : null);
+        setReactionCounts(prev => ({
+          ...prev,
+          [reactionType]: Math.max(0, (prev[reactionType] || 1) - 1)
+        }));
+      } else {
+        // Remove previous reaction if any
+        if (userReaction) {
+          await PostService.removeReaction(post.id, user.id);
+          setReactionCounts(prev => ({
+            ...prev,
+            [userReaction]: Math.max(0, (prev[userReaction] || 1) - 1)
+          }));
+        }
+        // Add new reaction
+        await PostService.addReaction(post.id, user.id, reactionType);
+        setUserReaction(reactionType);
+
+        // Update counts
+        const newCounts = { ...reactionCounts };
+        newCounts[reactionType] = (newCounts[reactionType] || 0) + 1;
+        setReactionCounts(newCounts);
+
+        // Update post likes count
+        setPost(prev => prev ? {
+          ...prev,
+          liked: reactionType === 'like',
+          likes: (reactionCounts['like'] || 0) + (reactionType === 'like' ? 1 : 0),
+        } : null);
+      }
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save reaction',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleToggleBookmark = async () => {
+    if (!user?.id || !post) return;
+
+    try {
+      const newBookmarkedState = await PostService.toggleSavePost(post.id, user.id);
+      setIsBookmarked(newBookmarkedState);
+
+      toast({
+        title: newBookmarkedState ? 'Saved!' : 'Removed from saved',
+        description: newBookmarkedState ? 'Post added to your saved posts.' : 'Post removed from saved posts.',
+      });
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save post',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleLike = (targetId: string, isPost = false) => {
     if (isPost) {
       setPost(prev => prev ? {
