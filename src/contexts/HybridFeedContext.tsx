@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 
 interface Post {
   id: string;
@@ -146,6 +146,42 @@ export const HybridFeedProvider: React.FC<HybridFeedProviderProps> = ({ children
 
   const [savedPosts, setSavedPosts] = useState<Post[]>([]);
   const [viewHistory, setViewHistory] = useState<Post[]>([]);
+
+  // Load saved posts and history from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedPostsData = localStorage.getItem('eloity_saved_posts');
+      const viewHistoryData = localStorage.getItem('eloity_view_history');
+
+      if (savedPostsData) {
+        setSavedPosts(JSON.parse(savedPostsData));
+      }
+
+      if (viewHistoryData) {
+        setViewHistory(JSON.parse(viewHistoryData));
+      }
+    } catch (error) {
+      console.error('Error loading saved content from localStorage:', error);
+    }
+  }, []);
+
+  // Persist saved posts to localStorage whenever they change
+  useEffect(() => {
+    try {
+      localStorage.setItem('eloity_saved_posts', JSON.stringify(savedPosts));
+    } catch (error) {
+      console.error('Error saving posts to localStorage:', error);
+    }
+  }, [savedPosts]);
+
+  // Persist view history to localStorage whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('eloity_view_history', JSON.stringify(viewHistory));
+    } catch (error) {
+      console.error('Error saving view history to localStorage:', error);
+    }
+  }, [viewHistory]);
 
   const addPost = (post: Omit<Post, 'id' | 'createdAt'>) => {
     const newPost: Post = {
