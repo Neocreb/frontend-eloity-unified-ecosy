@@ -40,17 +40,18 @@ const router = express.Router();
 
 // Get current cryptocurrency prices
 router.get('/prices', async (req, res) => {
+  // Set headers FIRST before anything else to ensure proper content-type
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.setHeader('Cache-Control', 'public, max-age=60');
+
   try {
     const { symbols, vs_currency = 'usd' } = req.query;
     const symbolList = symbols ? (typeof symbols === 'string' ? symbols.split(',') : symbols) : ['bitcoin', 'ethereum', 'tether', 'binancecoin'];
 
-    // Ensure response is JSON with correct headers
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, max-age=60');
-
     logger.info('Fetching crypto prices', {
       symbolCount: symbolList.length,
-      vsCurrency: vs_currency
+      vsCurrency: vs_currency,
+      symbols: symbolList
     });
 
     const prices = await getCryptoPrices(
@@ -58,14 +59,18 @@ router.get('/prices', async (req, res) => {
       String(vs_currency)
     );
 
+    logger.info('Successfully fetched crypto prices', {
+      symbolCount: Object.keys(prices).length
+    });
+
     // Always return valid JSON response
     if (!prices || typeof prices !== 'object' || Object.keys(prices).length === 0) {
-      logger.warn('No cryptocurrency prices available');
+      logger.warn('No cryptocurrency prices available, returning empty response');
       return res.status(200).json({
         prices: {},
         timestamp: new Date().toISOString(),
         vs_currency: vs_currency || 'usd',
-        warning: 'No price data available'
+        warning: 'No price data available - API services may be temporarily unavailable'
       });
     }
 
@@ -77,16 +82,26 @@ router.get('/prices', async (req, res) => {
   } catch (error) {
     logger.error('Crypto prices fetch error:', {
       message: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      errorType: error instanceof Error ? error.constructor.name : typeof error
     });
 
-    // Always return valid JSON on error
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.status(500).json({
-      error: 'Failed to fetch cryptocurrency prices',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      prices: {}
-    });
+    // Always return valid JSON on error - never return HTML error pages
+    try {
+      res.status(500).json({
+        error: 'Failed to fetch cryptocurrency prices',
+        message: error instanceof Error ? error.message : 'Unknown error occurred',
+        prices: {},
+        timestamp: new Date().toISOString(),
+        hint: 'External API services may be temporarily unavailable. Please try again in a few moments.'
+      });
+    } catch (responseError) {
+      // If JSON response fails, log it and send minimal response
+      logger.error('Failed to send JSON error response:', {
+        message: responseError instanceof Error ? responseError.message : String(responseError)
+      });
+      res.status(500).end('{"error":"Server error"}');
+    }
   }
 });
 
