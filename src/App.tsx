@@ -80,6 +80,7 @@ import WalletIntegrations from "./pages/wallet/WalletIntegrations";
 import WalletCards from "./pages/wallet/WalletCards";
 import GiftCards from "./pages/wallet/GiftCards";
 import SendMoney from "./pages/wallet/SendMoney";
+import SendToEloity from "./pages/wallet/SendToEloity";
 import Request from "./pages/wallet/Request";
 import Deposit from "./pages/wallet/Deposit";
 import Withdraw from "./pages/wallet/Withdraw";
