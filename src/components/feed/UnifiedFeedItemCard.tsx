@@ -60,6 +60,7 @@ import ReactionPicker from './ReactionPicker';
 import { PostService } from '@/services/postService';
 import { profileService } from '@/services/profileService';
 import { supabase } from '@/integrations/supabase/client';
+import { virtualGiftsService } from '@/services/virtualGiftsService';
 
 // Unified content type interface
 interface UnifiedFeedItem {
