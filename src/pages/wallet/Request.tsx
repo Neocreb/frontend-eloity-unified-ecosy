@@ -132,7 +132,17 @@ const Request = () => {
             </div>
 
             <div className="space-y-2">
-              {filtered.length > 0 ? (
+              {loadingSuggested && !searchQuery ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-600" />
+                  <p className="text-sm text-gray-500 mt-2">Loading suggested people...</p>
+                </div>
+              ) : isSearching && searchQuery ? (
+                <div className="text-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-600" />
+                  <p className="text-sm text-gray-500 mt-2">Searching users...</p>
+                </div>
+              ) : filtered.length > 0 ? (
                 filtered.map((person) => (
                   <button
                     key={person.id}
@@ -157,7 +167,9 @@ const Request = () => {
                   </button>
                 ))
               ) : (
-                <div className="text-center py-8 text-gray-500">No people found</div>
+                <div className="text-center py-8 text-gray-500">
+                  {searchQuery ? "No people found matching your search" : "No suggested people yet"}
+                </div>
               )}
             </div>
           </div>
