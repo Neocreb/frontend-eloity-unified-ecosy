@@ -496,7 +496,12 @@ const UnifiedFeedItemCardComponent: React.FC<{
                 className="flex items-center gap-1 px-2 py-1.5 h-auto text-yellow-600 hover:text-yellow-700"
               >
                 <Gift className="w-4 h-4" />
-                <span className="text-xs sm:text-sm hidden sm:inline">Gift</span>
+                {giftsReceivedCount > 0 && (
+                  <span className="text-xs sm:text-sm">{formatNumber(giftsReceivedCount)}</span>
+                )}
+                <span className="text-xs sm:text-sm hidden sm:inline">
+                  {giftsReceivedCount > 0 ? `($${giftsReceivedValue.toFixed(2)})` : 'Gift'}
+                </span>
               </Button>
             }
           />
