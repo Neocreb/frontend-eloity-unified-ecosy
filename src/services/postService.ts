@@ -503,6 +503,157 @@ export class PostService {
     }
   }
 
+  // Save/bookmark a post
+  static async savePost(postId: string, userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("user_saved_posts")
+        .insert({
+          post_id: postId,
+          user_id: userId
+        });
+
+      if (error) {
+        console.error("Error saving post:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in savePost:", error);
+      return false;
+    }
+  }
+
+  // Unsave/unbookmark a post
+  static async unsavePost(postId: string, userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("user_saved_posts")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Error unsaving post:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in unsavePost:", error);
+      return false;
+    }
+  }
+
+  // Toggle save on post
+  static async toggleSavePost(postId: string, userId: string): Promise<boolean> {
+    try {
+      // Check if post is already saved
+      const { data: existingSave, error: checkError } = await supabase
+        .from("user_saved_posts")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking save:", checkError);
+        return false;
+      }
+
+      if (existingSave) {
+        // Unsave
+        return this.unsavePost(postId, userId);
+      } else {
+        // Save
+        return this.savePost(postId, userId);
+      }
+    } catch (error) {
+      console.error("Error in toggleSavePost:", error);
+      return false;
+    }
+  }
+
+  // Check if post is saved by user
+  static async isPostSavedByUser(postId: string, userId: string): Promise<boolean> {
+    try {
+      const { data, error } = await supabase
+        .from("user_saved_posts")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error checking if post is saved:", error);
+        return false;
+      }
+
+      return !!data;
+    } catch (error) {
+      console.error("Error in isPostSavedByUser:", error);
+      return false;
+    }
+  }
+
+  // Get user's saved posts
+  static async getUserSavedPosts(userId: string, limit = 10, offset = 0): Promise<PostWithAuthor[]> {
+    try {
+      const { data, error } = await supabase
+        .from("user_saved_posts")
+        .select("post_id")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .range(offset, offset + limit - 1);
+
+      if (error) {
+        console.error("Error fetching saved posts:", error);
+        return [];
+      }
+
+      if (!data || data.length === 0) {
+        return [];
+      }
+
+      const postIds = data.map((item: any) => item.post_id);
+
+      // Fetch the full post data for each saved post
+      const { data: posts, error: postsError } = await supabase
+        .from("posts")
+        .select("*")
+        .in("id", postIds);
+
+      if (postsError) {
+        console.error("Error fetching saved posts data:", postsError);
+        return [];
+      }
+
+      // Enhance posts with author and engagement data
+      const enhancedPosts = await Promise.all(
+        posts?.map(async (post: any) => {
+          const author = await UserService.getUserById(post.user_id);
+          const likesCount = await this.getPostLikesCount(post.id);
+          const commentsCount = await this.getPostCommentsCount(post.id);
+          const likedByUser = await this.isPostLikedByUser(post.id, userId);
+
+          return {
+            ...post,
+            author,
+            likes_count: likesCount,
+            comments_count: commentsCount,
+            liked_by_user: likedByUser
+          };
+        }) || []
+      );
+
+      return enhancedPosts as PostWithAuthor[];
+    } catch (error) {
+      console.error("Error in getUserSavedPosts:", error);
+      return [];
+    }
+  }
+
   // Add comment to post
   static async addComment(postId: string, userId: string, content: string): Promise<CommentWithAuthor | null> {
     try {
