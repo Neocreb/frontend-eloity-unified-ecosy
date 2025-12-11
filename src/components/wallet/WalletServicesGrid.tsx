@@ -34,7 +34,7 @@ const WalletServicesGrid = () => {
       id: "to-eloity",
       label: "To Eloity",
       icon: <User className="h-6 w-6" />,
-      action: () => navigate("/app/wallet/send-money"),
+      action: () => navigate("/app/wallet/send-to-eloity"),
       gradient: "bg-gradient-to-br from-teal-400 to-cyan-500",
       iconColor: "text-white",
     },
