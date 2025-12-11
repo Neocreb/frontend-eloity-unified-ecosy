@@ -482,22 +482,43 @@ const UnifiedFeedItemCardComponent: React.FC<{
           />
         )}
       </div>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => handleInteraction("save")}
-        className={cn(
-          "px-2 py-1.5 h-auto",
-          item.userInteracted.saved && "text-blue-500"
-        )}
-      >
-        <Bookmark
+      {item.type === 'post' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleToggleBookmark}
+          disabled={isLoadingInteractions}
           className={cn(
-            "w-4 h-4",
-            item.userInteracted.saved && "fill-current"
+            "px-2 py-1.5 h-auto",
+            isBookmarked && "text-blue-500"
           )}
-        />
-      </Button>
+        >
+          <Bookmark
+            className={cn(
+              "w-4 h-4",
+              isBookmarked && "fill-current"
+            )}
+          />
+        </Button>
+      )}
+      {item.type !== 'post' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleInteraction("save")}
+          className={cn(
+            "px-2 py-1.5 h-auto",
+            item.userInteracted.saved && "text-blue-500"
+          )}
+        >
+          <Bookmark
+            className={cn(
+              "w-4 h-4",
+              item.userInteracted.saved && "fill-current"
+            )}
+          />
+        </Button>
+      )}
     </div>
   );
 
