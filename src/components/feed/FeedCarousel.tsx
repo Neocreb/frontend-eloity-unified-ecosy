@@ -69,12 +69,23 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
   const [canScrollRight, setCanScrollRight] = useState(posts.length > 1);
   const [postInteractions, setPostInteractions] = useState<Record<string, any>>({});
 
+  // Track current index based on scroll position
+  const updateCurrentIndex = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, clientWidth } = scrollContainerRef.current;
+      const cardWidth = 320 + 16; // w-80 (320px) + gap-4 (16px)
+      const newIndex = Math.round(scrollLeft / cardWidth);
+      setCurrentIndex(Math.min(newIndex, posts.length - 1));
+    }
+  };
+
   const checkScroll = () => {
     if (scrollContainerRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
       setCanScrollLeft(scrollLeft > 0);
       setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
     }
+    updateCurrentIndex();
   };
 
   const scroll = (direction: 'left' | 'right') => {
