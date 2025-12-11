@@ -155,6 +155,13 @@ export const HybridFeedProvider: React.FC<HybridFeedProviderProps> = ({ children
 
       if (savedPostsData) {
         setSavedPosts(JSON.parse(savedPostsData));
+      } else {
+        // Initialize with demo saved posts if empty
+        const demoSavedPosts = [posts[0], posts[1]].filter(p => p);
+        if (demoSavedPosts.length > 0) {
+          setSavedPosts(demoSavedPosts);
+          localStorage.setItem('eloity_saved_posts', JSON.stringify(demoSavedPosts));
+        }
       }
 
       if (viewHistoryData) {
