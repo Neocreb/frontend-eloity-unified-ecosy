@@ -121,7 +121,8 @@ class RealtimeFeedService {
         .in('user_id', userIds);
 
       if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
+        const errorMsg = profilesError instanceof Error ? profilesError.message : JSON.stringify(profilesError);
+        console.error("Error fetching profiles:", errorMsg);
         return [];
       }
 
@@ -440,7 +441,8 @@ class RealtimeFeedService {
         .in('user_id', userIds);
 
       if (profilesError) {
-        console.error("Error fetching profiles:", profilesError);
+        const errorMsg = profilesError instanceof Error ? profilesError.message : JSON.stringify(profilesError);
+        console.error("Error fetching profiles:", errorMsg);
         return [];
       }
 
