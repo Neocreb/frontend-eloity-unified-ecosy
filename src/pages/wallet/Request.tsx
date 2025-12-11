@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { useWalletContext } from "@/contexts/WalletContext";
 import { WalletActionHeader } from "@/components/wallet/WalletActionHeader";
 import { Button } from "@/components/ui/button";
@@ -7,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, ArrowRight, CheckCircle2, Loader2, AlertCircle } from "lucide-react";
+import { UserService } from "@/services/userService";
+import { virtualGiftsService } from "@/services/virtualGiftsService";
 
 interface Recipient {
   id: string;
@@ -17,24 +20,70 @@ interface Recipient {
 
 const Request = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState<"recipient" | "amount" | "review" | "success">("recipient");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRecipient, setSelectedRecipient] = useState<Recipient | null>(null);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [suggestedPeople, setSuggestedPeople] = useState<Recipient[]>([]);
+  const [searchResults, setSearchResults] = useState<Recipient[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [loadingSuggested, setLoadingSuggested] = useState(true);
 
-  const suggestedPeople: Recipient[] = [
-    { id: "1", name: "John Doe", username: "johndoe", avatar: "/placeholder.svg" },
-    { id: "2", name: "Sarah Smith", username: "sarahsmith", avatar: "/placeholder.svg" },
-    { id: "3", name: "Mike Johnson", username: "mikej", avatar: "/placeholder.svg" },
-  ];
+  useEffect(() => {
+    loadSuggestedPeople();
+  }, []);
 
-  const filtered = suggestedPeople.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.username.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const loadSuggestedPeople = async () => {
+    try {
+      setLoadingSuggested(true);
+      if (!user?.id) return;
+
+      const recipients = await virtualGiftsService.getRecentRecipients(user.id, 10);
+      const mappedRecipients: Recipient[] = recipients.map((r) => ({
+        id: r.id,
+        name: r.display_name || r.username,
+        username: r.username,
+        avatar: r.avatar_url,
+      }));
+      setSuggestedPeople(mappedRecipients);
+    } catch (error) {
+      console.error("Error loading suggested people:", error);
+    } finally {
+      setLoadingSuggested(false);
+    }
+  };
+
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      searchForUsers();
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchQuery]);
+
+  const searchForUsers = async () => {
+    try {
+      setIsSearching(true);
+      const results = await UserService.searchUsers(searchQuery, 20);
+      const mappedResults: Recipient[] = results.map((u) => ({
+        id: u.id,
+        name: u.full_name || u.name || u.username || "Unknown",
+        username: u.username || "unknown",
+        avatar: u.avatar_url || u.avatar,
+      }));
+      setSearchResults(mappedResults);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const filtered = searchQuery.trim() ? searchResults : suggestedPeople;
 
   const handleSelectRecipient = (recipient: Recipient) => {
     setSelectedRecipient(recipient);
