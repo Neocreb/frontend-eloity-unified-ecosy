@@ -38,6 +38,21 @@ const router = express.Router();
 // CRYPTOCURRENCY PRICE DATA
 // =============================================================================
 
+// Hardcoded fallback prices (always available, no external API needed)
+const FALLBACK_PRICES_RESPONSE: Record<string, any> = {
+  bitcoin: { usd: 45000, usd_24h_change: 2.5, usd_market_cap: 880000000000, usd_24h_vol: 28000000000 },
+  ethereum: { usd: 2500, usd_24h_change: 1.8, usd_market_cap: 300000000000, usd_24h_vol: 15000000000 },
+  tether: { usd: 1.0, usd_24h_change: 0.1, usd_market_cap: 100000000000, usd_24h_vol: 80000000000 },
+  binancecoin: { usd: 620, usd_24h_change: 3.2, usd_market_cap: 95000000000, usd_24h_vol: 2500000000 },
+  solana: { usd: 140, usd_24h_change: 4.1, usd_market_cap: 62000000000, usd_24h_vol: 3800000000 },
+  cardano: { usd: 1.05, usd_24h_change: 2.2, usd_market_cap: 37000000000, usd_24h_vol: 1200000000 },
+  chainlink: { usd: 28, usd_24h_change: 1.9, usd_market_cap: 12500000000, usd_24h_vol: 780000000 },
+  polygon: { usd: 0.85, usd_24h_change: 3.5, usd_market_cap: 8500000000, usd_24h_vol: 650000000 },
+  avalanche: { usd: 35, usd_24h_change: 2.8, usd_market_cap: 1200000000, usd_24h_vol: 420000000 },
+  polkadot: { usd: 9.5, usd_24h_change: 2.1, usd_market_cap: 12500000000, usd_24h_vol: 850000000 },
+  dogecoin: { usd: 0.35, usd_24h_change: 3.8, usd_market_cap: 52000000000, usd_24h_vol: 2800000000 }
+};
+
 // Get current cryptocurrency prices
 router.get('/prices', async (req, res) => {
   // Set headers FIRST before anything else to ensure proper content-type
@@ -54,30 +69,48 @@ router.get('/prices', async (req, res) => {
       symbols: symbolList
     });
 
-    const prices = await getCryptoPrices(
-      symbolList.map((s: string) => String(s).toLowerCase().trim()),
-      String(vs_currency)
-    );
+    let prices = {};
+    let fetchedFromAPI = false;
 
-    logger.info('Successfully fetched crypto prices', {
-      symbolCount: Object.keys(prices).length
-    });
-
-    // Always return valid JSON response
-    if (!prices || typeof prices !== 'object' || Object.keys(prices).length === 0) {
-      logger.warn('No cryptocurrency prices available, returning empty response');
-      return res.status(200).json({
-        prices: {},
-        timestamp: new Date().toISOString(),
-        vs_currency: vs_currency || 'usd',
-        warning: 'No price data available - API services may be temporarily unavailable'
+    // Try to get live prices from service
+    try {
+      prices = await getCryptoPrices(
+        symbolList.map((s: string) => String(s).toLowerCase().trim()),
+        String(vs_currency)
+      );
+      if (prices && Object.keys(prices).length > 0) {
+        fetchedFromAPI = true;
+        logger.info('Successfully fetched crypto prices from external APIs', {
+          symbolCount: Object.keys(prices).length
+        });
+      }
+    } catch (innerError) {
+      logger.warn('getCryptoPrices encountered error, using fallback', {
+        message: innerError instanceof Error ? innerError.message : String(innerError)
       });
     }
 
+    // If we didn't get prices from API, use fallback
+    if (!fetchedFromAPI || !prices || Object.keys(prices).length === 0) {
+      logger.info('Using fallback prices for symbols:', { symbols: symbolList });
+      prices = {};
+      for (const symbol of symbolList) {
+        const lower = String(symbol).toLowerCase();
+        prices[lower] = FALLBACK_PRICES_RESPONSE[lower] || {
+          usd: 0,
+          usd_24h_change: 0,
+          usd_market_cap: 0,
+          usd_24h_vol: 0
+        };
+      }
+    }
+
+    // Always return valid JSON response
     res.status(200).json({
       prices,
       timestamp: new Date().toISOString(),
-      vs_currency: vs_currency || 'usd'
+      vs_currency: vs_currency || 'usd',
+      source: fetchedFromAPI ? 'api' : 'fallback'
     });
   } catch (error) {
     logger.error('Crypto prices fetch error:', {
@@ -88,16 +121,16 @@ router.get('/prices', async (req, res) => {
 
     // Always return valid JSON on error - never return HTML error pages
     try {
-      res.status(500).json({
-        error: 'Failed to fetch cryptocurrency prices',
-        message: error instanceof Error ? error.message : 'Unknown error occurred',
-        prices: {},
+      res.status(200).json({
+        prices: FALLBACK_PRICES_RESPONSE,
         timestamp: new Date().toISOString(),
-        hint: 'External API services may be temporarily unavailable. Please try again in a few moments.'
+        vs_currency: 'usd',
+        source: 'fallback',
+        warning: 'Using fallback prices due to API error'
       });
     } catch (responseError) {
       // If JSON response fails, log it and send minimal response
-      logger.error('Failed to send JSON error response:', {
+      logger.error('Failed to send JSON response:', {
         message: responseError instanceof Error ? responseError.message : String(responseError)
       });
       res.status(500).end('{"error":"Server error"}');

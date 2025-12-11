@@ -24,8 +24,15 @@ const FALLBACK_PRICES: Record<string, any> = {
 };
 
 export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'usd') {
+  logger.info('getCryptoPrices called with symbols:', { symbols, vsCurrency });
   try {
     const result: any = {};
+
+    // Validate inputs
+    if (!Array.isArray(symbols) || symbols.length === 0) {
+      logger.warn('getCryptoPrices called with invalid symbols', { symbols });
+      return FALLBACK_PRICES;
+    }
 
     // Check if CryptoAPIs API key is available
     const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
