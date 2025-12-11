@@ -419,18 +419,35 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
         )}
       </div>
 
-      {/* Scroll indicator */}
-      {posts.length > 1 && (
+      {/* Scroll indicator - Hidden on mobile when there are many items */}
+      {posts.length > 1 && posts.length <= 5 && (
         <div className="flex justify-center gap-1 mt-3">
-          {posts.slice(0, Math.min(5, posts.length)).map((_, idx) => (
-            <div
+          {posts.map((_, idx) => (
+            <button
               key={idx}
+              onClick={() => {
+                if (scrollContainerRef.current) {
+                  const cardWidth = 320 + 16; // w-80 + gap
+                  scrollContainerRef.current.scrollTo({
+                    left: idx * cardWidth,
+                    behavior: 'smooth',
+                  });
+                }
+              }}
               className={cn(
-                'h-1.5 rounded-full transition-all',
+                'h-1.5 rounded-full transition-all cursor-pointer hover:bg-gray-400',
                 idx === currentIndex ? 'w-6 bg-blue-600' : 'w-1.5 bg-gray-300'
               )}
+              aria-label={`Go to post ${idx + 1}`}
             />
           ))}
+        </div>
+      )}
+
+      {/* Simple counter for many items */}
+      {posts.length > 5 && (
+        <div className="text-center mt-3 text-sm text-gray-500">
+          Post {currentIndex + 1} of {posts.length}
         </div>
       )}
     </div>
