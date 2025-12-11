@@ -758,6 +758,32 @@ class VirtualGiftsService {
     }
   }
 
+  // Get total gifts value received by a user
+  async getTotalGiftsValueReceived(userId: string): Promise<{
+    totalCount: number;
+    totalValue: number;
+    currency: string;
+  }> {
+    try {
+      const gifts = await this.getReceivedGifts(userId, 1000);
+      const totalCount = gifts.length;
+      const totalValue = gifts.reduce((sum, gift) => sum + gift.totalAmount, 0);
+
+      return {
+        totalCount,
+        totalValue,
+        currency: 'USD' // Default currency, can be updated to user's currency
+      };
+    } catch (error) {
+      console.error("Error getting total gifts value received:", error);
+      return {
+        totalCount: 0,
+        totalValue: 0,
+        currency: 'USD'
+      };
+    }
+  }
+
   // Get recent gift recipients for a user
   async getRecentRecipients(
     userId: string,

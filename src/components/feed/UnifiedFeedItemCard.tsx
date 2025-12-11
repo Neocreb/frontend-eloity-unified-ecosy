@@ -58,6 +58,9 @@ import PostContentRenderer from './PostContentRenderer';
 import { FeedUserCard, FeedGroupCard, FeedPageCard } from './FeedEntityCards';
 import ReactionPicker from './ReactionPicker';
 import { PostService } from '@/services/postService';
+import { profileService } from '@/services/profileService';
+import { supabase } from '@/integrations/supabase/client';
+import { virtualGiftsService } from '@/services/virtualGiftsService';
 
 // Unified content type interface
 interface UnifiedFeedItem {
@@ -121,21 +124,52 @@ const UnifiedFeedItemCardComponent: React.FC<{
   const [userReaction, setUserReaction] = React.useState<string | null>(null);
   const [isBookmarked, setIsBookmarked] = React.useState(false);
   const [isLoadingInteractions, setIsLoadingInteractions] = React.useState(false);
+  const [giftsReceivedValue, setGiftsReceivedValue] = React.useState(0);
+  const [giftsReceivedCount, setGiftsReceivedCount] = React.useState(0);
 
   const formatTime = (date: Date) => formatTimeAgo(date);
 
-  // Load user interactions on mount
+  // Load user interactions and follow status on mount
   React.useEffect(() => {
     const loadUserInteractions = async () => {
-      if (!user?.id || item.type !== 'post') return;
+      if (!user?.id) return;
 
       try {
         setIsLoadingInteractions(true);
-        const reaction = await PostService.getUserReactionOnPost(item.id, user.id);
-        setUserReaction(reaction);
 
-        const saved = await PostService.isPostSavedByUser(item.id, user.id);
-        setIsBookmarked(saved);
+        // Check follow status for non-self items
+        if (item.type === 'post' && item.author?.id && !item.author.id.startsWith(user.id)) {
+          try {
+            const { data: followData } = await supabase
+              .from('followers')
+              .select('id')
+              .eq('follower_id', user.id)
+              .eq('following_id', item.author.id)
+              .maybeSingle();
+            setIsFollowing(!!followData);
+          } catch (error) {
+            console.warn('Error checking follow status:', error);
+          }
+        }
+
+        if (item.type === 'post') {
+          const reaction = await PostService.getUserReactionOnPost(item.id, user.id);
+          setUserReaction(reaction);
+
+          const saved = await PostService.isPostSavedByUser(item.id, user.id);
+          setIsBookmarked(saved);
+
+          // Load gift count for the post author
+          if (item.author?.id) {
+            try {
+              const giftStats = await virtualGiftsService.getTotalGiftsValueReceived(item.author.id);
+              setGiftsReceivedValue(giftStats.totalValue);
+              setGiftsReceivedCount(giftStats.totalCount);
+            } catch (error) {
+              console.warn('Error loading gift stats:', error);
+            }
+          }
+        }
       } catch (error) {
         console.warn('Error loading user interactions:', error);
       } finally {
@@ -144,7 +178,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
     };
 
     loadUserInteractions();
-  }, [item.id, user?.id]);
+  }, [item.id, item.author?.id, user?.id]);
 
   const handleInteraction = (type: string) => {
     switch (type) {
@@ -229,6 +263,9 @@ const UnifiedFeedItemCardComponent: React.FC<{
         await PostService.addReaction(item.id, user.id, reactionType);
         setUserReaction(reactionType);
       }
+
+      // Notify parent to refresh like count
+      onInteraction(item.id, "like");
     } catch (error) {
       console.error('Error handling reaction:', error);
       toast({
@@ -236,6 +273,32 @@ const UnifiedFeedItemCardComponent: React.FC<{
         description: 'Failed to save reaction',
         variant: 'destructive'
       });
+    }
+  };
+
+  const handleToggleFollow = async () => {
+    if (!user?.id || !item.author?.id) return;
+
+    try {
+      setIsLoadingInteractions(true);
+      await profileService.toggleFollow(user.id, item.author.id, isFollowing);
+      setIsFollowing(!isFollowing);
+
+      toast({
+        title: isFollowing ? 'Unfollowed!' : 'Following!',
+        description: isFollowing
+          ? `You have unfollowed ${item.author.name}.`
+          : `You are now following ${item.author.name}.`,
+      });
+    } catch (error) {
+      console.error('Error toggling follow:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update follow status. Please try again.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsLoadingInteractions(false);
     }
   };
 
@@ -433,7 +496,12 @@ const UnifiedFeedItemCardComponent: React.FC<{
                 className="flex items-center gap-1 px-2 py-1.5 h-auto text-yellow-600 hover:text-yellow-700"
               >
                 <Gift className="w-4 h-4" />
-                <span className="text-xs sm:text-sm hidden sm:inline">Gift</span>
+                {giftsReceivedCount > 0 && (
+                  <span className="text-xs sm:text-sm">{formatNumber(giftsReceivedCount)}</span>
+                )}
+                <span className="text-xs sm:text-sm hidden sm:inline">
+                  {giftsReceivedCount > 0 ? `($${giftsReceivedValue.toFixed(2)})` : 'Gift'}
+                </span>
               </Button>
             }
           />
@@ -592,7 +660,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
                 <CompactFollowButton
                   type="user"
                   isFollowing={isFollowing}
-                  onToggleFollow={() => setIsFollowing(!isFollowing)}
+                  onToggleFollow={handleToggleFollow}
                 />
               )}
               <PostOptionsModal
@@ -715,7 +783,7 @@ const UnifiedFeedItemCardComponent: React.FC<{
                 <CompactFollowButton
                   type="user"
                   isFollowing={isFollowing}
-                  onToggleFollow={() => setIsFollowing(!isFollowing)}
+                  onToggleFollow={handleToggleFollow}
                 />
               )}
               <PostOptionsModal
