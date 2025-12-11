@@ -30,15 +30,18 @@ const FreelanceFAB: React.FC<FreelanceFABProps> = ({ className }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Safely access currency context - fall back to no formatting if not available
-  let formatCurrency: (amount: number) => string;
-  try {
-    const currencyContext = useCurrency();
-    formatCurrency = currencyContext.formatCurrency;
-  } catch (error) {
-    // Currency context not available, use simple formatting
-    formatCurrency = (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-  }
+  // Use safe currency formatting - fall back to simple formatting if context unavailable
+  const useSafeCurrency = () => {
+    try {
+      return useCurrency();
+    } catch {
+      return {
+        formatCurrency: (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+      };
+    }
+  };
+
+  const { formatCurrency } = useSafeCurrency();
 
   // Don't show on freelance pages to avoid duplication
   const hiddenPaths = ["/app/freelance", "/auth", "/"];
