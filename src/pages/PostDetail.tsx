@@ -780,9 +780,9 @@ const PostDetail: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => handleBookmark(post.id, true)}
+                onClick={handleToggleBookmark}
               >
-                <Bookmark className={cn("h-5 w-5", post.bookmarked && "fill-current")} />
+                <Bookmark className={cn("h-5 w-5", isBookmarked && "fill-current text-blue-500")} />
               </Button>
             </div>
           </CardContent>
