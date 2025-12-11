@@ -249,6 +249,9 @@ const UnifiedFeedItemCardComponent: React.FC<{
         await PostService.addReaction(item.id, user.id, reactionType);
         setUserReaction(reactionType);
       }
+
+      // Notify parent to refresh like count
+      onInteraction(item.id, "like");
     } catch (error) {
       console.error('Error handling reaction:', error);
       toast({
