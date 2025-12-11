@@ -159,7 +159,8 @@ export const freelanceMessagingService = {
       if (error) throw error;
       return count || 0;
     } catch (error) {
-      console.error('Error getting unread count:', error);
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Error getting unread count:', errorMsg);
       return 0;
     }
   },
