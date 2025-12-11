@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import BankAccountManager, { BankAccount } from "@/components/wallet/BankAccountManager";
 import { paymentMethods } from "@/config/paymentMethods";
+import { UserService } from "@/services/userService";
+import { virtualGiftsService } from "@/services/virtualGiftsService";
 
 type RecipientType = "bank" | "username" | "email" | "mobile";
 
