@@ -212,6 +212,54 @@ const UnifiedFeedItemCardComponent: React.FC<{
     }
   };
 
+  const handleReaction = async (reactionType: string) => {
+    if (!user?.id || item.type !== 'post') return;
+
+    try {
+      // If clicking the same reaction, toggle it off
+      if (userReaction === reactionType) {
+        await PostService.removeReaction(item.id, user.id);
+        setUserReaction(null);
+      } else {
+        // Remove previous reaction if any
+        if (userReaction) {
+          await PostService.removeReaction(item.id, user.id);
+        }
+        // Add new reaction
+        await PostService.addReaction(item.id, user.id, reactionType);
+        setUserReaction(reactionType);
+      }
+    } catch (error) {
+      console.error('Error handling reaction:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save reaction',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleToggleBookmark = async () => {
+    if (!user?.id || item.type !== 'post') return;
+
+    try {
+      const newBookmarkedState = await PostService.toggleSavePost(item.id, user.id);
+      setIsBookmarked(newBookmarkedState);
+
+      toast({
+        title: newBookmarkedState ? 'Saved!' : 'Removed from saved',
+        description: newBookmarkedState ? 'Post added to your saved posts.' : 'Post removed from saved posts.',
+      });
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save post',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const handleContentClick = (e: React.MouseEvent) => {
     // Don't navigate if clicking on interactive elements
     const target = e.target as HTMLElement;
