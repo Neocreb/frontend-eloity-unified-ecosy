@@ -211,9 +211,9 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
 
   return (
     <div className={cn('mb-6 px-2 sm:px-0', className)}>
-      <div className="mb-3">
-        <h3 className="text-lg font-semibold">Discover More</h3>
-        <p className="text-sm text-gray-500">Swipe through posts from your network</p>
+      <div className="mb-3 sm:mb-4">
+        <h3 className="text-base sm:text-lg font-semibold">Discover More</h3>
+        <p className="text-xs sm:text-sm text-gray-500">Swipe through posts from your network</p>
       </div>
 
       <div className="relative group">
