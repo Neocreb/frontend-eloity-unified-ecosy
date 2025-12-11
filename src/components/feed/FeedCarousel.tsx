@@ -262,7 +262,7 @@ const FeedCarousel: React.FC<FeedCarouselProps> = ({
                   </div>
 
                   {/* Content */}
-                  <div className="p-3 flex-1 overflow-hidden">
+                  <div className="p-2 sm:p-3 flex-1 overflow-hidden">
                     {post.type === 'post' && post.content.text && (
                       <PostContentRenderer
                         content={post.content.text}
