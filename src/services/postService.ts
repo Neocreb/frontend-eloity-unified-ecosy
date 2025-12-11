@@ -363,6 +363,126 @@ export class PostService {
     }
   }
 
+  // Add reaction to post
+  static async addReaction(postId: string, userId: string, reactionType: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("post_reactions")
+        .insert({
+          post_id: postId,
+          user_id: userId,
+          reaction_type: reactionType
+        });
+
+      if (error) {
+        console.error("Error adding reaction:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in addReaction:", error);
+      return false;
+    }
+  }
+
+  // Remove reaction from post
+  static async removeReaction(postId: string, userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("post_reactions")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Error removing reaction:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in removeReaction:", error);
+      return false;
+    }
+  }
+
+  // Toggle reaction on post
+  static async toggleReaction(postId: string, userId: string, reactionType: string): Promise<boolean> {
+    try {
+      // Check if user already has a reaction
+      const { data: existingReaction, error: checkError } = await supabase
+        .from("post_reactions")
+        .select("id")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (checkError) {
+        console.error("Error checking reaction:", checkError);
+        return false;
+      }
+
+      if (existingReaction) {
+        // Remove existing reaction
+        return this.removeReaction(postId, userId);
+      } else {
+        // Add new reaction
+        return this.addReaction(postId, userId, reactionType);
+      }
+    } catch (error) {
+      console.error("Error in toggleReaction:", error);
+      return false;
+    }
+  }
+
+  // Get user's reaction on post
+  static async getUserReactionOnPost(postId: string, userId: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase
+        .from("post_reactions")
+        .select("reaction_type")
+        .eq("post_id", postId)
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching user reaction:", error);
+        return null;
+      }
+
+      return data?.reaction_type || null;
+    } catch (error) {
+      console.error("Error in getUserReactionOnPost:", error);
+      return null;
+    }
+  }
+
+  // Get reaction counts for post grouped by type
+  static async getPostReactionCounts(postId: string): Promise<Record<string, number>> {
+    try {
+      const { data, error } = await supabase
+        .from("post_reactions")
+        .select("reaction_type")
+        .eq("post_id", postId);
+
+      if (error) {
+        console.error("Error fetching reaction counts:", error);
+        return {};
+      }
+
+      const counts: Record<string, number> = {};
+      data?.forEach((reaction: any) => {
+        counts[reaction.reaction_type] = (counts[reaction.reaction_type] || 0) + 1;
+      });
+
+      return counts;
+    } catch (error) {
+      console.error("Error in getPostReactionCounts:", error);
+      return {};
+    }
+  }
+
   // Get post comments count
   static async getPostCommentsCount(postId: string): Promise<number> {
     try {
