@@ -403,13 +403,23 @@ const EnhancedVideos: React.FC = () => {
           paddingBottom: "80px", // Account for mobile navigation
         }}
       >
-        {mockVideos.map((video, index) => (
-          <VideoCard
-            key={video.id}
-            video={video}
-            isActive={index === currentVideoIndex}
-          />
-        ))}
+        {isLoading ? (
+          <div className="h-screen flex items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-white" />
+          </div>
+        ) : videos.length > 0 ? (
+          videos.map((video, index) => (
+            <VideoCard
+              key={video.id}
+              video={video}
+              isActive={index === currentVideoIndex}
+            />
+          ))
+        ) : (
+          <div className="h-screen flex items-center justify-center">
+            <p className="text-gray-400">No videos available</p>
+          </div>
+        )}
       </div>
 
       {/* Create Button */}
