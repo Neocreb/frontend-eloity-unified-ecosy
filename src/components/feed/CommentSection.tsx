@@ -1,5 +1,5 @@
 // @ts-nocheck
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { PostComment } from "@/types/user";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ import {
   Image as ImageIcon,
   X,
   Send,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,17 +24,39 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import VirtualGiftsAndTips from "@/components/premium/VirtualGiftsAndTips";
+import { PostService } from "@/services/postService";
+import { toast } from "@/hooks/use-toast";
+
+interface CommentWithAuthor {
+  id: string;
+  content: string;
+  created_at: string;
+  user_id: string;
+  post_id: string;
+  parent_id?: string | null;
+  likes_count?: number;
+  liked_by_user?: boolean;
+  author?: {
+    id: string;
+    username: string;
+    name: string;
+    avatar: string;
+    is_verified: boolean;
+  };
+}
 
 interface CommentSectionProps {
   postId: string;
-  comments: PostComment[];
-  onAddComment: (postId: string, comment: string) => void;
+  comments?: PostComment[];
+  onAddComment?: (postId: string, comment: string) => void;
+  onCommentAdded?: () => void;
 }
 
 const CommentSection = ({
   postId,
-  comments,
+  comments: initialComments,
   onAddComment,
+  onCommentAdded,
 }: CommentSectionProps) => {
   const [commentInput, setCommentInput] = useState("");
   const [commentImages, setCommentImages] = useState<File[]>([]);
@@ -44,6 +67,12 @@ const CommentSection = ({
   const [showAllReplies, setShowAllReplies] = useState<Record<string, boolean>>(
     {},
   );
+  const [comments, setComments] = useState<CommentWithAuthor[]>(initialComments || []);
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMoreComments, setHasMoreComments] = useState(false);
+  const [commentLikes, setCommentLikes] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
 
   const handleSubmit = () => {
