@@ -745,8 +745,17 @@ export class PostService {
   // Get comment likes count
   static async getCommentLikesCount(commentId: string): Promise<number> {
     try {
-      // Assuming there's a comment_likes table (not in schema, so we'll skip for now)
-      return 0;
+      const { count, error } = await supabase
+        .from("post_comment_likes")
+        .select("*", { count: "exact" })
+        .eq("comment_id", commentId);
+
+      if (error) {
+        console.warn("Error fetching comment likes count:", error);
+        return 0;
+      }
+
+      return count || 0;
     } catch (error) {
       console.error("Error in getCommentLikesCount:", error);
       return 0;
@@ -756,11 +765,63 @@ export class PostService {
   // Get comment replies count
   static async getCommentRepliesCount(commentId: string): Promise<number> {
     try {
-      // Assuming there's a parent_id in comments for replies (not in schema, so we'll skip for now)
-      return 0;
+      const { count, error } = await supabase
+        .from("post_comments")
+        .select("*", { count: "exact" })
+        .eq("parent_id", commentId);
+
+      if (error) {
+        console.warn("Error fetching comment replies count:", error);
+        return 0;
+      }
+
+      return count || 0;
     } catch (error) {
       console.error("Error in getCommentRepliesCount:", error);
       return 0;
+    }
+  }
+
+  // Like a comment
+  static async likeComment(commentId: string, userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("post_comment_likes")
+        .insert({
+          comment_id: commentId,
+          user_id: userId
+        });
+
+      if (error) {
+        console.error("Error liking comment:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in likeComment:", error);
+      return false;
+    }
+  }
+
+  // Unlike a comment
+  static async unlikeComment(commentId: string, userId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from("post_comment_likes")
+        .delete()
+        .eq("comment_id", commentId)
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Error unliking comment:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in unlikeComment:", error);
+      return false;
     }
   }
 
