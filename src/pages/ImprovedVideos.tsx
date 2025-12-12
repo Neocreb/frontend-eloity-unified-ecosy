@@ -15,6 +15,7 @@ import {
   Music,
   ChevronUp,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -22,6 +23,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/utils/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { videoService } from "@/services/videoService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VideoData {
   id: string;
