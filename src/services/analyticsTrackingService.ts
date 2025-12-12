@@ -77,7 +77,11 @@ class AnalyticsTrackingService {
    * Generate unique session ID
    */
   private generateSessionId(): string {
-    return `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Use crypto.getRandomValues for cryptographically secure random session id
+    const array = new Uint8Array(9);
+    window.crypto.getRandomValues(array);
+    const randomStr = Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+    return `session_${Date.now()}_${randomStr}`;
   }
 
   /**
