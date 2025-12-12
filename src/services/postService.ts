@@ -658,16 +658,22 @@ export class PostService {
     }
   }
 
-  // Add comment to post
-  static async addComment(postId: string, userId: string, content: string): Promise<CommentWithAuthor | null> {
+  // Add comment to post (or reply to a comment)
+  static async addComment(postId: string, userId: string, content: string, parentId?: string): Promise<CommentWithAuthor | null> {
     try {
+      const commentData: any = {
+        post_id: postId,
+        user_id: userId,
+        content: content
+      };
+
+      if (parentId) {
+        commentData.parent_id = parentId;
+      }
+
       const { data, error } = await supabase
         .from("post_comments")
-        .insert({
-          post_id: postId,
-          user_id: userId,
-          content: content
-        })
+        .insert(commentData)
         .select()
         .single();
 
