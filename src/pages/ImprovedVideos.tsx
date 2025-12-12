@@ -51,59 +51,8 @@ interface VideoData {
   timestamp: string;
 }
 
-const mockVideos: VideoData[] = [
-  {
-    id: "1",
-    user: {
-      username: "creator1",
-      displayName: "Sarah Wilson",
-      avatar: "/placeholder.jpg",
-      verified: true,
-    },
-    description:
-      "Amazing sunset timelapse from the mountains! 🌅 Nature is incredible #sunset #mountains #timelapse",
-    hashtags: ["sunset", "mountains", "timelapse", "nature"],
-    music: {
-      title: "Epic Cinematic",
-      artist: "AudioLibrary",
-    },
-    stats: {
-      likes: 12500,
-      comments: 834,
-      shares: 392,
-      views: 45600,
-    },
-    thumbnail: "/placeholder.jpg",
-    videoUrl: "/placeholder-video.mp4",
-    timestamp: "2h",
-  },
-  {
-    id: "2",
-    user: {
-      username: "foodie_chef",
-      displayName: "Chef Marcus",
-      avatar: "/placeholder.jpg",
-      verified: false,
-    },
-    description:
-      "Quick 5-minute pasta recipe that'll blow your mind! 🍝 Perfect for busy weeknights #cooking #pasta #quickrecipes",
-    hashtags: ["cooking", "pasta", "quickrecipes", "food"],
-    music: {
-      title: "Upbeat Cooking",
-      artist: "FoodBeats",
-    },
-    stats: {
-      likes: 8900,
-      comments: 567,
-      shares: 289,
-      views: 32100,
-    },
-    thumbnail: "/placeholder.jpg",
-    videoUrl: "/placeholder-video.mp4",
-    timestamp: "5h",
-  },
-  // Add more mock videos...
-];
+// Note: Videos are now fetched from the API instead of using mock data
+// See ImprovedVideos component below
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) {
