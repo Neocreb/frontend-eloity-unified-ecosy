@@ -344,8 +344,29 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
 const ImprovedVideos: React.FC = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+
+  // Fetch videos from API
+  useEffect(() => {
+    const loadVideos = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedVideos = await videoService.getLatestVideos(50);
+        setVideos(fetchedVideos || []);
+      } catch (error) {
+        console.error("Error loading videos:", error);
+        setVideos([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadVideos();
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -359,7 +380,7 @@ const ImprovedVideos: React.FC = () => {
       if (
         newIndex !== currentVideoIndex &&
         newIndex >= 0 &&
-        newIndex < mockVideos.length
+        newIndex < videos.length
       ) {
         setCurrentVideoIndex(newIndex);
       }
@@ -367,7 +388,7 @@ const ImprovedVideos: React.FC = () => {
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [currentVideoIndex]);
+  }, [currentVideoIndex, videos.length]);
 
   return (
     <div className="fixed inset-0 bg-black text-white overflow-hidden z-10">
