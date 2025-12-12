@@ -15,6 +15,7 @@ import {
   Music,
   ChevronUp,
   ChevronDown,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -22,6 +23,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { cn } from "@/utils/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { videoService } from "@/services/videoService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VideoData {
   id: string;
@@ -48,59 +51,8 @@ interface VideoData {
   timestamp: string;
 }
 
-const mockVideos: VideoData[] = [
-  {
-    id: "1",
-    user: {
-      username: "creator1",
-      displayName: "Sarah Wilson",
-      avatar: "/placeholder.jpg",
-      verified: true,
-    },
-    description:
-      "Amazing sunset timelapse from the mountains! 🌅 Nature is incredible #sunset #mountains #timelapse",
-    hashtags: ["sunset", "mountains", "timelapse", "nature"],
-    music: {
-      title: "Epic Cinematic",
-      artist: "AudioLibrary",
-    },
-    stats: {
-      likes: 12500,
-      comments: 834,
-      shares: 392,
-      views: 45600,
-    },
-    thumbnail: "/placeholder.jpg",
-    videoUrl: "/placeholder-video.mp4",
-    timestamp: "2h",
-  },
-  {
-    id: "2",
-    user: {
-      username: "foodie_chef",
-      displayName: "Chef Marcus",
-      avatar: "/placeholder.jpg",
-      verified: false,
-    },
-    description:
-      "Quick 5-minute pasta recipe that'll blow your mind! 🍝 Perfect for busy weeknights #cooking #pasta #quickrecipes",
-    hashtags: ["cooking", "pasta", "quickrecipes", "food"],
-    music: {
-      title: "Upbeat Cooking",
-      artist: "FoodBeats",
-    },
-    stats: {
-      likes: 8900,
-      comments: 567,
-      shares: 289,
-      views: 32100,
-    },
-    thumbnail: "/placeholder.jpg",
-    videoUrl: "/placeholder-video.mp4",
-    timestamp: "5h",
-  },
-  // Add more mock videos...
-];
+// Note: Videos are now fetched from the API instead of using mock data
+// See ImprovedVideos component below
 
 const formatNumber = (num: number): string => {
   if (num >= 1000000) {
@@ -392,8 +344,29 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
 const ImprovedVideos: React.FC = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+
+  // Fetch videos from API
+  useEffect(() => {
+    const loadVideos = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedVideos = await videoService.getLatestVideos(50);
+        setVideos(fetchedVideos || []);
+      } catch (error) {
+        console.error("Error loading videos:", error);
+        setVideos([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadVideos();
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -407,7 +380,7 @@ const ImprovedVideos: React.FC = () => {
       if (
         newIndex !== currentVideoIndex &&
         newIndex >= 0 &&
-        newIndex < mockVideos.length
+        newIndex < videos.length
       ) {
         setCurrentVideoIndex(newIndex);
       }
@@ -415,7 +388,7 @@ const ImprovedVideos: React.FC = () => {
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [currentVideoIndex]);
+  }, [currentVideoIndex, videos.length]);
 
   return (
     <div className="fixed inset-0 bg-black text-white overflow-hidden z-10">
@@ -440,13 +413,23 @@ const ImprovedVideos: React.FC = () => {
           willChange: "scroll-position",
         }}
       >
-        {mockVideos.map((video, index) => (
-          <VideoCard
-            key={video.id}
-            video={video}
-            isActive={index === currentVideoIndex}
-          />
-        ))}
+        {isLoading ? (
+          <div className="h-screen flex items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-white" />
+          </div>
+        ) : videos.length > 0 ? (
+          videos.map((video, index) => (
+            <VideoCard
+              key={video.id}
+              video={video}
+              isActive={index === currentVideoIndex}
+            />
+          ))
+        ) : (
+          <div className="h-screen flex items-center justify-center">
+            <p className="text-gray-400">No videos available</p>
+          </div>
+        )}
       </div>
 
       {/* Create Button with improved mobile positioning */}

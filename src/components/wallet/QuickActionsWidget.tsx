@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +16,10 @@ import {
   Store,
   Users,
   Clock,
+  Send,
+  Loader2,
 } from "lucide-react";
+import { virtualGiftsService } from "@/services/virtualGiftsService";
 
 interface ActionItem {
   id: string;
@@ -39,13 +43,35 @@ interface RecentRecipient {
 
 const QuickActionsWidget = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { walletBalance, transactions, getTotalEarnings } = useWalletContext();
+  const [recentRecipients, setRecentRecipients] = useState<RecentRecipient[]>([]);
+  const [loadingRecipients, setLoadingRecipients] = useState(true);
 
-  const [recentRecipients] = useState<RecentRecipient[]>([
-    { id: "1", name: "John Doe", lastAmount: 250, frequency: 5 },
-    { id: "2", name: "Sarah Smith", lastAmount: 100, frequency: 3 },
-    { id: "3", name: "Mike Johnson", lastAmount: 75, frequency: 2 },
-  ]);
+  useEffect(() => {
+    loadRecentRecipients();
+  }, []);
+
+  const loadRecentRecipients = async () => {
+    try {
+      setLoadingRecipients(true);
+      if (!user?.id) return;
+
+      const recipients = await virtualGiftsService.getRecentRecipients(user.id, 5);
+      const mappedRecipients: RecentRecipient[] = recipients.map((r) => ({
+        id: r.id,
+        name: r.display_name || r.username,
+        avatar: r.avatar_url,
+        lastAmount: 0,
+        frequency: 1,
+      }));
+      setRecentRecipients(mappedRecipients);
+    } catch (error) {
+      console.error("Error loading recent recipients:", error);
+    } finally {
+      setLoadingRecipients(false);
+    }
+  };
 
   // Modal states
   const [showSendModal, setShowSendModal] = useState(false);
@@ -164,40 +190,51 @@ const QuickActionsWidget = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {recentRecipients.map((recipient) => (
-              <div
-                key={recipient.id}
-                className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all duration-200 cursor-pointer group"
-                onClick={() => setShowSendModal(true)}
-              >
-                <Avatar className="h-10 w-10 flex-shrink-0">
-                  <AvatarImage src={recipient.avatar} />
-                  <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-semibold">
-                    {recipient.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm text-gray-900">{recipient.name}</p>
-                  <p className="text-xs text-gray-500 truncate">
-                    Last sent: ${recipient.lastAmount.toFixed(2)} • {recipient.frequency} times
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  className="shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowSendModal(true);
-                  }}
-                >
-                  <Send className="h-3 w-3 sm:mr-1" />
-                  <span className="hidden sm:inline text-xs">Send</span>
-                </Button>
+            {loadingRecipients ? (
+              <div className="text-center py-6">
+                <Loader2 className="h-6 w-6 animate-spin mx-auto text-indigo-600" />
+                <p className="text-sm text-gray-500 mt-2">Loading recipients...</p>
               </div>
-            ))}
+            ) : recentRecipients.length > 0 ? (
+              recentRecipients.map((recipient) => (
+                <div
+                  key={recipient.id}
+                  className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-transparent transition-all duration-200 cursor-pointer group"
+                  onClick={() => setShowSendModal(true)}
+                >
+                  <Avatar className="h-10 w-10 flex-shrink-0">
+                    <AvatarImage src={recipient.avatar} />
+                    <AvatarFallback className="bg-gradient-to-br from-blue-400 to-blue-600 text-white font-semibold">
+                      {recipient.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-sm text-gray-900">{recipient.name}</p>
+                    <p className="text-xs text-gray-500 truncate">
+                      Recipient
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="shrink-0 bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowSendModal(true);
+                    }}
+                  >
+                    <Send className="h-3 w-3 sm:mr-1" />
+                    <span className="hidden sm:inline text-xs">Send</span>
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <div className="text-center py-6 text-gray-500">
+                <p className="text-sm">No recent recipients yet</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

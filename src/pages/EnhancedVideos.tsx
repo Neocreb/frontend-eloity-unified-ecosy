@@ -25,6 +25,7 @@ import {
   Zap,
   Play,
   Pause,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +40,8 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/utils/utils";
 import { SmartContentRecommendations } from "@/components/ai/SmartContentRecommendations";
+import { videoService } from "@/services/videoService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VideoData {
   id: string;
@@ -69,153 +72,8 @@ interface VideoData {
   timestamp: string;
 }
 
-const mockVideos: VideoData[] = [
-  {
-    id: "1",
-    user: {
-      id: "user1",
-      username: "creative_creator",
-      displayName: "Creative Creator",
-      avatar: "/placeholder.svg?height=40&width=40",
-      verified: true,
-    },
-    title: "Amazing sunset timelapse",
-    description:
-      "Captured this beautiful sunset from my balcony. The colors were absolutely incredible! 🌅 #sunset #timelapse #nature",
-    videoUrl: "/placeholder-video.mp4",
-    thumbnail: "/placeholder.svg?height=600&width=400",
-    duration: 30,
-    stats: {
-      views: 125400,
-      likes: 8900,
-      comments: 234,
-      shares: 67,
-    },
-    hashtags: ["sunset", "timelapse", "nature", "beautiful", "sky"],
-    music: {
-      title: "Calm Vibes",
-      artist: "Peaceful Sounds",
-      url: "/music/calm-vibes.mp3",
-    },
-    timestamp: "2 hours ago",
-  },
-  {
-    id: "2",
-    user: {
-      id: "user2",
-      username: "tech_reviewer",
-      displayName: "Tech Reviewer",
-      avatar: "/placeholder.svg?height=40&width=40",
-      verified: false,
-    },
-    title: "iPhone 15 Pro Review",
-    description:
-      "Here's my honest review of the iPhone 15 Pro after using it for a week. The camera improvements are insane! 📱✨ #iPhone15Pro #TechReview #Apple",
-    videoUrl: "/placeholder-video.mp4",
-    thumbnail: "/placeholder.svg?height=600&width=400",
-    duration: 45,
-    stats: {
-      views: 89200,
-      likes: 5600,
-      comments: 342,
-      shares: 89,
-    },
-    hashtags: ["iPhone15Pro", "TechReview", "Apple", "smartphone"],
-    music: {
-      title: "Tech Beat",
-      artist: "Electronic Vibes",
-      url: "/music/tech-beat.mp3",
-    },
-    timestamp: "5 hours ago",
-  },
-  {
-    id: "3",
-    user: {
-      id: "user3",
-      username: "fitness_guru",
-      displayName: "Fitness Guru",
-      avatar: "/placeholder.svg?height=40&width=40",
-      verified: true,
-    },
-    title: "5-Minute Morning Workout",
-    description:
-      "Start your day right with this quick but effective morning workout routine! No equipment needed 💪 #MorningWorkout #Fitness #Health",
-    videoUrl: "/placeholder-video.mp4",
-    thumbnail: "/placeholder.svg?height=600&width=400",
-    duration: 60,
-    stats: {
-      views: 234500,
-      likes: 18700,
-      comments: 892,
-      shares: 234,
-    },
-    hashtags: ["MorningWorkout", "Fitness", "Health", "NoEquipment"],
-    music: {
-      title: "Pump It Up",
-      artist: "Workout Mix",
-      url: "/music/pump-it-up.mp3",
-    },
-    timestamp: "1 day ago",
-  },
-  {
-    id: "4",
-    user: {
-      id: "user4",
-      username: "food_lover",
-      displayName: "Food Lover",
-      avatar: "/placeholder.svg?height=40&width=40",
-      verified: false,
-    },
-    title: "60-Second Pasta Recipe",
-    description:
-      "The easiest and most delicious pasta recipe you'll ever make! Perfect for busy weeknights 🍝 #Pasta #QuickRecipe #FoodHack",
-    videoUrl: "/placeholder-video.mp4",
-    thumbnail: "/placeholder.svg?height=600&width=400",
-    duration: 60,
-    stats: {
-      views: 156800,
-      likes: 12400,
-      comments: 567,
-      shares: 145,
-    },
-    hashtags: ["Pasta", "QuickRecipe", "FoodHack", "Cooking"],
-    music: {
-      title: "Kitchen Vibes",
-      artist: "Cooking Sounds",
-      url: "/music/kitchen-vibes.mp3",
-    },
-    timestamp: "2 days ago",
-  },
-  {
-    id: "5",
-    user: {
-      id: "user5",
-      username: "travel_explorer",
-      displayName: "Travel Explorer",
-      avatar: "/placeholder.svg?height=40&width=40",
-      verified: true,
-    },
-    title: "Hidden Gems in Tokyo",
-    description:
-      "Found some incredible hidden spots in Tokyo that most tourists don't know about! 🏯🇯🇵 #Tokyo #Travel #HiddenGems",
-    videoUrl: "/placeholder-video.mp4",
-    thumbnail: "/placeholder.svg?height=600&width=400",
-    duration: 90,
-    stats: {
-      views: 298600,
-      likes: 24500,
-      comments: 1234,
-      shares: 456,
-    },
-    hashtags: ["Tokyo", "Travel", "HiddenGems", "Japan"],
-    music: {
-      title: "Tokyo Nights",
-      artist: "City Sounds",
-      url: "/music/tokyo-nights.mp3",
-    },
-    timestamp: "3 days ago",
-  },
-];
+// Note: Videos are now fetched from the API instead of using mock data
+// See EnhancedVideos component below
 
 interface VideoCardProps {
   video: VideoData;
@@ -484,7 +342,28 @@ const VideoCard: React.FC<VideoCardProps> = ({ video, isActive }) => {
 const EnhancedVideos: React.FC = () => {
   const [currentVideoIndex, setCurrentVideoIndex] = useState(0);
   const [isCreatorOpen, setIsCreatorOpen] = useState(false);
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
+
+  // Fetch videos from API
+  useEffect(() => {
+    const loadVideos = async () => {
+      try {
+        setIsLoading(true);
+        const fetchedVideos = await videoService.getLatestVideos(50);
+        setVideos(fetchedVideos || []);
+      } catch (error) {
+        console.error("Error loading videos:", error);
+        setVideos([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadVideos();
+  }, []);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -498,7 +377,7 @@ const EnhancedVideos: React.FC = () => {
       if (
         newIndex !== currentVideoIndex &&
         newIndex >= 0 &&
-        newIndex < mockVideos.length
+        newIndex < videos.length
       ) {
         setCurrentVideoIndex(newIndex);
       }
@@ -506,7 +385,7 @@ const EnhancedVideos: React.FC = () => {
 
     container.addEventListener("scroll", handleScroll, { passive: true });
     return () => container.removeEventListener("scroll", handleScroll);
-  }, [currentVideoIndex]);
+  }, [currentVideoIndex, videos.length]);
 
   return (
     <div className="fixed inset-0 bg-black text-white overflow-hidden z-10">
@@ -524,13 +403,23 @@ const EnhancedVideos: React.FC = () => {
           paddingBottom: "80px", // Account for mobile navigation
         }}
       >
-        {mockVideos.map((video, index) => (
-          <VideoCard
-            key={video.id}
-            video={video}
-            isActive={index === currentVideoIndex}
-          />
-        ))}
+        {isLoading ? (
+          <div className="h-screen flex items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-white" />
+          </div>
+        ) : videos.length > 0 ? (
+          videos.map((video, index) => (
+            <VideoCard
+              key={video.id}
+              video={video}
+              isActive={index === currentVideoIndex}
+            />
+          ))
+        ) : (
+          <div className="h-screen flex items-center justify-center">
+            <p className="text-gray-400">No videos available</p>
+          </div>
+        )}
       </div>
 
       {/* Create Button */}
