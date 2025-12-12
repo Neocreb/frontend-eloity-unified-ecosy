@@ -25,6 +25,7 @@ import {
   Zap,
   Play,
   Pause,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -39,6 +40,8 @@ import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/utils/utils";
 import { SmartContentRecommendations } from "@/components/ai/SmartContentRecommendations";
+import { videoService } from "@/services/videoService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface VideoData {
   id: string;
