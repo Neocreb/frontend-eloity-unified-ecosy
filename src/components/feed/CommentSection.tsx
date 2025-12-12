@@ -75,11 +75,62 @@ const CommentSection = ({
   const [commentLikes, setCommentLikes] = useState<Record<string, boolean>>({});
   const { user } = useAuth();
 
-  const handleSubmit = () => {
-    if (commentInput.trim() || commentImages.length > 0) {
-      onAddComment(postId, commentInput);
+  useEffect(() => {
+    if (postId) {
+      loadComments();
+    }
+  }, [postId]);
+
+  const loadComments = async (pageNum = 1) => {
+    try {
+      setIsLoadingComments(true);
+      const loadedComments = await PostService.getPostComments(postId, 10, (pageNum - 1) * 10);
+      setComments(loadedComments);
+      setPage(pageNum);
+      setHasMoreComments(loadedComments.length === 10);
+    } catch (error) {
+      console.error("Error loading comments:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load comments",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoadingComments(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!commentInput.trim() && commentImages.length === 0) {
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      if (onAddComment) {
+        onAddComment(postId, commentInput);
+      } else {
+        await PostService.addComment(postId, user?.id || "", commentInput);
+        await loadComments();
+        if (onCommentAdded) {
+          onCommentAdded();
+        }
+      }
       setCommentInput("");
       setCommentImages([]);
+      toast({
+        title: "Success",
+        description: "Comment added successfully",
+      });
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add comment",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -92,23 +143,36 @@ const CommentSection = ({
     setCommentImages(prev => prev.filter((_, i) => i !== index));
   };
 
-  const handleReplySubmit = (commentId: string) => {
-    if (replyInputs[commentId]?.trim()) {
-      // In a real app, this would call an API to add a reply
-      // For now, we'll just simulate it with a notification
-      console.log(`Reply to comment ${commentId}: ${replyInputs[commentId]}`);
+  const handleReplySubmit = async (commentId: string) => {
+    if (!replyInputs[commentId]?.trim()) {
+      return;
+    }
 
-      // Clear the input
+    try {
+      setIsSubmitting(true);
+      await PostService.addComment(postId, user?.id || "", replyInputs[commentId], commentId);
+      await loadComments();
       setReplyInputs({
         ...replyInputs,
         [commentId]: "",
       });
-
-      // Close the reply form
       setExpandedComments({
         ...expandedComments,
         [commentId]: false,
       });
+      toast({
+        title: "Success",
+        description: "Reply added successfully",
+      });
+    } catch (error) {
+      console.error("Error adding reply:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add reply",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -124,6 +188,35 @@ const CommentSection = ({
       ...showAllReplies,
       [commentId]: !showAllReplies[commentId],
     });
+  };
+
+  const handleCommentLike = async (commentId: string) => {
+    try {
+      const isLiked = commentLikes[commentId];
+      setCommentLikes(prev => ({
+        ...prev,
+        [commentId]: !isLiked,
+      }));
+
+      if (isLiked) {
+        // Unlike - would need an API endpoint
+        toast({
+          description: "Comment unliked",
+        });
+      } else {
+        // Like - would need an API endpoint
+        toast({
+          description: "Comment liked",
+        });
+      }
+    } catch (error) {
+      console.error("Error liking comment:", error);
+      toast({
+        title: "Error",
+        description: "Failed to like comment",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
