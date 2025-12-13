@@ -22,8 +22,10 @@ import { randomUUID } from 'crypto'; // Import crypto module
 
 // Load environment variables
 console.log("🔄 Loading environment variables...");
-dotenv.config({ path: '.env' });
-dotenv.config({ path: '.env.local' }); // Load .env.local to override .env (if it exists)
+const cwd = process.cwd();
+console.log(`📂 Working directory: ${cwd}`);
+dotenv.config({ path: join(cwd, '.env') });
+dotenv.config({ path: join(cwd, '.env.local') }); // Load .env.local to override .env (if it exists)
 console.log("✅ Environment variables loaded");
 console.log("🔍 DATABASE_URL:", process.env.DATABASE_URL ? "SET" : "NOT SET");
 console.log("🔍 VITE_SUPABASE_URL:", process.env.VITE_SUPABASE_URL ? "SET" : "NOT SET");
