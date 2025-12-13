@@ -23,51 +23,17 @@ export const TestimonialsSection: React.FC = () => {
     fetchTestimonials();
   }, []);
 
-  const defaultTestimonials: Testimonial[] = [
-    {
-      id: '1',
-      name: 'Sarah Johnson',
-      title: 'Content Creator',
-      quote: 'Eloity transformed how I connect with my audience. I increased my earnings by 300% in just 3 months!',
-      image_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=sarah',
-      rating: 5,
-      category: 'creator',
-      metrics: { earnings: '+300%', followers: '+50K' },
-    },
-    {
-      id: '2',
-      name: 'Ahmed Hassan',
-      title: 'Freelance Developer',
-      quote: 'The freelance marketplace is incredible. I found high-paying projects immediately and tripled my income.',
-      image_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=ahmed',
-      rating: 5,
-      category: 'freelancer',
-      metrics: { projects: '+15', income: '+250%' },
-    },
-    {
-      id: '3',
-      name: 'Maria Chen',
-      title: 'Crypto Trader',
-      quote: 'The trading tools and community on Eloity are unmatched. I made smarter trades and reduced losses significantly.',
-      image_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=maria',
-      rating: 5,
-      category: 'trader',
-      metrics: { trades: '+200', returns: '+45%' },
-    },
-  ];
-
   const fetchTestimonials = async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/landing/testimonials?featured=true');
       if (!response.ok) throw new Error('Failed to fetch testimonials');
       const data = await response.json();
-      setTestimonials(data && data.length > 0 ? data : defaultTestimonials);
+      setTestimonials(data);
       setError(null);
     } catch (err) {
       console.error('Error fetching testimonials:', err);
-      setTestimonials(defaultTestimonials);
-      setError(null);
+      setError('Failed to load testimonials');
     } finally {
       setIsLoading(false);
     }
