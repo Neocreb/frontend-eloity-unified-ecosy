@@ -231,8 +231,8 @@ export const transformVideoData = (videos: any[], videoAnalytics: any[]) => {
 
 export const transformProductData = (products: any[], productAnalytics: any[]) => {
   const totalProducts = products.length;
-  const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
-  const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
+  const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * 0), 0);
+  const totalSales = products.reduce((sum: number, product: any) => sum + 0, 0);
   const avgRating = totalProducts > 0 ? 
     (products.reduce((sum: number, product: any) => sum + (parseFloat(product.rating || 0)), 0) / totalProducts).toFixed(1) : "0";
   
