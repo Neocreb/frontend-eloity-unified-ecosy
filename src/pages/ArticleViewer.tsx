@@ -7,14 +7,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ArrowLeft,
-  ArrowRight,
-  CheckCircle2,
   Clock,
   Heart,
   Bookmark,
@@ -24,22 +21,57 @@ import {
   ListChecks,
   Trophy,
   RotateCcw,
-  Star,
-  Gift
+  CheckCircle2,
+  Coins,
+  Gift,
 } from "lucide-react";
-import { 
-  educationalArticleService, 
-  EducationalArticle, 
-  ArticleQuizQuestion,
-  UserArticleProgress 
-} from "@/services/educationalArticleService";
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+interface Article {
+  id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  author_id: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  category: string;
+  reading_time: number;
+  featured_image: string;
+  is_published: boolean;
+  published_at: string;
+  views_count: number;
+  likes_count: number;
+  bookmarks_count: number;
+  quiz_questions: any;
+  quiz_passing_score: number;
+  reward_reading: number;
+  reward_quiz_completion: number;
+  reward_perfect_score: number;
+  tags: string[];
+}
+
+interface UserProgress {
+  id: string;
+  user_id: string;
+  article_id: string;
+  read: boolean;
+  quiz_score: number | null;
+  bookmarked: boolean;
+  liked: boolean;
+  reading_reward_claimed: boolean;
+  quiz_reward_claimed: boolean;
+  perfect_score_reward_claimed: boolean;
+}
 
 interface QuizState {
   currentQuestion: number;
-  answers: { [questionId: string]: number };
+  answers: { [key: number]: number };
   showResults: boolean;
   score: number;
-  startTime: Date;
 }
 
 const ArticleViewer = () => {
@@ -47,24 +79,23 @@ const ArticleViewer = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [article, setArticle] = useState<EducationalArticle | null>(null);
-  const [userProgress, setUserProgress] = useState<UserArticleProgress | null>(null);
+
+  const [article, setArticle] = useState<Article | null>(null);
+  const [userProgress, setUserProgress] = useState<UserProgress | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showQuiz, setShowQuiz] = useState(false);
   const [quizState, setQuizState] = useState<QuizState>({
     currentQuestion: 0,
     answers: {},
     showResults: false,
     score: 0,
-    startTime: new Date()
   });
-  const [showQuiz, setShowQuiz] = useState(false);
-  const [readingStartTime] = useState(new Date());
 
   useEffect(() => {
     if (!user) {
       toast({
         title: "Authentication Required",
-        description: "Please sign in to read articles.",
+        description: "Please sign in to access articles.",
         variant: "destructive",
       });
       navigate("/auth");
@@ -76,35 +107,18 @@ const ArticleViewer = () => {
     }
   }, [articleId, user, navigate, toast]);
 
-  useEffect(() => {
-    // Track reading time when component unmounts
-    return () => {
-      if (user && articleId && readingStartTime) {
-        const timeSpent = Math.round((Date.now() - readingStartTime.getTime()) / 60000); // in minutes
-        if (timeSpent > 0) {
-          educationalArticleService.updateReadingProgress(user.id, articleId, timeSpent);
-        }
-      }
-    };
-  }, [user, articleId, readingStartTime]);
-
-  // Track reading progress periodically
-  useEffect(() => {
-    if (!user || !articleId) return;
-
-    const interval = setInterval(() => {
-      const timeSpent = Math.round((Date.now() - readingStartTime.getTime()) / 60000); // in minutes
-      if (timeSpent > 0) {
-        educationalArticleService.updateReadingProgress(user.id, articleId, timeSpent);
-      }
-    }, 30000); // Track every 30 seconds
-
-    return () => clearInterval(interval);
-  }, [user, articleId, readingStartTime]);
-
-  const loadArticle = () => {
+  const loadArticle = async () => {
     try {
-      const articleData = educationalArticleService.getArticleById(articleId!);
+      setLoading(true);
+
+      // Load article
+      const { data: articleData, error: articleError } = await supabase
+        .from('educational_articles')
+        .select('*')
+        .eq('id', articleId!)
+        .single();
+
+      if (articleError) throw articleError;
       if (!articleData) {
         toast({
           title: "Article Not Found",
@@ -115,15 +129,39 @@ const ArticleViewer = () => {
         return;
       }
 
-      const progress = user ? educationalArticleService.getUserArticleProgress(user.id, articleId!) : null;
-      
       setArticle(articleData);
-      setUserProgress(progress);
+
+      // Load user progress
+      if (user) {
+        const { data: progressData, error: progressError } = await supabase
+          .from('article_progress')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('article_id', articleId!)
+          .single();
+
+        if (progressError && progressError.code !== 'PGRST116') throw progressError;
+
+        if (!progressData) {
+          // Create initial progress record
+          await supabase
+            .from('article_progress')
+            .insert({
+              user_id: user.id,
+              article_id: articleId!,
+            });
+        } else {
+          setUserProgress(progressData);
+        }
+
+        // Mark as read and claim reward
+        await markArticleRead();
+      }
     } catch (error) {
       console.error("Error loading article:", error);
       toast({
         title: "Error",
-        description: "Failed to load article content.",
+        description: "Failed to load article.",
         variant: "destructive",
       });
     } finally {
@@ -131,132 +169,177 @@ const ArticleViewer = () => {
     }
   };
 
-  const handleStartQuiz = () => {
-    setShowQuiz(true);
-    setQuizState({
-      currentQuestion: 0,
-      answers: {},
-      showResults: false,
-      score: 0,
-      startTime: new Date()
-    });
-  };
+  const markArticleRead = async () => {
+    if (!user || !article) return;
 
-  const handleQuizAnswer = (questionId: string, answerIndex: number) => {
-    setQuizState(prev => ({
-      ...prev,
-      answers: {
-        ...prev.answers,
-        [questionId]: answerIndex
-      }
-    }));
-  };
+    try {
+      // Update progress
+      await supabase
+        .from('article_progress')
+        .update({ read: true })
+        .eq('user_id', user.id)
+        .eq('article_id', article.id);
 
-  const handleNextQuestion = () => {
-    if (!article?.quiz.questions) return;
-
-    if (quizState.currentQuestion < article.quiz.questions.length - 1) {
-      setQuizState(prev => ({
-        ...prev,
-        currentQuestion: prev.currentQuestion + 1
-      }));
-    } else {
-      // Calculate score and show results
-      const totalQuestions = article.quiz.questions.length;
-      const correctAnswers = article.quiz.questions.reduce((count, question) => {
-        const userAnswer = quizState.answers[question.id];
-        return count + (userAnswer === question.correctAnswer ? 1 : 0);
-      }, 0);
-      
-      const score = Math.round((correctAnswers / totalQuestions) * 100);
-      
-      setQuizState(prev => ({
-        ...prev,
-        showResults: true,
-        score
-      }));
-
-      // Save quiz score and handle rewards
-      if (user && articleId) {
-        educationalArticleService.saveQuizScore(user.id, articleId, score).then(() => {
-          // Refresh progress to get updated rewards
-          const updatedProgress = educationalArticleService.getUserArticleProgress(user.id, articleId);
-          setUserProgress(updatedProgress);
-        });
-
-        if (score >= article.quiz.passingScore) {
-          // Calculate total rewards earned
-          let rewardMessage = `Congratulations! You scored ${score}% and completed the article.`;
-          let totalPoints = 0;
-
-          if (article.rewardPoints.quizCompletion) {
-            totalPoints += article.rewardPoints.quizCompletion;
-          }
-
-          if (score === 100 && article.rewardPoints.perfectScore) {
-            totalPoints += article.rewardPoints.perfectScore;
-            rewardMessage += ` Perfect score bonus included!`;
-          }
-
-          toast({
-            title: "🎉 Quiz Passed!",
-            description: `${rewardMessage} You earned ${totalPoints} points!`,
+      // Claim reading reward
+      const hasClaimedReading = await checkRewardClaimed('reading');
+      if (!hasClaimedReading) {
+        await supabase
+          .from('article_reward_claims')
+          .insert({
+            user_id: user.id,
+            article_id: article.id,
+            reward_type: 'reading',
+            amount: article.reward_reading,
           });
-        } else {
-          toast({
-            title: "Quiz Failed",
-            description: `You scored ${score}%. You need ${article.quiz.passingScore}% or higher to complete the article.`,
-            variant: "destructive",
-          });
-        }
       }
+    } catch (error) {
+      console.error('Error marking article as read:', error);
     }
   };
 
-  const retakeQuiz = () => {
-    setQuizState({
-      currentQuestion: 0,
-      answers: {},
-      showResults: false,
-      score: 0,
-      startTime: new Date()
-    });
-  };
+  const checkRewardClaimed = async (rewardType: string): Promise<boolean> => {
+    if (!user || !article) return true;
 
-  const handleToggleBookmark = () => {
-    if (!user || !articleId) return;
-    
-    const isBookmarked = educationalArticleService.toggleBookmark(user.id, articleId);
-    toast({
-      title: isBookmarked ? "Article Bookmarked" : "Bookmark Removed",
-      description: isBookmarked ? "Article saved to your bookmarks" : "Article removed from bookmarks",
-    });
-    
-    // Refresh progress
-    const progress = educationalArticleService.getUserArticleProgress(user.id, articleId);
-    setUserProgress(progress);
+    try {
+      const { data, error } = await supabase
+        .from('article_reward_claims')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('article_id', article.id)
+        .eq('reward_type', rewardType)
+        .single();
+
+      return !!data;
+    } catch {
+      return false;
+    }
   };
 
   const handleToggleLike = async () => {
-    if (!user || !articleId) return;
+    if (!user || !article) return;
 
-    const isLiked = await educationalArticleService.toggleLike(user.id, articleId);
-    toast({
-      title: isLiked ? "❤️ Article Liked" : "Like Removed",
-      description: isLiked ? "Thanks for the feedback! You earned engagement points." : "Like removed",
-    });
+    try {
+      const newLiked = !userProgress?.liked;
+      await supabase
+        .from('article_progress')
+        .update({ liked: newLiked })
+        .eq('user_id', user.id)
+        .eq('article_id', article.id);
 
-    // Refresh progress
-    const progress = educationalArticleService.getUserArticleProgress(user.id, articleId);
-    setUserProgress(progress);
+      setUserProgress(prev => prev ? { ...prev, liked: newLiked } : null);
+    } catch (error) {
+      console.error('Error toggling like:', error);
+    }
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case "Beginner": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-      case "Intermediate": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-      case "Advanced": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
+  const handleToggleBookmark = async () => {
+    if (!user || !article) return;
+
+    try {
+      const newBookmarked = !userProgress?.bookmarked;
+      await supabase
+        .from('article_progress')
+        .update({ bookmarked: newBookmarked })
+        .eq('user_id', user.id)
+        .eq('article_id', article.id);
+
+      setUserProgress(prev => prev ? { ...prev, bookmarked: newBookmarked } : null);
+      toast({
+        title: newBookmarked ? 'Bookmarked!' : 'Removed from bookmarks',
+      });
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
+  };
+
+  const handleAnswerQuestion = (questionIndex: number, answer: number) => {
+    setQuizState(prev => ({
+      ...prev,
+      answers: { ...prev.answers, [questionIndex]: answer },
+    }));
+  };
+
+  const handleSubmitQuiz = async () => {
+    if (!article || !article.quiz_questions || !user) return;
+
+    // Calculate score
+    const questions = article.quiz_questions;
+    let correctAnswers = 0;
+
+    for (let i = 0; i < questions.length; i++) {
+      if (quizState.answers[i] === questions[i].correctAnswer) {
+        correctAnswers++;
+      }
+    }
+
+    const score = Math.round((correctAnswers / questions.length) * 100);
+
+    try {
+      // Update progress with quiz score
+      await supabase
+        .from('article_progress')
+        .update({ quiz_score: score })
+        .eq('user_id', user.id)
+        .eq('article_id', article.id);
+
+      // Claim quiz completion reward
+      const hasClaimedQuiz = await checkRewardClaimed('quiz_completion');
+      if (!hasClaimedQuiz) {
+        await supabase
+          .from('article_reward_claims')
+          .insert({
+            user_id: user.id,
+            article_id: article.id,
+            reward_type: 'quiz_completion',
+            amount: article.reward_quiz_completion,
+          });
+      }
+
+      // Claim perfect score reward if applicable
+      if (score === 100) {
+        const hasClaimedPerfect = await checkRewardClaimed('perfect_score');
+        if (!hasClaimedPerfect) {
+          await supabase
+            .from('article_reward_claims')
+            .insert({
+              user_id: user.id,
+              article_id: article.id,
+              reward_type: 'perfect_score',
+              amount: article.reward_perfect_score,
+            });
+        }
+      }
+
+      setQuizState(prev => ({
+        ...prev,
+        score,
+        showResults: true,
+      }));
+
+      toast({
+        title: `Quiz Complete! Score: ${score}%`,
+        description: score >= article.quiz_passing_score ? 'You passed!' : 'Keep learning!',
+      });
+    } catch (error) {
+      console.error('Error submitting quiz:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to submit quiz.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'Beginner':
+        return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300';
+      case 'Intermediate':
+        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300';
+      case 'Advanced':
+        return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -279,7 +362,7 @@ const ArticleViewer = () => {
           <p className="text-muted-foreground mb-4">The requested article could not be found.</p>
           <Button onClick={() => navigate("/app/crypto-learn")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Learn
+            Back to Learning
           </Button>
         </div>
       </div>
@@ -289,347 +372,359 @@ const ArticleViewer = () => {
   return (
     <>
       <Helmet>
-        <title>{article.title} | Eloity</title>
+        <title>{article.title} - Crypto Education | Eloity</title>
         <meta name="description" content={article.excerpt} />
       </Helmet>
 
       <div className="min-h-screen bg-platform">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/app/crypto-learn")}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Learn
-            </Button>
-            
-            <div className="flex items-center gap-2">
-              <Badge className={getLevelColor(article.difficulty)}>
-                {article.difficulty}
-              </Badge>
-              {userProgress?.completed && (
-                <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-                  <CheckCircle2 className="h-3 w-3 mr-1" />
-                  Completed
-                </Badge>
-              )}
-            </div>
-          </div>
+          {/* Back Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/app/crypto-learn")}
+            className="flex items-center gap-2 mb-6"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back to Learning
+          </Button>
 
           {/* Article Header */}
-          <Card className="mb-6">
-            <CardContent className="p-8">
-              <div className="space-y-6">
-                {/* Featured Image */}
-                {article.featuredImage && (
-                  <div className="relative h-64 overflow-hidden rounded-lg">
-                    <img
-                      src={article.featuredImage}
-                      alt={article.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                    <div className="absolute top-4 right-4">
-                      <Badge className={`bg-gradient-to-r ${article.category.color} text-white`}>
-                        {article.category.name}
-                      </Badge>
+          <article className="space-y-6">
+            {/* Featured Image */}
+            {article.featured_image && (
+              <div className="rounded-lg overflow-hidden h-96">
+                <img
+                  src={article.featured_image}
+                  alt={article.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+
+            {/* Title & Meta */}
+            <div className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <h1 className="text-4xl font-bold mb-4">{article.title}</h1>
+                  <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {article.reading_time} min read
                     </div>
-                  </div>
-                )}
-
-                {/* Article Meta */}
-                <div>
-                  <h1 className="text-3xl md:text-4xl font-bold mb-4">{article.title}</h1>
-                  <p className="text-lg text-muted-foreground mb-6">{article.excerpt}</p>
-                  
-                  {/* Author and Meta */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={article.author.avatar} alt={article.author.name} />
-                        <AvatarFallback>{article.author.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-semibold">{article.author.name}</p>
-                        <p className="text-sm text-muted-foreground">{article.author.title}</p>
-                      </div>
+                    <div className="flex items-center gap-1">
+                      <Eye className="h-4 w-4" />
+                      {article.views_count} views
                     </div>
-                    
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        {article.readingTime} min read
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Eye className="h-4 w-4" />
-                        {article.stats.views.toLocaleString()}
-                      </div>
-                    </div>
+                    <Badge className={getDifficultyColor(article.difficulty)}>
+                      {article.difficulty}
+                    </Badge>
                   </div>
-                </div>
-
-                {/* Action Buttons */}
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleToggleLike}
-                    className={userProgress?.liked ? "bg-red-50 border-red-200 text-red-600" : ""}
-                  >
-                    <Heart className={`h-4 w-4 mr-2 ${userProgress?.liked ? "fill-current" : ""}`} />
-                    {userProgress?.liked ? "Liked" : "Like"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleToggleBookmark}
-                    className={userProgress?.bookmarked ? "bg-blue-50 border-blue-200 text-blue-600" : ""}
-                  >
-                    <Bookmark className={`h-4 w-4 mr-2 ${userProgress?.bookmarked ? "fill-current" : ""}`} />
-                    {userProgress?.bookmarked ? "Saved" : "Save"}
-                  </Button>
-                  <Button variant="outline" size="sm">
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Reward Points Info */}
-          <Card className="mb-6 border-amber-200 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-10 h-10 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                  <Gift className="h-5 w-5 text-amber-600" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-amber-800 dark:text-amber-200">Earn Rewards</h3>
-                  <p className="text-sm text-amber-700 dark:text-amber-300">Complete this article to earn learning points</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    userProgress?.rewardsEarned.reading ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                  }`}>
-                    {userProgress?.rewardsEarned.reading ? <CheckCircle2 className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
-                  </div>
-                  <span className={userProgress?.rewardsEarned.reading ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}>
-                    Reading: {article.rewardPoints.reading} pts
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    userProgress?.rewardsEarned.quizCompletion ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                  }`}>
-                    {userProgress?.rewardsEarned.quizCompletion ? <CheckCircle2 className="h-3 w-3" /> : <ListChecks className="h-3 w-3" />}
-                  </div>
-                  <span className={userProgress?.rewardsEarned.quizCompletion ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}>
-                    Quiz Pass: {article.rewardPoints.quizCompletion} pts
-                  </span>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm">
-                  <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                    userProgress?.rewardsEarned.perfectScore ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300'
-                  }`}>
-                    {userProgress?.rewardsEarned.perfectScore ? <CheckCircle2 className="h-3 w-3" /> : <Star className="h-3 w-3" />}
-                  </div>
-                  <span className={userProgress?.rewardsEarned.perfectScore ? 'text-green-600 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}>
-                    Perfect Score: {article.rewardPoints.perfectScore} pts
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-4 pt-4 border-t border-amber-200 dark:border-amber-800">
-                <p className="text-xs text-amber-700 dark:text-amber-300">
-                  💡 Tip: Spend at least 80% of the reading time and pass the quiz to earn all rewards!
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Article Content */}
-          <Card className="mb-6">
-            <CardContent className="p-8">
-              <div className="prose dark:prose-invert max-w-none">
-                <div dangerouslySetInnerHTML={{ __html: article.content.replace(/\n/g, '<br />') }} />
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Quiz Section */}
-          {!showQuiz ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <div className="mb-6">
-                  <div className="w-16 h-16 mx-auto rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center mb-4">
-                    <ListChecks className="h-8 w-8 text-orange-600" />
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2">Test Your Knowledge</h3>
-                  <p className="text-muted-foreground mb-2">{article.quiz.description}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {article.quiz.questions.length} questions • {article.quiz.passingScore}% to pass
-                  </p>
-                </div>
-                
-                <Button onClick={handleStartQuiz} size="lg" className="bg-orange-600 hover:bg-orange-700">
-                  <ListChecks className="h-4 w-4 mr-2" />
-                  Start Quiz
+              {/* Action Buttons */}
+              <div className="flex items-center gap-3">
+                <Button
+                  variant={userProgress?.liked ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={handleToggleLike}
+                >
+                  <Heart
+                    className={`h-4 w-4 mr-2 ${userProgress?.liked ? 'fill-current' : ''}`}
+                  />
+                  Like
                 </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <Card>
-              <CardContent className="p-8">
-                {!quizState.showResults ? (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-semibold">
-                        {article.quiz.title}
-                      </h3>
-                      <div className="text-sm text-muted-foreground">
-                        Question {quizState.currentQuestion + 1} of {article.quiz.questions.length}
+                <Button
+                  variant={userProgress?.bookmarked ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={handleToggleBookmark}
+                >
+                  <Bookmark
+                    className={`h-4 w-4 mr-2 ${userProgress?.bookmarked ? 'fill-current' : ''}`}
+                  />
+                  Bookmark
+                </Button>
+                <Button variant="outline" size="sm">
+                  <Share2 className="h-4 w-4 mr-2" />
+                  Share
+                </Button>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Content */}
+            <div className="prose dark:prose-invert max-w-none">
+              <div
+                dangerouslySetInnerHTML={{
+                  __html: article.content
+                    .split('\n')
+                    .map(line => (line ? `<p>${line}</p>` : ''))
+                    .join(''),
+                }}
+              />
+            </div>
+
+            {/* Rewards Section */}
+            {(article.reward_reading || article.reward_quiz_completion) && (
+              <>
+                <Separator />
+                <Card className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200">
+                  <CardContent className="p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                        <Gift className="h-4 w-4 text-amber-600" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-amber-800 dark:text-amber-200">
+                          Earn Rewards
+                        </h3>
+                        <p className="text-xs text-amber-700 dark:text-amber-300">
+                          Complete the quiz to earn points
+                        </p>
                       </div>
                     </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      {article.reward_reading > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Coins className="h-4 w-4 text-blue-600" />
+                          <span>Reading: {article.reward_reading} pts</span>
+                        </div>
+                      )}
+                      {article.reward_quiz_completion > 0 && (
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <span>Quiz: {article.reward_quiz_completion} pts</span>
+                        </div>
+                      )}
+                      {article.reward_perfect_score > 0 && (
+                        <div className="flex items-center gap-2">
+                          <Trophy className="h-4 w-4 text-purple-600" />
+                          <span>Perfect: {article.reward_perfect_score} pts</span>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
 
-                    <Progress 
-                      value={((quizState.currentQuestion + 1) / article.quiz.questions.length) * 100}
-                      className="h-2"
-                    />
-
-                    <Card>
-                      <CardContent className="p-6">
-                        <h4 className="text-lg font-medium mb-4">
-                          {article.quiz.questions[quizState.currentQuestion].question}
-                        </h4>
-                        
-                        <RadioGroup
-                          value={quizState.answers[article.quiz.questions[quizState.currentQuestion].id]?.toString()}
-                          onValueChange={(value) => 
-                            handleQuizAnswer(
-                              article.quiz.questions[quizState.currentQuestion].id, 
-                              parseInt(value)
-                            )
-                          }
+            {/* Quiz Section */}
+            {article.quiz_questions && article.quiz_questions.length > 0 && (
+              <>
+                <Separator />
+                {!showQuiz ? (
+                  <Card className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                          <ListChecks className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold mb-1">Test Your Knowledge</h3>
+                          <p className="text-sm text-muted-foreground">
+                            Take the quiz to reinforce your learning
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => setShowQuiz(true)}
+                          className="bg-blue-600 hover:bg-blue-700"
                         >
-                          {article.quiz.questions[quizState.currentQuestion].options.map((option, index) => (
-                            <div key={index} className="flex items-center space-x-2 p-3 rounded-lg hover:bg-muted/50">
-                              <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                              <Label htmlFor={`option-${index}`} className="flex-1 cursor-pointer">
-                                {option}
-                              </Label>
+                          <ListChecks className="h-4 w-4 mr-2" />
+                          Start Quiz
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="p-6">
+                      {!quizState.showResults ? (
+                        <div className="space-y-6">
+                          <div>
+                            <div className="flex justify-between items-center mb-2">
+                              <h3 className="font-semibold">
+                                Question {quizState.currentQuestion + 1} of{' '}
+                                {article.quiz_questions.length}
+                              </h3>
+                              <span className="text-sm text-muted-foreground">
+                                {Math.round(
+                                  ((quizState.currentQuestion + 1) /
+                                    article.quiz_questions.length) *
+                                    100
+                                )}
+                                %
+                              </span>
                             </div>
-                          ))}
-                        </RadioGroup>
+                            <Progress
+                              value={
+                                ((quizState.currentQuestion + 1) /
+                                  article.quiz_questions.length) *
+                                100
+                              }
+                              className="h-2"
+                            />
+                          </div>
 
-                        <div className="flex justify-end mt-6">
-                          <Button 
-                            onClick={handleNextQuestion}
-                            disabled={quizState.answers[article.quiz.questions[quizState.currentQuestion].id] === undefined}
+                          <div>
+                            <h4 className="font-semibold mb-4">
+                              {article.quiz_questions[quizState.currentQuestion].question}
+                            </h4>
+
+                            <RadioGroup
+                              value={String(
+                                quizState.answers[quizState.currentQuestion] ?? -1
+                              )}
+                              onValueChange={value =>
+                                handleAnswerQuestion(quizState.currentQuestion, parseInt(value))
+                              }
+                            >
+                              <div className="space-y-3">
+                                {article.quiz_questions[quizState.currentQuestion].options.map(
+                                  (option: string, idx: number) => (
+                                    <div key={idx} className="flex items-center space-x-2">
+                                      <RadioGroupItem value={String(idx)} id={`option-${idx}`} />
+                                      <Label htmlFor={`option-${idx}`} className="cursor-pointer">
+                                        {option}
+                                      </Label>
+                                    </div>
+                                  )
+                                )}
+                              </div>
+                            </RadioGroup>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <Button
+                              variant="outline"
+                              onClick={() =>
+                                setQuizState(prev => ({
+                                  ...prev,
+                                  currentQuestion: Math.max(0, prev.currentQuestion - 1),
+                                }))
+                              }
+                              disabled={quizState.currentQuestion === 0}
+                            >
+                              Previous
+                            </Button>
+
+                            {quizState.currentQuestion <
+                            article.quiz_questions.length - 1 ? (
+                              <Button
+                                onClick={() =>
+                                  setQuizState(prev => ({
+                                    ...prev,
+                                    currentQuestion: prev.currentQuestion + 1,
+                                  }))
+                                }
+                              >
+                                Next
+                              </Button>
+                            ) : (
+                              <Button
+                                onClick={handleSubmitQuiz}
+                                className="bg-green-600 hover:bg-green-700"
+                              >
+                                Submit Quiz
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-6">
+                          <div className="text-center">
+                            <div className="text-5xl font-bold mb-2">
+                              {quizState.score}%
+                            </div>
+                            <p className="text-lg font-semibold mb-2">
+                              {quizState.score >= article.quiz_passing_score
+                                ? '🎉 Passed!'
+                                : 'Keep Learning'}
+                            </p>
+                            <p className="text-muted-foreground">
+                              Passing score: {article.quiz_passing_score}%
+                            </p>
+                          </div>
+
+                          <Separator />
+
+                          <div className="space-y-3">
+                            {article.quiz_questions.map((q: any, idx: number) => {
+                              const userAnswer = quizState.answers[idx];
+                              const isCorrect = userAnswer === q.correctAnswer;
+
+                              return (
+                                <div
+                                  key={idx}
+                                  className={`p-4 rounded-lg border ${
+                                    isCorrect
+                                      ? 'bg-green-50 dark:bg-green-900/20 border-green-200'
+                                      : 'bg-red-50 dark:bg-red-900/20 border-red-200'
+                                  }`}
+                                >
+                                  <p className="font-semibold text-sm mb-2">{q.question}</p>
+                                  <p className="text-sm">
+                                    Your answer:{' '}
+                                    <span
+                                      className={
+                                        isCorrect
+                                          ? 'text-green-600 font-semibold'
+                                          : 'text-red-600 font-semibold'
+                                      }
+                                    >
+                                      {q.options[userAnswer]}
+                                    </span>
+                                  </p>
+                                  {!isCorrect && (
+                                    <p className="text-sm mt-2">
+                                      Correct answer:{' '}
+                                      <span className="text-green-600 font-semibold">
+                                        {q.options[q.correctAnswer]}
+                                      </span>
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          <Button
+                            onClick={() => {
+                              setShowQuiz(false);
+                              setQuizState({
+                                currentQuestion: 0,
+                                answers: {},
+                                showResults: false,
+                                score: 0,
+                              });
+                            }}
+                            className="w-full"
                           >
-                            {quizState.currentQuestion < article.quiz.questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
-                            <ArrowRight className="h-4 w-4 ml-2" />
+                            Back to Article
                           </Button>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                ) : (
-                  <div className="text-center space-y-6">
-                    <div className={`w-20 h-20 mx-auto rounded-full flex items-center justify-center ${
-                      quizState.score >= article.quiz.passingScore 
-                        ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' 
-                        : 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400'
-                    }`}>
-                      {quizState.score >= article.quiz.passingScore ? (
-                        <Trophy className="h-10 w-10" />
-                      ) : (
-                        <RotateCcw className="h-10 w-10" />
                       )}
-                    </div>
-
-                    <div>
-                      <h3 className="text-2xl font-bold mb-2">
-                        {quizState.score >= article.quiz.passingScore ? 'Quiz Completed!' : 'Quiz Failed'}
-                      </h3>
-                      <p className="text-lg text-muted-foreground mb-4">
-                        Your score: {quizState.score}%
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {quizState.score >= article.quiz.passingScore 
-                          ? 'Congratulations! You have successfully completed this article.'
-                          : `You need ${article.quiz.passingScore}% or higher to complete the article.`
-                        }
-                      </p>
-                    </div>
-                    
-                    <div className="flex gap-3 justify-center">
-                      {quizState.score < article.quiz.passingScore && (
-                        <Button onClick={retakeQuiz} variant="outline">
-                          <RotateCcw className="h-4 w-4 mr-2" />
-                          Retake Quiz
-                        </Button>
-                      )}
-                      <Button onClick={() => navigate("/app/crypto-learn")}>
-                        <ArrowLeft className="h-4 w-4 mr-2" />
-                        Back to Learn
-                      </Button>
-                    </div>
-
-                    {/* Quiz Review */}
-                    <div className="mt-8 text-left">
-                      <h4 className="text-lg font-semibold mb-4">Quiz Review</h4>
-                      <div className="space-y-4">
-                        {article.quiz.questions.map((question, index) => {
-                          const userAnswer = quizState.answers[question.id];
-                          const isCorrect = userAnswer === question.correctAnswer;
-                          
-                          return (
-                            <Card key={question.id} className={`border-l-4 ${
-                              isCorrect ? 'border-green-500' : 'border-red-500'
-                            }`}>
-                              <CardContent className="p-4">
-                                <div className="flex items-start gap-3">
-                                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-sm ${
-                                    isCorrect ? 'bg-green-500' : 'bg-red-500'
-                                  }`}>
-                                    {index + 1}
-                                  </div>
-                                  <div className="flex-1">
-                                    <p className="font-medium mb-2">{question.question}</p>
-                                    <p className="text-sm text-muted-foreground mb-1">
-                                      Your answer: {question.options[userAnswer]}
-                                    </p>
-                                    {!isCorrect && (
-                                      <p className="text-sm text-green-600 mb-2">
-                                        Correct answer: {question.options[question.correctAnswer]}
-                                      </p>
-                                    )}
-                                    <p className="text-sm text-muted-foreground italic">
-                                      {question.explanation}
-                                    </p>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
-          )}
+              </>
+            )}
+
+            {/* Tags */}
+            {article.tags && article.tags.length > 0 && (
+              <>
+                <Separator />
+                <div className="flex flex-wrap gap-2">
+                  {article.tags.map((tag, idx) => (
+                    <Badge key={idx} variant="outline">
+                      {tag}
+                    </Badge>
+                  ))}
+                </div>
+              </>
+            )}
+          </article>
         </div>
       </div>
     </>
