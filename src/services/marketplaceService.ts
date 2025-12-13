@@ -955,7 +955,7 @@ export class MarketplaceService {
         .from('product_reviews')
         .select(`
           *,
-          reviewer:users(full_name, avatar_url)
+          user:user_id(full_name, avatar_url)
         `)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
