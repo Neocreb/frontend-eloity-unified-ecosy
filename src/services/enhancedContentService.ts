@@ -114,27 +114,27 @@ const transformVideoData = (video: any): ContentItem => {
 
 // Transform product data to content item format
 const transformProductData = (product: any): ContentItem => {
-  const revenue = (product.price || 0) * (product.sales_count || 0);
-  
+  const revenue = (product.price || 0) * (product.review_count || 0);
+
   return {
     id: product.id,
     title: product.name,
     type: 'Product',
     description: product.description,
-    views: product.view_count || 0,
-    engagement: product.total_reviews || 0,
+    views: 0,
+    engagement: product.review_count || 0,
     revenue: revenue,
     publishDate: product.created_at,
     platform: 'Marketplace',
-    thumbnail: product.thumbnail_image || product.images?.[0] || '/api/placeholder/300/200',
+    thumbnail: product.image_url || product.images?.[0] || '/api/placeholder/300/200',
     analytics: {
-      sales: product.sales_count || 0,
-      rating: product.average_rating || 0,
+      sales: 0,
+      rating: product.rating || 0,
       price: product.price || 0,
-      stock: product.stock_quantity || 0,
+      stock: product.in_stock ? 1 : 0,
     },
     price: product.price || 0,
-    sales: product.sales_count || 0
+    sales: 0
   };
 };
 
