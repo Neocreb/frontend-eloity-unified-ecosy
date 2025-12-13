@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft,
   RefreshCw,
@@ -22,27 +23,69 @@ import {
   Brain,
   Target
 } from "lucide-react";
+import { createClient } from '@supabase/supabase-js';
 import { blogService } from "@/services/blogService";
 import { BlogPost } from "@/types/blog";
-import { courseService, Course } from "@/services/courseService";
-import { educationalArticleService, EducationalArticle } from "@/services/educationalArticleService";
 import LearningProgressDashboard from "@/components/rewards/LearningProgressDashboard";
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+interface Course {
+  id: string;
+  title: string;
+  description: string;
+  level: 'Beginner' | 'Intermediate' | 'Advanced';
+  category: string;
+  duration: string;
+  course_type: 'platform' | 'creator';
+  instructor_name: string;
+  thumbnail_url: string;
+  rating: number;
+  total_students: number;
+  price: number;
+  is_paid: boolean;
+  has_certificate: boolean;
+  reward_enrollment: number;
+  reward_completion: number;
+  reward_certificate: number;
+}
+
+interface Article {
+  id: string;
+  title: string;
+  excerpt: string;
+  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  category: string;
+  reading_time: number;
+  featured_image: string;
+  views_count: number;
+  quiz_attempts: number;
+  tags: string[];
+}
 
 const CryptoLearn = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>([]);
-  const [educationalArticles, setEducationalArticles] = useState<EducationalArticle[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
+  const [platformCourses, setPlatformCourses] = useState<Course[]>([]);
+  const [creatorCourses, setCreatorCourses] = useState<Course[]>([]);
+  const [userEnrollments, setUserEnrollments] = useState<string[]>([]);
+
   const [courseStats, setCourseStats] = useState({
     totalCourses: 0,
     enrolledCourses: 0,
     completedCourses: 0,
-    totalTimeSpent: 0,
-    averageProgress: 0
   });
+
   const [isLoading, setIsLoading] = useState(true);
+  const [filterLevel, setFilterLevel] = useState('all');
+  const [filterCategory, setFilterCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!user) {
@@ -59,43 +102,75 @@ const CryptoLearn = () => {
 
   const loadData = async () => {
     try {
-      // Load courses
-      const allCourses = courseService.getAllCourses();
+      setIsLoading(true);
 
-      // Load user progress for each course
+      // Load platform courses
+      const { data: platformCoursesData, error: platformError } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('is_published', true)
+        .eq('course_type', 'platform')
+        .order('created_at', { ascending: false });
+
+      if (platformError) throw platformError;
+
+      // Load creator courses
+      const { data: creatorCoursesData, error: creatorError } = await supabase
+        .from('courses')
+        .select('*')
+        .eq('is_published', true)
+        .eq('course_type', 'creator')
+        .order('created_at', { ascending: false });
+
+      if (creatorError) throw creatorError;
+
+      setPlatformCourses(platformCoursesData || []);
+      setCreatorCourses(creatorCoursesData || []);
+
+      // Load user enrollments
       if (user) {
-        const userProgress = courseService.getUserProgress(user.id);
-        const enrolledCourseIds = userProgress.map(p => p.courseId);
+        const { data: enrollmentsData, error: enrollError } = await supabase
+          .from('course_enrollments')
+          .select('course_id')
+          .eq('user_id', user.id);
 
-        // Update course enrollment and progress status
-        allCourses.forEach(course => {
-          const progress = userProgress.find(p => p.courseId === course.id);
-          if (progress) {
-            course.enrolled = true;
-            course.progress = progress.progress;
-            course.completedLessons = progress.completedLessons.length;
-          }
+        if (enrollError) throw enrollError;
+
+        const enrolledIds = (enrollmentsData || []).map(e => e.course_id);
+        setUserEnrollments(enrolledIds);
+
+        // Calculate stats
+        const completedCount = (enrollmentsData || []).filter(e => e.status === 'completed').length;
+        setCourseStats({
+          totalCourses: (platformCoursesData || []).length + (creatorCoursesData || []).length,
+          enrolledCourses: enrolledIds.length,
+          completedCourses: completedCount,
         });
-
-        // Get course statistics
-        const stats = courseService.getCourseStats(user.id);
-        setCourseStats(stats);
       }
 
-      setCourses(allCourses);
+      // Load articles
+      const { data: articlesData, error: articlesError } = await supabase
+        .from('educational_articles')
+        .select('*')
+        .eq('is_published', true)
+        .order('published_at', { ascending: false })
+        .limit(12);
+
+      if (articlesError) throw articlesError;
+      setArticles(articlesData || []);
 
       // Load blog posts
-      const result = await blogService.getBlogPosts({ limit: 12 });
-      setBlogPosts(result?.posts || []);
-
-      // Load educational articles
-      const articles = educationalArticleService.getAllArticles();
-      setEducationalArticles(articles);
+      try {
+        const blogResult = await blogService.getBlogPosts({ limit: 6 });
+        setBlogPosts(blogResult?.posts || []);
+      } catch (error) {
+        console.error('Error loading blog posts:', error);
+      }
     } catch (error) {
       console.error("Failed to load data:", error);
       toast({
         title: "Error",
-        description: "Failed to load course data.",
+        description: "Failed to load learning content.",
         variant: "destructive",
       });
     } finally {
@@ -103,11 +178,7 @@ const CryptoLearn = () => {
     }
   };
 
-  const handleBackToCrypto = () => {
-    navigate("/app/crypto");
-  };
   const handleRefresh = () => {
-    setIsLoading(true);
     loadData();
   };
 
@@ -119,24 +190,47 @@ const CryptoLearn = () => {
     navigate(`/app/article/${articleId}`);
   };
 
-  if (!user) {
-    return null; // Will redirect to auth
-  }
-
   const getLevelColor = (level: string) => {
     switch (level) {
-      case "Beginner": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
-      case "Intermediate": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
-      case "Advanced": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
-      default: return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
+      case "Beginner":
+        return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300";
+      case "Intermediate":
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300";
+      case "Advanced":
+        return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300";
+      default:
+        return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300";
     }
   };
+
+  const filterCourses = (courses: Course[]) => {
+    return courses.filter(course => {
+      const matchLevel = filterLevel === 'all' || course.level === filterLevel;
+      const matchCategory = filterCategory === 'all' || course.category === filterCategory;
+      const matchSearch =
+        !searchTerm ||
+        course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        course.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return matchLevel && matchCategory && matchSearch;
+    });
+  };
+
+  if (!user) {
+    return null;
+  }
+
+  const allCourses = [...platformCourses, ...creatorCourses];
+  const categories = Array.from(new Set(allCourses.map(c => c.category).filter(Boolean)));
 
   return (
     <>
       <Helmet>
         <title>Crypto Education Center - Learn Trading & Blockchain | Eloity</title>
-        <meta name="description" content="Comprehensive cryptocurrency education with courses, tutorials, and expert insights on trading, blockchain, and DeFi." />
+        <meta
+          name="description"
+          content="Comprehensive cryptocurrency education with courses, tutorials, and expert insights on trading, blockchain, and DeFi."
+        />
       </Helmet>
 
       <div className="min-h-screen bg-platform">
@@ -146,7 +240,7 @@ const CryptoLearn = () => {
             <Button
               variant="ghost"
               size="icon"
-              onClick={handleBackToCrypto}
+              onClick={() => navigate("/app/crypto")}
               aria-label="Back to Crypto"
               className="shrink-0"
             >
@@ -183,9 +277,8 @@ const CryptoLearn = () => {
                     <h3 className="text-xl font-bold">Welcome to Crypto Academy</h3>
                     <p className="text-white font-medium">
                       {courseStats.enrolledCourses > 0
-                        ? `Continue your crypto education journey`
-                        : `Start your journey to becoming a crypto expert`
-                      }
+                        ? `Continue your learning journey`
+                        : `Start your journey to becoming a crypto expert`}
                     </p>
                   </div>
                 </div>
@@ -194,11 +287,6 @@ const CryptoLearn = () => {
                     {courseStats.completedCourses}/{courseStats.totalCourses}
                   </div>
                   <div className="text-sm text-white font-medium">Courses Completed</div>
-                  {courseStats.enrolledCourses > 0 && (
-                    <div className="text-xs text-white/80 mt-1">
-                      {Math.round(courseStats.averageProgress)}% avg progress
-                    </div>
-                  )}
                 </div>
               </div>
             </CardContent>
@@ -227,243 +315,269 @@ const CryptoLearn = () => {
 
             {/* Courses Tab */}
             <TabsContent value="courses" className="mt-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {courses.map((course, index) => (
-                  <Card
-                    key={course.id}
-                    className="cursor-pointer hover:shadow-xl transition-all duration-300 group content-card overflow-hidden hover:scale-[1.02]"
-                    onClick={() => handleCourseClick(course.id)}
-                  >
-                    <div className={`h-2 bg-gradient-to-r ${course.color}`}></div>
-                    <CardContent className="p-6">
-                      <div className="space-y-4">
-                        <div className="flex items-start justify-between">
-                          <div className={`p-3 rounded-lg bg-gradient-to-r ${course.color}`}>
-                            <course.icon className="h-6 w-6 text-white" />
-                          </div>
-                          <Badge className={getLevelColor(course.level)}>
-                            {course.level}
-                          </Badge>
-                        </div>
+              {/* Filters */}
+              <div className="mb-6 space-y-4">
+                <input
+                  type="text"
+                  placeholder="Search courses..."
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900"
+                />
 
-                        <div>
-                          <h3 className="font-bold text-lg mb-2 group-hover:text-blue-600 transition-colors">
-                            {course.title}
-                          </h3>
-                          <p className="text-sm text-muted-foreground line-clamp-2">
-                            {course.description}
-                          </p>
-                        </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Select value={filterLevel} onValueChange={setFilterLevel}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filter by level..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Levels</SelectItem>
+                      <SelectItem value="Beginner">Beginner</SelectItem>
+                      <SelectItem value="Intermediate">Intermediate</SelectItem>
+                      <SelectItem value="Advanced">Advanced</SelectItem>
+                    </SelectContent>
+                  </Select>
 
-                        {/* Progress bar for enrolled courses */}
-                        {course.enrolled && course.progress > 0 && (
-                          <div className="space-y-2">
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                              <span>Progress</span>
-                              <span>{Math.round(course.progress)}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
-                              <div
-                                className="bg-blue-600 h-1.5 rounded-full transition-all duration-300"
-                                style={{ width: `${course.progress}%` }}
-                              ></div>
-                            </div>
+                  <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Filter by category..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map(cat => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {/* Platform Courses Section */}
+              {platformCourses.length > 0 && (
+                <div className="mb-12">
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold mb-2">Platform Courses</h2>
+                    <p className="text-muted-foreground">Curated courses by Eloity experts</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filterCourses(platformCourses).map(course => (
+                      <Card
+                        key={course.id}
+                        className="cursor-pointer hover:shadow-xl transition-all duration-300 group overflow-hidden hover:scale-[1.02]"
+                        onClick={() => handleCourseClick(course.id)}
+                      >
+                        {course.thumbnail_url && (
+                          <div className="h-40 overflow-hidden bg-gray-200 dark:bg-gray-700">
+                            <img
+                              src={course.thumbnail_url}
+                              alt={course.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
                           </div>
                         )}
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <Badge className={getLevelColor(course.level)}>
+                                {course.level}
+                              </Badge>
+                              {course.is_paid && (
+                                <Badge variant="secondary">${course.price}</Badge>
+                              )}
+                            </div>
 
-                        <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-4 w-4" />
-                            {course.duration}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <BookOpen className="h-4 w-4" />
-                            {course.totalLessons} lessons
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Users className="h-4 w-4" />
-                            {course.students.toLocaleString()}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 text-yellow-500" />
-                            {course.rating}
-                          </div>
-                        </div>
+                            <div>
+                              <h3 className="font-bold text-lg mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                {course.title}
+                              </h3>
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {course.description}
+                              </p>
+                            </div>
 
-                        <Button
-                          className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCourseClick(course.id);
-                          }}
-                        >
-                          <Play className="h-4 w-4 mr-2" />
-                          {course.enrolled
-                            ? course.progress > 0
-                              ? 'Continue Learning'
-                              : 'Start Learning'
-                            : 'View Course'
-                          }
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                            <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                {course.duration}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                {course.total_students} students
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Star className="h-4 w-4 text-yellow-500" />
+                                {course.rating}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                {course.has_certificate && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Certificate
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+
+                            <Button
+                              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleCourseClick(course.id);
+                              }}
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              View Course
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Creator Courses Section */}
+              {creatorCourses.length > 0 && (
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-2xl font-bold mb-2">Community Courses</h2>
+                    <p className="text-muted-foreground">Courses created by our community experts</p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filterCourses(creatorCourses).map(course => (
+                      <Card
+                        key={course.id}
+                        className="cursor-pointer hover:shadow-xl transition-all duration-300 group overflow-hidden hover:scale-[1.02]"
+                        onClick={() => handleCourseClick(course.id)}
+                      >
+                        {course.thumbnail_url && (
+                          <div className="h-40 overflow-hidden bg-gray-200 dark:bg-gray-700">
+                            <img
+                              src={course.thumbnail_url}
+                              alt={course.title}
+                              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                            />
+                          </div>
+                        )}
+                        <CardContent className="p-6">
+                          <div className="space-y-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-center gap-2">
+                                <Badge className={getLevelColor(course.level)}>
+                                  {course.level}
+                                </Badge>
+                                <Badge variant="outline" className="text-xs">
+                                  Community
+                                </Badge>
+                              </div>
+                              {course.is_paid && (
+                                <Badge variant="secondary">${course.price}</Badge>
+                              )}
+                            </div>
+
+                            <div>
+                              <h3 className="font-bold text-lg mb-2 group-hover:text-blue-600 transition-colors line-clamp-2">
+                                {course.title}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                by {course.instructor_name}
+                              </p>
+                              <p className="text-sm text-muted-foreground line-clamp-2 mt-1">
+                                {course.description}
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                {course.duration}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                {course.total_students} students
+                              </div>
+                            </div>
+
+                            <Button
+                              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleCourseClick(course.id);
+                              }}
+                            >
+                              <Play className="h-4 w-4 mr-2" />
+                              View Course
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {filterCourses(allCourses).length === 0 && (
+                <div className="text-center py-12">
+                  <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-muted-foreground">No courses found matching your filters</p>
+                </div>
+              )}
             </TabsContent>
 
             {/* Articles Tab */}
             <TabsContent value="articles" className="mt-6">
-              <div className="space-y-8">
-                {/* Educational Articles Section */}
-                {educationalArticles && educationalArticles.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="text-xl font-bold">Educational Articles</h3>
-                        <p className="text-sm text-muted-foreground">
-                          In-depth articles with quizzes to test your knowledge
-                        </p>
-                      </div>
-                      <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
-                        Interactive Learning
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {educationalArticles.map((article) => (
-                        <Card
-                          key={article.id}
-                          className="cursor-pointer hover:shadow-xl transition-all duration-300 group border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm overflow-hidden hover:scale-[1.02]"
-                          onClick={() => handleArticleClick(article.id)}
-                        >
-                          {article.featuredImage && (
-                            <div className="relative h-48 overflow-hidden">
-                              <img
-                                src={article.featuredImage}
-                                alt={article.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                              <div className="absolute top-3 right-3">
-                                <Badge className={`bg-gradient-to-r ${article.category.color} text-white`}>
-                                  {article.category.name}
-                                </Badge>
-                              </div>
-                              <div className="absolute top-3 left-3">
-                                <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  Quiz
-                                </Badge>
-                              </div>
+              {articles.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {articles.map(article => (
+                    <Card
+                      key={article.id}
+                      className="cursor-pointer hover:shadow-xl transition-all duration-300 group overflow-hidden hover:scale-[1.02]"
+                      onClick={() => handleArticleClick(article.id)}
+                    >
+                      {article.featured_image && (
+                        <div className="relative h-48 overflow-hidden">
+                          <img
+                            src={article.featured_image}
+                            alt={article.title}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
+                          <div className="absolute top-3 right-3">
+                            <Badge className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300">
+                              {article.difficulty}
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
+                      <CardContent className="p-6">
+                        <div className="space-y-3">
+                          <h3 className="font-bold text-lg line-clamp-2 group-hover:text-blue-600 transition-colors">
+                            {article.title}
+                          </h3>
+                          <p className="text-sm text-muted-foreground line-clamp-3">
+                            {article.excerpt}
+                          </p>
+                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {article.reading_time}m read
                             </div>
-                          )}
-                          <CardContent className="p-6">
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Badge className={`text-xs ${
-                                  article.difficulty === 'Beginner'
-                                    ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                                    : article.difficulty === 'Intermediate'
-                                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                                    : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                                }`}>
-                                  {article.difficulty}
-                                </Badge>
-                              </div>
-
-                              <h3 className="font-bold text-lg line-clamp-2 group-hover:text-blue-600 transition-colors">
-                                {article.title}
-                              </h3>
-                              <p className="text-sm text-muted-foreground line-clamp-3">
-                                {article.excerpt}
-                              </p>
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {article.readingTime}m read
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span>{article.quiz.questions.length} questions</span>
-                                  <span>{article.stats.views.toLocaleString()} views</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Blog Posts Section */}
-                {blogPosts && blogPosts.length > 0 && (
-                  <div>
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h3 className="text-xl font-bold">Latest Blog Posts</h3>
-                        <p className="text-sm text-muted-foreground">
-                          Stay updated with the latest crypto news and insights
-                        </p>
-                      </div>
-                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                        News & Updates
-                      </Badge>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {blogPosts.slice(0, 6).map((post, index) => (
-                        <Card
-                          key={post.id}
-                          className="cursor-pointer hover:shadow-xl transition-all duration-300 group border-0 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm overflow-hidden hover:scale-[1.02]"
-                          onClick={() => window.open(`/blog/${post.slug}`, "_blank")}
-                        >
-                          {post.featuredImage && (
-                            <div className="relative h-48 overflow-hidden">
-                              <img
-                                src={post.featuredImage}
-                                alt={post.title}
-                                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-                              <div className="absolute top-3 right-3">
-                                <Badge className="bg-white/90 text-black">
-                                  {post.category.name}
-                                </Badge>
-                              </div>
-                            </div>
-                          )}
-                          <CardContent className="p-6">
-                            <div className="space-y-3">
-                              <h3 className="font-bold text-lg line-clamp-2 group-hover:text-blue-600 transition-colors">
-                                {post.title}
-                              </h3>
-                              <p className="text-sm text-muted-foreground line-clamp-3">
-                                {post.excerpt}
-                              </p>
-                              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {post.readingTime}m read
-                                </div>
-                                <span>{new Date(post.publishedAt).toLocaleDateString()}</span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Empty State */}
-                {(!educationalArticles || educationalArticles.length === 0) && (!blogPosts || blogPosts.length === 0) && (
-                  <div className="col-span-full text-center py-12">
-                    <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                    <p className="text-muted-foreground">Loading educational content...</p>
-                  </div>
-                )}
-              </div>
+                            <span>👁️ {article.views_count} views</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <BookOpen className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                  <p className="text-muted-foreground">No articles available yet</p>
+                </div>
+              )}
             </TabsContent>
 
             {/* Progress Tab */}
