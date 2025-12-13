@@ -85,26 +85,31 @@ export const videoService = {
   async getVideoById(id: string): Promise<Video | null> {
     const { data, error } = await supabase
       .from('videos')
-      .select(`
-        *,
-        profiles(
-          user_id,
-          username,
-          full_name,
-          avatar_url,
-          is_verified
-        )
-      `)
+      .select('*')
       .eq('id', id)
       .single();
 
     if (error) throw error;
     if (!data) return null;
 
-    return {
-      ...data,
-      user: data.profiles || undefined
-    };
+    // Fetch user profile separately
+    try {
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('user_id, username, full_name, avatar_url, is_verified')
+        .eq('user_id', data.user_id)
+        .single();
+
+      return {
+        ...data,
+        user: profileData || undefined
+      };
+    } catch (profileError) {
+      return {
+        ...data,
+        user: undefined
+      };
+    }
   },
 
   async createVideo(videoData: {
