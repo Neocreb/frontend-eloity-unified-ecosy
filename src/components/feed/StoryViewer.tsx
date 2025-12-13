@@ -48,12 +48,12 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
     }, 100);
 
     return () => clearInterval(timer);
-  }, [currentMedia, currentIndex, currentStoryIndex, stories.length]);
+  }, [currentStory, currentIndex, stories.length, onStoryChange, onClose]);
 
   // Reset progress when story changes
   useEffect(() => {
     setProgress(0);
-  }, [currentIndex, currentStoryIndex]);
+  }, [currentIndex]);
 
   const handleLike = async () => {
     if (currentMedia) {
