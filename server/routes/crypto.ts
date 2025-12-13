@@ -55,18 +55,21 @@ const FALLBACK_PRICES_RESPONSE: Record<string, any> = {
 
 // Get current cryptocurrency prices
 router.get('/prices', async (req, res) => {
-  // Set headers FIRST before anything else to ensure proper content-type
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, max-age=60');
-
   try {
+    // Set headers FIRST before anything else to ensure proper content-type
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.setHeader('Cache-Control', 'public, max-age=60');
+
+    // Ensure we never return an error that could be HTML
+    res.removeHeader('X-Frame-Options');
+
     const { symbols, vs_currency = 'usd' } = req.query;
     const symbolList = symbols ? (typeof symbols === 'string' ? symbols.split(',') : symbols) : ['bitcoin', 'ethereum', 'tether', 'binancecoin'];
 
-    logger.info('Fetching crypto prices', {
+    logger.info('[Crypto Prices API] Request received', {
       symbolCount: symbolList.length,
       vsCurrency: vs_currency,
-      symbols: symbolList
+      symbols: symbolList.slice(0, 5) // Log first 5 for debugging
     });
 
     let prices = {};
@@ -74,25 +77,32 @@ router.get('/prices', async (req, res) => {
 
     // Try to get live prices from service
     try {
+      const trimmedSymbols = symbolList.map((s: string) => String(s).toLowerCase().trim());
+      logger.info('[Crypto Prices API] Calling getCryptoPrices service', { symbols: trimmedSymbols });
+
       prices = await getCryptoPrices(
-        symbolList.map((s: string) => String(s).toLowerCase().trim()),
+        trimmedSymbols,
         String(vs_currency)
       );
+
       if (prices && Object.keys(prices).length > 0) {
         fetchedFromAPI = true;
-        logger.info('Successfully fetched crypto prices from external APIs', {
+        logger.info('[Crypto Prices API] Successfully fetched from API', {
           symbolCount: Object.keys(prices).length
         });
+      } else {
+        logger.warn('[Crypto Prices API] API returned empty prices');
       }
     } catch (innerError) {
-      logger.warn('getCryptoPrices encountered error, using fallback', {
-        message: innerError instanceof Error ? innerError.message : String(innerError)
+      logger.warn('[Crypto Prices API] getCryptoPrices service error', {
+        message: innerError instanceof Error ? innerError.message : String(innerError),
+        error: innerError
       });
     }
 
     // If we didn't get prices from API, use fallback
     if (!fetchedFromAPI || !prices || Object.keys(prices).length === 0) {
-      logger.info('Using fallback prices for symbols:', { symbols: symbolList });
+      logger.info('[Crypto Prices API] Using fallback prices', { symbols: symbolList });
       prices = {};
       for (const symbol of symbolList) {
         const lower = String(symbol).toLowerCase();
@@ -105,15 +115,21 @@ router.get('/prices', async (req, res) => {
       }
     }
 
-    // Always return valid JSON response
-    res.status(200).json({
+    // Ensure response is JSON
+    const response = {
       prices,
       timestamp: new Date().toISOString(),
       vs_currency: vs_currency || 'usd',
-      source: fetchedFromAPI ? 'api' : 'fallback'
-    });
+      source: fetchedFromAPI ? 'api' : 'fallback',
+      status: 'success'
+    };
+
+    logger.info('[Crypto Prices API] Sending response', { priceCount: Object.keys(prices).length });
+
+    // Use json() method which ensures proper headers
+    return res.status(200).json(response);
   } catch (error) {
-    logger.error('Crypto prices fetch error:', {
+    logger.error('[Crypto Prices API] Unhandled error', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       errorType: error instanceof Error ? error.constructor.name : typeof error
@@ -121,19 +137,31 @@ router.get('/prices', async (req, res) => {
 
     // Always return valid JSON on error - never return HTML error pages
     try {
-      res.status(200).json({
+      const errorResponse = {
         prices: FALLBACK_PRICES_RESPONSE,
         timestamp: new Date().toISOString(),
         vs_currency: 'usd',
         source: 'fallback',
-        warning: 'Using fallback prices due to API error'
-      });
+        warning: 'Using fallback prices due to API error',
+        error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined,
+        status: 'error'
+      };
+
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return res.status(200).json(errorResponse);
     } catch (responseError) {
-      // If JSON response fails, log it and send minimal response
-      logger.error('Failed to send JSON response:', {
+      // Last resort - send minimal JSON response
+      logger.error('[Crypto Prices API] Failed to send error response', {
         message: responseError instanceof Error ? responseError.message : String(responseError)
       });
-      res.status(500).end('{"error":"Server error"}');
+
+      res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      return res.status(200).end(JSON.stringify({
+        prices: FALLBACK_PRICES_RESPONSE,
+        source: 'fallback',
+        status: 'error',
+        message: 'Server error - using fallback prices'
+      }));
     }
   }
 });
