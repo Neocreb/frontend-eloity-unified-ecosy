@@ -128,7 +128,12 @@ export const videoService = {
       .from('videos')
       .insert({
         ...videoData,
-        user_id: user.id
+        user_id: user.id,
+        is_public: true,
+        views_count: 0,
+        likes_count: 0,
+        comments_count: 0,
+        shares_count: 0
       })
       .select()
       .single();
