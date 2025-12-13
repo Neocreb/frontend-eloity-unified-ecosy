@@ -249,11 +249,11 @@ const fetchProducts = async (params: FetchContentParams) => {
         query = query.order('view_count', { ascending: false });
         break;
       case 'engagement':
-        query = query.order('total_reviews', { ascending: false });
+        query = query.order('review_count', { ascending: false });
         break;
       case 'revenue':
         // Order by revenue (price * sales)
-        query = query.order('total_sales', { ascending: false });
+        query = query.order('price', { ascending: false });
         break;
       default:
         query = query.order('created_at', { ascending: false });
