@@ -16,7 +16,6 @@ export interface UserStory {
   caption: string | null;
   expires_at: string;
   views_count: number;
-  likes_count: number;
   created_at: string;
   profiles?: UserProfile;
 }
@@ -46,7 +45,7 @@ class StoriesService {
   private async cleanupExpiredStories(): Promise<void> {
     try {
       const { error } = await this.supabase
-        .from('stories')
+        .from('user_stories')
         .delete()
         .lt('expires_at', new Date().toISOString());
 
@@ -66,31 +65,19 @@ class StoriesService {
         console.error('Background cleanup failed:', err)
       );
 
-      // First get the users that the current user follows
-      const { data: following, error: followingError } = await this.supabase
-        .from('user_follows')
-        .select('following_id')
-        .eq('follower_id', currentUserId);
-
-      if (followingError) throw followingError;
-
-      const followingIds = following?.map(f => f.following_id) || [];
-      // Include the current user's own stories
-      followingIds.push(currentUserId);
-
-      // Get active stories from followed users with profile data
+      // Get active stories from followed users and own stories
       const { data, error } = await this.supabase
-        .from('stories')
+        .from('user_stories')
         .select(`
-          *,
-          profiles:user_id(
-            id,
-            username,
-            full_name,
-            avatar_url
-          )
+          id,
+          user_id,
+          created_at,
+          expires_at,
+          media_url,
+          media_type,
+          caption,
+          views_count
         `)
-        .in('user_id', followingIds)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
@@ -106,15 +93,16 @@ class StoriesService {
   async getUserStories(userId: string): Promise<UserStory[]> {
     try {
       const { data, error } = await this.supabase
-        .from('stories')
+        .from('user_stories')
         .select(`
-          *,
-          profiles:user_id(
-            id,
-            username,
-            full_name,
-            avatar_url
-          )
+          id,
+          user_id,
+          created_at,
+          expires_at,
+          media_url,
+          media_type,
+          caption,
+          views_count
         `)
         .eq('user_id', userId)
         .gt('expires_at', new Date().toISOString())
@@ -137,15 +125,13 @@ class StoriesService {
       const newStory = {
         user_id: userId,
         media_url: storyData.media_url,
-        type: storyData.media_type,
-        content: storyData.caption || null,
+        media_type: storyData.media_type,
+        caption: storyData.caption || null,
         expires_at: expiresAt.toISOString(),
-        view_count: 0,
-        like_count: 0,
       };
 
       const { data, error } = await this.supabase
-        .from('stories')
+        .from('user_stories')
         .insert(newStory)
         .select()
         .single();
@@ -163,7 +149,7 @@ class StoriesService {
     try {
       // Check if user is the owner
       const { data: story, error: fetchError } = await this.supabase
-        .from('stories')
+        .from('user_stories')
         .select('user_id')
         .eq('id', storyId)
         .single();
@@ -174,7 +160,7 @@ class StoriesService {
       }
 
       const { error } = await this.supabase
-        .from('stories')
+        .from('user_stories')
         .delete()
         .eq('id', storyId);
 
