@@ -135,15 +135,15 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
 
       {/* Story content */}
       <div className="relative w-full h-full max-w-md mx-auto">
-        {currentMedia.media_type === 'image' ? (
+        {currentStory.media_type === 'image' || currentStory.type === 'image' ? (
           <img
-            src={currentMedia.media_url}
-            alt={currentMedia.caption || 'Story'}
+            src={currentStory.media_url}
+            alt={currentStory.caption || currentStory.content || 'Story'}
             className="w-full h-full object-contain"
           />
         ) : (
           <video
-            src={currentMedia.media_url}
+            src={currentStory.media_url}
             autoPlay
             loop
             className="w-full h-full object-contain"
@@ -151,9 +151,9 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
         )}
 
         {/* Story caption */}
-        {currentMedia.caption && (
+        {(currentStory.caption || currentStory.content) && (
           <div className="absolute bottom-20 left-4 right-4 text-white text-sm bg-black/50 p-2 rounded-lg">
-            {currentMedia.caption}
+            {currentStory.caption || currentStory.content}
           </div>
         )}
 
