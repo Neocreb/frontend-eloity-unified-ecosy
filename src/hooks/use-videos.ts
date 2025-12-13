@@ -113,7 +113,8 @@ export const useVideos = () => {
           throw fetchErr;
         }
       } catch (err) {
-        console.error("Error fetching videos:", err);
+        const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+        console.error("Error fetching videos:", errorMessage);
         setVideos([]);
         setError(null); // Don't show error for empty videos
         setLoading(false);

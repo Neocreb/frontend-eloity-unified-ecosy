@@ -1300,7 +1300,8 @@ const EnhancedTikTokVideosV3: React.FC = () => {
         
         setLoading(false);
       } catch (err) {
-        console.error("Error fetching videos:", err);
+        const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+        console.error("Error fetching videos:", errorMessage);
         setError("Failed to load videos");
         setLoading(false);
       }

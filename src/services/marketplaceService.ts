@@ -961,7 +961,8 @@ export class MarketplaceService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error fetching product reviews:", error);
+        const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+        console.error("Error fetching product reviews:", errorMessage);
         return [];
       }
 
