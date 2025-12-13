@@ -48,7 +48,7 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
       // Get active stories with profile data and filter by expiration date
       const now = new Date().toISOString();
       const { data, error } = await supabase
-        .from("stories")
+        .from("user_stories")
         .select(
           `
           id,
@@ -56,11 +56,9 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
           created_at,
           expires_at,
           media_url,
-          profiles:user_id(
-            username,
-            full_name,
-            avatar_url
-          )
+          media_type,
+          caption,
+          views_count
         `
         )
         .gt("expires_at", now)
