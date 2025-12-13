@@ -306,8 +306,8 @@ export const fetchMarketplacePerformance = async (): Promise<PlatformPerformance
     
     // Calculate current period metrics
     const totalProducts = products.length;
-    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.total_sales || 0)), 0);
-    const totalSales = products.reduce((sum: number, product: any) => sum + (product.total_sales || 0), 0);
+    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
+    const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
     const avgRating = totalProducts > 0 ? 
       (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts) : 0;
     
@@ -317,14 +317,14 @@ export const fetchMarketplacePerformance = async (): Promise<PlatformPerformance
     
     const { data: previousProducts, error: previousProductsError } = await supabase
       .from('products')
-      .select('id, price, total_sales')
+      .select('id, price, sales_count')
       .gte('created_at', previousPeriodStart.toISOString())
       .lt('created_at', thirtyDaysAgo.toISOString());
     
     if (previousProductsError) throw previousProductsError;
     
-    const previousRevenue = previousProducts.reduce((sum: number, product: any) => sum + (product.price * (product.total_sales || 0)), 0);
-    const previousSales = previousProducts.reduce((sum: number, product: any) => sum + (product.total_sales || 0), 0);
+    const previousRevenue = previousProducts.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
+    const previousSales = previousProducts.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
     
     // Calculate growth rates
     const revenueGrowth = calculateGrowthRate(totalRevenue, previousRevenue);
