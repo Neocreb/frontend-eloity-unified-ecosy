@@ -243,20 +243,15 @@ const ProfessionalCrypto = () => {
     }
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCompactCurrency = (value: number) => {
     if (value >= 1000000000) {
-      return `$${(value / 1000000000).toFixed(2)}B`;
+      return `${selectedCurrency?.symbol || "$"}${(value / 1000000000).toFixed(2)}B`;
     } else if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(2)}M`;
+      return `${selectedCurrency?.symbol || "$"}${(value / 1000000).toFixed(2)}M`;
     } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(2)}K`;
+      return `${selectedCurrency?.symbol || "$"}${(value / 1000).toFixed(2)}K`;
     }
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: value < 1 ? 6 : 2,
-    }).format(value);
+    return formatCurrency(value);
   };
 
   const formatPercentage = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
