@@ -196,6 +196,13 @@ import AdminChat from "./pages/admin/AdminChat";
 import AdminBoosts from "./pages/admin/AdminBoosts";
 import AdminSystem from "./pages/admin/AdminSystem";
 import AdminAdsManager from "./pages/admin/AdminAdsManager";
+import AdminLandingOverview from "./pages/admin/AdminLandingOverview";
+import AdminLandingTestimonials from "./pages/admin/AdminLandingTestimonials";
+import AdminLandingFAQs from "./pages/admin/AdminLandingFAQs";
+import AdminLandingUseCases from "./pages/admin/AdminLandingUseCases";
+import AdminLandingStats from "./pages/admin/AdminLandingStats";
+import AdminLandingComparison from "./pages/admin/AdminLandingComparison";
+import AdminLandingWaitlist from "./pages/admin/AdminLandingWaitlist";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
