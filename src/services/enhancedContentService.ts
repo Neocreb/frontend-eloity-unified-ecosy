@@ -114,7 +114,7 @@ const transformVideoData = (video: any): ContentItem => {
 
 // Transform product data to content item format
 const transformProductData = (product: any): ContentItem => {
-  const revenue = (product.price || 0) * (product.total_sales || 0);
+  const revenue = (product.price || 0) * (product.sales_count || 0);
   
   return {
     id: product.id,
@@ -128,13 +128,13 @@ const transformProductData = (product: any): ContentItem => {
     platform: 'Marketplace',
     thumbnail: product.thumbnail_image || product.images?.[0] || '/api/placeholder/300/200',
     analytics: {
-      sales: product.total_sales || 0,
+      sales: product.sales_count || 0,
       rating: product.average_rating || 0,
       price: product.price || 0,
       stock: product.stock_quantity || 0,
     },
     price: product.price || 0,
-    sales: product.total_sales || 0
+    sales: product.sales_count || 0
   };
 };
 
