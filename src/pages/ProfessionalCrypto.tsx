@@ -213,7 +213,7 @@ const ProfessionalCrypto = () => {
       const priceMap = new Map(list.map((c) => [c.symbol.toUpperCase(), c.current_price]));
       let sumUSD = 0;
       let sumUSDPrev = 0;
-      let top = { symbol: "USDT", balance: 0, value: 0 };
+      let top = { symbol: "USDT", balance: 0, value: 0, valueInUserCurrency: 0 };
       for (const h of perCurrency) {
         const sym = h.currency.toUpperCase();
         const norm = sym;
@@ -223,7 +223,7 @@ const ProfessionalCrypto = () => {
         const changePct = list.find((c) => c.symbol.toUpperCase() === norm)?.price_change_percentage_24h || 0;
         const prev = usd / (1 + changePct / 100);
         sumUSDPrev += isFinite(prev) ? prev : usd;
-        if (usd > top.value) top = { symbol: norm, balance: h.balance, value: usd };
+        if (usd > top.value) top = { symbol: norm, balance: h.balance, value: usd, valueInUserCurrency: convertAmount(usd, "USD", selectedCurrency?.code || "USD") };
       }
       setTotalBalanceUSD(sumUSD);
       const delta = sumUSD - sumUSDPrev;
