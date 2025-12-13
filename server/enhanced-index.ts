@@ -24,9 +24,18 @@ import { randomUUID } from 'crypto'; // Import crypto module
 console.log("🔄 Loading environment variables...");
 const cwd = process.cwd();
 console.log(`📂 Working directory: ${cwd}`);
-dotenv.config({ path: join(cwd, '.env') });
-dotenv.config({ path: join(cwd, '.env.local') }); // Load .env.local to override .env (if it exists)
+const fs = require('fs');
+const envPath = join(cwd, '.env');
+const envLocalPath = join(cwd, '.env.local');
+console.log(`🔍 Checking .env at: ${envPath} - exists: ${fs.existsSync(envPath)}`);
+console.log(`🔍 Checking .env.local at: ${envLocalPath} - exists: ${fs.existsSync(envLocalPath)}`);
+const result1 = dotenv.config({ path: envPath });
+const result2 = dotenv.config({ path: envLocalPath }); // Load .env.local to override .env (if it exists)
 console.log("✅ Environment variables loaded");
+if (result1.error) console.log("⚠️  .env error:", result1.error.message);
+if (result2.error) console.log("⚠️  .env.local error:", result2.error.message);
+if (!result1.error) console.log(`✅ .env loaded with ${Object.keys(result1.parsed || {}).length} variables`);
+if (!result2.error) console.log(`✅ .env.local loaded with ${Object.keys(result2.parsed || {}).length} variables`);
 console.log("🔍 DATABASE_URL:", process.env.DATABASE_URL ? "SET" : "NOT SET");
 console.log("🔍 VITE_SUPABASE_URL:", process.env.VITE_SUPABASE_URL ? "SET" : "NOT SET");
 console.log("🔍 SUPABASE_SERVICE_ROLE_KEY:", process.env.SUPABASE_SERVICE_ROLE_KEY ? "SET" : "NOT SET");
