@@ -97,32 +97,25 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
         <X size={24} />
       </button>
 
-      {/* Progress bars */}
-      <div className="absolute top-4 left-4 right-4 flex gap-1 z-10">
-        {currentStory.stories?.map((_: any, index: number) => (
-          <div key={index} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-white transition-all duration-100 ease-linear"
-              style={{
-                width: index < currentStoryIndex ? '100%' : 
-                       index === currentStoryIndex ? `${progress}%` : '0%'
-              }}
-            />
-          </div>
-        ))}
+      {/* Progress bar */}
+      <div className="absolute top-4 left-4 right-4 h-1 bg-white/30 rounded-full overflow-hidden z-10">
+        <div
+          className="h-full bg-white transition-all duration-100 ease-linear"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
       {/* User info */}
       <div className="absolute top-8 left-4 z-10 flex items-center gap-3">
         <Avatar className="h-8 w-8 border-2 border-white">
-          <AvatarImage src={currentStory.avatar} alt={currentStory.username} />
-          <AvatarFallback>{currentStory.username.substring(0, 2)}</AvatarFallback>
+          <AvatarImage src={currentStory.user?.avatar || currentStory.profiles?.avatar_url} alt={currentStory.user?.name || currentStory.profiles?.full_name} />
+          <AvatarFallback>{(currentStory.user?.name || currentStory.profiles?.username || "U").substring(0, 2)}</AvatarFallback>
         </Avatar>
         <div className="text-white">
-          <div className="font-semibold text-sm">{currentStory.username}</div>
-          {currentMedia.created_at && (
+          <div className="font-semibold text-sm">{currentStory.user?.name || currentStory.profiles?.full_name || "Unknown"}</div>
+          {currentStory.created_at && (
             <div className="text-xs opacity-75">
-              {new Date(currentMedia.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(currentStory.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
           )}
         </div>
