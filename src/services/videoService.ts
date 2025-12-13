@@ -41,14 +41,7 @@ export const videoService = {
     let query = supabase
       .from('videos')
       .select(`
-        *,
-        profiles(
-          user_id,
-          username,
-          full_name,
-          avatar_url,
-          is_verified
-        )
+        *
       `)
       .eq('is_public', true)
       .order('created_at', { ascending: false });
@@ -63,10 +56,30 @@ export const videoService = {
     if (error) throw error;
     if (!data || data.length === 0) return [];
 
-    return data.map((video: any) => ({
-      ...video,
-      user: video.profiles || undefined
-    }));
+    // Fetch user profiles separately for each video
+    const videosWithUsers: Video[] = [];
+    for (const video of data) {
+      try {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('user_id, username, full_name, avatar_url, is_verified')
+          .eq('user_id', video.user_id)
+          .single();
+
+        videosWithUsers.push({
+          ...video,
+          user: profileData || undefined
+        });
+      } catch (profileError) {
+        // If profile fetch fails, still include the video without user data
+        videosWithUsers.push({
+          ...video,
+          user: undefined
+        });
+      }
+    }
+
+    return videosWithUsers;
   },
 
   async getVideoById(id: string): Promise<Video | null> {
