@@ -543,6 +543,13 @@ app.use('/api/currency', currencyRouter);
 // Mount crypto user router to the same /api/crypto path (handles user-specific crypto operations with auth)
 app.use('/api/crypto/user', cryptoUserRouter);
 
+// Mount course and article routes
+app.use('/api/admin/courses', adminCoursesRouter);
+app.use('/api/admin/articles', adminArticlesRouter);
+app.use('/api/courses', coursesRouter);
+app.use('/api/articles', articlesRouter);
+app.use('/api/creator/courses', creatorCoursesRouter);
+
 // =============================================================================
 // CORE AUTHENTICATION ENDPOINTS
 // =============================================================================
