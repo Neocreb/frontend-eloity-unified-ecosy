@@ -231,8 +231,8 @@ export const transformVideoData = (videos: any[], videoAnalytics: any[]) => {
 
 export const transformProductData = (products: any[], productAnalytics: any[]) => {
   const totalProducts = products.length;
-  const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.total_sales || 0)), 0);
-  const totalSales = products.reduce((sum: number, product: any) => sum + (product.total_sales || 0), 0);
+  const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
+  const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
   const avgRating = totalProducts > 0 ? 
     (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts).toFixed(1) : "0";
   
@@ -583,13 +583,13 @@ const fetchProductAnalytics = async () => {
     // Get product data
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, price, total_sales, total_reviews, average_rating');
+      .select('id, title, price, sales_count, reviews_count, rating');
     
     if (productsError) throw productsError;
     
     const totalProducts = products.length;
-    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.total_sales || 0)), 0);
-    const totalSales = products.reduce((sum: number, product: any) => sum + (product.total_sales || 0), 0);
+    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
+    const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
     const avgRating = totalProducts > 0 ? 
       (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts).toFixed(1) : "0";
     
@@ -1073,7 +1073,7 @@ const fetchMarketplaceDetails = async (): Promise<DetailedCategory[]> => {
   try {
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, price, total_sales, total_reviews, average_rating');
+      .select('id, title, price, sales_count, reviews_count, rating');
     
     if (productsError) {
       console.error('Error fetching products for Marketplace details:', productsError);
@@ -1081,8 +1081,8 @@ const fetchMarketplaceDetails = async (): Promise<DetailedCategory[]> => {
     }
     
     const totalProducts = products.length;
-    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.total_sales || 0)), 0);
-    const totalSales = products.reduce((sum: number, product: any) => sum + (product.total_sales || 0), 0);
+    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
+    const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
     const avgRating = totalProducts > 0 ? 
       (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts).toFixed(1) : "0";
     
