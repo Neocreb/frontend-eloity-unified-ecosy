@@ -188,13 +188,18 @@ class StoriesService {
   // Mark a story as viewed
   async viewStory(storyId: string, userId: string): Promise<StoryView> {
     try {
-      // Check if already viewed
+      // Validate storyId is a valid UUID and not "create" or other invalid values
+      if (!storyId || storyId === 'create' || typeof storyId !== 'string' || storyId.length < 36) {
+        throw new Error(`Invalid story ID: ${storyId}`);
+      }
+
+      // Check if already viewed using viewer_id column
       const { data: existingView, error: viewError } = await this.supabase
         .from('story_views')
         .select('id')
         .eq('story_id', storyId)
-        .eq('user_id', userId)
-        .single();
+        .eq('viewer_id', userId)
+        .maybeSingle();
 
       if (existingView) {
         // Already viewed, return existing view
@@ -206,12 +211,12 @@ class StoriesService {
         };
       }
 
-      // Insert new view
+      // Insert new view using correct column name viewer_id
       const { data, error } = await this.supabase
         .from('story_views')
         .insert({
           story_id: storyId,
-          user_id: userId,
+          viewer_id: userId,
           viewed_at: new Date().toISOString()
         })
         .select()
