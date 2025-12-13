@@ -24,11 +24,8 @@ import { randomUUID } from 'crypto'; // Import crypto module
 console.log("🔄 Loading environment variables...");
 const cwd = process.cwd();
 console.log(`📂 Working directory: ${cwd}`);
-const fs = require('fs');
 const envPath = join(cwd, '.env');
 const envLocalPath = join(cwd, '.env.local');
-console.log(`🔍 Checking .env at: ${envPath} - exists: ${fs.existsSync(envPath)}`);
-console.log(`🔍 Checking .env.local at: ${envLocalPath} - exists: ${fs.existsSync(envLocalPath)}`);
 const result1 = dotenv.config({ path: envPath });
 const result2 = dotenv.config({ path: envLocalPath }); // Load .env.local to override .env (if it exists)
 console.log("✅ Environment variables loaded");
