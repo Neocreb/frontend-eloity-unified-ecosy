@@ -23,14 +23,10 @@ import {
   Brain,
   Target
 } from "lucide-react";
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from "@/integrations/supabase/client";
 import { blogService } from "@/services/blogService";
 import { BlogPost } from "@/types/blog";
 import LearningProgressDashboard from "@/components/rewards/LearningProgressDashboard";
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
 
 interface Course {
   id: string;

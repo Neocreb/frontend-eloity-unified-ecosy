@@ -55,6 +55,7 @@ const Feed = () => {
   const [showStoryViewer, setShowStoryViewer] = useState(false);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [userStories, setUserStories] = useState<any[]>([]);
+  const [fetchedStories, setFetchedStories] = useState<any[]>([]);
 
   // Update URL when tab changes
   useEffect(() => {
@@ -102,9 +103,13 @@ const Feed = () => {
     }
   };
 
-  const handleViewStory = (storyIndex: number) => {
+  const handleViewStory = (story: any, storyIndex: number) => {
     setCurrentStoryIndex(storyIndex);
     setShowStoryViewer(true);
+  };
+
+  const handleStoriesFetched = (stories: any[]) => {
+    setFetchedStories(stories);
   };
 
   const baseTabs = [
@@ -183,6 +188,7 @@ const Feed = () => {
                     onCreateStory={() => setShowCreateStoryModal(true)}
                     userStories={userStories}
                     onViewStory={handleViewStory}
+                    onStoriesFetched={handleStoriesFetched}
                   />
                   <CreatePostTrigger onOpenCreatePost={() => navigate('/app/create-post')} />
                 </>
@@ -234,35 +240,9 @@ const Feed = () => {
         onSubmit={handleCreateStory}
       />
 
-      {showStoryViewer && (
+      {showStoryViewer && fetchedStories.length > 0 && (
         <StoryViewer
-          stories={[
-            ...userStories,
-            {
-              id: "2",
-              user: { id: "user-sarah", name: "Sarah", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=sarah", isUser: false },
-              timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-              content: { text: "Having a great day! 🌟" },
-              views: 45,
-              hasNew: true,
-            },
-            {
-              id: "3",
-              user: { id: "user-mike", name: "Mike", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=mike", isUser: false },
-              timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000),
-              content: { text: "Just finished a great workout! 💪" },
-              views: 23,
-              hasNew: false,
-            },
-            {
-              id: "4",
-              user: { id: "user-emma", name: "Emma", avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=emma", isUser: false },
-              timestamp: new Date(Date.now() - 1 * 60 * 60 * 1000),
-              content: { text: "Beautiful sunset today! 🌅" },
-              views: 67,
-              hasNew: true,
-            },
-          ]}
+          stories={fetchedStories}
           initialIndex={currentStoryIndex}
           onClose={() => setShowStoryViewer(false)}
           onStoryChange={setCurrentStoryIndex}

@@ -29,6 +29,7 @@ const EnhancedFeedWithTabs = () => {
   const [showCreatePostFlow, setShowCreatePostFlow] = useState(false);
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [userStories, setUserStories] = useState<any[]>([]);
+  const [fetchedStories, setFetchedStories] = useState<any[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -122,9 +123,13 @@ const EnhancedFeedWithTabs = () => {
     }
   };
 
-  const handleViewStory = (index: number) => {
+  const handleViewStory = (story: any, index: number) => {
     setCurrentStoryIndex(index);
     setShowStoryViewer(true);
+  };
+
+  const handleStoriesFetched = (stories: any[]) => {
+    setFetchedStories(stories);
   };
 
   const handleCreateStoryClick = () => {
@@ -141,6 +146,7 @@ const EnhancedFeedWithTabs = () => {
               onCreateStory={handleCreateStoryClick}
               userStories={userStories}
               onViewStory={handleViewStory}
+              onStoriesFetched={handleStoriesFetched}
             />
 
             {/* Tabs */}
@@ -167,9 +173,9 @@ const EnhancedFeedWithTabs = () => {
             />
           )}
 
-          {showStoryViewer && (
+          {showStoryViewer && fetchedStories.length > 0 && (
             <StoryViewer
-              stories={userStories}
+              stories={fetchedStories}
               initialIndex={currentStoryIndex}
               onClose={() => setShowStoryViewer(false)}
             />
