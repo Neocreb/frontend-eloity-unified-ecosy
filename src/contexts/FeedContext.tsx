@@ -129,10 +129,10 @@ export const FeedProvider: React.FC<FeedProviderProps> = ({ children }) => {
                 },
                 content: {
                   text: post.content || "",
-                  media: post.image ? [{
-                    type: "image",
-                    url: post.image,
-                    alt: "Post image",
+                  media: (post.image_url || post.image || post.video_url) ? [{
+                    type: post.video_url ? "video" : "image",
+                    url: post.image_url || post.image || post.video_url,
+                    alt: "Post media",
                   }] : [],
                 },
                 interactions: {
