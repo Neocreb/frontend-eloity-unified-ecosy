@@ -220,7 +220,8 @@ const fetchVideos = async (params: FetchContentParams) => {
     
     return data.map(transformVideoData);
   } catch (error) {
-    console.error('Error fetching videos:', error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Error fetching videos:', errorMessage);
     return [];
   }
 };

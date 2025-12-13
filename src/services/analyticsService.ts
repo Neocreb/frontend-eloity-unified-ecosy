@@ -634,7 +634,8 @@ const fetchProductAnalytics = async () => {
       ]
     };
   } catch (error) {
-    console.error('Error fetching product analytics:', error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Error fetching product analytics:', errorMessage);
     return {
       growth: 0,
       metrics: [
@@ -1016,7 +1017,8 @@ const fetchVideoDetails = async (): Promise<DetailedCategory[]> => {
       .select('id, title, views_count, likes_count, comments_count, created_at');
     
     if (videosError) {
-      console.error('Error fetching videos for Video details:', videosError);
+      const errorMessage = videosError instanceof Error ? videosError.message : JSON.stringify(videosError);
+      console.error('Error fetching videos for Video details:', errorMessage);
       return [];
     }
     
