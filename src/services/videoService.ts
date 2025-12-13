@@ -120,6 +120,7 @@ export const videoService = {
     duration?: number;
     category?: string;
     tags?: string[];
+    is_public?: boolean;
   }): Promise<Video> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
@@ -129,12 +130,37 @@ export const videoService = {
       .insert({
         ...videoData,
         user_id: user.id,
-        is_public: true,
+        is_public: videoData.is_public !== false,
         views_count: 0,
         likes_count: 0,
         comments_count: 0,
-        shares_count: 0
+        shares_count: 0,
+        is_monetized: false
       })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async publishVideo(videoId: string): Promise<Video> {
+    const { data, error } = await supabase
+      .from('videos')
+      .update({ is_public: true })
+      .eq('id', videoId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateVideoPrivacy(videoId: string, isPublic: boolean): Promise<Video> {
+    const { data, error } = await supabase
+      .from('videos')
+      .update({ is_public: isPublic })
+      .eq('id', videoId)
       .select()
       .single();
 
