@@ -659,5 +659,32 @@ export const videoService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async getUserPublishedVideos(userId: string, limit: number = 50): Promise<Video[]> {
+    const { data, error } = await supabase
+      .from('videos')
+      .select(`
+        *,
+        profiles(
+          user_id,
+          username,
+          full_name,
+          avatar_url,
+          is_verified
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    if (!data || data.length === 0) return [];
+
+    return data.map((video: any) => ({
+      ...video,
+      user: video.profiles || undefined
+    }));
   }
 };
