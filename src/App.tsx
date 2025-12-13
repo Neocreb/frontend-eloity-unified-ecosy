@@ -853,6 +853,13 @@ const AppRoutes = () => {
         <Route path="boosts" element={<AdminBoosts />} />
         <Route path="system" element={<AdminSystem />} />
         <Route path="ads" element={<AdminAdsManager />} />
+        <Route path="landing-overview" element={<AdminLandingOverview />} />
+        <Route path="landing-testimonials" element={<AdminLandingTestimonials />} />
+        <Route path="landing-faqs" element={<AdminLandingFAQs />} />
+        <Route path="landing-use-cases" element={<AdminLandingUseCases />} />
+        <Route path="landing-stats" element={<AdminLandingStats />} />
+        <Route path="landing-comparison" element={<AdminLandingComparison />} />
+        <Route path="landing-waitlist" element={<AdminLandingWaitlist />} />
       </Route>
 
       {/* Legacy route redirects */}
