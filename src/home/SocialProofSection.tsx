@@ -42,55 +42,15 @@ export const SocialProofSection: React.FC = () => {
     fetchStats();
   }, []);
 
-  const defaultStats: StatItem[] = [
-    {
-      id: '1',
-      metric_name: 'active_users',
-      current_value: 500000,
-      unit: 'users',
-      label: 'Active Users',
-      display_format: 'number',
-      icon: '👥',
-    },
-    {
-      id: '2',
-      metric_name: 'total_earnings',
-      current_value: 125000000,
-      unit: 'USD',
-      label: 'Total Earnings Distributed',
-      display_format: 'currency',
-      icon: '💰',
-    },
-    {
-      id: '3',
-      metric_name: 'transactions',
-      current_value: 2500000,
-      unit: 'transactions',
-      label: 'Transactions Completed',
-      display_format: 'number',
-      icon: '📊',
-    },
-    {
-      id: '4',
-      metric_name: 'uptime',
-      current_value: 99.9,
-      unit: '%',
-      label: 'Platform Uptime',
-      display_format: 'percentage',
-      icon: '⚡',
-    },
-  ];
-
   const fetchStats = async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/landing/social-proof-stats');
       if (!response.ok) throw new Error('Failed to fetch stats');
       const data = await response.json();
-      setStats(data && data.length > 0 ? data : defaultStats);
+      setStats(data);
     } catch (error) {
       console.error('Error fetching stats:', error);
-      setStats(defaultStats);
     } finally {
       setIsLoading(false);
     }
