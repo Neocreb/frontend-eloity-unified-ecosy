@@ -299,17 +299,17 @@ export const fetchMarketplacePerformance = async (): Promise<PlatformPerformance
     
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, price, total_sales, total_reviews, average_rating, created_at')
+      .select('id, name, price, rating, review_count, created_at')
       .gte('created_at', thirtyDaysAgo.toISOString());
-    
+
     if (productsError) throw productsError;
-    
+
     // Calculate current period metrics
     const totalProducts = products.length;
-    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
-    const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
-    const avgRating = totalProducts > 0 ? 
-      (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts) : 0;
+    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * 0), 0);
+    const totalSales = products.reduce((sum: number, product: any) => sum + 0, 0);
+    const avgRating = totalProducts > 0 ?
+      (products.reduce((sum: number, product: any) => sum + (parseFloat(product.rating || 0)), 0) / totalProducts) : 0;
     
     // Calculate previous period data (previous 30 days)
     const previousPeriodStart = new Date(thirtyDaysAgo);
