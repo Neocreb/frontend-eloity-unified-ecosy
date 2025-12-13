@@ -233,7 +233,7 @@ const fetchProducts = async (params: FetchContentParams) => {
     
     let query = supabase
       .from('products')
-      .select('id, name, description, thumbnail_image, images, price, total_sales, average_rating, view_count, created_at, stock_quantity');
+      .select('id, name, description, image_url, images, price, rating, review_count, created_at, in_stock');
     
     if (cutoff) {
       query = query.gte('created_at', cutoff);
