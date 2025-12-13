@@ -237,22 +237,63 @@ POST   /api/admin/landing/waitlist/export
 4. **Image Optimization**: URLs should point to CDN-hosted images
 5. **Lazy Loading**: Components load sections as needed
 
-## Testing Strategy
+## Testing & Verification
 
-### Unit Tests
-- API endpoint validation
-- Schema validation
-- Data sanitization
+### API Endpoints Testing
 
-### Integration Tests
-- Admin CRUD operations
-- Public content retrieval
-- Waitlist lead capture
+**Public Endpoints (No Authentication):**
+```bash
+# Get testimonials
+curl http://localhost:5002/api/landing/testimonials
 
-### E2E Tests
-- Landing page functionality
-- Admin panel workflows
-- Form submissions
+# Get FAQs with category filter
+curl http://localhost:5002/api/landing/faqs?category=security
+
+# Get use cases
+curl http://localhost:5002/api/landing/use-cases
+
+# Get social proof stats
+curl http://localhost:5002/api/landing/social-proof-stats
+
+# Get comparison matrix
+curl http://localhost:5002/api/landing/comparison-matrix
+
+# Join waitlist
+curl -X POST http://localhost:5002/api/landing/waitlist \
+  -H "Content-Type: application/json" \
+  -d '{"email":"user@example.com","name":"John Doe","user_type_interested":"creator"}'
+```
+
+**Admin Endpoints (Requires Admin Auth):**
+All admin endpoints require authentication header:
+```bash
+curl -H "Authorization: Bearer YOUR_ADMIN_TOKEN" http://localhost:5002/api/admin/landing/testimonials
+```
+
+### Frontend Testing
+
+1. **Landing Page Components:**
+   - Visit `/` to see landing page with new sections
+   - Verify testimonials carousel works
+   - Verify FAQs accordion is functional
+   - Verify use cases are displayed
+   - Verify social proof stats are showing
+
+2. **Admin Panel:**
+   - Navigate to `/admin/landing-overview` to see dashboard
+   - Test each admin page from the sidebar
+   - CRUD operations should work correctly
+   - Waitlist export (CSV/JSON) should function
+
+### Manual Data Population
+
+The migration script includes sample data, but you can add more through the admin panel:
+
+1. Go to `/admin/landing-overview`
+2. Click on each content type to manage
+3. Add new testimonials, FAQs, use cases, etc.
+4. Update statistics as needed
+5. View waitlist leads if any
 
 ## Deployment Checklist
 
