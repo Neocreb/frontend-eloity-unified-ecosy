@@ -969,14 +969,14 @@ export class MarketplaceService {
       return data.map(review => ({
         id: review.id,
         productId: review.product_id,
-        userId: review.user_id,
-        userName: review.user?.full_name || 'Anonymous User',
-        userAvatar: review.user?.avatar_url || '',
-        rating: review.rating,
+        userId: review.reviewer_id,
+        userName: review.reviewer?.full_name || 'Anonymous User',
+        userAvatar: review.reviewer?.avatar_url || '',
+        rating: review.overall_rating,
         title: review.title || '',
-        comment: review.content || '',
-        helpfulCount: review.helpful_count || 0,
-        verifiedPurchase: review.verified_purchase || false,
+        comment: review.comment || '',
+        helpfulCount: review.helpful_votes || 0,
+        verifiedPurchase: review.is_verified_purchase || false,
         createdAt: new Date(review.created_at),
         updatedAt: new Date(review.updated_at)
       }));
