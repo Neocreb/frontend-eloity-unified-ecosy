@@ -561,6 +561,10 @@ app.use('/api/courses', coursesRouter);
 app.use('/api/articles', articlesRouter);
 app.use('/api/creator/courses', creatorCoursesRouter);
 
+// Mount landing page routes
+app.use('/api/landing', landingRouter);
+app.use('/api/admin/landing', adminLandingRouter);
+
 // =============================================================================
 // CORE AUTHENTICATION ENDPOINTS
 // =============================================================================
