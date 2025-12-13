@@ -69,9 +69,11 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
   useEffect(() => {
     if (!currentStory) return;
 
-    // Mark story as viewed
-    if (currentStory.id) {
-      viewStory(currentStory.id);
+    // Mark story as viewed with validation
+    if (currentStory.id && currentStory.id !== 'create' && typeof currentStory.id === 'string' && currentStory.id.length >= 36) {
+      viewStory(currentStory.id).catch(err => {
+        console.error('Failed to mark story as viewed:', err);
+      });
     }
 
     if (isPaused) {
