@@ -323,8 +323,8 @@ export const fetchMarketplacePerformance = async (): Promise<PlatformPerformance
     
     if (previousProductsError) throw previousProductsError;
     
-    const previousRevenue = previousProducts.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
-    const previousSales = previousProducts.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
+    const previousRevenue = previousProducts.reduce((sum: number, product: any) => sum + (product.price * 0), 0);
+    const previousSales = previousProducts.reduce((sum: number, product: any) => sum + 0, 0);
     
     // Calculate growth rates
     const revenueGrowth = calculateGrowthRate(totalRevenue, previousRevenue);
