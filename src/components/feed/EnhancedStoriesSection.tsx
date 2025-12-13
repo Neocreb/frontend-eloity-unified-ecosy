@@ -24,7 +24,8 @@ interface Story {
 interface EnhancedStoriesSectionProps {
   onCreateStory: () => void;
   userStories: any[];
-  onViewStory: (index: number) => void;
+  onViewStory: (story: any, index: number) => void;
+  onStoriesFetched?: (stories: Story[]) => void;
   refetchTrigger?: number;
 }
 
@@ -32,6 +33,7 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
   onCreateStory,
   userStories,
   onViewStory,
+  onStoriesFetched,
   refetchTrigger = 0,
 }) => {
   const { user } = useAuth();
@@ -113,7 +115,9 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
         hasNew: false,
       };
 
-      setStories([createStoryOption, ...fetchedStories]);
+      const allStories = [createStoryOption, ...fetchedStories];
+      setStories(allStories);
+      onStoriesFetched?.(allStories);
     } catch {
       const createStoryOption: Story = {
         id: "create",
@@ -128,7 +132,9 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
         hasStory: false,
         hasNew: false,
       };
-      setStories([createStoryOption]);
+      const allStories = [createStoryOption];
+      setStories(allStories);
+      onStoriesFetched?.(allStories);
     } finally {
       setIsLoading(false);
     }
@@ -155,7 +161,7 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
 
   const handleStoryClick = (story: Story, index: number) => {
     if (story.user.isUser && !story.hasStory) onCreateStory();
-    else onViewStory(index);
+    else onViewStory(story, index);
   };
 
   return (
@@ -191,6 +197,13 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
               key={`story-${story.id}-${index}`}
               className="flex-shrink-0 cursor-pointer group"
               onClick={() => handleStoryClick(story, index)}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  handleStoryClick(story, index);
+                }
+              }}
             >
               <div className="flex flex-col items-center w-24 sm:w-28">
                 <div className="relative w-24 h-32 sm:w-28 sm:h-36">
