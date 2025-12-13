@@ -37,14 +37,19 @@ export interface VideoComment {
 
 
 export const videoService = {
-  async getVideos(limit: number = 20, offset: number = 0, category?: string): Promise<Video[]> {
+  async getVideos(limit: number = 20, offset: number = 0, category?: string, includePrivate: boolean = false): Promise<Video[]> {
     let query = supabase
       .from('videos')
       .select(`
         *
-      `)
-      .eq('is_public', true)
-      .order('created_at', { ascending: false });
+      `);
+
+    // Only filter by is_public if not including private videos
+    if (!includePrivate) {
+      query = query.eq('is_public', true);
+    }
+
+    query = query.order('created_at', { ascending: false });
 
     if (category && category !== 'all') {
       query = query.eq('category', category);
