@@ -106,7 +106,14 @@ export const useStories = () => {
 
   const viewStory = async (storyId: string) => {
     if (!user) {
-      throw new Error('User not authenticated');
+      console.warn('User not authenticated, skipping story view');
+      return null;
+    }
+
+    // Validate storyId before attempting to view
+    if (!storyId || storyId === 'create' || typeof storyId !== 'string' || storyId.length < 36) {
+      console.warn('Invalid story ID, skipping view:', storyId);
+      return null;
     }
 
     try {
@@ -116,7 +123,8 @@ export const useStories = () => {
       return view;
     } catch (err) {
       console.error('Error viewing story:', err);
-      throw err;
+      // Don't throw - just log and continue
+      return null;
     }
   };
 
