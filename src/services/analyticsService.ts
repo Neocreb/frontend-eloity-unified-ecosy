@@ -234,7 +234,7 @@ export const transformProductData = (products: any[], productAnalytics: any[]) =
   const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
   const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
   const avgRating = totalProducts > 0 ? 
-    (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts).toFixed(1) : "0";
+    (products.reduce((sum: number, product: any) => sum + (parseFloat(product.rating || 0)), 0) / totalProducts).toFixed(1) : "0";
   
   // Calculate growth (simplified)
   const growth = totalProducts > 0 ? Math.min(100, Math.round((totalSales / totalProducts) * 5)) : 0;
@@ -591,7 +591,7 @@ const fetchProductAnalytics = async () => {
     const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
     const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
     const avgRating = totalProducts > 0 ? 
-      (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts).toFixed(1) : "0";
+      (products.reduce((sum: number, product: any) => sum + (parseFloat(product.rating || 0)), 0) / totalProducts).toFixed(1) : "0";
     
     // Calculate growth (simplified)
     const growth = totalProducts > 0 ? Math.min(100, Math.round((totalSales / totalProducts) * 5)) : 0;
@@ -1084,7 +1084,7 @@ const fetchMarketplaceDetails = async (): Promise<DetailedCategory[]> => {
     const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.sales_count || 0)), 0);
     const totalSales = products.reduce((sum: number, product: any) => sum + (product.sales_count || 0), 0);
     const avgRating = totalProducts > 0 ? 
-      (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts).toFixed(1) : "0";
+      (products.reduce((sum: number, product: any) => sum + (parseFloat(product.rating || 0)), 0) / totalProducts).toFixed(1) : "0";
     
     return [
       {
