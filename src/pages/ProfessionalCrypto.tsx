@@ -589,7 +589,7 @@ const ProfessionalCrypto = () => {
                               </div>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(crypto.current_price)}</p>
+                              <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(convertAmount(crypto.current_price, "USD", selectedCurrency?.code || "USD"))}</p>
                               <div className={cn(
                                 "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
                                 crypto.price_change_percentage_24h >= 0
@@ -631,7 +631,7 @@ const ProfessionalCrypto = () => {
                               </div>
                             </div>
                             <div className="text-right flex-shrink-0">
-                              <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(crypto.current_price)}</p>
+                              <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(convertAmount(crypto.current_price, "USD", selectedCurrency?.code || "USD"))}</p>
                               <div className={cn(
                                 "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
                                 crypto.price_change_percentage_24h >= 0
