@@ -56,9 +56,9 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
   }, [currentIndex]);
 
   const handleLike = async () => {
-    if (currentMedia) {
+    if (currentStory?.id) {
       try {
-        await likeStory(currentMedia.id);
+        await likeStory(currentStory.id);
       } catch (error) {
         console.error('Error liking story:', error);
       }
@@ -68,7 +68,6 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
   const goToPreviousStory = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
-      setCurrentStoryIndex(0);
       onStoryChange?.(currentIndex - 1);
     } else {
       onClose();
@@ -78,14 +77,13 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
   const goToNextStory = () => {
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(prev => prev + 1);
-      setCurrentStoryIndex(0);
       onStoryChange?.(currentIndex + 1);
     } else {
       onClose();
     }
   };
 
-  if (!currentStory || !currentMedia) {
+  if (!currentStory) {
     return null;
   }
 
