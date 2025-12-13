@@ -37,14 +37,19 @@ export interface VideoComment {
 
 
 export const videoService = {
-  async getVideos(limit: number = 20, offset: number = 0, category?: string): Promise<Video[]> {
+  async getVideos(limit: number = 20, offset: number = 0, category?: string, includePrivate: boolean = false): Promise<Video[]> {
     let query = supabase
       .from('videos')
       .select(`
         *
-      `)
-      .eq('is_public', true)
-      .order('created_at', { ascending: false });
+      `);
+
+    // Only filter by is_public if not including private videos
+    if (!includePrivate) {
+      query = query.eq('is_public', true);
+    }
+
+    query = query.order('created_at', { ascending: false });
 
     if (category && category !== 'all') {
       query = query.eq('category', category);
@@ -120,6 +125,7 @@ export const videoService = {
     duration?: number;
     category?: string;
     tags?: string[];
+    is_public?: boolean;
   }): Promise<Video> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
@@ -129,12 +135,37 @@ export const videoService = {
       .insert({
         ...videoData,
         user_id: user.id,
-        is_public: true,
+        is_public: videoData.is_public !== false,
         views_count: 0,
         likes_count: 0,
         comments_count: 0,
-        shares_count: 0
+        shares_count: 0,
+        is_monetized: false
       })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async publishVideo(videoId: string): Promise<Video> {
+    const { data, error } = await supabase
+      .from('videos')
+      .update({ is_public: true })
+      .eq('id', videoId)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  },
+
+  async updateVideoPrivacy(videoId: string, isPublic: boolean): Promise<Video> {
+    const { data, error } = await supabase
+      .from('videos')
+      .update({ is_public: isPublic })
+      .eq('id', videoId)
       .select()
       .single();
 
@@ -628,5 +659,32 @@ export const videoService = {
 
     if (error) throw error;
     return data;
+  },
+
+  async getUserPublishedVideos(userId: string, limit: number = 50): Promise<Video[]> {
+    const { data, error } = await supabase
+      .from('videos')
+      .select(`
+        *,
+        profiles(
+          user_id,
+          username,
+          full_name,
+          avatar_url,
+          is_verified
+        )
+      `)
+      .eq('user_id', userId)
+      .eq('is_public', true)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    if (!data || data.length === 0) return [];
+
+    return data.map((video: any) => ({
+      ...video,
+      user: video.profiles || undefined
+    }));
   }
 };

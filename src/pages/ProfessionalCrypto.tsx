@@ -115,10 +115,21 @@ const ProfessionalCrypto = () => {
 
       // Read body once to avoid "body stream already read" errors
       const pricesText = await pricesRes.text();
+      console.log('[Crypto] Response status:', pricesRes.status);
       console.log('[Crypto] Response text length:', pricesText.length, 'First 200 chars:', pricesText.substring(0, 200));
 
+      // Check for HTML response (indicates server error)
+      if (pricesText.includes('<!doctype html') || pricesText.includes('<html')) {
+        console.error('[Crypto] Server returned HTML instead of JSON. This usually means:');
+        console.error('[Crypto] 1. The backend server is not running');
+        console.error('[Crypto] 2. The API route is not registered');
+        console.error('[Crypto] 3. There is a server misconfiguration');
+        console.error('[Crypto] Status:', pricesRes.status, pricesRes.statusText);
+        throw new Error('API returned HTML (server error). Please check that the backend is running.');
+      }
+
       if (!pricesRes.ok) {
-        console.error(`[Crypto] HTTP error! status: ${pricesRes.status}`, pricesText);
+        console.error(`[Crypto] HTTP error! status: ${pricesRes.status}`, pricesText.substring(0, 200));
         throw new Error(`API returned HTTP ${pricesRes.status}: ${pricesText.substring(0, 100)}`);
       }
 
@@ -134,7 +145,7 @@ const ProfessionalCrypto = () => {
           pricesPayload = pricesText ? JSON.parse(pricesText) : null;
           console.warn('[Crypto] Successfully parsed JSON despite incorrect content-type');
         } catch (parseError) {
-          console.error('[Crypto] Non-JSON response received:', pricesText.substring(0, 500));
+          console.error('[Crypto] Failed to parse non-JSON response:', pricesText.substring(0, 500));
           throw new Error(`API returned non-JSON response: ${pricesText.substring(0, 100)}`);
         }
       } else {
@@ -142,9 +153,17 @@ const ProfessionalCrypto = () => {
           pricesPayload = pricesText ? JSON.parse(pricesText) : null;
           console.log('[Crypto] Successfully parsed prices:', pricesPayload);
         } catch (parseError) {
-          console.error('[Crypto] Failed to parse JSON response:', pricesText);
+          console.error('[Crypto] Failed to parse JSON response:', pricesText.substring(0, 500));
           throw new Error('Failed to parse API response as JSON');
         }
+      }
+
+      // Handle fallback prices (server might return fallback data)
+      if (pricesPayload.warning) {
+        console.warn('[Crypto] API warning:', pricesPayload.warning);
+      }
+      if (pricesPayload.source === 'fallback') {
+        console.info('[Crypto] Using fallback prices from server');
       }
       const prices: Record<string, any> = {};
 
