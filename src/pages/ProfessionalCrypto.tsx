@@ -64,6 +64,7 @@ const TRACKED = Object.keys(SYMBOL_META);
 const ProfessionalCrypto = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { formatCurrency, selectedCurrency, convertAmount } = useCurrency();
   const navigate = useNavigate();
 
   const [cryptos, setCryptos] = useState<Cryptocurrency[]>([]);
@@ -72,7 +73,7 @@ const ProfessionalCrypto = () => {
   const [totalBalanceUSD, setTotalBalanceUSD] = useState(0);
   const [totalChangeUSD, setTotalChangeUSD] = useState(0);
   const [totalChangePct, setTotalChangePct] = useState(0);
-  const [primaryAsset, setPrimaryAsset] = useState<{ symbol: string; balance: number; value: number }>({ symbol: "USDT", balance: 0, value: 0 });
+  const [primaryAsset, setPrimaryAsset] = useState<{ symbol: string; balance: number; value: number; valueInUserCurrency: number }>({ symbol: "USDT", balance: 0, value: 0, valueInUserCurrency: 0 });
   const [activeMarketTab, setActiveMarketTab] = useState<"favorites" | "trending">("trending");
   const [activeCommunityTab, setActiveCommunityTab] = useState<"discover" | "community" | "events" | "announcements">("discover");
 
