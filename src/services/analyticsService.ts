@@ -583,7 +583,7 @@ const fetchProductAnalytics = async () => {
     // Get product data
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, title, price, sales_count, reviews_count, rating');
+      .select('id, title, price, rating, review_count');
     
     if (productsError) throw productsError;
     
@@ -1073,7 +1073,7 @@ const fetchMarketplaceDetails = async (): Promise<DetailedCategory[]> => {
   try {
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, title, price, sales_count, reviews_count, rating');
+      .select('id, title, price, rating, review_count');
     
     if (productsError) {
       console.error('Error fetching products for Marketplace details:', productsError);
