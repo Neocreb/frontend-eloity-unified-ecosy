@@ -193,19 +193,56 @@ router.get('/prices/:symbol', async (req, res) => {
 // Get market orderbook for trading pairs
 router.get('/orderbook/:pair', async (req, res) => {
   try {
+    // Set headers to ensure JSON response
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+
     const { pair } = req.params;
     const { depth = 20 } = req.query;
-    
-    const orderbook = await getOrderBook(pair, parseInt(depth));
-    
-    res.json({
+
+    logger.info('[Orderbook API] Request received', { pair, depth });
+
+    let orderbook;
+    try {
+      orderbook = await getOrderBook(pair, parseInt(depth as string));
+    } catch (fetchError) {
+      logger.warn('[Orderbook API] getOrderBook failed, using fallback', {
+        pair,
+        error: fetchError instanceof Error ? fetchError.message : String(fetchError)
+      });
+      // Fallback orderbook data
+      orderbook = {
+        bids: [],
+        asks: [],
+        timestamp: new Date().toISOString(),
+        source: 'fallback'
+      };
+    }
+
+    const response = {
       pair,
       orderbook,
-      timestamp: new Date().toISOString()
-    });
+      timestamp: new Date().toISOString(),
+      status: 'success'
+    };
+
+    return res.status(200).json(response);
   } catch (error) {
-    logger.error('Orderbook fetch error:', error);
-    res.status(500).json({ error: 'Failed to fetch orderbook' });
+    logger.error('[Orderbook API] Unhandled error:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    return res.status(200).json({
+      error: 'Failed to fetch orderbook',
+      orderbook: {
+        bids: [],
+        asks: [],
+        source: 'fallback'
+      },
+      timestamp: new Date().toISOString(),
+      status: 'error'
+    });
   }
 });
 
