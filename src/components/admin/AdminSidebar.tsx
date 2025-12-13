@@ -35,6 +35,7 @@ import {
   Route,
   Gift,
   BookOpen,
+  Globe,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -210,6 +211,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ className = "" }) => {
       icon: <Zap className="w-5 h-5" />,
       requiredPermission: "content.moderate",
       description: "Manage carousel ads and banners",
+    },
+    {
+      path: "/admin/landing-overview",
+      label: "Landing Page",
+      icon: <Globe className="w-5 h-5" />,
+      requiredPermission: "content.moderate",
+      description: "Manage landing page content",
     },
   ];
 

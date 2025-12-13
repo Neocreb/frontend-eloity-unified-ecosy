@@ -112,6 +112,8 @@ import adminArticlesRouter from './routes/adminArticles.js';
 import coursesRouter from './routes/courses.js';
 import articlesRouter from './routes/articles.js';
 import creatorCoursesRouter from './routes/creatorCourses.js';
+import landingRouter from './routes/landing.js';
+import adminLandingRouter from './routes/adminLanding.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -558,6 +560,10 @@ app.use('/api/admin/articles', adminArticlesRouter);
 app.use('/api/courses', coursesRouter);
 app.use('/api/articles', articlesRouter);
 app.use('/api/creator/courses', creatorCoursesRouter);
+
+// Mount landing page routes
+app.use('/api/landing', landingRouter);
+app.use('/api/admin/landing', adminLandingRouter);
 
 // =============================================================================
 // CORE AUTHENTICATION ENDPOINTS

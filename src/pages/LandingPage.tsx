@@ -6,6 +6,11 @@ import AdvancedFeaturesSection from "@/home/AdvancedFeaturesSection";
 import ProblemSolutionSection from "@/home/ProblemSolutionSection";
 import WhyEloitySection from "@/home/WhyEloitySection";
 import ScreenshotCarousel from "@/home/ScreenshotCarousel";
+import { SocialProofSection } from "@/home/SocialProofSection";
+import { TestimonialsSection } from "@/home/TestimonialsSection";
+import { UseCasesSection } from "@/home/UseCasesSection";
+import { FAQSection } from "@/home/FAQSection";
+import { ComparisonSection } from "@/home/ComparisonSection";
 import NewsletterSection from "@/home/NewsletterSection";
 
 const LandingPage = () => {
@@ -14,9 +19,14 @@ const LandingPage = () => {
       <HeroSection />
       <FeaturesSection />
       <AdvancedFeaturesSection />
+      <SocialProofSection />
       <ProblemSolutionSection />
       <WhyEloitySection />
       <ScreenshotCarousel />
+      <TestimonialsSection />
+      <UseCasesSection />
+      <ComparisonSection />
+      <FAQSection />
       <NewsletterSection />
     </Layout>
   );
