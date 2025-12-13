@@ -14,40 +14,33 @@ interface StoryViewerProps {
 
 const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: StoryViewerProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const { user } = useAuth();
   const { likeStory, viewStory } = useStories();
 
   const currentStory = stories[currentIndex];
-  const currentMedia = currentStory?.stories?.[currentStoryIndex];
 
   // Auto-advance story
   useEffect(() => {
-    if (!currentMedia) return;
+    if (!currentStory) return;
 
     // Mark story as viewed
-    viewStory(currentMedia.id);
+    if (currentStory.id) {
+      viewStory(currentStory.id);
+    }
 
     const timer = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
-          // Move to next story segment
-          if (currentStory.stories && currentStoryIndex < currentStory.stories.length - 1) {
-            setCurrentStoryIndex(prevIndex => prevIndex + 1);
+          // Move to next user's story
+          if (currentIndex < stories.length - 1) {
+            setCurrentIndex(prevIndex => prevIndex + 1);
+            onStoryChange?.(currentIndex + 1);
             return 0;
           } else {
-            // Move to next user's story
-            if (currentIndex < stories.length - 1) {
-              setCurrentIndex(prevIndex => prevIndex + 1);
-              setCurrentStoryIndex(0);
-              onStoryChange?.(currentIndex + 1);
-              return 0;
-            } else {
-              // End of stories
-              onClose();
-              return 100;
-            }
+            // End of stories
+            onClose();
+            return 100;
           }
         }
         return prev + 2; // Progress speed
