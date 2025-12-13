@@ -14,40 +14,33 @@ interface StoryViewerProps {
 
 const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: StoryViewerProps) => {
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const { user } = useAuth();
   const { likeStory, viewStory } = useStories();
 
   const currentStory = stories[currentIndex];
-  const currentMedia = currentStory?.stories?.[currentStoryIndex];
 
   // Auto-advance story
   useEffect(() => {
-    if (!currentMedia) return;
+    if (!currentStory) return;
 
     // Mark story as viewed
-    viewStory(currentMedia.id);
+    if (currentStory.id) {
+      viewStory(currentStory.id);
+    }
 
     const timer = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
-          // Move to next story segment
-          if (currentStory.stories && currentStoryIndex < currentStory.stories.length - 1) {
-            setCurrentStoryIndex(prevIndex => prevIndex + 1);
+          // Move to next user's story
+          if (currentIndex < stories.length - 1) {
+            setCurrentIndex(prevIndex => prevIndex + 1);
+            onStoryChange?.(currentIndex + 1);
             return 0;
           } else {
-            // Move to next user's story
-            if (currentIndex < stories.length - 1) {
-              setCurrentIndex(prevIndex => prevIndex + 1);
-              setCurrentStoryIndex(0);
-              onStoryChange?.(currentIndex + 1);
-              return 0;
-            } else {
-              // End of stories
-              onClose();
-              return 100;
-            }
+            // End of stories
+            onClose();
+            return 100;
           }
         }
         return prev + 2; // Progress speed
@@ -55,17 +48,17 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
     }, 100);
 
     return () => clearInterval(timer);
-  }, [currentMedia, currentIndex, currentStoryIndex, stories.length]);
+  }, [currentStory, currentIndex, stories.length, onStoryChange, onClose]);
 
   // Reset progress when story changes
   useEffect(() => {
     setProgress(0);
-  }, [currentIndex, currentStoryIndex]);
+  }, [currentIndex]);
 
   const handleLike = async () => {
-    if (currentMedia) {
+    if (currentStory?.id) {
       try {
-        await likeStory(currentMedia.id);
+        await likeStory(currentStory.id);
       } catch (error) {
         console.error('Error liking story:', error);
       }
@@ -75,7 +68,6 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
   const goToPreviousStory = () => {
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
-      setCurrentStoryIndex(0);
       onStoryChange?.(currentIndex - 1);
     } else {
       onClose();
@@ -85,14 +77,13 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
   const goToNextStory = () => {
     if (currentIndex < stories.length - 1) {
       setCurrentIndex(prev => prev + 1);
-      setCurrentStoryIndex(0);
       onStoryChange?.(currentIndex + 1);
     } else {
       onClose();
     }
   };
 
-  if (!currentStory || !currentMedia) {
+  if (!currentStory) {
     return null;
   }
 
@@ -106,32 +97,25 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
         <X size={24} />
       </button>
 
-      {/* Progress bars */}
-      <div className="absolute top-4 left-4 right-4 flex gap-1 z-10">
-        {currentStory.stories?.map((_: any, index: number) => (
-          <div key={index} className="flex-1 h-1 bg-white/30 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-white transition-all duration-100 ease-linear"
-              style={{
-                width: index < currentStoryIndex ? '100%' : 
-                       index === currentStoryIndex ? `${progress}%` : '0%'
-              }}
-            />
-          </div>
-        ))}
+      {/* Progress bar */}
+      <div className="absolute top-4 left-4 right-4 h-1 bg-white/30 rounded-full overflow-hidden z-10">
+        <div
+          className="h-full bg-white transition-all duration-100 ease-linear"
+          style={{ width: `${progress}%` }}
+        />
       </div>
 
       {/* User info */}
       <div className="absolute top-8 left-4 z-10 flex items-center gap-3">
         <Avatar className="h-8 w-8 border-2 border-white">
-          <AvatarImage src={currentStory.avatar} alt={currentStory.username} />
-          <AvatarFallback>{currentStory.username.substring(0, 2)}</AvatarFallback>
+          <AvatarImage src={currentStory.user?.avatar || currentStory.profiles?.avatar_url} alt={currentStory.user?.name || currentStory.profiles?.full_name} />
+          <AvatarFallback>{(currentStory.user?.name || currentStory.profiles?.username || "U").substring(0, 2)}</AvatarFallback>
         </Avatar>
         <div className="text-white">
-          <div className="font-semibold text-sm">{currentStory.username}</div>
-          {currentMedia.created_at && (
+          <div className="font-semibold text-sm">{currentStory.user?.name || currentStory.profiles?.full_name || "Unknown"}</div>
+          {currentStory.created_at && (
             <div className="text-xs opacity-75">
-              {new Date(currentMedia.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(currentStory.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </div>
           )}
         </div>
@@ -151,15 +135,15 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
 
       {/* Story content */}
       <div className="relative w-full h-full max-w-md mx-auto">
-        {currentMedia.media_type === 'image' ? (
+        {currentStory.media_type === 'image' || currentStory.type === 'image' ? (
           <img
-            src={currentMedia.media_url}
-            alt={currentMedia.caption || 'Story'}
+            src={currentStory.media_url}
+            alt={currentStory.caption || currentStory.content || 'Story'}
             className="w-full h-full object-contain"
           />
         ) : (
           <video
-            src={currentMedia.media_url}
+            src={currentStory.media_url}
             autoPlay
             loop
             className="w-full h-full object-contain"
@@ -167,9 +151,9 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
         )}
 
         {/* Story caption */}
-        {currentMedia.caption && (
+        {(currentStory.caption || currentStory.content) && (
           <div className="absolute bottom-20 left-4 right-4 text-white text-sm bg-black/50 p-2 rounded-lg">
-            {currentMedia.caption}
+            {currentStory.caption || currentStory.content}
           </div>
         )}
 

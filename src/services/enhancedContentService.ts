@@ -114,27 +114,27 @@ const transformVideoData = (video: any): ContentItem => {
 
 // Transform product data to content item format
 const transformProductData = (product: any): ContentItem => {
-  const revenue = (product.price || 0) * (product.total_sales || 0);
-  
+  const revenue = (product.price || 0) * (product.review_count || 0);
+
   return {
     id: product.id,
     title: product.name,
     type: 'Product',
     description: product.description,
-    views: product.view_count || 0,
-    engagement: product.total_reviews || 0,
+    views: 0,
+    engagement: product.review_count || 0,
     revenue: revenue,
     publishDate: product.created_at,
     platform: 'Marketplace',
-    thumbnail: product.thumbnail_image || product.images?.[0] || '/api/placeholder/300/200',
+    thumbnail: product.image_url || product.images?.[0] || '/api/placeholder/300/200',
     analytics: {
-      sales: product.total_sales || 0,
-      rating: product.average_rating || 0,
+      sales: 0,
+      rating: product.rating || 0,
       price: product.price || 0,
-      stock: product.stock_quantity || 0,
+      stock: product.in_stock ? 1 : 0,
     },
     price: product.price || 0,
-    sales: product.total_sales || 0
+    sales: 0
   };
 };
 
@@ -233,7 +233,7 @@ const fetchProducts = async (params: FetchContentParams) => {
     
     let query = supabase
       .from('products')
-      .select('id, name, description, thumbnail_image, images, price, total_sales, average_rating, view_count, created_at, stock_quantity');
+      .select('id, name, description, image_url, images, price, rating, review_count, created_at, in_stock');
     
     if (cutoff) {
       query = query.gte('created_at', cutoff);
@@ -249,11 +249,11 @@ const fetchProducts = async (params: FetchContentParams) => {
         query = query.order('view_count', { ascending: false });
         break;
       case 'engagement':
-        query = query.order('total_reviews', { ascending: false });
+        query = query.order('review_count', { ascending: false });
         break;
       case 'revenue':
         // Order by revenue (price * sales)
-        query = query.order('total_sales', { ascending: false });
+        query = query.order('price', { ascending: false });
         break;
       default:
         query = query.order('created_at', { ascending: false });

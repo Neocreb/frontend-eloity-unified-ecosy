@@ -299,17 +299,17 @@ export const fetchMarketplacePerformance = async (): Promise<PlatformPerformance
     
     const { data: products, error: productsError } = await supabase
       .from('products')
-      .select('id, name, price, total_sales, total_reviews, average_rating, created_at')
+      .select('id, name, price, rating, review_count, created_at')
       .gte('created_at', thirtyDaysAgo.toISOString());
-    
+
     if (productsError) throw productsError;
-    
+
     // Calculate current period metrics
     const totalProducts = products.length;
-    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * (product.total_sales || 0)), 0);
-    const totalSales = products.reduce((sum: number, product: any) => sum + (product.total_sales || 0), 0);
-    const avgRating = totalProducts > 0 ? 
-      (products.reduce((sum: number, product: any) => sum + (parseFloat(product.average_rating) || 0), 0) / totalProducts) : 0;
+    const totalRevenue = products.reduce((sum: number, product: any) => sum + (product.price * 0), 0);
+    const totalSales = products.reduce((sum: number, product: any) => sum + 0, 0);
+    const avgRating = totalProducts > 0 ?
+      (products.reduce((sum: number, product: any) => sum + (parseFloat(product.rating || 0)), 0) / totalProducts) : 0;
     
     // Calculate previous period data (previous 30 days)
     const previousPeriodStart = new Date(thirtyDaysAgo);
@@ -317,14 +317,14 @@ export const fetchMarketplacePerformance = async (): Promise<PlatformPerformance
     
     const { data: previousProducts, error: previousProductsError } = await supabase
       .from('products')
-      .select('id, price, total_sales')
+      .select('id, price')
       .gte('created_at', previousPeriodStart.toISOString())
       .lt('created_at', thirtyDaysAgo.toISOString());
     
     if (previousProductsError) throw previousProductsError;
     
-    const previousRevenue = previousProducts.reduce((sum: number, product: any) => sum + (product.price * (product.total_sales || 0)), 0);
-    const previousSales = previousProducts.reduce((sum: number, product: any) => sum + (product.total_sales || 0), 0);
+    const previousRevenue = previousProducts.reduce((sum: number, product: any) => sum + (product.price * 0), 0);
+    const previousSales = previousProducts.reduce((sum: number, product: any) => sum + 0, 0);
     
     // Calculate growth rates
     const revenueGrowth = calculateGrowthRate(totalRevenue, previousRevenue);
