@@ -952,10 +952,10 @@ export class MarketplaceService {
   static async getProductReviews(productId: string): Promise<Review[]> {
     try {
       const { data, error } = await supabase
-        .from('product_reviews')
+        .from('marketplace_reviews')
         .select(`
           *,
-          user:user_id(full_name, avatar_url)
+          reviewer:reviewer_id(full_name, avatar_url)
         `)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
