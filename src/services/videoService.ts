@@ -87,7 +87,6 @@ export const videoService = {
       .from('videos')
       .select('*')
       .eq('id', id)
-      .eq('is_public', true)
       .single();
 
     if (error) throw error;
