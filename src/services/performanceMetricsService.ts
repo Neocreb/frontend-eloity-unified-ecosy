@@ -317,7 +317,7 @@ export const fetchMarketplacePerformance = async (): Promise<PlatformPerformance
     
     const { data: previousProducts, error: previousProductsError } = await supabase
       .from('products')
-      .select('id, price, sales_count')
+      .select('id, price')
       .gte('created_at', previousPeriodStart.toISOString())
       .lt('created_at', thirtyDaysAgo.toISOString());
     
