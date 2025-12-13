@@ -212,6 +212,13 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ className = "" }) => {
       requiredPermission: "content.moderate",
       description: "Manage carousel ads and banners",
     },
+    {
+      path: "/admin/landing-overview",
+      label: "Landing Page",
+      icon: <Globe className="w-5 h-5" />,
+      requiredPermission: "content.moderate",
+      description: "Manage landing page content",
+    },
   ];
 
   const systemItems: NavItem[] = [
