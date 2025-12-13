@@ -441,16 +441,16 @@ const ProfessionalCrypto = () => {
             <div className="mb-8">
               <p className="text-white/70 text-sm font-medium mb-1">Total Portfolio Value</p>
               <h2 className="text-5xl sm:text-6xl font-bold text-white mb-4">
-                {formatCurrency(totalBalanceUSD)}
+                {formatCompactCurrency(convertAmount(totalBalanceUSD, "USD", selectedCurrency?.code || "USD"))}
               </h2>
               <div className="flex items-center gap-4">
                 <div className="text-white/90">
                   <p className="text-sm">Primary Asset</p>
-                  <p className="font-semibold">{primaryAsset.balance.toFixed(2)} {primaryAsset.symbol} ≈ {formatCurrency(primaryAsset.value)}</p>
+                  <p className="font-semibold">{primaryAsset.balance.toFixed(2)} {primaryAsset.symbol} ≈ {formatCurrency(primaryAsset.valueInUserCurrency)}</p>
                 </div>
                 <div className={cn(
                   "px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-1",
-                  totalChangePct >= 0 
+                  totalChangePct >= 0
                     ? "bg-green-400/20 text-green-100"
                     : "bg-red-400/20 text-red-100"
                 )}>
@@ -459,7 +459,7 @@ const ProfessionalCrypto = () => {
                   ) : (
                     <TrendingDown className="h-4 w-4" />
                   )}
-                  {formatCurrency(totalChangeUSD)} ({formatPercentage(totalChangePct)}) 24h
+                  {formatCurrency(convertAmount(totalChangeUSD, "USD", selectedCurrency?.code || "USD"))} ({formatPercentage(totalChangePct)}) 24h
                 </div>
               </div>
             </div>
