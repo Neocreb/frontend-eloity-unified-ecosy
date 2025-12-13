@@ -14,10 +14,10 @@ export interface ArticleInput {
   featured_image?: string;
   quiz_questions?: any;
   quiz_passing_score?: number;
-  tags?: string[];
   reward_reading?: number;
   reward_quiz_completion?: number;
   reward_perfect_score?: number;
+  tags?: string[];
 }
 
 export interface ArticleUpdateInput extends Partial<ArticleInput> {
@@ -27,7 +27,7 @@ export interface ArticleUpdateInput extends Partial<ArticleInput> {
 
 export class ArticleDbService {
   /**
-   * Create a new article
+   * Create a new educational article
    */
   static async createArticle(authorId: string, input: ArticleInput) {
     try {
@@ -44,10 +44,10 @@ export class ArticleDbService {
           featured_image: input.featured_image || '',
           quiz_questions: input.quiz_questions || null,
           quiz_passing_score: input.quiz_passing_score || 70,
-          tags: input.tags || [],
           reward_reading: input.reward_reading || 1,
           reward_quiz_completion: input.reward_quiz_completion || 2,
           reward_perfect_score: input.reward_perfect_score || 3,
+          tags: input.tags || [],
         })
         .select()
         .single();
@@ -85,6 +85,7 @@ export class ArticleDbService {
   static async getAllPublishedArticles(filters?: {
     difficulty?: string;
     category?: string;
+    tags?: string[];
   }) {
     try {
       let query = supabase
@@ -190,9 +191,29 @@ export class ArticleDbService {
   }
 
   /**
-   * Mark article as read
+   * Unpublish article
    */
-  static async markArticleRead(userId: string, articleId: string) {
+  static async unpublishArticle(articleId: string) {
+    try {
+      const { data, error } = await supabase
+        .from('educational_articles')
+        .update({ is_published: false })
+        .eq('id', articleId)
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      console.error('Error unpublishing article:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Record user article reading
+   */
+  static async markArticleRead(userId: string, articleId: string, timeSpent: number = 0) {
     try {
       const { data, error } = await supabase
         .from('article_progress')
@@ -201,6 +222,7 @@ export class ArticleDbService {
             user_id: userId,
             article_id: articleId,
             read: true,
+            time_spent_minutes: timeSpent,
             read_at: new Date().toISOString(),
           },
           { onConflict: 'user_id,article_id' }
@@ -211,10 +233,7 @@ export class ArticleDbService {
       if (error) throw error;
 
       // Increment views count
-      await supabase
-        .from('educational_articles')
-        .update({ views_count: supabase.rpc('increment_views', { article_id: articleId }) })
-        .eq('id', articleId);
+      await supabase.rpc('increment_article_views', { article_id: articleId });
 
       return { success: true, data };
     } catch (error) {
@@ -224,13 +243,9 @@ export class ArticleDbService {
   }
 
   /**
-   * Submit quiz for article
+   * Submit article quiz answer
    */
-  static async submitArticleQuiz(
-    userId: string,
-    articleId: string,
-    quizScore: number
-  ) {
+  static async submitArticleQuiz(userId: string, articleId: string, score: number) {
     try {
       const { data, error } = await supabase
         .from('article_progress')
@@ -238,7 +253,7 @@ export class ArticleDbService {
           {
             user_id: userId,
             article_id: articleId,
-            quiz_score: quizScore,
+            quiz_score: score,
           },
           { onConflict: 'user_id,article_id' }
         )
@@ -256,7 +271,7 @@ export class ArticleDbService {
   /**
    * Bookmark article
    */
-  static async toggleArticleBookmark(userId: string, articleId: string, bookmarked: boolean) {
+  static async bookmarkArticle(userId: string, articleId: string, bookmarked: boolean) {
     try {
       const { data, error } = await supabase
         .from('article_progress')
@@ -272,17 +287,9 @@ export class ArticleDbService {
         .single();
 
       if (error) throw error;
-
-      // Update bookmarks count
-      const increment = bookmarked ? 1 : -1;
-      await supabase.rpc('increment_article_bookmarks', {
-        article_id: articleId,
-        increment: increment,
-      });
-
       return { success: true, data };
     } catch (error) {
-      console.error('Error toggling bookmark:', error);
+      console.error('Error bookmarking article:', error);
       throw error;
     }
   }
@@ -290,7 +297,7 @@ export class ArticleDbService {
   /**
    * Like article
    */
-  static async toggleArticleLike(userId: string, articleId: string, liked: boolean) {
+  static async likeArticle(userId: string, articleId: string, liked: boolean) {
     try {
       const { data, error } = await supabase
         .from('article_progress')
@@ -306,17 +313,9 @@ export class ArticleDbService {
         .single();
 
       if (error) throw error;
-
-      // Update likes count
-      const increment = liked ? 1 : -1;
-      await supabase.rpc('increment_article_likes', {
-        article_id: articleId,
-        increment: increment,
-      });
-
       return { success: true, data };
     } catch (error) {
-      console.error('Error toggling like:', error);
+      console.error('Error liking article:', error);
       throw error;
     }
   }
@@ -342,96 +341,67 @@ export class ArticleDbService {
   }
 
   /**
-   * Claim article reward
+   * Get user's all article progress
    */
-  static async claimArticleReward(
-    userId: string,
-    articleId: string,
-    rewardType: 'reading' | 'quiz_completion' | 'perfect_score',
-    amount: number
-  ) {
-    try {
-      const { data, error } = await supabase
-        .from('article_reward_claims')
-        .insert({
-          user_id: userId,
-          article_id: articleId,
-          reward_type: rewardType,
-          amount: amount,
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      console.error('Error claiming reward:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Check if reward has been claimed
-   */
-  static async hasClaimedReward(
-    userId: string,
-    articleId: string,
-    rewardType: string
-  ): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from('article_reward_claims')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('article_id', articleId)
-        .eq('reward_type', rewardType)
-        .single();
-
-      if (error && error.code === 'PGRST116') return false; // Not found
-      if (error) throw error;
-      return !!data;
-    } catch (error) {
-      console.error('Error checking reward claim:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get user's bookmarked articles
-   */
-  static async getUserBookmarkedArticles(userId: string) {
+  static async getUserArticlesProgress(userId: string) {
     try {
       const { data, error } = await supabase
         .from('article_progress')
-        .select(`
+        .select(
+          `
           *,
-          educational_articles(*)
-        `)
+          article:article_id(id, title, difficulty, category)
+        `
+        )
         .eq('user_id', userId)
-        .eq('bookmarked', true)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
     } catch (error) {
-      console.error('Error fetching bookmarked articles:', error);
+      console.error('Error fetching user article progress:', error);
       throw error;
     }
   }
 
   /**
-   * Increment quiz attempts
+   * Claim article reading reward
    */
-  static async incrementQuizAttempts(articleId: string) {
+  static async claimReadingReward(userId: string, articleId: string, amount: number) {
     try {
-      const { data, error } = await supabase.rpc('increment_quiz_attempts', {
-        article_id: articleId,
-      });
+      await supabase.from('article_progress').update({ reading_reward_claimed: true }).eq('user_id', userId).eq('article_id', articleId);
 
-      if (error) throw error;
-      return { success: true, data };
+      return { success: true, amount };
     } catch (error) {
-      console.error('Error incrementing quiz attempts:', error);
+      console.error('Error claiming reading reward:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Claim article quiz reward
+   */
+  static async claimQuizReward(userId: string, articleId: string, amount: number) {
+    try {
+      await supabase.from('article_progress').update({ quiz_reward_claimed: true }).eq('user_id', userId).eq('article_id', articleId);
+
+      return { success: true, amount };
+    } catch (error) {
+      console.error('Error claiming quiz reward:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Claim perfect score reward
+   */
+  static async claimPerfectScoreReward(userId: string, articleId: string, amount: number) {
+    try {
+      await supabase.from('article_progress').update({ perfect_score_reward_claimed: true }).eq('user_id', userId).eq('article_id', articleId);
+
+      return { success: true, amount };
+    } catch (error) {
+      console.error('Error claiming perfect score reward:', error);
       throw error;
     }
   }

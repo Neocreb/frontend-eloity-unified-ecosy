@@ -98,6 +98,11 @@ import currencyRouter from './routes/currency.js';
 import { initializeCurrencyService } from './services/currencyService.js';
 import startMetricsSync from './tasks/metricsSync.js';
 import startCryptoDataSync from './tasks/syncCryptoData.js';
+import adminCoursesRouter from './routes/adminCourses.js';
+import adminArticlesRouter from './routes/adminArticles.js';
+import coursesRouter from './routes/courses.js';
+import articlesRouter from './routes/articles.js';
+import creatorCoursesRouter from './routes/creatorCourses.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -537,6 +542,13 @@ app.use('/api/creator-boost', creatorFundBoostRouter);
 app.use('/api/currency', currencyRouter);
 // Mount crypto user router to the same /api/crypto path (handles user-specific crypto operations with auth)
 app.use('/api/crypto/user', cryptoUserRouter);
+
+// Mount course and article routes
+app.use('/api/admin/courses', adminCoursesRouter);
+app.use('/api/admin/articles', adminArticlesRouter);
+app.use('/api/courses', coursesRouter);
+app.use('/api/articles', articlesRouter);
+app.use('/api/creator/courses', creatorCoursesRouter);
 
 // =============================================================================
 // CORE AUTHENTICATION ENDPOINTS
