@@ -1,11 +1,27 @@
 import { Router, Request, Response } from 'express';
+import { createClient } from '@supabase/supabase-js';
 import ArticleDbService from '../services/articleDbService';
+import { ActivityRewardService } from '../services/activityRewardService';
 
 const router = Router();
+const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+/**
+ * Middleware to verify user is authenticated
+ */
+function requireAuth(req: Request, res: Response, next: Function) {
+  const userId = req.user?.id;
+  if (!userId) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  next();
+}
 
 /**
  * GET /api/articles
- * Get all published articles with optional filters
+ * Get all published articles with filtering
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
@@ -16,15 +32,14 @@ router.get('/', async (req: Request, res: Response) => {
       category: category as string,
     });
 
-    // Apply search filter
+    // Simple search filter for title/excerpt/content
     if (search) {
-      const searchLower = (search as string).toLowerCase();
+      const searchTerm = (search as string).toLowerCase();
       articles = articles.filter(
-        (article: any) =>
-          article.title.toLowerCase().includes(searchLower) ||
-          article.excerpt?.toLowerCase().includes(searchLower) ||
-          article.content?.toLowerCase().includes(searchLower) ||
-          article.tags?.some((tag: string) => tag.toLowerCase().includes(searchLower))
+        (article) =>
+          article.title.toLowerCase().includes(searchTerm) ||
+          article.excerpt?.toLowerCase().includes(searchTerm) ||
+          article.tags?.some((tag) => tag.toLowerCase().includes(searchTerm))
       );
     }
 
@@ -44,17 +59,8 @@ router.get('/:id', async (req: Request, res: Response) => {
     const { id } = req.params;
     const article = await ArticleDbService.getArticleById(id);
 
-    if (!article) {
+    if (!article || !article.is_published) {
       return res.status(404).json({ error: 'Article not found' });
-    }
-
-    // Check if article is published or user is author
-    const userId = req.user?.id;
-    const isPublished = article.is_published;
-    const isAuthor = article.author_id === userId;
-
-    if (!isPublished && !isAuthor) {
-      return res.status(403).json({ error: 'Article not available' });
     }
 
     res.json(article);
@@ -66,31 +72,49 @@ router.get('/:id', async (req: Request, res: Response) => {
 
 /**
  * POST /api/articles/:id/read
- * Mark article as read
+ * Mark article as read and track progress
  */
-router.post('/:id/read', async (req: Request, res: Response) => {
+router.post('/:id/read', requireAuth, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const { timeSpent } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'User ID not found' });
     }
 
-    const result = await ArticleDbService.markArticleRead(userId, id);
-
-    // Claim reading reward if not already claimed
     const article = await ArticleDbService.getArticleById(id);
-    if (article && !await ArticleDbService.hasClaimedReward(userId, id, 'reading')) {
-      await ArticleDbService.claimArticleReward(
-        userId,
-        id,
-        'reading',
-        article.reward_reading
-      );
+    if (!article) {
+      return res.status(404).json({ error: 'Article not found' });
     }
 
-    res.status(201).json(result);
+    const result = await ArticleDbService.markArticleRead(userId, id, timeSpent || 0);
+
+    // Award reading reward
+    if (article.reward_reading > 0) {
+      const progress = await ArticleDbService.getUserArticleProgress(userId, id);
+      if (progress && !progress.reading_reward_claimed) {
+        await ActivityRewardService.logActivity({
+          userId,
+          actionType: 'read_article',
+          targetId: id,
+          targetType: 'article',
+          value: Number(article.reward_reading) || 1,
+          metadata: {
+            rewardType: 'reading',
+            articleTitle: article.title,
+            difficulty: article.difficulty,
+            points: Number(article.reward_reading),
+          },
+        });
+
+        // Mark reward as claimed
+        await ArticleDbService.claimReadingReward(userId, id, Number(article.reward_reading));
+      }
+    }
+
+    res.json(result);
   } catch (error) {
     console.error('Error marking article read:', error);
     res.status(500).json({ error: 'Failed to mark article as read' });
@@ -99,43 +123,67 @@ router.post('/:id/read', async (req: Request, res: Response) => {
 
 /**
  * POST /api/articles/:id/quiz
- * Submit quiz answer for article
+ * Submit article quiz answer
  */
-router.post('/:id/quiz', async (req: Request, res: Response) => {
+router.post('/:id/quiz', requireAuth, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { quizScore } = req.body;
+    const { score } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'User ID not found' });
     }
 
-    if (quizScore === undefined) {
-      return res.status(400).json({ error: 'Quiz score is required' });
+    if (score === undefined) {
+      return res.status(400).json({ error: 'Score is required' });
     }
 
-    const result = await ArticleDbService.submitArticleQuiz(userId, id, quizScore);
-
-    // Claim quiz completion reward
     const article = await ArticleDbService.getArticleById(id);
-    if (article && !await ArticleDbService.hasClaimedReward(userId, id, 'quiz_completion')) {
-      await ArticleDbService.claimArticleReward(
-        userId,
-        id,
-        'quiz_completion',
-        article.reward_quiz_completion
-      );
+    if (!article) {
+      return res.status(404).json({ error: 'Article not found' });
     }
 
-    // Claim perfect score reward if applicable
-    if (quizScore === 100 && article && !await ArticleDbService.hasClaimedReward(userId, id, 'perfect_score')) {
-      await ArticleDbService.claimArticleReward(
-        userId,
-        id,
-        'perfect_score',
-        article.reward_perfect_score
-      );
+    const result = await ArticleDbService.submitArticleQuiz(userId, id, score);
+
+    // Award quiz completion reward
+    if (score >= (article.quiz_passing_score || 70) && article.reward_quiz_completion > 0) {
+      const progress = await ArticleDbService.getUserArticleProgress(userId, id);
+      if (progress && !progress.quiz_reward_claimed) {
+        await ActivityRewardService.logActivity({
+          userId,
+          actionType: 'complete_article_quiz',
+          targetId: id,
+          targetType: 'article_quiz',
+          value: Number(article.reward_quiz_completion) || 2,
+          metadata: {
+            rewardType: 'quiz_completion',
+            articleTitle: article.title,
+            score,
+            points: Number(article.reward_quiz_completion),
+          },
+        });
+
+        await ArticleDbService.claimQuizReward(userId, id, Number(article.reward_quiz_completion));
+
+        // Award perfect score bonus if applicable
+        if (score === 100 && article.reward_perfect_score > 0) {
+          await ActivityRewardService.logActivity({
+            userId,
+            actionType: 'achieve_milestone',
+            targetId: id,
+            targetType: 'article_perfect_score',
+            value: Number(article.reward_perfect_score) || 3,
+            metadata: {
+              rewardType: 'perfect_score',
+              articleTitle: article.title,
+              points: Number(article.reward_perfect_score),
+            },
+          });
+
+          await ArticleDbService.claimPerfectScoreReward(userId, id, Number(article.reward_perfect_score));
+        }
+      }
     }
 
     res.json(result);
@@ -149,7 +197,7 @@ router.post('/:id/quiz', async (req: Request, res: Response) => {
  * POST /api/articles/:id/bookmark
  * Bookmark article
  */
-router.post('/:id/bookmark', async (req: Request, res: Response) => {
+router.post('/:id/bookmark', requireAuth, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { bookmarked } = req.body;
@@ -159,11 +207,11 @@ router.post('/:id/bookmark', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'User ID not found' });
     }
 
-    const result = await ArticleDbService.toggleArticleBookmark(userId, id, bookmarked);
+    const result = await ArticleDbService.bookmarkArticle(userId, id, bookmarked);
     res.json(result);
   } catch (error) {
-    console.error('Error toggling bookmark:', error);
-    res.status(500).json({ error: 'Failed to toggle bookmark' });
+    console.error('Error bookmarking article:', error);
+    res.status(500).json({ error: 'Failed to bookmark article' });
   }
 });
 
@@ -171,7 +219,7 @@ router.post('/:id/bookmark', async (req: Request, res: Response) => {
  * POST /api/articles/:id/like
  * Like article
  */
-router.post('/:id/like', async (req: Request, res: Response) => {
+router.post('/:id/like', requireAuth, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { liked } = req.body;
@@ -181,11 +229,11 @@ router.post('/:id/like', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'User ID not found' });
     }
 
-    const result = await ArticleDbService.toggleArticleLike(userId, id, liked);
+    const result = await ArticleDbService.likeArticle(userId, id, liked);
     res.json(result);
   } catch (error) {
-    console.error('Error toggling like:', error);
-    res.status(500).json({ error: 'Failed to toggle like' });
+    console.error('Error liking article:', error);
+    res.status(500).json({ error: 'Failed to like article' });
   }
 });
 
@@ -193,7 +241,7 @@ router.post('/:id/like', async (req: Request, res: Response) => {
  * GET /api/articles/:id/progress
  * Get user's progress on article
  */
-router.get('/:id/progress', async (req: Request, res: Response) => {
+router.get('/:id/progress', requireAuth, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const userId = req.user?.id;
@@ -203,18 +251,18 @@ router.get('/:id/progress', async (req: Request, res: Response) => {
     }
 
     const progress = await ArticleDbService.getUserArticleProgress(userId, id);
-    res.json(progress || {});
+    res.json(progress || { read: false, liked: false, bookmarked: false });
   } catch (error) {
     console.error('Error fetching article progress:', error);
-    res.status(500).json({ error: 'Failed to fetch article progress' });
+    res.status(500).json({ error: 'Failed to fetch progress' });
   }
 });
 
 /**
- * GET /api/articles/user/bookmarked
- * Get user's bookmarked articles
+ * GET /api/articles/user/progress
+ * Get user's progress on all articles
  */
-router.get('/user/bookmarked', async (req: Request, res: Response) => {
+router.get('/user/progress', requireAuth, async (req: Request, res: Response) => {
   try {
     const userId = req.user?.id;
 
@@ -222,11 +270,11 @@ router.get('/user/bookmarked', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'User ID not found' });
     }
 
-    const articles = await ArticleDbService.getUserBookmarkedArticles(userId);
-    res.json(articles);
+    const progress = await ArticleDbService.getUserArticlesProgress(userId);
+    res.json(progress);
   } catch (error) {
-    console.error('Error fetching bookmarked articles:', error);
-    res.status(500).json({ error: 'Failed to fetch bookmarked articles' });
+    console.error('Error fetching user article progress:', error);
+    res.status(500).json({ error: 'Failed to fetch progress' });
   }
 });
 
