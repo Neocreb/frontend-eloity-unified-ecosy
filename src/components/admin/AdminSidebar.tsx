@@ -35,6 +35,7 @@ import {
   Route,
   Gift,
   BookOpen,
+  Globe,
 } from "lucide-react";
 
 interface AdminSidebarProps {
