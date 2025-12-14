@@ -139,6 +139,22 @@ const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
           .in('user_id', Array.from(recipientIds));
 
         profilesMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+
+        // Fetch missing profiles individually
+        const missingIds = Array.from(recipientIds).filter(id => !profilesMap.has(id));
+        if (missingIds.length > 0) {
+          for (const userId of missingIds) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('user_id, username, full_name, avatar_url')
+              .eq('user_id', userId)
+              .single();
+
+            if (profile) {
+              profilesMap.set(userId, profile);
+            }
+          }
+        }
       }
 
       const recipientMap = new Map<string, { gifts: number; tips: number; username: string; avatar_url: string }>();
