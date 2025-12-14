@@ -114,6 +114,7 @@ import articlesRouter from './routes/articles.js';
 import creatorCoursesRouter from './routes/creatorCourses.js';
 import landingRouter from './routes/landing.js';
 import adminLandingRouter from './routes/adminLanding.js';
+import bybitRouter from './routes/bybit.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
