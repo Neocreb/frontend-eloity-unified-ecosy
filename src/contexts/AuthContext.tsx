@@ -12,6 +12,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
 import { ExtendedUser, UserProfile } from "@/types/user";
+import { retryAsync } from "@/utils/retryUtils";
+import { parseSupabaseError } from "@/utils/supabaseDebug";
 
 // Define types for our context
 type AuthContextType = {
