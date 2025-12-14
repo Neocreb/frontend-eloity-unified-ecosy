@@ -130,12 +130,16 @@ const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
       (giftTxData || []).forEach(tx => recipientIds.add(tx.to_user_id));
       (tipTxData || []).forEach(tx => recipientIds.add(tx.to_user_id));
 
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('user_id, username, full_name, avatar_url')
-        .in('user_id', Array.from(recipientIds));
+      let profilesMap = new Map();
 
-      const profilesMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+      if (recipientIds.size > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, username, full_name, avatar_url')
+          .in('user_id', Array.from(recipientIds));
+
+        profilesMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+      }
 
       const recipientMap = new Map<string, { gifts: number; tips: number; username: string; avatar_url: string }>();
 
