@@ -173,27 +173,30 @@ try {
   });
 
   db = {
-    select: () => ({
-      from: () => createMockQueryBuilder()
-    }),
-    insert: () => ({
-      values: () => ({
-        returning: () => ({
+    select: (fields?: any) => {
+      const queryBuilder = createMockQueryBuilder();
+      return {
+        from: (table?: any) => queryBuilder
+      };
+    },
+    insert: (table?: any) => ({
+      values: (values?: any) => ({
+        returning: (fields?: any) => ({
           execute: async () => [],
           all: async () => []
         })
       })
     }),
-    update: () => ({
-      set: () => ({
-        where: () => ({
+    update: (table?: any) => ({
+      set: (values?: any) => ({
+        where: (condition?: any) => ({
           execute: async () => [],
           all: async () => []
         })
       })
     }),
-    delete: () => ({
-      where: () => ({
+    delete: (table?: any) => ({
+      where: (condition?: any) => ({
         execute: async () => [],
         all: async () => []
       })
