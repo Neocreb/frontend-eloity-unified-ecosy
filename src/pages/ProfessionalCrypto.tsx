@@ -377,7 +377,7 @@ const ProfessionalCrypto = () => {
 
       <div className="min-h-screen bg-white dark:bg-slate-950">
         {/* UPPER ZONE - Full-bleed gradient with animated wave */}
-        <div className="relative w-full bg-gradient-to-b from-purple-500 via-purple-500 to-indigo-600 dark:from-purple-700 dark:to-indigo-800 pt-8 pb-32 overflow-hidden">
+        <div className="relative w-full bg-gradient-to-b from-purple-500 via-purple-500 to-indigo-600 dark:from-purple-700 dark:to-indigo-800 pt-8 pb-20 overflow-hidden">
           {/* Animated wave/blob background */}
           <svg
             className="absolute inset-0 w-full h-full opacity-20 dark:opacity-10"
