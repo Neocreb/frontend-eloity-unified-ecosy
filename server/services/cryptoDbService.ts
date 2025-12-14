@@ -202,70 +202,117 @@ export async function confirmEscrowPayment(escrowId: string, data: any) {
 
 export async function getUserTradingHistory(userId: string, filters: any, page: number, limit: number) {
   try {
-    // In a real implementation, you would query the trading history table
-    // For now, we'll return mock data
-    const mockTrades: any[] = [];
-    const totalTrades = 50;
-    
-    for (let i = 0; i < Math.min(limit, totalTrades - (page - 1) * limit); i++) {
-      const tradeId = `trade_${userId}_${Date.now()}_${i}`;
-      const isBuy = Math.random() > 0.5;
-      
-      mockTrades.push({
-        id: tradeId,
-        userId,
-        pair: 'BTC/USD',
-        side: isBuy ? 'buy' : 'sell',
-        price: parseFloat((45000 + (Math.random() * 2000 - 1000)).toFixed(2)),
-        amount: parseFloat((Math.random() * 2).toFixed(4)),
-        totalValue: parseFloat((Math.random() * 90000).toFixed(2)),
-        fee: parseFloat((Math.random() * 100).toFixed(2)),
-        feeCurrency: 'USD',
-        status: 'completed',
-        orderType: 'market',
-        timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        metadata: {}
-      });
+    // Query the crypto_transactions table for user's trading history
+    const trades = await db.select('crypto_transactions', (record) => {
+      if (record.user_id !== userId) return false;
+      if (filters.type && record.transaction_type !== filters.type) return false;
+      if (filters.status && record.status !== filters.status) return false;
+      return true;
+    });
+
+    if (!trades || trades.length === 0) {
+      return {
+        trades: [],
+        summary: {
+          totalTrades: 0,
+          buyTrades: 0,
+          sellTrades: 0,
+          totalVolume: 0,
+          totalFees: 0
+        },
+        total: 0
+      };
     }
-    
-    // Mock summary
+
+    const startIdx = (page - 1) * limit;
+    const paginatedTrades = trades.slice(startIdx, startIdx + limit);
+
+    // Calculate summary statistics
+    const buyTrades = trades.filter((t: any) => t.transaction_type === 'buy').length;
+    const sellTrades = trades.filter((t: any) => t.transaction_type === 'sell').length;
+    const totalVolume = trades.reduce((sum: number, t: any) => sum + parseFloat(t.amount?.toString() || '0'), 0);
+    const totalFees = trades.reduce((sum: number, t: any) => sum + parseFloat(t.transaction_fee?.toString() || '0'), 0);
+
     const summary = {
-      totalTrades: totalTrades,
-      buyTrades: Math.floor(totalTrades * 0.55),
-      sellTrades: Math.floor(totalTrades * 0.45),
-      totalVolume: parseFloat((totalTrades * 50000).toFixed(2)),
-      totalFees: parseFloat((totalTrades * 50).toFixed(2))
+      totalTrades: trades.length,
+      buyTrades,
+      sellTrades,
+      totalVolume: parseFloat(totalVolume.toFixed(8)),
+      totalFees: parseFloat(totalFees.toFixed(8))
     };
-    
+
     return {
-      trades: mockTrades,
+      trades: paginatedTrades,
       summary,
-      total: totalTrades
+      total: trades.length
     };
   } catch (error) {
     logger.error('Error fetching user trading history:', error);
-    throw error;
+    return {
+      trades: [],
+      summary: {
+        totalTrades: 0,
+        buyTrades: 0,
+        sellTrades: 0,
+        totalVolume: 0,
+        totalFees: 0
+      },
+      total: 0
+    };
   }
 }
 
 export async function getTradingStatistics(userId: string, timeframe: string) {
   try {
-    // In a real implementation, you would query the trading statistics table
-    // For now, we'll return mock data
+    // Query the crypto_transactions table to calculate trading statistics
+    const trades = await db.select('crypto_transactions', (record) => record.user_id === userId);
+
+    if (!trades || trades.length === 0) {
+      return {
+        totalTrades: 0,
+        successfulTrades: 0,
+        successRate: 0,
+        totalVolume: 0,
+        averageTradeSize: 0,
+        tradingPairs: [],
+        profitLoss: 0,
+        reputation: 0,
+        averageResponseTime: 0,
+        averageCompletionTime: 0
+      };
+    }
+
+    const successfulTrades = trades.filter((t: any) => t.status === 'completed').length;
+    const successRate = (successfulTrades / trades.length) * 100;
+    const totalVolume = trades.reduce((sum: number, t: any) => sum + parseFloat(t.amount?.toString() || '0'), 0);
+    const averageTradeSize = totalVolume / trades.length;
+    const tradingPairs = Array.from(new Set(trades.map((t: any) => t.currency)));
+
     return {
-      totalTrades: Math.floor(Math.random() * 100) + 20,
-      successfulTrades: Math.floor(Math.random() * 90) + 15,
-      successRate: parseFloat((85 + Math.random() * 15).toFixed(2)),
-      totalVolume: parseFloat((Math.random() * 500000 + 50000).toFixed(2)),
-      averageTradeSize: parseFloat((Math.random() * 5000 + 1000).toFixed(2)),
-      tradingPairs: ['BTC/USD', 'ETH/USD', 'BTC/EUR'],
-      profitLoss: parseFloat((Math.random() * 10000 - 5000).toFixed(2)),
-      reputation: parseFloat((4 + Math.random() * 1).toFixed(1)),
-      averageResponseTime: Math.floor(Math.random() * 10) + 1, // minutes
-      averageCompletionTime: Math.floor(Math.random() * 30) + 10 // minutes
+      totalTrades: trades.length,
+      successfulTrades,
+      successRate: parseFloat(successRate.toFixed(2)),
+      totalVolume: parseFloat(totalVolume.toFixed(8)),
+      averageTradeSize: parseFloat(averageTradeSize.toFixed(8)),
+      tradingPairs,
+      profitLoss: 0,
+      reputation: 0,
+      averageResponseTime: 0,
+      averageCompletionTime: 0
     };
   } catch (error) {
     logger.error('Error fetching trading statistics:', error);
-    throw error;
+    return {
+      totalTrades: 0,
+      successfulTrades: 0,
+      successRate: 0,
+      totalVolume: 0,
+      averageTradeSize: 0,
+      tradingPairs: [],
+      profitLoss: 0,
+      reputation: 0,
+      averageResponseTime: 0,
+      averageCompletionTime: 0
+    };
   }
 }
