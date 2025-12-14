@@ -79,26 +79,29 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
         }
       });
 
-      const fetchedStories: Story[] = Object.values(groupedByUser).map((story: any) => ({
-        id: story.id,
-        user: {
-          id: story.user_id,
-          name:
-            story.profiles?.full_name ||
-            story.profiles?.username ||
-            "Unknown User",
-          avatar:
-            story.profiles?.avatar_url ||
-            "https://api.dicebear.com/7.x/avataaars/svg?seed=user",
-          isUser: story.user_id === user?.id,
-        },
-        hasStory: true,
-        hasNew:
-          new Date(story.created_at) >
-          new Date(Date.now() - 24 * 60 * 60 * 1000),
-        thumbnail: story.media_url,
-        timestamp: new Date(story.created_at),
-      }));
+      const fetchedStories: Story[] = Object.values(groupedByUser).map((story: any) => {
+        const profile = Array.isArray(story.profiles) ? story.profiles[0] : story.profiles;
+        return {
+          id: story.id,
+          user: {
+            id: story.user_id,
+            name:
+              profile?.full_name ||
+              profile?.username ||
+              "Unknown User",
+            avatar:
+              profile?.avatar_url ||
+              "https://api.dicebear.com/7.x/avataaars/svg?seed=user",
+            isUser: story.user_id === user?.id,
+          },
+          hasStory: true,
+          hasNew:
+            new Date(story.created_at) >
+            new Date(Date.now() - 24 * 60 * 60 * 1000),
+          thumbnail: story.media_url,
+          timestamp: new Date(story.created_at),
+        };
+      });
 
       const createStoryOption: Story = {
         id: "create",
