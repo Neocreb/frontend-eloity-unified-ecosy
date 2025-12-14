@@ -29,7 +29,22 @@ const FreelanceFAB: React.FC<FreelanceFABProps> = ({ className }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { formatCurrency } = useCurrency();
+
+  let formatCurrency: (amount: number, currency?: string) => string;
+  try {
+    const currencyContext = useCurrency();
+    formatCurrency = currencyContext.formatCurrency;
+  } catch (error) {
+    // Fallback formatting if CurrencyProvider is not available
+    formatCurrency = (amount: number, currency = "USD") => {
+      return new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency,
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      }).format(amount);
+    };
+  }
 
   // Don't show on freelance pages to avoid duplication
   const hiddenPaths = ["/app/freelance", "/auth", "/"];
