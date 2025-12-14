@@ -132,10 +132,10 @@ const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
 
       const { data: profilesData } = await supabase
         .from('profiles')
-        .select('id, username, full_name, avatar_url')
-        .in('id', Array.from(recipientIds));
+        .select('user_id, username, full_name, avatar_url')
+        .in('user_id', Array.from(recipientIds));
 
-      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+      const profilesMap = new Map((profilesData || []).map(p => [p.user_id, p]));
 
       const recipientMap = new Map<string, { gifts: number; tips: number; username: string; avatar_url: string }>();
 
