@@ -139,24 +139,27 @@ function scheduleRateUpdates() {
 export async function refreshExchangeRates(): Promise<void> {
   try {
     logger.info('Refreshing exchange rates...');
-    
+
+    // Keep default rates as backup
+    const backupCache = new Map(exchangeRateCache);
     exchangeRateCache.clear();
-    
-    // Load fiat rates
+    initializeDefaultRates();
+
+    // Load fiat rates (with latest data)
     await loadFiatRates();
-    
+
     // Load crypto rates
     if (CRYPTOAPIS_API_KEY) {
       await loadCryptoRates();
     } else {
       logger.warn('CRYPTOAPIS_API_KEY not set, skipping crypto rates');
     }
-    
+
     lastRateUpdateTime = Date.now();
     logger.info(`Exchange rates refreshed. Total rates cached: ${exchangeRateCache.size}`);
   } catch (error) {
     logger.error('Error refreshing exchange rates:', error);
-    throw error;
+    // Don't throw - keep using cached rates
   }
 }
 
