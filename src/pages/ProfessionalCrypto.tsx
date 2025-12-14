@@ -7,23 +7,27 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   TrendingUp,
   TrendingDown,
-  BarChart3,
   ArrowUpDown,
   Users,
   PieChart,
   BookOpen,
   ChevronRight,
   Star,
-  Activity,
-  Globe,
-  Target,
+  Blocks,
+  Zap,
+  Plus,
+  Send,
+  Clock,
+  MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import CryptoWalletBalanceCard from "@/components/crypto/CryptoWalletBalanceCard";
 import { supabase } from "@/integrations/supabase/client";
+import FeaturedCryptoService, { FeaturedCryptoListing, CommunityFeaturedPost } from "@/services/featuredCryptoService";
 
 interface Cryptocurrency {
   id: string;
@@ -62,17 +66,21 @@ const TRACKED = Object.keys(SYMBOL_META);
 const ProfessionalCrypto = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { formatCurrency, selectedCurrency, convertAmount } = useCurrency();
   const navigate = useNavigate();
 
   const [cryptos, setCryptos] = useState<Cryptocurrency[]>([]);
   const [marketStats, setMarketStats] = useState<MarketStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [topGainersLosersTab, setTopGainersLosersTab] = useState<"gainers" | "losers">("gainers");
-
   const [totalBalanceUSD, setTotalBalanceUSD] = useState(0);
   const [totalChangeUSD, setTotalChangeUSD] = useState(0);
   const [totalChangePct, setTotalChangePct] = useState(0);
-  const [primaryAsset, setPrimaryAsset] = useState<{ symbol: string; balance: number; value: number }>({ symbol: "USDT", balance: 0, value: 0 });
+  const [primaryAsset, setPrimaryAsset] = useState<{ symbol: string; balance: number; value: number; valueInUserCurrency: number }>({ symbol: "USDT", balance: 0, value: 0, valueInUserCurrency: 0 });
+  const [activeMarketTab, setActiveMarketTab] = useState<"favorites" | "trending" | "gemw" | "new_listings">("trending");
+  const [activeCommunityTab, setActiveCommunityTab] = useState<"discover" | "community" | "event" | "announcement">("discover");
+  const [gemwListings, setGemwListings] = useState<FeaturedCryptoListing[]>([]);
+  const [newListings, setNewListings] = useState<FeaturedCryptoListing[]>([]);
+  const [communityPosts, setCommunityPosts] = useState<CommunityFeaturedPost[]>([]);
 
   useEffect(() => {
     loadData();
@@ -81,14 +89,10 @@ const ProfessionalCrypto = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // 1) Fetch live prices from backend (using CoinGecko via CryptoAPIs)
-      console.log('[Crypto] Starting price fetch from /api/crypto/prices');
-
       let pricesRes;
       let retries = 3;
       let lastError: Error | null = null;
 
-      // Retry logic for better resilience
       while (retries > 0) {
         try {
           pricesRes = await fetch(`/api/crypto/prices?symbols=bitcoin,ethereum,tether,binancecoin,solana,cardano,polkadot,avalanche`, {
@@ -101,7 +105,6 @@ const ProfessionalCrypto = () => {
           lastError = fetchError instanceof Error ? fetchError : new Error(String(fetchError));
           retries--;
           if (retries > 0) {
-            console.warn(`[Crypto] Fetch failed, retrying... (${retries} attempts left)`);
             await new Promise(resolve => setTimeout(resolve, 1000));
           }
         }
@@ -111,63 +114,33 @@ const ProfessionalCrypto = () => {
         throw lastError || new Error('Failed to fetch cryptocurrency prices after retries');
       }
 
-      console.log('[Crypto] Response status:', pricesRes.status, pricesRes.statusText);
-
-      // Read body once to avoid "body stream already read" errors
       const pricesText = await pricesRes.text();
-      console.log('[Crypto] Response status:', pricesRes.status);
-      console.log('[Crypto] Response text length:', pricesText.length, 'First 200 chars:', pricesText.substring(0, 200));
 
-      // Check for HTML response (indicates server error)
       if (pricesText.includes('<!doctype html') || pricesText.includes('<html')) {
-        console.error('[Crypto] Server returned HTML instead of JSON. This usually means:');
-        console.error('[Crypto] 1. The backend server is not running');
-        console.error('[Crypto] 2. The API route is not registered');
-        console.error('[Crypto] 3. There is a server misconfiguration');
-        console.error('[Crypto] Status:', pricesRes.status, pricesRes.statusText);
         throw new Error('API returned HTML (server error). Please check that the backend is running.');
       }
 
       if (!pricesRes.ok) {
-        console.error(`[Crypto] HTTP error! status: ${pricesRes.status}`, pricesText.substring(0, 200));
         throw new Error(`API returned HTTP ${pricesRes.status}: ${pricesText.substring(0, 100)}`);
       }
 
       const contentType = pricesRes.headers.get('content-type');
-      console.log('[Crypto] Content-Type:', contentType);
-
-      // Validate JSON response
       let pricesPayload;
       if (!contentType || !contentType.includes('application/json')) {
-        console.error('[Crypto] Non-JSON response received. Content-Type:', contentType);
-        // Try to parse anyway in case content-type header is wrong
         try {
           pricesPayload = pricesText ? JSON.parse(pricesText) : null;
-          console.warn('[Crypto] Successfully parsed JSON despite incorrect content-type');
         } catch (parseError) {
-          console.error('[Crypto] Failed to parse non-JSON response:', pricesText.substring(0, 500));
           throw new Error(`API returned non-JSON response: ${pricesText.substring(0, 100)}`);
         }
       } else {
         try {
           pricesPayload = pricesText ? JSON.parse(pricesText) : null;
-          console.log('[Crypto] Successfully parsed prices:', pricesPayload);
         } catch (parseError) {
-          console.error('[Crypto] Failed to parse JSON response:', pricesText.substring(0, 500));
           throw new Error('Failed to parse API response as JSON');
         }
       }
 
-      // Handle fallback prices (server might return fallback data)
-      if (pricesPayload.warning) {
-        console.warn('[Crypto] API warning:', pricesPayload.warning);
-      }
-      if (pricesPayload.source === 'fallback') {
-        console.info('[Crypto] Using fallback prices from server');
-      }
       const prices: Record<string, any> = {};
-
-      // Process backend data into the format expected by the UI
       if (pricesPayload.prices) {
         Object.entries(pricesPayload.prices).forEach(([symbol, data]: [string, any]) => {
           prices[symbol] = {
@@ -179,7 +152,6 @@ const ProfessionalCrypto = () => {
         });
       }
 
-      // Normalize into UI list with metadata
       const list: Cryptocurrency[] = TRACKED.map((id) => {
         const p = prices[id] || {};
         const meta = SYMBOL_META[id];
@@ -197,14 +169,12 @@ const ProfessionalCrypto = () => {
       }).sort((a, b) => a.market_cap_rank - b.market_cap_rank);
       setCryptos(list);
 
-      // Compute market stats (best-effort from available data)
       const totalMarketCap = list.reduce((s, c) => s + (c.market_cap || 0), 0);
       const totalVolume24h = list.reduce((s, c) => s + (c.total_volume || 0), 0);
       const btc = list.find((c) => c.id === "bitcoin");
       const btcDominance = totalMarketCap > 0 && btc ? (btc.market_cap / totalMarketCap) * 100 : 0;
       setMarketStats({ totalMarketCap, totalVolume24h, bitcoinDominance: btcDominance, activeCoins: list.length });
 
-      // 2) Try to fetch user crypto holdings (gracefully fail if not available)
       let perCurrency: { currency: string; balance: number }[] = [];
       try {
         if (!user?.id) throw new Error("No user");
@@ -217,67 +187,68 @@ const ProfessionalCrypto = () => {
           .filter((r: any) => r.currency && typeof r.balance !== "undefined")
           .map((r: any) => ({ currency: String(r.currency).toUpperCase(), balance: Number(r.balance) || 0 }));
       } catch (walletError) {
-        // Fallback: use aggregated unified wallet balance
         try {
           if (user?.id) {
             const r = await fetch(`/api/wallet/balance?userId=${encodeURIComponent(user.id)}`);
-
-            // Read body once to avoid "body stream already read" errors
             const walletText = await r.text();
 
             if (!r.ok) {
-              console.error(`HTTP error! status: ${r.status}`, walletText);
               throw new Error(`HTTP error! status: ${r.status}`);
             }
 
             const contentType = r.headers.get('content-type');
             if (!contentType || !contentType.includes('application/json')) {
-              console.error('Non-JSON response received:', walletText.substring(0, 500));
-              throw new Error(`Received non-JSON response from wallet balance API: ${walletText.substring(0, 100)}`);
+              throw new Error(`Received non-JSON response from wallet balance API`);
             }
 
             let j;
             try {
               j = walletText ? JSON.parse(walletText) : null;
             } catch (parseError) {
-              console.error('Failed to parse wallet balance response:', walletText);
               throw new Error('Failed to parse wallet balance response as JSON');
             }
             const total = Number(j?.data?.balances?.crypto || 0);
             perCurrency = total > 0 ? [{ currency: "USDT", balance: total }] : [];
           }
         } catch (fallbackError) {
-          console.warn("Wallet balance unavailable, showing prices only:", fallbackError);
-          // Continue without wallet data - prices are still loaded and displayed
           perCurrency = [];
         }
       }
 
-      // 3) Compute totals in USD and primary asset from holdings and prices
       const priceMap = new Map(list.map((c) => [c.symbol.toUpperCase(), c.current_price]));
       let sumUSD = 0;
       let sumUSDPrev = 0;
-      let top = { symbol: "USDT", balance: 0, value: 0 };
+      let top = { symbol: "USDT", balance: 0, value: 0, valueInUserCurrency: 0 };
       for (const h of perCurrency) {
         const sym = h.currency.toUpperCase();
-        // Map common synonyms
-        const norm = sym === "BTC" || sym === "ETH" || sym === "SOL" || sym === "ADA" || sym === "LINK" || sym === "MATIC" || sym === "AVAX" || sym === "DOT" || sym === "DOGE" || sym === "USDT" ? sym : sym;
+        const norm = sym;
         const px = priceMap.get(norm) ?? (norm === "USDT" ? 1 : 0);
         const usd = h.balance * px;
         sumUSD += usd;
         const changePct = list.find((c) => c.symbol.toUpperCase() === norm)?.price_change_percentage_24h || 0;
         const prev = usd / (1 + changePct / 100);
         sumUSDPrev += isFinite(prev) ? prev : usd;
-        if (usd > top.value) top = { symbol: norm, balance: h.balance, value: usd };
+        if (usd > top.value) top = { symbol: norm, balance: h.balance, value: usd, valueInUserCurrency: convertAmount(usd, "USD", selectedCurrency?.code || "USD") };
       }
       setTotalBalanceUSD(sumUSD);
       const delta = sumUSD - sumUSDPrev;
       setTotalChangeUSD(delta);
       setTotalChangePct(sumUSDPrev > 0 ? (delta / sumUSDPrev) * 100 : 0);
       setPrimaryAsset(top);
+
+      // Load featured listings and community posts in parallel
+      const [gemwData, newListingsData, communityData] = await Promise.all([
+        FeaturedCryptoService.getFeaturedListingsByCategory('gemw', 6),
+        FeaturedCryptoService.getFeaturedListingsByCategory('new_listing', 6),
+        FeaturedCryptoService.getCommunityFeaturedPosts(undefined, 3),
+      ]);
+
+      setGemwListings(gemwData);
+      setNewListings(newListingsData);
+      setCommunityPosts(communityData);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
-      console.error("[Crypto] Error loading crypto prices:", errorMessage, error);
+      console.error("[Crypto] Error loading crypto prices:", errorMessage);
       toast({
         title: "Error",
         description: `Failed to load cryptocurrency prices: ${errorMessage}`,
@@ -288,20 +259,15 @@ const ProfessionalCrypto = () => {
     }
   };
 
-  const formatCurrency = (value: number) => {
+  const formatCompactCurrency = (value: number) => {
     if (value >= 1000000000) {
-      return `$${(value / 1000000000).toFixed(2)}B`;
+      return `${selectedCurrency?.symbol || "$"}${(value / 1000000000).toFixed(2)}B`;
     } else if (value >= 1000000) {
-      return `$${(value / 1000000).toFixed(2)}M`;
+      return `${selectedCurrency?.symbol || "$"}${(value / 1000000).toFixed(2)}M`;
     } else if (value >= 1000) {
-      return `$${(value / 1000).toFixed(2)}K`;
+      return `${selectedCurrency?.symbol || "$"}${(value / 1000).toFixed(2)}K`;
     }
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: value < 1 ? 6 : 2,
-    }).format(value);
+    return formatCurrency(value);
   };
 
   const formatPercentage = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
@@ -312,20 +278,23 @@ const ProfessionalCrypto = () => {
 
   const handleQuickNavigation = (section: string) => {
     switch (section) {
-      case "trading":
+      case "portfolio":
+        navigate("/app/crypto-portfolio");
+        break;
+      case "trade":
         navigate("/app/crypto-trading");
         break;
       case "p2p":
         navigate("/app/crypto-p2p");
-        break;
-      case "portfolio":
-        navigate("/app/crypto-portfolio");
         break;
       case "learn":
         navigate("/app/crypto-learn");
         break;
       case "defi":
         navigate("/app/defi");
+        break;
+      case "convert":
+        navigate("/app/crypto-trading?type=convert");
         break;
       default:
         break;
@@ -334,43 +303,66 @@ const ProfessionalCrypto = () => {
 
   const handleDeposit = () => navigate("/app/crypto/deposit");
   const handleWithdraw = () => navigate("/app/crypto/withdraw");
+  const handleConvert = () => navigate("/app/crypto-trading?type=convert");
 
-  // Initiate KYC if needed for certain actions. Tries backend, fails gracefully.
-  const handleKYCSubmit = async (data: any): Promise<{ success: boolean; error?: any }> => {
-    try {
-      if (!user?.id) {
-        return { success: false, error: 'Not authenticated' };
-      }
-
-      const authToken = localStorage.getItem('access_token');
-      const res = await fetch('/api/kyc/initiate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        },
-        body: JSON.stringify({ userId: user.id, ...data }),
-      });
-
-      if (res.ok) {
-        return { success: true };
-      }
-
-      const err = await res.json().catch(() => ({}));
-      return { success: false, error: err?.error || res.statusText };
-    } catch (e) {
-      return { success: false, error: (e as any)?.message || e };
-    }
-  };
-
-  const topGainers = useMemo(
-    () => cryptos.filter(c => c.price_change_percentage_24h > 0).sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0, 5),
+  const trendingCryptos = useMemo(
+    () => cryptos.sort((a, b) => b.total_volume - a.total_volume).slice(0, 6),
     [cryptos]
   );
-  const topLosers = useMemo(
-    () => cryptos.filter(c => c.price_change_percentage_24h < 0).sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 5),
-    [cryptos]
-  );
+
+  const quickAccessItems = [
+    { 
+      label: "Portfolio", 
+      icon: PieChart, 
+      description: "Asset Management", 
+      section: "portfolio",
+      color: "from-purple-500 to-violet-600",
+      iconColor: "text-purple-500"
+    },
+    { 
+      label: "Trade", 
+      icon: ArrowUpDown, 
+      description: "Spot & Futures Trading", 
+      section: "trade",
+      color: "from-green-500 to-emerald-600",
+      iconColor: "text-green-500",
+      badge: "Hot"
+    },
+    { 
+      label: "P2P", 
+      icon: Users, 
+      description: "Peer-to-Peer Trading", 
+      section: "p2p",
+      color: "from-blue-500 to-cyan-600",
+      iconColor: "text-blue-500"
+    },
+    { 
+      label: "Learn & Earn", 
+      icon: BookOpen, 
+      description: "Courses, Articles & Rewards", 
+      section: "learn",
+      color: "from-orange-500 to-red-600",
+      iconColor: "text-orange-500",
+      badge: "100%"
+    },
+    { 
+      label: "DeFi", 
+      icon: Blocks, 
+      description: "Yield & Lending Hub", 
+      section: "defi",
+      color: "from-teal-500 to-cyan-600",
+      iconColor: "text-teal-500",
+      badge: "New"
+    },
+    { 
+      label: "Convert", 
+      icon: Zap, 
+      description: "Swap Assets Instantly", 
+      section: "convert",
+      color: "from-purple-600 to-pink-600",
+      iconColor: "text-purple-600"
+    },
+  ];
 
   return (
     <>
@@ -378,227 +370,546 @@ const ProfessionalCrypto = () => {
         <title>Crypto - Professional Trading Platform | Eloity</title>
       </Helmet>
 
-      <div className="min-h-screen bg-platform">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
-          <CryptoWalletBalanceCard
-            totalBalance={totalBalanceUSD}
-            totalBalance24hChange={totalChangeUSD}
-            totalBalance24hPercent={totalChangePct}
-            primaryAsset={primaryAsset}
-            onDeposit={handleDeposit}
-            onWithdraw={handleWithdraw}
-            className="mb-8"
-          />
+      <div className="min-h-screen bg-white dark:bg-slate-950">
+        {/* UPPER ZONE - Full-bleed gradient with animated wave */}
+        <div className="relative w-full bg-gradient-to-b from-purple-500 via-purple-500 to-indigo-600 dark:from-purple-700 dark:to-indigo-800 pt-8 pb-32 overflow-hidden">
+          {/* Animated wave/blob background */}
+          <svg
+            className="absolute inset-0 w-full h-full opacity-20 dark:opacity-10"
+            viewBox="0 0 1200 120"
+            preserveAspectRatio="none"
+            style={{
+              animation: "wave 15s ease-in-out infinite",
+            }}
+          >
+            <style>
+              {`
+                @keyframes wave {
+                  0%, 100% { transform: translateX(0); }
+                  50% { transform: translateX(25px); }
+                }
+                @keyframes float {
+                  0%, 100% { transform: translateY(0px) rotate(0deg); }
+                  50% { transform: translateY(-20px) rotate(5deg); }
+                }
+              `}
+            </style>
+            <defs>
+              <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style={{ stopColor: "#ffffff", stopOpacity: 0.3 }} />
+                <stop offset="100%" style={{ stopColor: "#ffffff", stopOpacity: 0.1 }} />
+              </linearGradient>
+            </defs>
+            <path
+              fill="url(#gradient)"
+              d="M0,50 Q300,20 600,50 T1200,50 L1200,120 L0,120 Z"
+            />
+          </svg>
 
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-            {[
-              { label: "Trade", icon: ArrowUpDown, color: "from-green-500 to-emerald-600", description: "Spot & Futures Trading", section: "trading" },
-              { label: "P2P", icon: Users, color: "from-blue-500 to-cyan-600", description: "Peer-to-Peer Trading", section: "p2p" },
-              { label: "Portfolio", icon: PieChart, color: "from-purple-500 to-violet-600", description: "Asset Management", section: "portfolio" },
-              { label: "Learn", icon: BookOpen, color: "from-orange-500 to-red-600", description: "Education Center", section: "learn" },
-              { label: "DeFi", icon: Target, color: "from-teal-500 to-cyan-600", description: "Yield & Lending Hub", section: "defi" },
-            ].map((item, index) => (
-              <Card
-                key={index}
-                className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105 group content-card hover:shadow-blue-500/25"
-                onClick={() => handleQuickNavigation(item.section)}
-              >
-                <CardContent className="p-6 text-center">
-                  <div className={`w-12 h-12 mx-auto mb-3 rounded-lg bg-gradient-to-r ${item.color} flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                    <item.icon className="h-6 w-6 text-white" />
+          {/* Content container */}
+          <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            {/* Top greeting section */}
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h1 className="text-2xl sm:text-4xl font-bold text-white">
+                Hi {user?.user_metadata?.full_name?.split(' ')[0] || 'User'} 👋
+              </h1>
+              <Badge className="bg-green-400 text-green-900 border-0 font-semibold shrink-0">
+                🔒 Secured
+              </Badge>
+            </div>
+            <p className="text-white/80 text-sm sm:text-base mb-6">Digital asset portfolio</p>
+
+            {/* Portfolio value section */}
+            <div className="mb-4">
+              <p className="text-white/70 text-xs sm:text-sm font-medium mb-2">Total Portfolio Value</p>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-4xl sm:text-6xl font-bold text-white flex-1">
+                  {formatCompactCurrency(convertAmount(totalBalanceUSD, "USD", selectedCurrency?.code || "USD"))}
+                </h2>
+                <div className={cn(
+                  "px-2 sm:px-4 py-1 sm:py-2 rounded-full font-semibold text-xs sm:text-sm flex items-center gap-1 shrink-0 mt-1",
+                  totalChangePct >= 0
+                    ? "bg-green-400/20 text-green-100"
+                    : "bg-red-400/20 text-red-100"
+                )}>
+                  {totalChangePct >= 0 ? (
+                    <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
+                  ) : (
+                    <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />
+                  )}
+                  <span className="hidden sm:inline">{formatCurrency(convertAmount(totalChangeUSD, "USD", selectedCurrency?.code || "USD"))} ({formatPercentage(totalChangePct)}) 24h</span>
+                  <span className="sm:hidden">{formatPercentage(totalChangePct)} 24h</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* FLOATING ACTION BUTTONS - positioned above divider */}
+        <div className="relative z-20 -mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+          <div className="flex gap-2 sm:gap-4 justify-center sm:justify-start">
+            <Button
+              onClick={handleDeposit}
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+            >
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Deposit</span>
+            </Button>
+            <Button
+              onClick={handleConvert}
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+            >
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Convert</span>
+            </Button>
+            <Button
+              onClick={handleWithdraw}
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+            >
+              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Withdraw</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* LOWER ZONE - Pure white/dark gray content */}
+        <div className="relative bg-white dark:bg-slate-900 px-4 sm:px-6 lg:px-8 py-12">
+          <div className="max-w-7xl mx-auto space-y-12">
+            {/* QUICK ACCESS SECTION */}
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Quick Access</h3>
+                <button
+                  onClick={() => handleQuickNavigation("portfolio")}
+                  className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-sm"
+                >
+                  View All →
+                </button>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6">
+                {quickAccessItems.map((item, index) => (
+                  <Card
+                    key={index}
+                    onClick={() => handleQuickNavigation(item.section)}
+                    className="cursor-pointer hover:shadow-lg dark:hover:shadow-purple-900/30 transition-all duration-300 hover:scale-105 dark:bg-slate-800 dark:border-slate-700 group"
+                  >
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-gray-100 to-gray-50 dark:from-slate-700 dark:to-slate-600 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <item.icon className={cn("h-7 w-7", item.iconColor)} />
+                        </div>
+                        {item.badge && (
+                          <Badge className={cn(
+                            "text-xs font-semibold",
+                            item.badge === "Hot" && "bg-yellow-400 text-yellow-900 border-0",
+                            item.badge === "100%" && "bg-green-400 text-green-900 border-0",
+                            item.badge === "New" && "bg-red-400 text-white border-0"
+                          )}>
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </div>
+                      <h4 className="font-bold text-lg text-gray-900 dark:text-white mb-1 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                        {item.label}
+                      </h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{item.description}</p>
+                      <ChevronRight className="h-4 w-4 text-gray-400 dark:text-gray-500 group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors" />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* MARKET DATA SECTION */}
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                  <Star className="h-6 w-6 text-yellow-500" />
+                  Top Cryptocurrencies
+                </h3>
+                <Badge variant="outline" className="dark:bg-slate-800 dark:border-slate-700">
+                  Live Prices
+                </Badge>
+              </div>
+
+              <Card className="dark:bg-slate-800 dark:border-slate-700">
+                <CardContent className="p-0">
+                  <Tabs value={activeMarketTab} onValueChange={(value) => setActiveMarketTab(value as any)} className="w-full">
+                    <div className="border-b dark:border-slate-700 px-6 pt-6">
+                      <TabsList className="grid w-full max-w-2xl grid-cols-4 dark:bg-slate-700">
+                        <TabsTrigger value="favorites" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Favorites
+                        </TabsTrigger>
+                        <TabsTrigger value="trending" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Trending
+                        </TabsTrigger>
+                        <TabsTrigger value="gemw" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          GemW
+                        </TabsTrigger>
+                        <TabsTrigger value="new_listings" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          New Listings
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+
+                    <TabsContent value="favorites" className="p-0 mt-0">
+                      <div className="divide-y dark:divide-slate-700">
+                        {cryptos.slice(0, 4).map((crypto) => (
+                          <div
+                            key={crypto.id}
+                            onClick={() => handleNavigateToTrade(crypto.id)}
+                            className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                              <img
+                                src={crypto.image}
+                                alt={crypto.name}
+                                className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                  {crypto.symbol.toUpperCase()}/USDT
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">{crypto.name}</p>
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(convertAmount(crypto.current_price, "USD", selectedCurrency?.code || "USD"))}</p>
+                              <div className={cn(
+                                "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
+                                crypto.price_change_percentage_24h >= 0
+                                  ? "text-green-600 dark:text-green-400"
+                                  : "text-red-600 dark:text-red-400"
+                              )}>
+                                {crypto.price_change_percentage_24h >= 0 ? (
+                                  <TrendingUp className="h-3 w-3" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3" />
+                                )}
+                                <span>{formatPercentage(crypto.price_change_percentage_24h)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="trending" className="p-0 mt-0">
+                      <div className="divide-y dark:divide-slate-700">
+                        {trendingCryptos.map((crypto) => (
+                          <div
+                            key={crypto.id}
+                            onClick={() => handleNavigateToTrade(crypto.id)}
+                            className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                          >
+                            <div className="flex items-center gap-4 flex-1 min-w-0">
+                              <img
+                                src={crypto.image}
+                                alt={crypto.name}
+                                className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
+                              />
+                              <div className="min-w-0 flex-1">
+                                <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                  {crypto.symbol.toUpperCase()}/USDT
+                                </p>
+                                <p className="text-sm text-gray-600 dark:text-gray-400">{crypto.name}</p>
+                              </div>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(convertAmount(crypto.current_price, "USD", selectedCurrency?.code || "USD"))}</p>
+                              <div className={cn(
+                                "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
+                                crypto.price_change_percentage_24h >= 0
+                                  ? "text-green-600 dark:text-green-400"
+                                  : "text-red-600 dark:text-red-400"
+                              )}>
+                                {crypto.price_change_percentage_24h >= 0 ? (
+                                  <TrendingUp className="h-3 w-3" />
+                                ) : (
+                                  <TrendingDown className="h-3 w-3" />
+                                )}
+                                <span>{formatPercentage(crypto.price_change_percentage_24h)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="gemw" className="p-0 mt-0">
+                      <div className="divide-y dark:divide-slate-700">
+                        {gemwListings.length > 0 ? (
+                          gemwListings.map((listing) => (
+                            <div
+                              key={listing.id}
+                              className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <img
+                                  src={listing.image_url || 'https://via.placeholder.com/48'}
+                                  alt={listing.name}
+                                  className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                    {listing.symbol.toUpperCase()}/USDT
+                                  </p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{listing.name}</p>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0 flex items-center gap-3">
+                                <Badge className="bg-yellow-400 text-yellow-900 border-0 font-semibold">Hot</Badge>
+                                <div>
+                                  <p className="font-bold text-gray-900 dark:text-white">${listing.current_price?.toFixed(8) || '-.--'}</p>
+                                  <div className={cn(
+                                    "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
+                                    listing.price_change_24h >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  )}>
+                                    {listing.price_change_24h >= 0 ? (
+                                      <TrendingUp className="h-3 w-3" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3" />
+                                    )}
+                                    <span>{formatPercentage(listing.price_change_24h)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+                            No GemW listings available
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="new_listings" className="p-0 mt-0">
+                      <div className="divide-y dark:divide-slate-700">
+                        {newListings.length > 0 ? (
+                          newListings.map((listing) => (
+                            <div
+                              key={listing.id}
+                              className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <img
+                                  src={listing.image_url || 'https://via.placeholder.com/48'}
+                                  alt={listing.name}
+                                  className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                    {listing.symbol.toUpperCase()}/USDT
+                                  </p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{listing.name}</p>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0 flex items-center gap-3">
+                                <Badge className="bg-red-400 text-white border-0 font-semibold">New</Badge>
+                                <div>
+                                  <p className="font-bold text-gray-900 dark:text-white">${listing.current_price?.toFixed(8) || '-.--'}</p>
+                                  <div className={cn(
+                                    "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
+                                    listing.price_change_24h >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  )}>
+                                    {listing.price_change_24h >= 0 ? (
+                                      <TrendingUp className="h-3 w-3" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3" />
+                                    )}
+                                    <span>{formatPercentage(listing.price_change_24h)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+                            No new listings available
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+
+                  <div className="p-6 border-t dark:border-slate-700 text-center">
+                    <button
+                      onClick={() => handleNavigateToTrade("bitcoin")}
+                      className="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium text-sm transition-colors"
+                    >
+                      View More Coins →
+                    </button>
                   </div>
-                  <h3 className="font-semibold text-lg mb-1">{item.label}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                  <ChevronRight className="h-4 w-4 mx-auto mt-2 text-muted-foreground group-hover:text-primary transition-colors" />
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            </div>
 
-          <div className="space-y-8">
-            {marketStats && (
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <Card className="content-card">
-                  <CardContent className="p-6 text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <Globe className="h-5 w-5 text-blue-600 mr-2" />
-                      <span className="text-sm font-medium text-muted-foreground">Market Cap</span>
+            {/* COMMUNITY SECTION */}
+            <div className="space-y-6">
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <MessageSquare className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                Community
+              </h3>
+
+              <Card className="dark:bg-slate-800 dark:border-slate-700">
+                <CardContent className="p-0">
+                  <Tabs value={activeCommunityTab} onValueChange={(value) => setActiveCommunityTab(value as any)} className="w-full">
+                    <div className="border-b dark:border-slate-700 px-6 pt-6">
+                      <TabsList className="grid w-full max-w-2xl grid-cols-4 dark:bg-slate-700">
+                        <TabsTrigger value="discover" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Discover
+                        </TabsTrigger>
+                        <TabsTrigger value="community" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Community
+                        </TabsTrigger>
+                        <TabsTrigger value="event" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Event
+                        </TabsTrigger>
+                        <TabsTrigger value="announcement" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Announcement
+                        </TabsTrigger>
+                      </TabsList>
                     </div>
-                    <p className="text-2xl font-bold text-blue-600">{formatCurrency(marketStats.totalMarketCap)}</p>
-                  </CardContent>
-                </Card>
 
-                <Card className="content-card">
-                  <CardContent className="p-6 text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <BarChart3 className="h-5 w-5 text-green-600 mr-2" />
-                      <span className="text-sm font-medium text-muted-foreground">24h Volume</span>
-                    </div>
-                    <p className="text-2xl font-bold text-green-600">{formatCurrency(marketStats.totalVolume24h)}</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="content-card">
-                  <CardContent className="p-6 text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <Target className="h-5 w-5 text-orange-600 mr-2" />
-                      <span className="text-sm font-medium text-muted-foreground">BTC Dominance</span>
-                    </div>
-                    <p className="text-2xl font-bold text-orange-600">{marketStats.bitcoinDominance.toFixed(1)}%</p>
-                  </CardContent>
-                </Card>
-
-                <Card className="content-card">
-                  <CardContent className="p-6 text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <Activity className="h-5 w-5 text-purple-600 mr-2" />
-                      <span className="text-sm font-medium text-muted-foreground">Active Coins</span>
-                    </div>
-                    <p className="text-2xl font-bold text-purple-600">{marketStats.activeCoins.toLocaleString()}</p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            <Card className="content-card shadow-xl">
-              <CardHeader className="pb-4">
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <Star className="h-5 w-5 text-yellow-500" />
-                  Top Cryptocurrencies
-                  <Badge variant="outline" className="ml-auto">Live Prices</Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                  {cryptos.slice(0, 10).map((crypto, index) => (
-                    <div
-                      key={crypto.id}
-                      onClick={() => handleNavigateToTrade(crypto.id)}
-                      className="flex items-center justify-between p-4 hover:bg-gradient-to-r hover:from-blue-50/50 hover:to-purple-50/50 dark:hover:from-blue-900/20 dark:hover:to-purple-900/20 transition-all duration-200 cursor-pointer group"
-                    >
-                      <div className="flex items-center gap-4 flex-1 min-w-0">
-                        <div className="relative">
-                          <Badge
-                            variant="outline"
-                            className={cn(
-                              "text-xs px-1.5 py-0.5 font-bold absolute -top-2 -left-2 z-10",
-                              index < 3 && "bg-gradient-to-r from-yellow-400 to-orange-500 text-white border-0"
-                            )}
+                    <TabsContent value="discover" className="p-6 mt-0 space-y-4">
+                      {communityPosts.length > 0 ? (
+                        communityPosts.map((post) => (
+                          <div
+                            key={post.id}
+                            className="p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border dark:border-slate-700 relative"
                           >
-                            #{crypto.market_cap_rank}
-                          </Badge>
-                          <img
-                            src={crypto.image}
-                            alt={crypto.name}
-                            className="w-10 h-10 rounded-full ring-2 ring-white dark:ring-gray-700 shadow-sm group-hover:ring-blue-200 transition-all"
-                          />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold text-base truncate group-hover:text-blue-600 transition-colors">
-                              {crypto.name}
-                            </p>
-                            <span className="text-sm text-muted-foreground bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full font-medium">
-                              {crypto.symbol.toUpperCase()}
-                            </span>
-                          </div>
-                          <p className="text-sm text-muted-foreground">Market Cap: {formatCurrency(crypto.market_cap)}</p>
-                        </div>
-                      </div>
-
-                      <div className="text-right flex-shrink-0 space-y-1">
-                        <p className="font-bold text-lg">{formatCurrency(crypto.current_price)}</p>
-                        <div
-                          className={cn(
-                            "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-sm font-semibold",
-                            crypto.price_change_percentage_24h >= 0
-                              ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300"
-                              : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300"
-                          )}
-                        >
-                          {crypto.price_change_percentage_24h >= 0 ? (
-                            <TrendingUp className="h-4 w-4" />
-                          ) : (
-                            <TrendingDown className="h-4 w-4" />
-                          )}
-                          <span>{formatPercentage(crypto.price_change_percentage_24h)}</span>
-                        </div>
-                      </div>
-
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-blue-500 transition-colors ml-2" />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="content-card shadow-xl">
-              <CardHeader className="pb-4">
-                <Tabs value={topGainersLosersTab} onValueChange={(value) => setTopGainersLosersTab(value as "gainers" | "losers")}>
-                  <TabsList className="grid w-full max-w-md grid-cols-2">
-                    <TabsTrigger value="gainers" className="flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4 text-green-600" />
-                      Top Gainers
-                    </TabsTrigger>
-                    <TabsTrigger value="losers" className="flex items-center gap-2">
-                      <TrendingDown className="h-4 w-4 text-red-600" />
-                      Top Losers
-                    </TabsTrigger>
-                  </TabsList>
-
-                  <TabsContent value="gainers" className="mt-6">
-                    <div className="space-y-3">
-                      {topGainers.map((crypto) => (
-                        <div
-                          key={crypto.id}
-                          onClick={() => handleNavigateToTrade(crypto.id)}
-                          className="flex items-center justify-between p-3 rounded-lg hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-3">
-                            <img src={crypto.image} alt={crypto.name} className="w-8 h-8 rounded-full" />
-                            <div>
-                              <p className="font-medium group-hover:text-green-600 transition-colors">{crypto.name}</p>
-                              <p className="text-sm text-muted-foreground">{crypto.symbol.toUpperCase()}</p>
+                            {post.is_featured && (
+                              <Badge className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 border-0 font-semibold">
+                                Selected
+                              </Badge>
+                            )}
+                            <div className="flex gap-4">
+                              <img
+                                src={post.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'}
+                                alt={post.username}
+                                className="w-12 h-12 rounded-full flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0 pr-12">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white">{post.username}</p>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {new Date(post.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                {post.title && <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{post.title}</p>}
+                                <p className="text-gray-700 dark:text-gray-300 mb-3">{post.content}</p>
+                                <div className={cn(
+                                  "inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold",
+                                  post.sentiment === "positive"
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                    : post.sentiment === "negative"
+                                    ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                    : "bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300"
+                                )}>
+                                  {post.sentiment === "positive" ? (
+                                    <TrendingUp className="h-4 w-4" />
+                                  ) : (
+                                    <TrendingDown className="h-4 w-4" />
+                                  )}
+                                  {post.sentiment === "positive" ? "+" : ""}{post.impact_percentage}%
+                                </div>
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold">{formatCurrency(crypto.current_price)}</p>
-                            <p className="text-green-600 font-medium text-sm">{formatPercentage(crypto.price_change_percentage_24h)}</p>
-                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>Discover new opportunities in the crypto community</p>
                         </div>
-                      ))}
-                    </div>
-                  </TabsContent>
+                      )}
+                    </TabsContent>
 
-                  <TabsContent value="losers" className="mt-6">
-                    <div className="space-y-3">
-                      {topLosers.map((crypto) => (
-                        <div
-                          key={crypto.id}
-                          onClick={() => handleNavigateToTrade(crypto.id)}
-                          className="flex items-center justify-between p-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer group"
-                        >
-                          <div className="flex items-center gap-3">
-                            <img src={crypto.image} alt={crypto.name} className="w-8 h-8 rounded-full" />
-                            <div>
-                              <p className="font-medium group-hover:text-red-600 transition-colors">{crypto.name}</p>
-                              <p className="text-sm text-muted-foreground">{crypto.symbol.toUpperCase()}</p>
+                    <TabsContent value="community" className="p-6 mt-0 space-y-4">
+                      {communityPosts.filter(p => p.category === 'community').length > 0 ? (
+                        communityPosts.filter(p => p.category === 'community').map((post) => (
+                          <div
+                            key={post.id}
+                            className="p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border dark:border-slate-700"
+                          >
+                            <div className="flex gap-4">
+                              <img
+                                src={post.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'}
+                                alt={post.username}
+                                className="w-12 h-12 rounded-full flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white">{post.username}</p>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {new Date(post.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-gray-700 dark:text-gray-300 mb-3">{post.content}</p>
+                                <span className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-sm cursor-pointer">Follow</span>
+                              </div>
                             </div>
                           </div>
-                          <div className="text-right">
-                            <p className="font-semibold">{formatCurrency(crypto.current_price)}</p>
-                            <p className="text-red-600 font-medium text-sm">{formatPercentage(crypto.price_change_percentage_24h)}</p>
-                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>Join our crypto community to connect with other traders</p>
                         </div>
-                      ))}
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </CardHeader>
-            </Card>
+                      )}
+                    </TabsContent>
+
+                    <TabsContent value="event" className="p-6 mt-0">
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Upcoming crypto events and webinars coming soon</p>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="announcement" className="p-6 mt-0 space-y-4">
+                      {communityPosts.filter(p => p.category === 'announcement').length > 0 ? (
+                        communityPosts.filter(p => p.category === 'announcement').map((post) => (
+                          <div
+                            key={post.id}
+                            className="p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border dark:border-slate-700"
+                          >
+                            <div className="flex gap-4">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Star className="h-6 w-6 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white">{post.username}</p>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {new Date(post.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                {post.title && <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{post.title}</p>}
+                                <p className="text-gray-700 dark:text-gray-300">{post.content}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>Latest announcements and market updates</p>
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-
-          {/* Modals removed - now using full-page routes for crypto operations */}
         </div>
       </div>
     </>
