@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,15 +9,17 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useToast } from '@/components/ui/use-toast';
 import { SuggestedUsers } from '@/components/gifts/SuggestedUsers';
 import { VirtualGift } from '@/types/gifts';
-import { 
-  Gift, 
-  Search, 
-  User, 
-  Heart, 
-  Clock, 
-  Send, 
+import { supabase } from '@/lib/supabase';
+import {
+  Gift,
+  Search,
+  User,
+  Heart,
+  Clock,
+  Send,
   Plus,
-  Sparkles
+  Sparkles,
+  Loader2
 } from 'lucide-react';
 
 interface QuickSendTabProps {
@@ -31,42 +33,37 @@ const QuickSendTab = ({ onGiftSent }: QuickSendTabProps) => {
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState('');
   const [isSending, setIsSending] = useState(false);
+  const [popularGifts, setPopularGifts] = useState<VirtualGift[]>([]);
+  const [giftsLoading, setGiftsLoading] = useState(true);
 
-  // Sample popular gifts for quick send
-  const popularGifts = [
-    {
-      id: '1',
-      name: 'Rose',
-      price: 1.99,
-      emoji: '🌹',
-      category: 'flowers',
-      rarity: 'common'
-    },
-    {
-      id: '2',
-      name: 'Chocolate',
-      price: 2.99,
-      emoji: '🍫',
-      category: 'food',
-      rarity: 'common'
-    },
-    {
-      id: '3',
-      name: 'Diamond Ring',
-      price: 9.99,
-      emoji: '💍',
-      category: 'jewelry',
-      rarity: 'rare'
-    },
-    {
-      id: '4',
-      name: 'Crown',
-      price: 19.99,
-      emoji: '👑',
-      category: 'royal',
-      rarity: 'epic'
+  useEffect(() => {
+    fetchPopularGifts();
+  }, []);
+
+  const fetchPopularGifts = async () => {
+    try {
+      setGiftsLoading(true);
+      const { data, error } = await supabase
+        .from('virtual_gifts')
+        .select('*')
+        .eq('available', true)
+        .order('price', { ascending: true })
+        .limit(4);
+
+      if (error) throw error;
+      setPopularGifts(data || []);
+    } catch (error) {
+      console.error('Error loading popular gifts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load gifts.',
+        variant: 'destructive',
+      });
+      setPopularGifts([]);
+    } finally {
+      setGiftsLoading(false);
     }
-  ];
+  };
 
   const handleSendGift = async () => {
     if (!selectedUser || !selectedGift) {
