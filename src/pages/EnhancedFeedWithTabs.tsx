@@ -16,6 +16,8 @@ import ErrorBoundary from "@/components/ui/error-boundary";
 import { useQuickLinksStats, useTrendingTopicsData, useSuggestedUsersData, useLiveNowData } from "@/hooks/use-sidebar-widgets";
 import { HybridFeedProvider } from "@/contexts/HybridFeedContext";
 import HybridFeedContent from "@/components/feed/HybridFeedContent";
+import { supabase } from "@/integrations/supabase/client";
+import { storiesService } from "@/services/storiesService";
 
 // Main enhanced feed component
 const EnhancedFeedWithTabs = () => {
@@ -30,6 +32,7 @@ const EnhancedFeedWithTabs = () => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [userStories, setUserStories] = useState<any[]>([]);
   const [fetchedStories, setFetchedStories] = useState<any[]>([]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -92,32 +95,76 @@ const EnhancedFeedWithTabs = () => {
 
   const handleCreateStory = async (storyData: any) => {
     try {
-      const newStory = {
-        id: `story-${Date.now()}`,
-        user: {
-          id: user?.id || "current-user",
-          name: user?.name || "You",
-          username: user?.username || "you",
-          avatar: user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=user",
-          isUser: true,
-        },
-        timestamp: new Date(),
-        content: storyData,
-        views: 0,
-        hasNew: true,
-      };
+      if (!user?.id) {
+        toast({
+          title: "Sign in required",
+          description: "Please sign in to create stories.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-      setUserStories(prev => [newStory, ...prev]);
+      if (!storyData.file || !storyData.type) {
+        toast({
+          title: "Invalid story",
+          description: "Please select media for your story.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Creating story...",
+        description: "Uploading your story.",
+      });
+
+      // Upload media to storage
+      const fileExt = storyData.file.name.split('.').pop();
+      const fileName = `${user.id}/${Date.now()}.${fileExt}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('stories')
+        .upload(fileName, storyData.file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        toast({
+          title: "Upload failed",
+          description: uploadError.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('stories')
+        .getPublicUrl(fileName);
+
+      // Create story record in database
+      await storiesService.createStory({
+        media_url: publicUrl,
+        media_type: storyData.type as 'image' | 'video',
+        caption: storyData.text || undefined,
+        expires_in_hours: 24
+      }, user.id);
 
       toast({
         title: "Story created!",
         description: "Your story has been published.",
       });
+
+      setShowCreateStoryModal(false);
+      // Trigger refetch of stories in EnhancedStoriesSection
+      setRefetchTrigger(prev => prev + 1);
     } catch (error) {
       console.error("Error creating story:", error);
       toast({
         title: "Failed to create story",
-        description: "Please try again.",
+        description: error instanceof Error ? error.message : "Please try again.",
         variant: "destructive",
       });
     }
@@ -147,6 +194,7 @@ const EnhancedFeedWithTabs = () => {
               userStories={userStories}
               onViewStory={handleViewStory}
               onStoriesFetched={handleStoriesFetched}
+              refetchTrigger={refetchTrigger}
             />
 
             {/* Tabs */}

@@ -100,7 +100,17 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
             new Date(Date.now() - 24 * 60 * 60 * 1000),
           thumbnail: story.media_url,
           timestamp: new Date(story.created_at),
-        };
+          // Preserve raw story data for StoryViewer
+          media_url: story.media_url,
+          media_type: story.media_type,
+          caption: story.caption,
+          expires_at: story.expires_at,
+          views_count: story.views_count,
+          views: story.views_count,
+          created_at: story.created_at,
+          user_id: story.user_id,
+          profiles: profile,
+        } as any;
       });
 
       const createStoryOption: Story = {
