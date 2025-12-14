@@ -23,6 +23,7 @@ interface CurrencyRate {
 // In-memory cache for exchange rates
 let exchangeRateCache: Map<string, ExchangeRate> = new Map();
 let lastRateUpdateTime: number = 0;
+let isInitialized = false;
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Fiat currency pairs with direct conversion rates
@@ -52,6 +53,45 @@ const FIAT_PAIRS = [
 
 // Crypto pairs (will be fetched from CryptoAPIs)
 const CRYPTO_ASSETS = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'SOL', 'XRP', 'DOGE', 'MATIC'];
+
+// Initialize rates immediately with fiat pairs (synchronous)
+function initializeDefaultRates(): void {
+  if (exchangeRateCache.size > 0) return;
+
+  const now = new Date();
+
+  // Add fiat pairs
+  FIAT_PAIRS.forEach(pair => {
+    exchangeRateCache.set(`${pair.from}_${pair.to}`, {
+      from: pair.from,
+      to: pair.to,
+      rate: pair.rate,
+      lastUpdated: now,
+      source: 'static'
+    });
+
+    exchangeRateCache.set(`${pair.to}_${pair.from}`, {
+      from: pair.to,
+      to: pair.from,
+      rate: 1 / pair.rate,
+      lastUpdated: now,
+      source: 'static'
+    });
+  });
+
+  // Add same-currency rates
+  SUPPORTED_CURRENCIES.forEach(currency => {
+    exchangeRateCache.set(`${currency.code}_${currency.code}`, {
+      from: currency.code,
+      to: currency.code,
+      rate: 1,
+      lastUpdated: now,
+      source: 'static'
+    });
+  });
+
+  logger.info('Default exchange rates initialized');
+}
 
 export async function initializeCurrencyService() {
   logger.info('Initializing currency service...');
