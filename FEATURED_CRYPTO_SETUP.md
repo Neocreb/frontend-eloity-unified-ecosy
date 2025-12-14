@@ -1,13 +1,14 @@
 # Featured Crypto & Community Posts Setup Guide
 
-This document guides you through setting up the new featured crypto listings and community featured posts system for the Professional Crypto page.
+This document guides you through the new crypto page implementation with real data fetching from multiple sources and optional admin management.
 
 ## Overview
 
-The new system includes:
-- **Featured Crypto Listings**: GemW tokens, New Listings, Trending, and Hot cryptocurrencies
-- **Community Featured Posts**: Discover, Community, Event, and Announcement tabs with user-generated content
-- **Supabase Integration**: Real data storage with RLS policies and proper access control
+The crypto page now includes:
+- **Gainers/Losers Tabs**: Automatically calculated from live cryptocurrency prices
+- **Community Tabs**: Real data from blog posts, courses, feed posts, events, and announcements
+- **Admin Management**: Optional Supabase integration for manual content curation
+- **Zero Setup Required**: Works immediately with live data sources
 
 ## Changes Made
 
