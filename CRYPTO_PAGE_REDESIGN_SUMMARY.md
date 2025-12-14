@@ -231,19 +231,22 @@ All styles use:
 
 ## Known Limitations & Future Work
 
-### Current State
-- GemW and New Listings tabs show Supabase data with mock fallback
-- Community posts are from Supabase
-- No real-time subscriptions (uses one-time fetch)
-- No image upload for community posts
+### Current Implementation
+- ✅ Gainers/Losers automatically calculated from live prices
+- ✅ Real data from blog, courses, feed, events, announcements
+- ✅ Fallback to mock data if sources unavailable
+- ✅ Admin panel for manual content curation
+- One-time data fetch (page load) rather than real-time subscriptions
 
 ### Future Enhancements
-1. Real-time subscriptions for live updates
+1. Real-time subscriptions for live Gainers/Losers updates
 2. User-generated community posts with image upload
-3. Integration with CoinGecko for price data
-4. Engagement features (likes, shares, comments)
-5. Category management admin panel
-6. Advanced filtering and search
+3. Advanced engagement features (likes, shares, comments)
+4. Custom category management admin panel
+5. Advanced filtering, search, and sorting options
+6. User preferences for content categories
+7. Notification system for trending events/announcements
+8. Analytics dashboard for content performance
 
 ## Testing Checklist
 
