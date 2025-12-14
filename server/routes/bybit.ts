@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
+import bybitCache from '../services/bybitCacheService.js';
 import {
   getBybitServerTime,
   getBybitTicker,
