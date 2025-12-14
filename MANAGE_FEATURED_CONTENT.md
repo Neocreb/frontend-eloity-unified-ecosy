@@ -1,32 +1,51 @@
 # Managing Featured Crypto & Community Content
 
-This guide helps you add, update, and manage featured content on the Professional Crypto page.
+This guide helps you manage featured content on the crypto page. You have two options:
+1. **Automatic Management**: Content fetches automatically from real sources (zero configuration)
+2. **Manual Management**: Use admin interface to curate specific content
 
-## Quick Access via Supabase Dashboard
+## Automatic Content Management (No Configuration)
+
+The page automatically displays:
+- **Gainers**: Top 6 cryptos by 24h positive change (updated with prices)
+- **Losers**: Top 6 cryptos by 24h negative change (updated with prices)
+- **Discover**: Latest blog posts and courses
+- **Community**: Recent crypto-related feed posts
+- **Events**: Upcoming crypto events
+- **Announcements**: Latest tagged blog posts
+
+No database configuration needed - content is live immediately.
+
+## Manual Content Management (Optional)
+
+For admin users who want to manually curate content:
+
+### Accessing the Admin Interface
+
+1. Navigate to `/admin/featured-crypto`
+2. You'll see two tabs: "Featured Listings" and "Community Posts"
+3. View, add, edit, and delete content as needed
 
 ### Add New Featured Crypto Listing
 
+Via Admin Interface:
+1. Click the "Add Listing" button
+2. Fill in the form fields:
+   - **Symbol**: Crypto symbol (BTC, ETH, etc.)
+   - **Name**: Full name
+   - **Image URL**: Logo URL
+   - **Current Price**: Market price
+   - **24h Change %**: Price change percentage
+   - **Category**: gainers, losers, trending, hot
+   - **Order Index**: Display order (1, 2, 3...)
+3. Click "Add Listing"
+
+Via Supabase Dashboard (Advanced):
 1. Go to **Supabase Console** → Your Project
-2. Click **Table Editor** (left sidebar)
+2. Click **Table Editor**
 3. Select `featured_crypto_listings`
 4. Click **Insert row**
-5. Fill in the fields:
-
-| Field | Example | Notes |
-|-------|---------|-------|
-| symbol | BTC | Cryptocurrency symbol |
-| name | Bitcoin | Full name |
-| coingecko_id | bitcoin | For future API integration |
-| image_url | https://... | PNG/JPG URL |
-| current_price | 43250.50 | Current market price |
-| price_change_24h | 8.75 | Percentage change |
-| market_cap_rank | 1 | Optional ranking |
-| category | gemw | Choose: gemw, new_listing, trending, hot |
-| is_featured | true | Check to display on page |
-| order_index | 1 | Display order (1, 2, 3...) |
-
-6. Click **Save**
-7. Changes appear on page within seconds
+5. Fill in fields and save
 
 ### Add Community Featured Post
 
