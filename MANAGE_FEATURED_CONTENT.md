@@ -278,21 +278,32 @@ UPDATE community_featured_posts SET is_featured = false, updated_at = NOW();
 
 ## Best Practices
 
-✅ **Do**:
-- Check `is_featured` is TRUE before saving
-- Use proper image URLs
-- Keep order_index sequential (1, 2, 3...)
+### ✅ Do's
+- Use the Admin Interface for easy management
+- Set `is_featured = true` to display content
+- Keep `order_index` values sequential (1, 2, 3...)
+- Use valid, accessible image URLs (HTTPS)
+- Test changes and verify display on `/app/crypto`
 - Use realistic percentages (-100 to +500)
-- Test changes in staging first
-- Keep engagement_count up-to-date
+- Update content regularly to keep feed fresh
+- Use appropriate sentiment for each post type
 
-❌ **Don't**:
-- Leave fields empty (use NULL or 0)
-- Use invalid image URLs
-- Gap order_index values (1, 3, 5)
-- Negative order_index values
-- Use offensive content
-- Forget to set is_featured to true
+### ❌ Don'ts
+- Don't leave content fields empty (use sensible defaults)
+- Don't use invalid or broken image URLs
+- Don't gap order_index values (1, 3, 5 skips 2 and 4)
+- Don't use negative order_index values
+- Don't add offensive or inappropriate content
+- Don't forget to set `is_featured = true` to display
+- Don't manually update timestamp fields
+- Don't delete featured_at without planning
+
+### Quality Guidelines
+- **Gainers/Losers**: Automatically calculated (no manual management needed)
+- **Discover**: Link to educational and valuable content
+- **Community**: Show diverse user perspectives and discussions
+- **Events**: Post 48+ hours in advance
+- **Announcements**: Keep clear and concise
 
 ## Monitoring
 
