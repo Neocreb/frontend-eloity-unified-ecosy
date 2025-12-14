@@ -749,7 +749,7 @@ const ProfessionalCrypto = () => {
 
                   <div className="p-6 border-t dark:border-slate-700 text-center">
                     <button
-                      onClick={() => handleNavigateToTrade("bitcoin")}
+                      onClick={() => navigate(`/app/crypto/view-all?tab=${activeMarketTab}`)}
                       className="text-gray-600 dark:text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 font-medium text-sm transition-colors"
                     >
                       View More Coins →
