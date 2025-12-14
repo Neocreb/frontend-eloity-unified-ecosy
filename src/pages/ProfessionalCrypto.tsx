@@ -299,7 +299,7 @@ const ProfessionalCrypto = () => {
         navigate("/app/defi");
         break;
       case "convert":
-        navigate("/app/crypto-trading?type=convert");
+        navigate("/app/crypto-convert");
         break;
       default:
         break;
