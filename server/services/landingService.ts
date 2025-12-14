@@ -521,17 +521,25 @@ export const SocialProofStatsService = {
 
   async getStatByMetricName(metric_name: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock stat');
+        return mockStats.find(s => s.metric_name === metric_name);
+      }
+
       const { data, error } = await supabase
         .from('landing_social_proof_stats')
         .select('*')
         .eq('metric_name', metric_name)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch stat from database, using mock data:', error);
+        return mockStats.find(s => s.metric_name === metric_name);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching stat:', error);
-      throw error;
+      logger.error('Error fetching stat:', error);
+      return mockStats.find(s => s.metric_name === metric_name);
     }
   },
 
