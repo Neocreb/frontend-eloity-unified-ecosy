@@ -137,28 +137,13 @@ router.get('/prices', async (req, res) => {
       });
     }
 
-    // If we didn't get prices from API, use fallback
-    if (!fetchedFromAPI || !prices || Object.keys(prices).length === 0) {
-      logger.info('[Crypto Prices API] Using fallback prices', { symbols: symbolList });
-      prices = {};
-      for (const symbol of symbolList) {
-        const lower = String(symbol).toLowerCase();
-        prices[lower] = FALLBACK_PRICES_RESPONSE[lower] || {
-          usd: 0,
-          usd_24h_change: 0,
-          usd_market_cap: 0,
-          usd_24h_vol: 0
-        };
-      }
-    }
-
     // Ensure response is JSON
     const response = {
       prices,
       timestamp: new Date().toISOString(),
       vs_currency: vs_currency || 'usd',
-      source: fetchedFromAPI ? 'api' : 'fallback',
-      status: 'success'
+      source: fetchedFromAPI ? 'api' : 'none',
+      status: fetchedFromAPI ? 'success' : 'no_data'
     };
 
     logger.info('[Crypto Prices API] Sending response', { priceCount: Object.keys(prices).length });
@@ -175,11 +160,10 @@ router.get('/prices', async (req, res) => {
     // Always return valid JSON on error - never return HTML error pages
     try {
       const errorResponse = {
-        prices: FALLBACK_PRICES_RESPONSE,
+        prices: {},
         timestamp: new Date().toISOString(),
         vs_currency: 'usd',
-        source: 'fallback',
-        warning: 'Using fallback prices due to API error',
+        source: 'none',
         error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : undefined,
         status: 'error'
       };
@@ -194,10 +178,10 @@ router.get('/prices', async (req, res) => {
 
       res.setHeader('Content-Type', 'application/json; charset=utf-8');
       return res.status(200).end(JSON.stringify({
-        prices: FALLBACK_PRICES_RESPONSE,
-        source: 'fallback',
+        prices: {},
+        source: 'none',
         status: 'error',
-        message: 'Server error - using fallback prices'
+        message: 'Server error - no prices available'
       }));
     }
   }
