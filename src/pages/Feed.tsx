@@ -237,6 +237,7 @@ const Feed = () => {
                     userStories={userStories}
                     onViewStory={handleViewStory}
                     onStoriesFetched={handleStoriesFetched}
+                    refetchTrigger={refetchTrigger}
                   />
                   <CreatePostTrigger onOpenCreatePost={() => navigate('/app/create-post')} />
                 </>
