@@ -112,19 +112,38 @@ WHERE tablename IN ('featured_crypto_listings', 'community_featured_posts');
 
 ## Environment Variables
 
-No new environment variables are required. The system uses existing Supabase client configuration.
+No new environment variables required. Uses existing configuration:
+- `VITE_SUPABASE_URL` - For database queries
+- `VITE_SUPABASE_ANON_KEY` - For public data access
+- `CRYPTOAPIS_API_KEY` - (existing) For cryptocurrency price data
 
-## Testing
+## Testing the Implementation
+
+### Basic Testing (No Database Setup)
 
 1. Navigate to `/app/crypto` in your application
-2. You should see:
-   - **Quick Access**: 6 cards in a 2-column grid on mobile
-   - **Top Cryptocurrencies**: Tabs for Favorites, Trending, GemW, and New Listings
-   - **Community**: Tabs for Discover, Community, Event, and Announcement with featured posts
+2. Verify you see:
+   - **Deposit, Convert, Withdraw buttons**: Responsive on mobile with text and icons
+   - **Gainers tab**: Top 6 cryptocurrencies by positive 24h change
+   - **Losers tab**: Top 6 cryptocurrencies by negative 24h change
+   - **Discover tab**: Blog posts and courses from learning platform
+   - **Community tab**: Crypto-related posts from feed
+   - **Event tab**: Upcoming crypto events
+   - **Announcement tab**: Tagged blog posts and updates
+
+### Testing with Database (Optional)
+
+1. Apply migrations (see Setup Instructions)
+2. Access `/admin/featured-crypto`
+3. Add/edit/delete featured content
+4. Verify changes appear on `/app/crypto`
+5. Test toggle visibility and ordering
 
 ### Testing Data Fallback
 
-If you don't insert sample data, the system will display mock data automatically. This is useful for testing without database setup.
+- Disable network connection or temporarily unavailable data sources
+- System should display mock data automatically
+- No errors should appear in browser console
 
 ## Database Schema Reference
 
