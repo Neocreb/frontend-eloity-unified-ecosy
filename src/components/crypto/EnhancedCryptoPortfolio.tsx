@@ -816,7 +816,7 @@ function EnhancedCryptoPortfolioContent({
                     </tr>
                   </thead>
                   <tbody>
-                    {transactions.map((tx) => (
+                    {recentTransactions.map((tx) => (
                       <tr key={tx.id} className="border-b hover:bg-gray-50">
                         <td className="py-3">
                           {new Date(tx.timestamp).toLocaleDateString()}
