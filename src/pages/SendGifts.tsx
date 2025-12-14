@@ -52,58 +52,51 @@ const SendGifts = () => {
   const loadVirtualGiftsData = async () => {
     try {
       setIsLoading(true);
-      
+
       // Fetch virtual gifts
       const { data: giftsData, error: giftsError } = await supabase
         .from('virtual_gifts')
         .select('*')
-        .eq('is_active', true)
+        .eq('available', true)
         .order('created_at', { ascending: false });
-      
+
       if (giftsError) throw giftsError;
       setVirtualGifts(giftsData || []);
-      
+
       // Fetch recent gift transactions
       const { data: giftsTxData, error: giftsTxError } = await supabase
         .from('gift_transactions')
-        .select(`
-          *,
-          sender:profiles!gift_transactions_sender_id_fkey(username, avatar_url),
-          receiver:profiles!gift_transactions_receiver_id_fkey(username, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
-      
+
       if (giftsTxError) throw giftsTxError;
       setRecentGifts(giftsTxData || []);
-      
+
       // Fetch recent tip transactions
       const { data: tipsTxData, error: tipsTxError } = await supabase
         .from('tip_transactions')
-        .select(`
-          *,
-          sender:profiles!tip_transactions_sender_id_fkey(username, avatar_url),
-          receiver:profiles!tip_transactions_receiver_id_fkey(username, avatar_url)
-        `)
+        .select('*')
         .order('created_at', { ascending: false })
         .limit(10);
-      
+
       if (tipsTxError) throw tipsTxError;
       setRecentTips(tipsTxData || []);
-      
+
       // Calculate stats
       const totalGiftsSent = giftsTxData?.length || 0;
       const totalTipsSent = tipsTxData?.length || 0;
       const totalGiftsSpent = giftsTxData?.reduce((sum: number, tx: GiftTransaction) => sum + tx.total_amount, 0) || 0;
       const totalTipsSpent = tipsTxData?.reduce((sum: number, tx: TipTransaction) => sum + tx.amount, 0) || 0;
-      
+
       setStats({
         totalGiftsSent,
         totalTipsSent,
         totalSpent: totalGiftsSpent + totalTipsSpent,
       });
     } catch (error) {
-      console.error('Error loading virtual gifts data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error loading virtual gifts data:', errorMessage);
       toast({
         title: 'Error',
         description: 'Failed to load gift data. Please try again.',

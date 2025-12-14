@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { VirtualGift } from '@/types/gifts';
-import { 
-  Search, 
-  Filter, 
-  Gift, 
-  Crown, 
-  Heart, 
+import { supabase } from '@/lib/supabase';
+import {
+  Search,
+  Filter,
+  Gift,
+  Crown,
+  Heart,
   Star,
   Zap,
   Flower2,
@@ -20,7 +21,8 @@ import {
   Gamepad2,
   Music,
   Film,
-  Palette
+  Palette,
+  Loader2
 } from 'lucide-react';
 
 interface BrowseGiftsTabProps {
@@ -33,162 +35,60 @@ const BrowseGiftsTab = ({ onSelectGift }: BrowseGiftsTabProps) => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [rarityFilter, setRarityFilter] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
+  const [virtualGifts, setVirtualGifts] = useState<VirtualGift[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample virtual gifts data
-  const virtualGifts: VirtualGift[] = [
-    {
-      id: '1',
-      name: 'Red Rose',
-      price: 1.99,
-      emoji: '🌹',
-      category: 'flowers',
-      rarity: 'common',
-      description: 'A classic symbol of love and appreciation',
-      currency: 'USD',
-      animation: null,
-      sound: null,
-      effects: null,
-      available: true,
-      seasonal_start: null,
-      seasonal_end: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      popularity: 95
-    } as VirtualGift,
-    {
-      id: '2',
-      name: 'Chocolate Box',
-      price: 2.99,
-      emoji: '🍫',
-      category: 'food',
-      rarity: 'common',
-      description: 'Delicious chocolates to sweeten the moment',
-      currency: 'USD',
-      animation: null,
-      sound: null,
-      effects: null,
-      available: true,
-      seasonal_start: null,
-      seasonal_end: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      popularity: 88
-    } as VirtualGift,
-    {
-      id: '3',
-      name: 'Diamond Ring',
-      price: 9.99,
-      emoji: '💍',
-      category: 'jewelry',
-      rarity: 'rare',
-      description: 'A precious token of your admiration',
-      currency: 'USD',
-      animation: null,
-      sound: null,
-      effects: null,
-      available: true,
-      seasonal_start: null,
-      seasonal_end: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      popularity: 75
-    } as VirtualGift,
-    {
-      id: '4',
-      name: 'Golden Crown',
-      price: 19.99,
-      emoji: '👑',
-      category: 'royal',
-      rarity: 'epic',
-      description: 'Bestow royalty upon your favorite creator',
-      currency: 'USD',
-      animation: null,
-      sound: null,
-      effects: null,
-      available: true,
-      seasonal_start: null,
-      seasonal_end: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      popularity: 60
-    } as VirtualGift,
-    {
-      id: '5',
-      name: 'Magic Wand',
-      price: 4.99,
-      emoji: '🪄',
-      category: 'fantasy',
-      rarity: 'uncommon',
-      description: 'Grant magical powers to creators',
-      currency: 'USD',
-      animation: null,
-      sound: null,
-      effects: null,
-      available: true,
-      seasonal_start: null,
-      seasonal_end: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      popularity: 70
-    } as VirtualGift,
-    {
-      id: '6',
-      name: 'Coffee Cup',
-      price: 1.49,
-      emoji: '☕',
-      category: 'food',
-      rarity: 'common',
-      description: 'Fuel the creative process',
-      currency: 'USD',
-      animation: null,
-      sound: null,
-      effects: null,
-      available: true,
-      seasonal_start: null,
-      seasonal_end: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      popularity: 82
-    } as VirtualGift,
-    {
-      id: '7',
-      name: 'Gaming Controller',
-      price: 7.99,
-      emoji: '🎮',
-      category: 'gaming',
-      rarity: 'rare',
-      description: 'Level up your favorite streamer',
-      currency: 'USD',
-      animation: null,
-      sound: null,
-      effects: null,
-      available: true,
-      seasonal_start: null,
-      seasonal_end: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      popularity: 68
-    } as VirtualGift,
-    {
-      id: '8',
-      name: 'Musical Note',
-      price: 3.99,
-      emoji: '🎵',
-      category: 'music',
-      rarity: 'uncommon',
-      description: 'Create harmony with your favorite artist',
-      currency: 'USD',
-      animation: null,
-      sound: null,
-      effects: null,
-      available: true,
-      seasonal_start: null,
-      seasonal_end: null,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-      popularity: 72
-    } as VirtualGift
-  ];
+  useEffect(() => {
+    fetchVirtualGifts();
+  }, []);
+
+  const fetchVirtualGifts = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('virtual_gifts')
+        .select('*')
+        .eq('available', true)
+        .order('price', { ascending: true });
+
+      if (error) throw error;
+      setVirtualGifts(data || []);
+    } catch (error) {
+      console.error('Error loading virtual gifts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load virtual gifts. Please try again.',
+        variant: 'destructive',
+      });
+      setVirtualGifts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-8 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Loading virtual gifts...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (virtualGifts.length === 0) {
+    return (
+      <Card>
+        <CardContent className="p-8 text-center">
+          <Gift className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No virtual gifts available at the moment.</p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Category icons mapping
   const categoryIcons: Record<string, React.ReactNode> = {

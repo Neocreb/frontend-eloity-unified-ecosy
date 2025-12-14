@@ -102,7 +102,8 @@ const VirtualGiftsAndTips: React.FC<VirtualGiftsAndTipsProps> = ({
 
   const loadData = async () => {
     try {
-      const gifts = virtualGiftsService.getAvailableGifts();
+      // Fetch gifts from database
+      const gifts = await virtualGiftsService.getVirtualGiftsFromDB();
       setAvailableGifts(gifts);
 
       try {
@@ -126,7 +127,7 @@ const VirtualGiftsAndTips: React.FC<VirtualGiftsAndTipsProps> = ({
       }
     } catch (error) {
       console.error("Error loading data:", error);
-      setAvailableGifts(VIRTUAL_GIFTS || []);
+      setAvailableGifts([]);
     }
   };
 
