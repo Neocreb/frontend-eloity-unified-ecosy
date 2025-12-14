@@ -310,36 +310,6 @@ const ProfessionalCrypto = () => {
     [cryptos]
   );
 
-  const sampleCommunityPosts = [
-    {
-      id: 1,
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=user1",
-      username: "CryptoEnthusiast",
-      timestamp: "2 hours ago",
-      content: "USDT just hit a new milestone! 🚀 +11.10%",
-      change: "+11.10%",
-      changeType: "positive",
-    },
-    {
-      id: 2,
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=user2",
-      username: "BlockchainGuru",
-      timestamp: "4 hours ago",
-      content: "New DeFi opportunities unlocked this week",
-      change: "+8.50%",
-      changeType: "positive",
-    },
-    {
-      id: 3,
-      avatar: "https://api.dicebear.com/7.x/avataaars/svg?seed=user3",
-      username: "TradingMaster",
-      timestamp: "6 hours ago",
-      content: "Bitcoin holding strong above resistance",
-      change: "+2.30%",
-      changeType: "positive",
-    },
-  ];
-
   const quickAccessItems = [
     { 
       label: "Portfolio", 
