@@ -44,10 +44,24 @@ export function useLiveContent() {
   const loadLiveContent = useCallback(async () => {
     try {
       setLoading(true);
-      const [streams, battles] = await Promise.all([
-        liveStreamService.getActiveLiveStreams(),
-        liveStreamService.getActiveBattles()
-      ]);
+
+      // Fetch streams and battles with error handling
+      let streams: any[] = [];
+      let battles: any[] = [];
+
+      try {
+        streams = await liveStreamService.getActiveLiveStreams();
+      } catch (streamError) {
+        console.error('Failed to load live streams:', streamError instanceof Error ? streamError.message : 'Unknown error');
+        streams = [];
+      }
+
+      try {
+        battles = await liveStreamService.getActiveBattles();
+      } catch (battleError) {
+        console.error('Failed to load battles:', battleError instanceof Error ? battleError.message : 'Unknown error');
+        battles = [];
+      }
 
       const liveStreams: LiveStreamData[] = streams.map(stream => ({
         id: stream.id,
@@ -87,19 +101,21 @@ export function useLiveContent() {
         startedAt: new Date(item.started_at),
         category: item.category || undefined,
         battleData: {
-          type: item.battle.battle_type,
-          timeRemaining: item.battle.time_remaining || undefined,
+          type: item.battle?.battle_type || 'general',
+          timeRemaining: item.battle?.time_remaining || undefined,
           scores: {
-            user1: item.battle.challenger_score,
-            user2: item.battle.opponent_score
+            user1: item.battle?.challenger_score || 0,
+            user2: item.battle?.opponent_score || 0
           }
         }
       }));
 
       setLiveContent([...liveStreams, ...battleStreams]);
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('Failed to load live content:', errorMsg);
+      // Don't crash the component - just show empty list
+      setLiveContent([]);
     } finally {
       setLoading(false);
     }
