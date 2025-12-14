@@ -36,39 +36,36 @@ interface CurrencyContextType {
 
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
+// Minimal default context for fallback
+const getDefaultCurrencyContext = (): CurrencyContextType => ({
+  selectedCurrency: null,
+  userCurrency: null,
+  isLoading: false,
+  error: null,
+  exchangeRates: new Map(),
+  autoDetectEnabled: false,
+  detectedCountry: null,
+  detectedCurrency: null,
+  lastUpdated: null,
+  setCurrency: async () => {},
+  setUserCurrency: async () => {},
+  toggleAutoDetect: async () => {},
+  convertAmount: (amount: number) => amount,
+  convert: (amount: number) => ({ amount, rate: 1, timestamp: new Date(), formattedAmount: amount.toString() }),
+  formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
+  getExchangeRate: () => 1,
+  getSupportedCurrencies: () => [],
+  getCurrenciesByCategory: () => [],
+  refreshExchangeRates: async () => {},
+  refreshRates: async () => {},
+});
+
 export const useCurrency = () => {
   const context = useContext(CurrencyContext);
   if (!context) {
-    // Try to use fallback context before throwing
-    try {
-      const { useCurrencyFallback } = require('./SafeCurrencyProvider');
-      return useCurrencyFallback();
-    } catch (e) {
-      // If fallback also fails, provide hardcoded defaults
-      console.warn('CurrencyContext not available, using minimal defaults');
-      return {
-        selectedCurrency: null,
-        userCurrency: null,
-        isLoading: false,
-        error: null,
-        exchangeRates: new Map(),
-        autoDetectEnabled: false,
-        detectedCountry: null,
-        detectedCurrency: null,
-        lastUpdated: null,
-        setCurrency: async () => {},
-        setUserCurrency: async () => {},
-        toggleAutoDetect: async () => {},
-        convertAmount: (amount: number) => amount,
-        convert: (amount: number) => ({ amount, rate: 1, timestamp: new Date(), formattedAmount: amount.toString() }),
-        formatCurrency: (amount: number) => `$${amount.toFixed(2)}`,
-        getExchangeRate: () => 1,
-        getSupportedCurrencies: () => [],
-        getCurrenciesByCategory: () => [],
-        refreshExchangeRates: async () => {},
-        refreshRates: async () => {},
-      } as CurrencyContextType;
-    }
+    // Fallback to minimal defaults instead of throwing
+    console.warn('CurrencyContext not available, using minimal defaults');
+    return getDefaultCurrencyContext();
   }
   return context;
 };
