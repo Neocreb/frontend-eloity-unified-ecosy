@@ -820,15 +820,26 @@ export async function getRiskAssessment(userId: string) {
 // =============================================================================
 
 async function generateCryptoAddress(currency: string): Promise<string> {
-  // In production, generate real crypto addresses using appropriate libraries
-  const mockAddresses = {
-    'BTC': '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
-    'ETH': '0x742c82F23Cfa38a6c69b4Cc85a5C3A5b8Aa8bBBb',
-    'USDT': '0x742c82F23Cfa38a6c69b4Cc85a5C3A5b8Aa8bBBb',
-    'BNB': 'bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2'
-  };
-  
-  return mockAddresses[currency] || `mock_${currency.toLowerCase()}_address_${Date.now()}`;
+  // Use Bybit to get real deposit addresses
+  try {
+    const { getBybitDepositAddress } = await import('./bybitService.js');
+
+    logger.info(`Fetching deposit address for ${currency} from Bybit`);
+    const depositInfo = await getBybitDepositAddress(currency);
+
+    if (depositInfo && depositInfo.chains && depositInfo.chains.length > 0) {
+      // Return the first available deposit address
+      const address = depositInfo.chains[0].address;
+      logger.info(`Got deposit address for ${currency}: ${address.substring(0, 10)}...`);
+      return address;
+    }
+
+    logger.warn(`No deposit address found for ${currency} on Bybit`);
+    return null;
+  } catch (error) {
+    logger.error(`Failed to get deposit address for ${currency}:`, error);
+    return null;
+  }
 }
 
 async function getCurrencyBalance(address: string, currency: string): Promise<number> {
@@ -893,14 +904,34 @@ function getRequiredConfirmations(currency: string): number {
 }
 
 async function calculateWithdrawalFee(currency: string, amount: number): Promise<number> {
-  const feeStructure = {
-    'BTC': 0.0005,  // Fixed BTC fee
-    'ETH': 0.005,   // Fixed ETH fee
-    'USDT': 1.0,    // Fixed USDT fee
-    'BNB': 0.001    // Fixed BNB fee
+  // Try to get real withdrawal fees from Bybit
+  try {
+    const { getBybitWithdrawalFee } = await import('./bybitService.js');
+
+    logger.info(`Fetching withdrawal fee for ${currency} from Bybit`);
+    const feeInfo = await getBybitWithdrawalFee(currency);
+
+    if (feeInfo && feeInfo.chains && feeInfo.chains.length > 0) {
+      // Return the fee from the first available chain
+      const fee = parseFloat(feeInfo.chains[0].withdrawFee);
+      logger.info(`Withdrawal fee for ${currency}: ${fee}`);
+      return fee;
+    }
+
+    logger.warn(`No withdrawal fee found for ${currency} on Bybit, using default`);
+  } catch (error) {
+    logger.error(`Failed to get withdrawal fee for ${currency} from Bybit:`, error);
+  }
+
+  // Fallback to default fees if Bybit API fails
+  const defaultFees = {
+    'BTC': 0.0005,
+    'ETH': 0.005,
+    'USDT': 1.0,
+    'BNB': 0.001
   };
-  
-  return feeStructure[currency.toUpperCase()] || 0.001;
+
+  return defaultFees[currency.toUpperCase()] || 0.001;
 }
 
 async function validateCryptoAddress(address: string, currency: string): Promise<boolean> {
