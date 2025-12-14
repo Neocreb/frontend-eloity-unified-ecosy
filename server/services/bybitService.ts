@@ -405,6 +405,213 @@ export async function getBybitLeverageTokens() {
 }
 
 /**
+ * Get recent trades for a symbol
+ */
+export async function getBybitRecentTrades(symbol: string, limit: number = 100, category: 'spot' | 'linear' | 'inverse' = 'spot') {
+  try {
+    const query = `category=${category}&symbol=${symbol}&limit=${limit}`;
+    const result = await callBybitPublicAPI('/market/recent-trade', query);
+
+    if (!result || !result.list) {
+      logger.debug(`No recent trades found for ${symbol}`);
+      return [];
+    }
+
+    return result.list.map((trade: any) => ({
+      tradeId: trade.execId,
+      symbol: trade.symbol,
+      price: parseFloat(trade.price),
+      quantity: parseFloat(trade.size),
+      timestamp: parseInt(trade.time),
+      side: trade.side,
+      blockTrade: trade.blockTrade === '1'
+    }));
+  } catch (error) {
+    logger.error('Failed to get Bybit recent trades:', { symbol, error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
+}
+
+/**
+ * Get settlement history for a symbol (futures only)
+ */
+export async function getBybitSettlementHistory(symbol: string, limit: number = 100, category: 'linear' | 'inverse' = 'linear') {
+  try {
+    const query = `category=${category}&symbol=${symbol}&limit=${limit}`;
+    const result = await callBybitPublicAPI('/market/settlement-history', query);
+
+    if (!result || !result.list) {
+      logger.debug(`No settlement history found for ${symbol}`);
+      return [];
+    }
+
+    return result.list.map((settlement: any) => ({
+      symbol: settlement.symbol,
+      settlementTime: parseInt(settlement.settlementTime),
+      settlementPrice: parseFloat(settlement.settlementPrice),
+      funding: parseFloat(settlement.funding),
+      fundingRate: parseFloat(settlement.fundingRate)
+    }));
+  } catch (error) {
+    logger.error('Failed to get Bybit settlement history:', { symbol, error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
+}
+
+/**
+ * Get funding rate history for a symbol (futures only)
+ */
+export async function getBybitFundingRateHistory(symbol: string, limit: number = 100, category: 'linear' | 'inverse' = 'linear') {
+  try {
+    const query = `category=${category}&symbol=${symbol}&limit=${limit}`;
+    const result = await callBybitPublicAPI('/market/funding/history', query);
+
+    if (!result || !result.list) {
+      logger.debug(`No funding rate history found for ${symbol}`);
+      return [];
+    }
+
+    return result.list.map((rate: any) => ({
+      symbol: rate.symbol,
+      fundingRate: parseFloat(rate.fundingRate),
+      fundingTime: parseInt(rate.fundingTimestamp),
+      nextFundingTime: rate.nextFundingTime ? parseInt(rate.nextFundingTime) : null
+    }));
+  } catch (error) {
+    logger.error('Failed to get Bybit funding rate history:', { symbol, error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
+}
+
+/**
+ * Get current funding rate for symbols
+ */
+export async function getBybitFundingRate(symbol: string, category: 'linear' | 'inverse' = 'linear') {
+  try {
+    const query = `category=${category}&symbol=${symbol}`;
+    const result = await callBybitPublicAPI('/market/funding/rate', query);
+
+    if (!result || !result.list || result.list.length === 0) {
+      logger.debug(`No funding rate found for ${symbol}`);
+      return null;
+    }
+
+    const rate = result.list[0];
+    return {
+      symbol: rate.symbol,
+      fundingRate: parseFloat(rate.fundingRate),
+      fundingTime: parseInt(rate.fundingTimestamp),
+      nextFundingTime: rate.nextFundingTime ? parseInt(rate.nextFundingTime) : null
+    };
+  } catch (error) {
+    logger.error('Failed to get Bybit funding rate:', { symbol, error: error instanceof Error ? error.message : String(error) });
+    return null;
+  }
+}
+
+/**
+ * Get historical trades (requires authentication for private trades)
+ */
+export async function getBybitTradeHistory(symbol: string, limit: number = 50, category: 'spot' | 'linear' | 'inverse' = 'spot') {
+  try {
+    const query = `category=${category}&symbol=${symbol}&limit=${limit}`;
+    const result = await callBybitPublicAPI('/market/public-recent-trading', query);
+
+    if (!result || !result.list) {
+      logger.debug(`No trade history found for ${symbol}`);
+      return [];
+    }
+
+    return result.list.map((trade: any) => ({
+      tradeId: trade.execId,
+      symbol: trade.symbol,
+      price: parseFloat(trade.price),
+      quantity: parseFloat(trade.size),
+      timestamp: parseInt(trade.time),
+      side: trade.side
+    }));
+  } catch (error) {
+    logger.error('Failed to get Bybit trade history:', { symbol, error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
+}
+
+/**
+ * Get open interest for a symbol
+ */
+export async function getBybitOpenInterest(symbol: string, period: string = '5min', category: 'linear' | 'inverse' = 'linear', limit: number = 100) {
+  try {
+    const query = `category=${category}&symbol=${symbol}&period=${period}&limit=${limit}`;
+    const result = await callBybitPublicAPI('/market/open-interest', query);
+
+    if (!result || !result.list) {
+      logger.debug(`No open interest data found for ${symbol}`);
+      return [];
+    }
+
+    return result.list.map((oi: any) => ({
+      symbol: oi.symbol,
+      openInterest: parseFloat(oi.openInterest),
+      timestamp: parseInt(oi.timestamp)
+    }));
+  } catch (error) {
+    logger.error('Failed to get Bybit open interest:', { symbol, error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
+}
+
+/**
+ * Get liquidation data for a symbol
+ */
+export async function getBybitLiquidations(symbol: string, limit: number = 100, category: 'linear' | 'inverse' = 'linear') {
+  try {
+    const query = `category=${category}&symbol=${symbol}&limit=${limit}`;
+    const result = await callBybitPublicAPI('/market/liquidation', query);
+
+    if (!result || !result.list) {
+      logger.debug(`No liquidation data found for ${symbol}`);
+      return [];
+    }
+
+    return result.list.map((liquidation: any) => ({
+      symbol: liquidation.symbol,
+      price: parseFloat(liquidation.price),
+      side: liquidation.side,
+      size: parseFloat(liquidation.size),
+      timestamp: parseInt(liquidation.time)
+    }));
+  } catch (error) {
+    logger.error('Failed to get Bybit liquidations:', { symbol, error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
+}
+
+/**
+ * Get long-short ratio for a symbol
+ */
+export async function getBybitLongShortRatio(symbol: string, period: string = '5min', limit: number = 100, category: 'linear' | 'inverse' = 'linear') {
+  try {
+    const query = `category=${category}&symbol=${symbol}&period=${period}&limit=${limit}`;
+    const result = await callBybitPublicAPI('/market/long-short', query);
+
+    if (!result || !result.list) {
+      logger.debug(`No long-short ratio found for ${symbol}`);
+      return [];
+    }
+
+    return result.list.map((ratio: any) => ({
+      symbol: ratio.symbol,
+      longRatio: parseFloat(ratio.longAccounts),
+      shortRatio: parseFloat(ratio.shortAccounts),
+      timestamp: parseInt(ratio.timestamp)
+    }));
+  } catch (error) {
+    logger.error('Failed to get Bybit long-short ratio:', { symbol, error: error instanceof Error ? error.message : String(error) });
+    return [];
+  }
+}
+
+/**
  * Verify Bybit API connectivity
  */
 export async function verifyBybitConnection(): Promise<boolean> {
