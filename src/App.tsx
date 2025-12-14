@@ -721,6 +721,7 @@ const AppRoutes = () => {
 
           <Route path="crypto" element={<ProfessionalCrypto />} />
           <Route path="crypto-trading" element={<CryptoTrading />} />
+          <Route path="crypto-convert" element={<CryptoConvert />} />
           <Route path="crypto-p2p" element={<CryptoP2P />} />
           <Route path="crypto-portfolio" element={<CryptoPortfolio />} />
           <Route path="crypto-learn" element={<CryptoLearn />} />
