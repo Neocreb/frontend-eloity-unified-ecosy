@@ -35,13 +35,24 @@ The Professional Crypto page has been completely redesigned with enhanced mobile
   - Real data from active crypto prices
   - Dynamically calculated from live data
 
-### 4. **Community Section** (Updated Tabs)
-**Before**: 4 tabs (Discover, Community, Events, Announcements)  
-**After**: 4 tabs (same names, improved content)
-- Discover - Featured community insights
-- Community - User connections and discussions with Follow button
-- Event - Upcoming events (placeholder for future data)
-- Announcement - Market updates and news
+### 4. **Community Section** (Real Data Integration)
+**Tabs**: Discover, Community, Events, Announcements with real data from multiple sources
+- **Discover** - Articles and courses from blog/learning platforms
+  - Fetches from blog posts (60%) and courses (40%)
+  - Displays as featured learning content
+  - Shows read count as engagement metric
+- **Community** - Crypto-related posts from the feed
+  - Filters feed posts containing crypto keywords
+  - Shows user avatars and engagement counts
+  - Displays creation date and follow button
+- **Events** - Upcoming crypto-related events
+  - Fetches from events table filtered by "crypto" type
+  - Shows event date, organizer, and attendee count
+  - Displays upcoming events in chronological order
+- **Announcements** - Tagged blog posts (announcements, news, updates)
+  - Fetches from blog system with specific tags
+  - Shows publication date and status
+  - Provides platform and market updates
 
 ### 5. **Data & Features**
 - Featured posts now show "Selected" badge for highlighted content
