@@ -16,6 +16,8 @@ import ErrorBoundary from "@/components/ui/error-boundary";
 import { useQuickLinksStats, useTrendingTopicsData, useSuggestedUsersData, useLiveNowData } from "@/hooks/use-sidebar-widgets";
 import { HybridFeedProvider } from "@/contexts/HybridFeedContext";
 import HybridFeedContent from "@/components/feed/HybridFeedContent";
+import { supabase } from "@/integrations/supabase/client";
+import { storiesService } from "@/services/storiesService";
 
 // Main enhanced feed component
 const EnhancedFeedWithTabs = () => {
