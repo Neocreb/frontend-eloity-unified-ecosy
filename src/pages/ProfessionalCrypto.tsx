@@ -665,6 +665,106 @@ const ProfessionalCrypto = () => {
                         ))}
                       </div>
                     </TabsContent>
+
+                    <TabsContent value="gemw" className="p-0 mt-0">
+                      <div className="divide-y dark:divide-slate-700">
+                        {gemwListings.length > 0 ? (
+                          gemwListings.map((listing) => (
+                            <div
+                              key={listing.id}
+                              className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <img
+                                  src={listing.image_url || 'https://via.placeholder.com/48'}
+                                  alt={listing.name}
+                                  className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                    {listing.symbol.toUpperCase()}/USDT
+                                  </p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{listing.name}</p>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0 flex items-center gap-3">
+                                <Badge className="bg-yellow-400 text-yellow-900 border-0 font-semibold">Hot</Badge>
+                                <div>
+                                  <p className="font-bold text-gray-900 dark:text-white">${listing.current_price?.toFixed(8) || '-.--'}</p>
+                                  <div className={cn(
+                                    "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
+                                    listing.price_change_24h >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  )}>
+                                    {listing.price_change_24h >= 0 ? (
+                                      <TrendingUp className="h-3 w-3" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3" />
+                                    )}
+                                    <span>{formatPercentage(listing.price_change_24h)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+                            No GemW listings available
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="new_listings" className="p-0 mt-0">
+                      <div className="divide-y dark:divide-slate-700">
+                        {newListings.length > 0 ? (
+                          newListings.map((listing) => (
+                            <div
+                              key={listing.id}
+                              className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
+                            >
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <img
+                                  src={listing.image_url || 'https://via.placeholder.com/48'}
+                                  alt={listing.name}
+                                  className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                                    {listing.symbol.toUpperCase()}/USDT
+                                  </p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{listing.name}</p>
+                                </div>
+                              </div>
+                              <div className="text-right flex-shrink-0 flex items-center gap-3">
+                                <Badge className="bg-red-400 text-white border-0 font-semibold">New</Badge>
+                                <div>
+                                  <p className="font-bold text-gray-900 dark:text-white">${listing.current_price?.toFixed(8) || '-.--'}</p>
+                                  <div className={cn(
+                                    "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
+                                    listing.price_change_24h >= 0
+                                      ? "text-green-600 dark:text-green-400"
+                                      : "text-red-600 dark:text-red-400"
+                                  )}>
+                                    {listing.price_change_24h >= 0 ? (
+                                      <TrendingUp className="h-3 w-3" />
+                                    ) : (
+                                      <TrendingDown className="h-3 w-3" />
+                                    )}
+                                    <span>{formatPercentage(listing.price_change_24h)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="p-6 text-center text-gray-500 dark:text-gray-400">
+                            No new listings available
+                          </div>
+                        )}
+                      </div>
+                    </TabsContent>
                   </Tabs>
 
                   <div className="p-6 border-t dark:border-slate-700 text-center">
