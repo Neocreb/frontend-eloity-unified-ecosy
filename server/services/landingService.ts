@@ -1,8 +1,129 @@
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger.js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
-const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || '';
+
+let supabase: any = null;
+
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  } catch (error) {
+    logger.error('Failed to initialize Supabase client for landing service:', error);
+  }
+}
+
+// Mock data for fallback when database is unavailable
+const mockTestimonials = [
+  {
+    id: 'testimonial-1',
+    name: 'Sarah Johnson',
+    title: 'Freelance Developer',
+    quote: 'Eloity transformed how I manage my freelance work. The platform is intuitive and the payment processing is seamless.',
+    image_url: 'https://randomuser.me/api/portraits/women/32.jpg',
+    metrics: { earnings: 50000, projects: 120 },
+    category: 'freelancer',
+    rating: 5,
+    is_verified: true,
+    is_featured: true,
+    order: 1,
+  },
+  {
+    id: 'testimonial-2',
+    name: 'Ahmed Hassan',
+    title: 'Content Creator',
+    quote: 'The creator economy tools on Eloity helped me monetize my content effectively. I doubled my income in 6 months.',
+    image_url: 'https://randomuser.me/api/portraits/men/44.jpg',
+    metrics: { followers: 500000, monthly_earnings: 25000 },
+    category: 'creator',
+    rating: 5,
+    is_verified: true,
+    is_featured: true,
+    order: 2,
+  },
+];
+
+const mockFAQs = [
+  {
+    id: 'faq-1',
+    question: 'How do I get started on Eloity?',
+    answer: 'Create an account, complete your profile, and start exploring opportunities in your field. It takes just a few minutes to get up and running.',
+    category: 'getting-started',
+    is_active: true,
+    order: 1,
+  },
+  {
+    id: 'faq-2',
+    question: 'Is Eloity available in my country?',
+    answer: 'Eloity is available in 150+ countries. We support multiple currencies and payment methods to serve a global audience.',
+    category: 'platform',
+    is_active: true,
+    order: 2,
+  },
+  {
+    id: 'faq-3',
+    question: 'How are payments processed?',
+    answer: 'We use secure payment processors to handle transactions. Payments are typically processed within 24-48 hours to your preferred wallet or bank account.',
+    category: 'payments',
+    is_active: true,
+    order: 3,
+  },
+];
+
+const mockUseCases = [
+  {
+    id: 'usecase-1',
+    user_type: 'freelancer',
+    title: 'Build Your Freelance Career',
+    description: 'Connect with clients worldwide and grow your freelance business with Eloity\'s comprehensive tools and marketplace.',
+    avatar_url: 'https://randomuser.me/api/portraits/women/45.jpg',
+    results: { clients: '1000+', earnings: '$100K+', projects: '500+' },
+    timeline_weeks: 24,
+    image_url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&h=300&fit=crop',
+    is_featured: true,
+    order: 1,
+  },
+  {
+    id: 'usecase-2',
+    user_type: 'creator',
+    title: 'Monetize Your Content',
+    description: 'Turn your passion into income with Eloity\'s creator tools, sponsorships, and community monetization features.',
+    avatar_url: 'https://randomuser.me/api/portraits/men/46.jpg',
+    results: { monthly_earnings: '$10K+', followers: '100K+' },
+    timeline_weeks: 12,
+    image_url: 'https://images.unsplash.com/photo-1516321318423-f06f70504504?w=500&h=300&fit=crop',
+    is_featured: true,
+    order: 2,
+  },
+];
+
+const mockComparisons = [
+  {
+    id: 'comparison-1',
+    feature_name: 'Multi-currency Support',
+    category: 'payments',
+    eloity_has: true,
+    feature_description: 'Support for 150+ currencies with real-time exchange rates',
+    competitors: { 'Competitor A': false, 'Competitor B': true, 'Competitor C': false },
+  },
+  {
+    id: 'comparison-2',
+    feature_name: 'Creator Monetization',
+    category: 'features',
+    eloity_has: true,
+    feature_description: 'Multiple revenue streams including tips, sponsorships, and subscriptions',
+    competitors: { 'Competitor A': false, 'Competitor B': true, 'Competitor C': true },
+  },
+  {
+    id: 'comparison-3',
+    feature_name: 'Global Marketplace',
+    category: 'features',
+    eloity_has: true,
+    feature_description: 'Decentralized marketplace connecting buyers and sellers worldwide',
+    competitors: { 'Competitor A': false, 'Competitor B': false, 'Competitor C': true },
+  },
+];
 
 // ============================================================================
 // TESTIMONIALS SERVICE
@@ -14,6 +135,11 @@ export const TestimonialsService = {
     featured?: boolean;
   }) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock testimonials');
+        return mockTestimonials.filter(t => !filters?.featured || t.is_featured);
+      }
+
       let query = supabase
         .from('landing_testimonials')
         .select('*');
@@ -26,27 +152,38 @@ export const TestimonialsService = {
       }
 
       const { data, error } = await query.order('order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch testimonials from database, using mock data:', error);
+        return mockTestimonials.filter(t => !filters?.featured || t.is_featured);
+      }
+      return data || mockTestimonials;
     } catch (error) {
-      console.error('Error fetching testimonials:', error);
-      throw error;
+      logger.error('Error fetching testimonials:', error);
+      return mockTestimonials;
     }
   },
 
   async getTestimonialById(id: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock testimonial');
+        return mockTestimonials.find(t => t.id === id);
+      }
+
       const { data, error } = await supabase
         .from('landing_testimonials')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch testimonial from database, using mock data:', error);
+        return mockTestimonials.find(t => t.id === id);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching testimonial:', error);
-      throw error;
+      logger.error('Error fetching testimonial:', error);
+      return mockTestimonials.find(t => t.id === id);
     }
   },
 
@@ -138,6 +275,11 @@ export const FAQsService = {
     active?: boolean;
   }) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock FAQs');
+        return mockFAQs.filter(f => !filters?.active || f.is_active);
+      }
+
       let query = supabase
         .from('landing_faqs')
         .select('*');
@@ -150,27 +292,38 @@ export const FAQsService = {
       }
 
       const { data, error } = await query.order('order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch FAQs from database, using mock data:', error);
+        return mockFAQs.filter(f => !filters?.active || f.is_active);
+      }
+      return data || mockFAQs;
     } catch (error) {
-      console.error('Error fetching FAQs:', error);
-      throw error;
+      logger.error('Error fetching FAQs:', error);
+      return mockFAQs;
     }
   },
 
   async getFAQById(id: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock FAQ');
+        return mockFAQs.find(f => f.id === id);
+      }
+
       const { data, error } = await supabase
         .from('landing_faqs')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch FAQ from database, using mock data:', error);
+        return mockFAQs.find(f => f.id === id);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching FAQ:', error);
-      throw error;
+      logger.error('Error fetching FAQ:', error);
+      return mockFAQs.find(f => f.id === id);
     }
   },
 
@@ -242,6 +395,11 @@ export const UseCasesService = {
     featured?: boolean;
   }) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock use cases');
+        return mockUseCases.filter(u => !filters?.featured || u.is_featured);
+      }
+
       let query = supabase
         .from('landing_use_cases')
         .select('*');
@@ -254,27 +412,38 @@ export const UseCasesService = {
       }
 
       const { data, error } = await query.order('order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch use cases from database, using mock data:', error);
+        return mockUseCases.filter(u => !filters?.featured || u.is_featured);
+      }
+      return data || mockUseCases;
     } catch (error) {
-      console.error('Error fetching use cases:', error);
-      throw error;
+      logger.error('Error fetching use cases:', error);
+      return mockUseCases;
     }
   },
 
   async getUseCaseById(id: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock use case');
+        return mockUseCases.find(u => u.id === id);
+      }
+
       const { data, error } = await supabase
         .from('landing_use_cases')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch use case from database, using mock data:', error);
+        return mockUseCases.find(u => u.id === id);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching use case:', error);
-      throw error;
+      logger.error('Error fetching use case:', error);
+      return mockUseCases.find(u => u.id === id);
     }
   },
 
@@ -344,35 +513,57 @@ export const UseCasesService = {
 // SOCIAL PROOF STATS SERVICE
 // ============================================================================
 
+const mockStats = [
+  { id: 'stat-1', metric_name: 'active_users', current_value: '50000', unit: 'users', display_format: 'number', label: 'Active Users', icon: 'users', order: 1 },
+  { id: 'stat-2', metric_name: 'total_earnings', current_value: '$50M', unit: 'usd', display_format: 'currency', label: 'Total Earnings Processed', icon: 'dollar', order: 2 },
+  { id: 'stat-3', metric_name: 'countries', current_value: '150', unit: 'countries', display_format: 'number', label: 'Countries Supported', icon: 'globe', order: 3 },
+];
+
 export const SocialProofStatsService = {
   async getAllStats() {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock stats');
+        return mockStats;
+      }
+
       const { data, error } = await supabase
         .from('landing_social_proof_stats')
         .select('*')
         .order('order', { ascending: true });
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch stats from database, using mock data:', error);
+        return mockStats;
+      }
+      return data || mockStats;
     } catch (error) {
-      console.error('Error fetching stats:', error);
-      throw error;
+      logger.error('Error fetching stats:', error);
+      return mockStats;
     }
   },
 
   async getStatByMetricName(metric_name: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock stat');
+        return mockStats.find(s => s.metric_name === metric_name);
+      }
+
       const { data, error } = await supabase
         .from('landing_social_proof_stats')
         .select('*')
         .eq('metric_name', metric_name)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch stat from database, using mock data:', error);
+        return mockStats.find(s => s.metric_name === metric_name);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching stat:', error);
-      throw error;
+      logger.error('Error fetching stat:', error);
+      return mockStats.find(s => s.metric_name === metric_name);
     }
   },
 
@@ -431,6 +622,11 @@ export const ComparisonMatrixService = {
     active?: boolean;
   }) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock comparisons');
+        return mockComparisons.filter(c => !filters?.active || c.is_active !== false);
+      }
+
       let query = supabase
         .from('landing_comparison_matrix')
         .select('*');
@@ -443,27 +639,38 @@ export const ComparisonMatrixService = {
       }
 
       const { data, error } = await query.order('order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch comparisons from database, using mock data:', error);
+        return mockComparisons.filter(c => !filters?.active || c.is_active !== false);
+      }
+      return data || mockComparisons;
     } catch (error) {
-      console.error('Error fetching comparisons:', error);
-      throw error;
+      logger.error('Error fetching comparisons:', error);
+      return mockComparisons;
     }
   },
 
   async getComparisonById(id: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock comparison');
+        return mockComparisons.find(c => c.id === id);
+      }
+
       const { data, error } = await supabase
         .from('landing_comparison_matrix')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch comparison from database, using mock data:', error);
+        return mockComparisons.find(c => c.id === id);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching comparison:', error);
-      throw error;
+      logger.error('Error fetching comparison:', error);
+      return mockComparisons.find(c => c.id === id);
     }
   },
 

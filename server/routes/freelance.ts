@@ -10,6 +10,53 @@ import { freelance_stats } from '../../shared/freelance-schema.js';
 
 const router = express.Router();
 
+// Search endpoint for global search
+router.get('/search', async (req, res) => {
+  try {
+    const { q, limit = 20, offset = 0 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const searchQuery = `%${q}%`;
+
+    // Search jobs
+    const jobsQuery = db.select().from(freelance_jobs)
+      .where(or(
+        like(freelance_jobs.title, searchQuery),
+        like(freelance_jobs.description, searchQuery)
+      ))
+      .orderBy(desc(freelance_jobs.created_at))
+      .limit(parseInt(limit as string))
+      .offset(parseInt(offset as string));
+
+    const jobsResult = await jobsQuery.execute();
+
+    const jobs = jobsResult.map(job => ({
+      id: job.id,
+      title: job.title,
+      description: job.description,
+      budget: job.budget_min,
+      budget_type: job.budget_type,
+      category: job.category,
+      location: job.location || 'Remote',
+      skills: job.skills_required || [],
+      client: {
+        id: job.client_id,
+        name: 'Client',
+        verified: false
+      },
+      views: 0
+    }));
+
+    res.json({ jobs });
+  } catch (error) {
+    logger.error('Error searching freelance:', error);
+    res.status(500).json({ error: 'Failed to search freelance' });
+  }
+});
+
 // Get all jobs (with filtering, pagination, search)
 router.get('/jobs', async (req, res) => {
   try {

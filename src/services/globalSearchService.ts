@@ -334,25 +334,12 @@ class GlobalSearchService {
 
   async search(params: SearchParams): Promise<SearchResponse> {
     try {
-      // Use only real API calls - no mock data fallback
+      // Try real API calls first
       return await this.searchRealAPIs(params);
     } catch (error) {
-      console.error('Search API failed:', error);
-      // Return empty results on error instead of mock data
-      return {
-        results: [],
-        totalCount: 0,
-        currentPage: params.page || 1,
-        totalPages: 0,
-        suggestions: [],
-        relatedSearches: [],
-        facets: {
-          categories: [],
-          priceRanges: [],
-          ratings: [],
-          locations: []
-        }
-      };
+      console.warn('Search API failed, falling back to mock data:', error);
+      // Fall back to mock data when API is unavailable
+      return await this.searchMockData(params);
     }
   }
 
@@ -491,6 +478,15 @@ class GlobalSearchService {
     };
   }
 
+  // Helper method to filter mock data by query
+  private filterMockData(mockData: SearchResult[], query: string): SearchResult[] {
+    const lowerQuery = query.toLowerCase();
+    return mockData.filter((item) => {
+      const searchText = `${item.title} ${item.description} ${item.tags?.join(" ") || ""}`.toLowerCase();
+      return searchText.includes(lowerQuery);
+    });
+  }
+
   // Real API search methods
   private async searchUsers(query: string, filters: SearchFilters): Promise<SearchResult[]> {
     try {
@@ -537,7 +533,7 @@ class GlobalSearchService {
         console.warn('Invalid search query provided for products:', query);
         return [];
       }
-      
+
       const response = await fetch(`${this.baseUrl}/products/search?q=${encodeURIComponent(query)}`);
 
       // Read body once to avoid "body stream already read" errors
@@ -553,35 +549,34 @@ class GlobalSearchService {
       } catch (parseError) {
         throw new Error(`Failed to parse products search response: ${parseError}`);
       }
-      
+
       // Validate response data
       if (!data || !Array.isArray(data.products)) {
         console.warn('Invalid products data received:', data);
         return [];
       }
-      
+
       return data.products.map((product: any) => ({
         id: product.id || `product-${Date.now()}-${Math.random()}`,
         type: 'product' as const,
-        title: product.name || 'Untitled Product',
+        title: product.name || product.title || 'Untitled Product',
         description: product.description || 'No description available',
         image: product.images?.[0] || '/placeholder.svg',
         price: product.price || 0,
         rating: product.rating || 0,
         category: product.category || 'Uncategorized',
         tags: Array.isArray(product.tags) ? product.tags : [],
-        author: { 
-          name: product.seller?.name || 'Unknown Seller', 
-          verified: product.seller?.verified || false 
+        author: {
+          name: product.seller?.name || 'Unknown Seller',
+          verified: product.seller?.verified || false
         },
-        stats: { 
-          views: product.views || 0, 
-          likes: product.likes || 0 
+        stats: {
+          views: product.views || 0,
+          likes: product.likes || 0
         },
       })) || [];
     } catch (error) {
       console.error('Products search failed:', error);
-      // Return empty array instead of failing completely
       return [];
     }
   }

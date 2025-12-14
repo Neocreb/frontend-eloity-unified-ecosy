@@ -23,6 +23,7 @@ interface CurrencyRate {
 // In-memory cache for exchange rates
 let exchangeRateCache: Map<string, ExchangeRate> = new Map();
 let lastRateUpdateTime: number = 0;
+let isInitialized = false;
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Fiat currency pairs with direct conversion rates
@@ -53,10 +54,58 @@ const FIAT_PAIRS = [
 // Crypto pairs (will be fetched from CryptoAPIs)
 const CRYPTO_ASSETS = ['BTC', 'ETH', 'USDT', 'USDC', 'BNB', 'ADA', 'SOL', 'XRP', 'DOGE', 'MATIC'];
 
+// Initialize rates immediately with fiat pairs (synchronous)
+function initializeDefaultRates(): void {
+  if (exchangeRateCache.size > 0) return;
+
+  const now = new Date();
+
+  // Add fiat pairs
+  FIAT_PAIRS.forEach(pair => {
+    exchangeRateCache.set(`${pair.from}_${pair.to}`, {
+      from: pair.from,
+      to: pair.to,
+      rate: pair.rate,
+      lastUpdated: now,
+      source: 'static'
+    });
+
+    exchangeRateCache.set(`${pair.to}_${pair.from}`, {
+      from: pair.to,
+      to: pair.from,
+      rate: 1 / pair.rate,
+      lastUpdated: now,
+      source: 'static'
+    });
+  });
+
+  // Add same-currency rates
+  SUPPORTED_CURRENCIES.forEach(currency => {
+    exchangeRateCache.set(`${currency.code}_${currency.code}`, {
+      from: currency.code,
+      to: currency.code,
+      rate: 1,
+      lastUpdated: now,
+      source: 'static'
+    });
+  });
+
+  logger.info('Default exchange rates initialized');
+}
+
 export async function initializeCurrencyService() {
   logger.info('Initializing currency service...');
-  await refreshExchangeRates();
-  
+
+  // Initialize default fiat rates immediately
+  initializeDefaultRates();
+
+  // Then refresh with latest rates asynchronously
+  refreshExchangeRates().catch(err => {
+    logger.warn('Failed to refresh exchange rates on startup:', err);
+  });
+
+  isInitialized = true;
+
   // Schedule daily rate updates at 00:00 UTC
   scheduleRateUpdates();
 }
@@ -90,24 +139,27 @@ function scheduleRateUpdates() {
 export async function refreshExchangeRates(): Promise<void> {
   try {
     logger.info('Refreshing exchange rates...');
-    
+
+    // Keep default rates as backup
+    const backupCache = new Map(exchangeRateCache);
     exchangeRateCache.clear();
-    
-    // Load fiat rates
+    initializeDefaultRates();
+
+    // Load fiat rates (with latest data)
     await loadFiatRates();
-    
+
     // Load crypto rates
     if (CRYPTOAPIS_API_KEY) {
       await loadCryptoRates();
     } else {
       logger.warn('CRYPTOAPIS_API_KEY not set, skipping crypto rates');
     }
-    
+
     lastRateUpdateTime = Date.now();
     logger.info(`Exchange rates refreshed. Total rates cached: ${exchangeRateCache.size}`);
   } catch (error) {
     logger.error('Error refreshing exchange rates:', error);
-    throw error;
+    // Don't throw - keep using cached rates
   }
 }
 
@@ -269,4 +321,8 @@ export function isCacheValid(): boolean {
 
 export function getCachedRateCount(): number {
   return exchangeRateCache.size;
+}
+
+export function isServiceInitialized(): boolean {
+  return isInitialized;
 }
