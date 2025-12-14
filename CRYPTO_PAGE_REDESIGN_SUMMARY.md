@@ -55,11 +55,18 @@ The Professional Crypto page has been completely redesigned with enhanced mobile
   - Provides platform and market updates
 
 ### 5. **Data & Features**
-- Featured posts now show "Selected" badge for highlighted content
+- **Real Data Sources**:
+  - Gainers/Losers: Calculated from live crypto prices (CoinGecko and CRYPTOAPIs)
+  - Discover: Blog posts and courses from learning platform
+  - Community: Crypto-related feed posts with user data
+  - Events: From events table with date filtering
+  - Announcements: Tagged blog posts (news, updates, announcements)
+- Featured posts show "Selected" badge for highlighted content
 - Community posts display engagement count and sentiment indicators
 - Proper time formatting for all timestamps
-- Fallback to mock data if database is empty
+- Automatic fallback to mock data if database empty or API unavailable
 - Real data fetching from Supabase with RLS policies
+- Admin management interface for manual content curation
 
 ## File Structure
 
