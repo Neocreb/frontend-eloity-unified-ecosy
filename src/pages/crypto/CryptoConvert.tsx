@@ -570,10 +570,10 @@ const CryptoConvert = () => {
                       Eloity Points Balance
                     </p>
                     <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                      {PLATFORM_TOKEN.balance.toLocaleString()}
+                      {eloitsBalance.toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      ${(PLATFORM_TOKEN.balance * PLATFORM_TOKEN.price).toFixed(2)} USD
+                      ${(eloitsBalance * PLATFORM_TOKEN.price).toFixed(2)} USD
                     </p>
                   </div>
 
