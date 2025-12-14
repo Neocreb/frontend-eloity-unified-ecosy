@@ -797,11 +797,11 @@ const ProfessionalCrypto = () => {
                         <TabsTrigger value="community" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
                           Community
                         </TabsTrigger>
-                        <TabsTrigger value="events" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
-                          Events
+                        <TabsTrigger value="event" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Event
                         </TabsTrigger>
-                        <TabsTrigger value="announcements" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
-                          Announcements
+                        <TabsTrigger value="announcement" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Announcement
                         </TabsTrigger>
                       </TabsList>
                     </div>
