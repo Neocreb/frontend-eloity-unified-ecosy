@@ -125,19 +125,42 @@ const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
       }));
       setGiftDistribution(processedDistribution);
 
-      // Get top recipients
+      // Get top recipients with profile data
+      const recipientIds = new Set<string>();
+      (giftTxData || []).forEach(tx => recipientIds.add(tx.to_user_id));
+      (tipTxData || []).forEach(tx => recipientIds.add(tx.to_user_id));
+
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, username, full_name, avatar_url')
+        .in('id', Array.from(recipientIds));
+
+      const profilesMap = new Map((profilesData || []).map(p => [p.id, p]));
+
       const recipientMap = new Map<string, { gifts: number; tips: number; username: string; avatar_url: string }>();
 
       (giftTxData || []).forEach(tx => {
+        const profile = profilesMap.get(tx.to_user_id);
         const key = tx.to_user_id;
-        const current = recipientMap.get(key) || { gifts: 0, tips: 0, username: '', avatar_url: '' };
+        const current = recipientMap.get(key) || {
+          gifts: 0,
+          tips: 0,
+          username: profile?.username || profile?.full_name || 'Unknown',
+          avatar_url: profile?.avatar_url || '/placeholder-user.jpg'
+        };
         current.gifts += 1;
         recipientMap.set(key, current);
       });
 
       (tipTxData || []).forEach(tx => {
+        const profile = profilesMap.get(tx.to_user_id);
         const key = tx.to_user_id;
-        const current = recipientMap.get(key) || { gifts: 0, tips: 0, username: '', avatar_url: '' };
+        const current = recipientMap.get(key) || {
+          gifts: 0,
+          tips: 0,
+          username: profile?.username || profile?.full_name || 'Unknown',
+          avatar_url: profile?.avatar_url || '/placeholder-user.jpg'
+        };
         current.tips += 1;
         recipientMap.set(key, current);
       });
