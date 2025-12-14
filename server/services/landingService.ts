@@ -379,6 +379,11 @@ export const UseCasesService = {
     featured?: boolean;
   }) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock use cases');
+        return mockUseCases.filter(u => !filters?.featured || u.is_featured);
+      }
+
       let query = supabase
         .from('landing_use_cases')
         .select('*');
@@ -391,11 +396,14 @@ export const UseCasesService = {
       }
 
       const { data, error } = await query.order('order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch use cases from database, using mock data:', error);
+        return mockUseCases.filter(u => !filters?.featured || u.is_featured);
+      }
+      return data || mockUseCases;
     } catch (error) {
-      console.error('Error fetching use cases:', error);
-      throw error;
+      logger.error('Error fetching use cases:', error);
+      return mockUseCases;
     }
   },
 
