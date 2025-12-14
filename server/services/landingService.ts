@@ -165,17 +165,25 @@ export const TestimonialsService = {
 
   async getTestimonialById(id: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock testimonial');
+        return mockTestimonials.find(t => t.id === id);
+      }
+
       const { data, error } = await supabase
         .from('landing_testimonials')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch testimonial from database, using mock data:', error);
+        return mockTestimonials.find(t => t.id === id);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching testimonial:', error);
-      throw error;
+      logger.error('Error fetching testimonial:', error);
+      return mockTestimonials.find(t => t.id === id);
     }
   },
 
