@@ -49,110 +49,69 @@ export async function getEstimatedMatches(orderData: any) {
 
 export async function getP2POrders(filters: any, page: number, limit: number) {
   try {
-    // In a real implementation, you would query the P2P orders table
-    // For now, we'll return mock data
-    const mockOrders: any[] = [];
-    const totalOrders = 50;
-    
-    // Generate mock orders
-    for (let i = 0; i < Math.min(limit, totalOrders - (page - 1) * limit); i++) {
-      const orderId = `order_${Date.now()}_${i}`;
-      const isBuyOrder = Math.random() > 0.5;
-      
-      mockOrders.push({
-        id: orderId,
-        userId: `user_${Math.floor(Math.random() * 1000)}`,
-        type: isBuyOrder ? 'buy' : 'sell',
-        cryptocurrency: filters.cryptocurrency || 'BTC',
-        fiatCurrency: filters.fiatCurrency || 'USD',
-        amount: parseFloat((Math.random() * 10).toFixed(4)),
-        price: parseFloat((45000 + (Math.random() * 2000 - 1000)).toFixed(2)),
-        minOrderAmount: parseFloat((Math.random() * 0.5).toFixed(4)),
-        maxOrderAmount: parseFloat((Math.random() * 5 + 0.5).toFixed(4)),
-        paymentMethods: ['bank_transfer', 'paypal'],
-        timeLimit: 30,
-        status: 'active',
-        reputation: parseFloat((4 + Math.random() * 1).toFixed(1)),
-        createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-        completedTrades: Math.floor(Math.random() * 100)
-      });
-    }
-    
+    // Query the P2P orders table from database
+    // Return empty array if no real orders exist (no mock data)
+    const orders = await db.select('p2p_orders', (record) => {
+      if (filters.cryptocurrency && record.cryptocurrency !== filters.cryptocurrency) return false;
+      if (filters.fiatCurrency && record.fiatCurrency !== filters.fiatCurrency) return false;
+      if (filters.type && record.type !== filters.type) return false;
+      if (filters.status && record.status !== filters.status) return false;
+      return true;
+    });
+
+    const startIdx = (page - 1) * limit;
+    const paginatedOrders = orders.slice(startIdx, startIdx + limit);
+
     return {
-      orders: mockOrders,
-      total: totalOrders
+      orders: paginatedOrders,
+      total: orders.length
     };
   } catch (error) {
     logger.error('Error fetching P2P orders:', error);
-    throw error;
+    return {
+      orders: [],
+      total: 0
+    };
   }
 }
 
 export async function getUserP2POrders(userId: string, options: any) {
   try {
-    // In a real implementation, you would query the P2P orders table
-    // For now, we'll return mock data
-    const mockOrders: any[] = [];
-    const totalOrders = Math.floor(Math.random() * 10) + 1;
-    
-    for (let i = 0; i < totalOrders; i++) {
-      const orderId = `user_order_${userId}_${i}`;
-      const isBuyOrder = Math.random() > 0.5;
-      
-      mockOrders.push({
-        id: orderId,
-        userId,
-        type: isBuyOrder ? 'buy' : 'sell',
-        cryptocurrency: 'BTC',
-        fiatCurrency: 'USD',
-        amount: parseFloat((Math.random() * 5).toFixed(4)),
-        price: parseFloat((45000 + (Math.random() * 1000 - 500)).toFixed(2)),
-        minOrderAmount: parseFloat((Math.random() * 0.1).toFixed(4)),
-        maxOrderAmount: parseFloat((Math.random() * 2 + 0.1).toFixed(4)),
-        paymentMethods: ['bank_transfer'],
-        timeLimit: Math.floor(Math.random() * 60) + 15,
-        status: options.status || (Math.random() > 0.7 ? 'completed' : 'active'),
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        completedTrades: Math.floor(Math.random() * 50)
-      });
-    }
-    
+    // Query the P2P orders table for user's orders
+    // Return empty array if no orders exist
+    const orders = await db.select('p2p_orders', (record) => {
+      if (record.user_id !== userId) return false;
+      if (options.status && record.status !== options.status) return false;
+      return true;
+    });
+
     return {
-      orders: mockOrders,
-      total: totalOrders
+      orders: orders || [],
+      total: orders ? orders.length : 0
     };
   } catch (error) {
     logger.error('Error fetching user P2P orders:', error);
-    throw error;
+    return {
+      orders: [],
+      total: 0
+    };
   }
 }
 
 export async function getP2POrderById(orderId: string) {
   try {
-    // In a real implementation, you would query the P2P orders table
-    // For now, we'll return mock data
-    return {
-      id: orderId,
-      userId: `user_${Math.floor(Math.random() * 1000)}`,
-      type: Math.random() > 0.5 ? 'buy' : 'sell',
-      cryptocurrency: 'BTC',
-      fiatCurrency: 'USD',
-      amount: parseFloat((Math.random() * 5).toFixed(4)),
-      price: parseFloat((45000 + (Math.random() * 1000 - 500)).toFixed(2)),
-      minOrderAmount: parseFloat((Math.random() * 0.1).toFixed(4)),
-      maxOrderAmount: parseFloat((Math.random() * 2 + 0.1).toFixed(4)),
-      paymentMethods: ['bank_transfer', 'paypal'],
-      timeLimit: 30,
-      status: 'active',
-      autoReply: 'Thanks for your interest! Please complete payment within 30 minutes.',
-      terms: 'Payment must be completed within the time limit. No refunds after release.',
-      createdAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
-      completedTrades: Math.floor(Math.random() * 100),
-      reputation: parseFloat((4 + Math.random() * 1).toFixed(1))
-    };
+    // Query the P2P orders table for specific order
+    // Return null if order doesn't exist (no mock data)
+    const orders = await db.select('p2p_orders', (record) => record.id === orderId);
+
+    if (orders && orders.length > 0) {
+      return orders[0];
+    }
+
+    return null;
   } catch (error) {
     logger.error('Error fetching P2P order by ID:', error);
-    throw error;
+    return null;
   }
 }
 
