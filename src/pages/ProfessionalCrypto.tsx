@@ -695,43 +695,44 @@ const ProfessionalCrypto = () => {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="new_listings" className="p-0 mt-0">
+                    <TabsContent value="losers" className="p-0 mt-0">
                       <div className="divide-y dark:divide-slate-700">
-                        {newListings.length > 0 ? (
-                          newListings.map((listing) => (
+                        {losersListings.length > 0 ? (
+                          losersListings.map((crypto) => (
                             <div
-                              key={listing.id}
+                              key={crypto.id}
+                              onClick={() => handleNavigateToTrade(crypto.id)}
                               className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
                             >
                               <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <img
-                                  src={listing.image_url || 'https://via.placeholder.com/48'}
-                                  alt={listing.name}
+                                  src={crypto.image}
+                                  alt={crypto.name}
                                   className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                                    {listing.symbol.toUpperCase()}/USDT
+                                    {crypto.symbol.toUpperCase()}/USDT
                                   </p>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">{listing.name}</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{crypto.name}</p>
                                 </div>
                               </div>
                               <div className="text-right flex-shrink-0 flex items-center gap-3">
-                                <Badge className="bg-red-400 text-white border-0 font-semibold">New</Badge>
+                                <Badge className="bg-red-400 text-white border-0 font-semibold">−</Badge>
                                 <div>
-                                  <p className="font-bold text-gray-900 dark:text-white">${listing.current_price?.toFixed(8) || '-.--'}</p>
+                                  <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(convertAmount(crypto.current_price, "USD", selectedCurrency?.code || "USD"))}</p>
                                   <div className={cn(
                                     "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
-                                    listing.price_change_24h >= 0
+                                    crypto.price_change_percentage_24h >= 0
                                       ? "text-green-600 dark:text-green-400"
                                       : "text-red-600 dark:text-red-400"
                                   )}>
-                                    {listing.price_change_24h >= 0 ? (
+                                    {crypto.price_change_percentage_24h >= 0 ? (
                                       <TrendingUp className="h-3 w-3" />
                                     ) : (
                                       <TrendingDown className="h-3 w-3" />
                                     )}
-                                    <span>{formatPercentage(listing.price_change_24h)}</span>
+                                    <span>{formatPercentage(crypto.price_change_percentage_24h)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -739,7 +740,7 @@ const ProfessionalCrypto = () => {
                           ))
                         ) : (
                           <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                            No new listings available
+                            No losers available
                           </div>
                         )}
                       </div>
