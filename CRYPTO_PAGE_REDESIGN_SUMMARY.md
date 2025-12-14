@@ -247,18 +247,38 @@ All styles use:
 
 ## Testing Checklist
 
+### Mobile Layout & Buttons
 - [ ] Mobile layout (2-column grid on small screens)
+- [ ] 3 action buttons (Deposit, Convert, Withdraw) fit on one line on mobile
+- [ ] Button text is visible on mobile (reduced font size, text-xs)
+- [ ] Buttons show icon + text on mobile, full text on desktop
 - [ ] Secured badge position (top right)
 - [ ] 24h change pill alignment (same line as total)
-- [ ] Action buttons fit without overflow
-- [ ] GemW tab shows data with "Hot" badge
-- [ ] New Listings tab shows data with "New" badge
-- [ ] Community posts show "Selected" badge
+
+### Gainers & Losers Tabs
+- [ ] Gainers tab shows top 6 coins by positive 24h change
+- [ ] Gainers display with green "+" badge
+- [ ] Losers tab shows top 6 coins by negative 24h change
+- [ ] Losers display with red "−" badge
+- [ ] Data updates with live crypto prices
+- [ ] Percentage change shows correctly
+
+### Community Section
+- [ ] Discover tab shows blog posts and courses
+- [ ] Community tab shows crypto-related feed posts
+- [ ] Events tab shows upcoming crypto events
+- [ ] Announcements tab shows tagged blog posts
+- [ ] All tabs show engagement counts
 - [ ] Sentiment indicators display correctly
-- [ ] Fallback mock data works when DB is empty
+- [ ] Fallback mock data works when sources unavailable
+
+### General
 - [ ] Dark mode styling applies correctly
 - [ ] All navigation routes work
 - [ ] No console errors
+- [ ] Admin can manage content via Admin page
+- [ ] Featured/hidden toggle works
+- [ ] New content can be added manually
 
 ## Performance Considerations
 
