@@ -116,22 +116,32 @@ src/pages/
 
 ## Setup Steps
 
-### Quick Start (5 minutes)
+### Quick Start (Automatic - No Setup Required)
+The crypto page works with **zero database setup** using:
+- **Live Data Sources**:
+  - Gainers/Losers: Automatically calculated from cryptocurrency prices
+  - Discover: Real blog posts and courses from the platform
+  - Community: Real posts from the feed system
+  - Events: Real events from the events table
+  - Announcements: Real tagged blog posts
+
+### Optional: Add Database Tables for Custom Content (10 minutes)
+To enable admin management of featured content:
 1. Open Supabase Console → SQL Editor
-2. Paste `migrations/featured_crypto_listings.sql`
+2. Copy and paste `migrations/featured_crypto_listings.sql`
 3. Click "Run"
-4. (Optional) Paste `migrations/sample_featured_data.sql` to add sample data
+4. (Optional) Paste `migrations/sample_featured_data.sql` for sample data
 
 ### Verification
 ```sql
--- Check tables exist
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema = 'public' 
+-- Check tables exist (optional)
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name IN ('featured_crypto_listings', 'community_featured_posts', 'crypto_categories');
 
--- Check RLS enabled
-SELECT schemaname, tablename, rowsecurity 
-FROM pg_tables 
+-- Check RLS enabled (optional)
+SELECT schemaname, tablename, rowsecurity
+FROM pg_tables
 WHERE tablename IN ('featured_crypto_listings', 'community_featured_posts');
 ```
 
