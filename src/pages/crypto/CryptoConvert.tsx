@@ -442,44 +442,46 @@ const CryptoConvert = () => {
                     <Label htmlFor="to-asset" className="text-base font-semibold">
                       To
                     </Label>
-                    <div className="flex gap-3 items-end">
-                      <Select
-                        value={toAsset.symbol}
-                        onValueChange={(value) => {
-                          if (value === "ELOITS") {
-                            setToAsset(PLATFORM_TOKEN);
-                          } else {
-                            const selected = CRYPTO_ASSETS.find(
-                              (a) => a.symbol === value
-                            );
-                            if (selected) setToAsset(selected);
-                          }
-                        }}
-                      >
-                        <SelectTrigger id="to-asset">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CRYPTO_ASSETS.map((asset) => (
-                            <SelectItem key={asset.id} value={asset.symbol}>
+                    <div className="flex gap-2 items-end">
+                      <div className="w-40 sm:w-48">
+                        <Select
+                          value={toAsset.symbol}
+                          onValueChange={(value) => {
+                            if (value === "ELOITS") {
+                              setToAsset(PLATFORM_TOKEN);
+                            } else {
+                              const selected = CRYPTO_ASSETS.find(
+                                (a) => a.symbol === value
+                              );
+                              if (selected) setToAsset(selected);
+                            }
+                          }}
+                        >
+                          <SelectTrigger id="to-asset" className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CRYPTO_ASSETS.map((asset) => (
+                              <SelectItem key={asset.id} value={asset.symbol}>
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={asset.image}
+                                    alt={asset.name}
+                                    className="h-4 w-4 rounded-full"
+                                  />
+                                  {asset.symbol} - {asset.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="ELOITS">
                               <div className="flex items-center gap-2">
-                                <img
-                                  src={asset.image}
-                                  alt={asset.name}
-                                  className="h-4 w-4 rounded-full"
-                                />
-                                {asset.symbol} - {asset.name}
+                                <Zap className="h-4 w-4 text-yellow-500" />
+                                ELOITS - Eloity Points
                               </div>
                             </SelectItem>
-                          ))}
-                          <SelectItem value="ELOITS">
-                            <div className="flex items-center gap-2">
-                              <Zap className="h-4 w-4 text-yellow-500" />
-                              ELOITS - Eloity Points
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="flex-1">
                         <Input
                           type="number"
