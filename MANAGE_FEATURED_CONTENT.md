@@ -1,75 +1,104 @@
 # Managing Featured Crypto & Community Content
 
-This guide helps you add, update, and manage featured content on the Professional Crypto page.
+This guide helps you manage featured content on the crypto page. You have two options:
+1. **Automatic Management**: Content fetches automatically from real sources (zero configuration)
+2. **Manual Management**: Use admin interface to curate specific content
 
-## Quick Access via Supabase Dashboard
+## Automatic Content Management (No Configuration)
+
+The page automatically displays:
+- **Gainers**: Top 6 cryptos by 24h positive change (updated with prices)
+- **Losers**: Top 6 cryptos by 24h negative change (updated with prices)
+- **Discover**: Latest blog posts and courses
+- **Community**: Recent crypto-related feed posts
+- **Events**: Upcoming crypto events
+- **Announcements**: Latest tagged blog posts
+
+No database configuration needed - content is live immediately.
+
+## Manual Content Management (Optional)
+
+For admin users who want to manually curate content:
+
+### Accessing the Admin Interface
+
+1. Navigate to `/admin/featured-crypto`
+2. You'll see two tabs: "Featured Listings" and "Community Posts"
+3. View, add, edit, and delete content as needed
 
 ### Add New Featured Crypto Listing
 
+Via Admin Interface:
+1. Click the "Add Listing" button
+2. Fill in the form fields:
+   - **Symbol**: Crypto symbol (BTC, ETH, etc.)
+   - **Name**: Full name
+   - **Image URL**: Logo URL
+   - **Current Price**: Market price
+   - **24h Change %**: Price change percentage
+   - **Category**: gainers, losers, trending, hot
+   - **Order Index**: Display order (1, 2, 3...)
+3. Click "Add Listing"
+
+Via Supabase Dashboard (Advanced):
 1. Go to **Supabase Console** → Your Project
-2. Click **Table Editor** (left sidebar)
+2. Click **Table Editor**
 3. Select `featured_crypto_listings`
 4. Click **Insert row**
-5. Fill in the fields:
-
-| Field | Example | Notes |
-|-------|---------|-------|
-| symbol | BTC | Cryptocurrency symbol |
-| name | Bitcoin | Full name |
-| coingecko_id | bitcoin | For future API integration |
-| image_url | https://... | PNG/JPG URL |
-| current_price | 43250.50 | Current market price |
-| price_change_24h | 8.75 | Percentage change |
-| market_cap_rank | 1 | Optional ranking |
-| category | gemw | Choose: gemw, new_listing, trending, hot |
-| is_featured | true | Check to display on page |
-| order_index | 1 | Display order (1, 2, 3...) |
-
-6. Click **Save**
-7. Changes appear on page within seconds
+5. Fill in fields and save
 
 ### Add Community Featured Post
 
+Via Admin Interface:
+1. Click the "Add Post" button
+2. Fill in the form fields:
+   - **Username**: Display name (e.g., "Crypto Guru")
+   - **Title**: Optional post title
+   - **Content**: Post content (required)
+   - **Category**: discover, community, announcement, event
+   - **Sentiment**: positive, neutral, negative
+   - **Impact %**: Market impact percentage
+   - **Order Index**: Display order (1, 2, 3...)
+3. Click "Add Post"
+
+Via Supabase Dashboard (Advanced):
 1. Go to **Supabase Console** → Your Project
 2. Click **Table Editor**
 3. Select `community_featured_posts`
 4. Click **Insert row**
-5. Fill in the fields:
+5. Fill in fields and save
 
-| Field | Example | Notes |
-|-------|---------|-------|
-| user_id | 550e8400... | Leave as NULL for system posts |
-| username | Crypto Guru | Display name |
-| avatar_url | https://... | Profile picture URL |
-| title | Market Update | Optional post title |
-| content | Bitcoin at new ATH! | Main post content |
-| category | discover | Choose: discover, community, announcement, event |
-| sentiment | positive | Choose: positive, negative, neutral |
-| impact_percentage | 12.50 | Market impact percentage |
-| is_featured | true | Check to display |
-| order_index | 1 | Display order |
-| engagement_count | 342 | Number of likes/interactions |
+#### Example Values
+```
+username: Crypto Guru
+title: Market Update
+content: Bitcoin holding strong above resistance levels
+category: announcement
+sentiment: positive
+impact_percentage: 2.30
+is_featured: true
+order_index: 1
+engagement_count: 342
+```
 
-6. Click **Save**
-
-## Via SQL Commands
+## Managing Content via SQL (Advanced)
 
 ### Add Featured Crypto
 
 ```sql
-INSERT INTO featured_crypto_listings 
+INSERT INTO featured_crypto_listings
 (symbol, name, coingecko_id, image_url, current_price, price_change_24h, category, is_featured, order_index)
-VALUES 
-('ETH', 'Ethereum', 'ethereum', 'https://assets.coingecko.com/coins/images/279/large/ethereum.png', 2350.00, 5.42, 'trending', true, 2);
+VALUES
+('SOL', 'Solana', 'solana', 'https://assets.coingecko.com/coins/images/4128/large/solana.png', 245.50, 28.75, 'gainers', true, 1);
 ```
 
 ### Add Community Post
 
 ```sql
-INSERT INTO community_featured_posts 
+INSERT INTO community_featured_posts
 (username, avatar_url, title, content, category, sentiment, impact_percentage, is_featured, order_index, engagement_count)
-VALUES 
-('Blockchain Expert', 'https://api.dicebear.com/7.x/avataaars/svg?seed=expert', 'DeFi Opportunities', 'New yield farming strategies in 2025', 'community', 'positive', 15.50, true, 1, 256);
+VALUES
+('Crypto Analyst', 'https://api.dicebear.com/7.x/avataaars/svg?seed=analyst', 'Market Update', 'Bitcoin momentum continues on positive news', 'announcement', 'positive', 5.50, true, 1, 256);
 ```
 
 ### Update Featured Status
@@ -117,22 +146,32 @@ WHERE id = 'uuid-here';
 
 ## Categories Explained
 
-### Crypto Categories
-- **gemw**: Emerging/high-potential tokens (shows "Hot" badge)
-- **new_listing**: Recently launched cryptocurrencies (shows "New" badge)
+### Crypto Categories (for featured_crypto_listings)
+- **gainers**: Top cryptocurrencies by positive 24h price change
+- **losers**: Top cryptocurrencies by negative 24h price change
 - **trending**: High volume, popular cryptocurrencies
-- **hot**: Rapidly moving prices or high momentum
+- **hot**: Rapidly moving prices with high momentum
+- **gemw**: Emerging/high-potential tokens (legacy)
+- **new_listing**: Recently launched cryptocurrencies (legacy)
 
-### Community Categories
-- **discover**: New opportunities and insights (featured on Discover tab)
-- **community**: User discussions and advice (featured on Community tab)
-- **announcement**: Official news and updates
+### Community Categories (for community_featured_posts)
+- **discover**: New opportunities, articles, and courses
+  - Displays learning content and educational resources
+  - Shows engagement count (views/reads)
+- **community**: User discussions and advice
+  - Shows crypto-related posts from users
+  - Displays engagement count (likes/shares)
+- **announcement**: Official news and platform updates
+  - Shows system announcements and news
+  - Displayed with neutral sentiment
 - **event**: Upcoming webinars and events
+  - Shows upcoming crypto events
+  - Displays attendee count
 
 ### Sentiments
-- **positive** 🟢: Bullish content, price increases
-- **negative** 🔴: Bearish content, price decreases
-- **neutral** ⚪: Informational content
+- **positive** 🟢: Bullish content, price increases, good news
+- **negative** 🔴: Bearish content, price decreases, warnings
+- **neutral** ⚪: Informational content, announcements
 
 ## Ordering & Featured Status
 
@@ -186,70 +225,93 @@ https://api.dicebear.com/7.x/avataaars/svg?seed=crypto_guru
 
 ## Common Tasks
 
-### Update Bitcoin Price
+### Via Admin Interface
+
+**Toggle Featured Status**:
+1. Click the eye icon to show/hide content
+2. Changes apply immediately
+
+**Delete Content**:
+1. Click the trash icon
+2. Confirm deletion
+3. Content removed from database
+
+**Change Display Order**:
+1. Edit the order_index field
+2. Lower numbers appear first
+3. Recommended: Use 1, 2, 3, etc. sequentially
+
+### Via SQL Commands
+
+**Update Crypto Price** (Manual update):
 ```sql
-UPDATE featured_crypto_listings 
-SET current_price = 45000, price_change_24h = 7.5 
+UPDATE featured_crypto_listings
+SET current_price = 45000, price_change_24h = 7.5, updated_at = NOW()
 WHERE symbol = 'BTC';
 ```
 
-### Feature Top Performing Crypto
+**Feature Top Performer**:
 ```sql
-UPDATE featured_crypto_listings 
-SET is_featured = true, order_index = 1, category = 'hot' 
+UPDATE featured_crypto_listings
+SET is_featured = true, order_index = 1, category = 'hot', updated_at = NOW()
 WHERE symbol = 'SOL';
 ```
 
-### Rotate Community Posts
+**Rotate Community Posts** (Hide old, show new):
 ```sql
--- Hide old post
-UPDATE community_featured_posts 
-SET is_featured = false 
+-- Hide posts older than 30 days
+UPDATE community_featured_posts
+SET is_featured = false, updated_at = NOW()
 WHERE created_at < NOW() - INTERVAL '30 days';
 
--- Show new post and set order
-UPDATE community_featured_posts 
-SET is_featured = true, order_index = 1 
+-- Show new post
+UPDATE community_featured_posts
+SET is_featured = true, order_index = 1, updated_at = NOW()
 WHERE username = 'NewCreator';
 ```
 
-### Clear All Featured Content
+**Hide All Content** (Temporary):
 ```sql
--- Temporarily hide everything
-UPDATE featured_crypto_listings SET is_featured = false;
-UPDATE community_featured_posts SET is_featured = false;
-
--- Or reset to defaults
-DELETE FROM featured_crypto_listings;
-DELETE FROM community_featured_posts;
-INSERT INTO featured_crypto_listings ... -- re-insert defaults
+UPDATE featured_crypto_listings SET is_featured = false, updated_at = NOW();
+UPDATE community_featured_posts SET is_featured = false, updated_at = NOW();
 ```
 
 ## Best Practices
 
-✅ **Do**:
-- Check `is_featured` is TRUE before saving
-- Use proper image URLs
-- Keep order_index sequential (1, 2, 3...)
+### ✅ Do's
+- Use the Admin Interface for easy management
+- Set `is_featured = true` to display content
+- Keep `order_index` values sequential (1, 2, 3...)
+- Use valid, accessible image URLs (HTTPS)
+- Test changes and verify display on `/app/crypto`
 - Use realistic percentages (-100 to +500)
-- Test changes in staging first
-- Keep engagement_count up-to-date
+- Update content regularly to keep feed fresh
+- Use appropriate sentiment for each post type
 
-❌ **Don't**:
-- Leave fields empty (use NULL or 0)
-- Use invalid image URLs
-- Gap order_index values (1, 3, 5)
-- Negative order_index values
-- Use offensive content
-- Forget to set is_featured to true
+### ❌ Don'ts
+- Don't leave content fields empty (use sensible defaults)
+- Don't use invalid or broken image URLs
+- Don't gap order_index values (1, 3, 5 skips 2 and 4)
+- Don't use negative order_index values
+- Don't add offensive or inappropriate content
+- Don't forget to set `is_featured = true` to display
+- Don't manually update timestamp fields
+- Don't delete featured_at without planning
 
-## Monitoring
+### Quality Guidelines
+- **Gainers/Losers**: Automatically calculated (no manual management needed)
+- **Discover**: Link to educational and valuable content
+- **Community**: Show diverse user perspectives and discussions
+- **Events**: Post 48+ hours in advance
+- **Announcements**: Keep clear and concise
 
-### Check What's Currently Displayed
+## Monitoring & Verification
+
+### Check Currently Displayed Content
 
 ```sql
--- Featured cryptos by category
-SELECT 
+-- Featured cryptos
+SELECT
   category,
   symbol,
   name,
@@ -259,8 +321,8 @@ FROM featured_crypto_listings
 WHERE is_featured = true
 ORDER BY category, order_index;
 
--- Featured community posts
-SELECT 
+-- Featured posts
+SELECT
   category,
   username,
   title,
@@ -271,59 +333,132 @@ WHERE is_featured = true
 ORDER BY category, order_index;
 ```
 
-### Check Total Count
+### Monitor Content Counts
 
 ```sql
-SELECT COUNT(*) as featured_cryptos FROM featured_crypto_listings WHERE is_featured = true;
-SELECT COUNT(*) as featured_posts FROM community_featured_posts WHERE is_featured = true;
+-- Count featured items
+SELECT
+  'Cryptos' as type,
+  COUNT(*) as count
+FROM featured_crypto_listings
+WHERE is_featured = true
+UNION ALL
+SELECT
+  'Posts' as type,
+  COUNT(*) as count
+FROM community_featured_posts
+WHERE is_featured = true;
+```
+
+### Check Recent Changes
+
+```sql
+-- Recently updated content
+SELECT
+  'Crypto' as type,
+  symbol,
+  updated_at
+FROM featured_crypto_listings
+WHERE updated_at > NOW() - INTERVAL '7 days'
+ORDER BY updated_at DESC
+UNION ALL
+SELECT
+  'Post' as type,
+  title,
+  updated_at
+FROM community_featured_posts
+WHERE updated_at > NOW() - INTERVAL '7 days'
+ORDER BY updated_at DESC;
 ```
 
 ## Troubleshooting
 
-### Changes Not Showing?
-1. Verify `is_featured = true`
-2. Refresh the page (Cmd+R or Ctrl+R)
+### Changes Not Showing on Crypto Page?
+
+**Check the basics**:
+1. Verify `is_featured = true` in database
+2. Refresh page and clear browser cache (Cmd+Shift+R or Ctrl+Shift+R)
 3. Check browser console for errors
 4. Verify category spelling (case-sensitive)
 
-### Wrong Order?
-- Recheck `order_index` values
-- Ensure they're sequential: 1, 2, 3, 4...
-- Update existing rows if needed
+**For Admin Interface**:
+1. Ensure you're logged in as admin
+2. Check that tables exist in Supabase
+3. Verify RLS policies allow admin access
 
-### Missing Images?
-- Verify URL is accessible
-- Check HTTPS (not HTTP)
-- Test URL in browser first
-- Use CoinGecko URLs for crypto logos
+**For Automatic Data**:
+1. Gainers/Losers: Check crypto prices are loading
+2. Discover: Verify blog posts exist and are published
+3. Community: Check feed posts exist with crypto keywords
+4. Events: Verify events table has crypto type events
+5. Announcements: Check blog posts have announcement tags
 
-## Automation Ideas
+### Content Order Issues
+- Verify `order_index` is sequential: 1, 2, 3, 4...
+- No gaps in order_index values
+- Lower numbers display first
+- Use `ORDER BY order_index ASC` in queries
 
-Schedule updates with:
-- **Supabase Functions**: Auto-fetch prices from CoinGecko
-- **Zapier/Make**: Sync posts from social media
-- **Custom API**: Build admin endpoint for bulk updates
-- **Webhooks**: Listen to price changes and auto-update
+### Missing Images
+- Verify URL is valid and accessible
+- Use HTTPS URLs only (not HTTP)
+- Test URL in browser directly
+- For cryptos: Use CoinGecko URLs
+- For avatars: Use Dicebear API or similar
+
+### Database Connection Issues
+- Verify `VITE_SUPABASE_URL` is set
+- Verify `VITE_SUPABASE_ANON_KEY` is set
+- Check Supabase project status
+- Verify RLS policies allow queries
+- Check browser console for network errors
+
+## Advanced Management
+
+### Automation with Supabase Functions
+Create scheduled functions to auto-update:
+```sql
+-- Example: Auto-update featured_at for fresh content
+UPDATE community_featured_posts
+SET featured_at = NOW()
+WHERE category = 'announcement'
+AND created_at > NOW() - INTERVAL '7 days'
+AND is_featured = true;
+```
+
+### Bulk Operations
+```sql
+-- Reorder all gainers content
+UPDATE featured_crypto_listings
+SET order_index = ROW_NUMBER() OVER (ORDER BY price_change_24h DESC)
+WHERE category = 'gainers';
+
+-- Archive old community posts
+UPDATE community_featured_posts
+SET is_featured = false
+WHERE created_at < NOW() - INTERVAL '30 days';
+```
 
 ---
 
-**Quick Command Reference:**
-```sql
--- Show featured cryptos
-SELECT * FROM featured_crypto_listings WHERE is_featured = true ORDER BY order_index;
+## Quick Reference
 
--- Show featured posts
-SELECT * FROM community_featured_posts WHERE is_featured = true ORDER BY order_index;
+**Admin Interface**:
+- Access: `/admin/featured-crypto`
+- Requires: Admin user role
+- Features: Add, edit, delete, toggle visibility
 
--- Hide everything
-UPDATE featured_crypto_listings SET is_featured = false;
-UPDATE community_featured_posts SET is_featured = false;
+**Automatic Content**:
+- Gainers: Calculated from crypto prices
+- Losers: Calculated from crypto prices
+- Discover: From blog posts and courses
+- Community: From feed posts
+- Events: From events table
+- Announcements: From tagged blog posts
 
--- Reset featured_at timestamp
-UPDATE featured_crypto_listings SET featured_at = NOW() WHERE id = 'uuid';
-```
-
-**Need Help?**
-- Check `FEATURED_CRYPTO_SETUP.md` for detailed setup
-- Review `CRYPTO_PAGE_REDESIGN_SUMMARY.md` for full documentation
-- See `src/services/featuredCryptoService.ts` for code examples
+**Support Resources**:
+- Setup Guide: `FEATURED_CRYPTO_SETUP.md`
+- Implementation Guide: `CRYPTO_PAGE_REDESIGN_SUMMARY.md`
+- Service Code: `src/services/featuredCryptoService.ts`
+- Admin Component: `src/pages/admin/AdminFeaturedCrypto.tsx`
+- Main Component: `src/pages/ProfessionalCrypto.tsx`

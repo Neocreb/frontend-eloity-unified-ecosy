@@ -76,10 +76,10 @@ const ProfessionalCrypto = () => {
   const [totalChangeUSD, setTotalChangeUSD] = useState(0);
   const [totalChangePct, setTotalChangePct] = useState(0);
   const [primaryAsset, setPrimaryAsset] = useState<{ symbol: string; balance: number; value: number; valueInUserCurrency: number }>({ symbol: "USDT", balance: 0, value: 0, valueInUserCurrency: 0 });
-  const [activeMarketTab, setActiveMarketTab] = useState<"favorites" | "trending" | "gemw" | "new_listings">("trending");
+  const [activeMarketTab, setActiveMarketTab] = useState<"favorites" | "trending" | "gainers" | "losers">("trending");
   const [activeCommunityTab, setActiveCommunityTab] = useState<"discover" | "community" | "event" | "announcement">("discover");
-  const [gemwListings, setGemwListings] = useState<FeaturedCryptoListing[]>([]);
-  const [newListings, setNewListings] = useState<FeaturedCryptoListing[]>([]);
+  const [gainersListings, setGainersListings] = useState<Cryptocurrency[]>([]);
+  const [losersListings, setLosersListings] = useState<Cryptocurrency[]>([]);
   const [communityPosts, setCommunityPosts] = useState<CommunityFeaturedPost[]>([]);
 
   useEffect(() => {
@@ -236,15 +236,20 @@ const ProfessionalCrypto = () => {
       setTotalChangePct(sumUSDPrev > 0 ? (delta / sumUSDPrev) * 100 : 0);
       setPrimaryAsset(top);
 
-      // Load featured listings and community posts in parallel
-      const [gemwData, newListingsData, communityData] = await Promise.all([
-        FeaturedCryptoService.getFeaturedListingsByCategory('gemw', 6),
-        FeaturedCryptoService.getFeaturedListingsByCategory('new_listing', 6),
-        FeaturedCryptoService.getCommunityFeaturedPosts(undefined, 3),
-      ]);
+      // Calculate gainers and losers from crypto prices
+      const gainers = list
+        .sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h)
+        .slice(0, 6);
 
-      setGemwListings(gemwData);
-      setNewListings(newListingsData);
+      const losers = list
+        .sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h)
+        .slice(0, 6);
+
+      setGainersListings(gainers);
+      setLosersListings(losers);
+
+      // Load community posts
+      const communityData = await FeaturedCryptoService.getCommunityFeaturedPosts(undefined, 3);
       setCommunityPosts(communityData);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
@@ -372,7 +377,7 @@ const ProfessionalCrypto = () => {
 
       <div className="min-h-screen bg-white dark:bg-slate-950">
         {/* UPPER ZONE - Full-bleed gradient with animated wave */}
-        <div className="relative w-full bg-gradient-to-b from-purple-500 via-purple-500 to-indigo-600 dark:from-purple-700 dark:to-indigo-800 pt-8 pb-32 overflow-hidden">
+        <div className="relative w-full bg-gradient-to-b from-purple-500 via-purple-500 to-indigo-600 dark:from-purple-700 dark:to-indigo-800 pt-8 pb-20 overflow-hidden">
           {/* Animated wave/blob background */}
           <svg
             className="absolute inset-0 w-full h-full opacity-20 dark:opacity-10"
@@ -447,26 +452,29 @@ const ProfessionalCrypto = () => {
 
         {/* FLOATING ACTION BUTTONS - positioned above divider */}
         <div className="relative z-20 -mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-          <div className="flex gap-2 sm:gap-4 justify-center sm:justify-start">
+          <div className="flex gap-2 sm:gap-4 justify-center sm:justify-start w-full">
             <Button
               onClick={handleDeposit}
-              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-2 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-xs sm:text-base flex-1 sm:flex-none justify-center whitespace-nowrap"
             >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="inline sm:hidden text-xs font-semibold">Deposit</span>
               <span className="hidden sm:inline">Deposit</span>
             </Button>
             <Button
               onClick={handleConvert}
-              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-2 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-xs sm:text-base flex-1 sm:flex-none justify-center whitespace-nowrap"
             >
-              <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="inline sm:hidden text-xs font-semibold">Convert</span>
               <span className="hidden sm:inline">Convert</span>
             </Button>
             <Button
               onClick={handleWithdraw}
-              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-2 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-xs sm:text-base flex-1 sm:flex-none justify-center whitespace-nowrap"
             >
-              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Send className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="inline sm:hidden text-xs font-semibold">Withdraw</span>
               <span className="hidden sm:inline">Withdraw</span>
             </Button>
           </div>
@@ -543,11 +551,11 @@ const ProfessionalCrypto = () => {
                         <TabsTrigger value="trending" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
                           Trending
                         </TabsTrigger>
-                        <TabsTrigger value="gemw" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
-                          GemW
+                        <TabsTrigger value="gainers" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Gainers
                         </TabsTrigger>
-                        <TabsTrigger value="new_listings" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
-                          New Listings
+                        <TabsTrigger value="losers" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Losers
                         </TabsTrigger>
                       </TabsList>
                     </div>
@@ -636,43 +644,44 @@ const ProfessionalCrypto = () => {
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="gemw" className="p-0 mt-0">
+                    <TabsContent value="gainers" className="p-0 mt-0">
                       <div className="divide-y dark:divide-slate-700">
-                        {gemwListings.length > 0 ? (
-                          gemwListings.map((listing) => (
+                        {gainersListings.length > 0 ? (
+                          gainersListings.map((crypto) => (
                             <div
-                              key={listing.id}
+                              key={crypto.id}
+                              onClick={() => handleNavigateToTrade(crypto.id)}
                               className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
                             >
                               <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <img
-                                  src={listing.image_url || 'https://via.placeholder.com/48'}
-                                  alt={listing.name}
+                                  src={crypto.image}
+                                  alt={crypto.name}
                                   className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                                    {listing.symbol.toUpperCase()}/USDT
+                                    {crypto.symbol.toUpperCase()}/USDT
                                   </p>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">{listing.name}</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{crypto.name}</p>
                                 </div>
                               </div>
                               <div className="text-right flex-shrink-0 flex items-center gap-3">
-                                <Badge className="bg-yellow-400 text-yellow-900 border-0 font-semibold">Hot</Badge>
+                                <Badge className="bg-green-400 text-green-900 border-0 font-semibold">+</Badge>
                                 <div>
-                                  <p className="font-bold text-gray-900 dark:text-white">${listing.current_price?.toFixed(8) || '-.--'}</p>
+                                  <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(convertAmount(crypto.current_price, "USD", selectedCurrency?.code || "USD"))}</p>
                                   <div className={cn(
                                     "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
-                                    listing.price_change_24h >= 0
+                                    crypto.price_change_percentage_24h >= 0
                                       ? "text-green-600 dark:text-green-400"
                                       : "text-red-600 dark:text-red-400"
                                   )}>
-                                    {listing.price_change_24h >= 0 ? (
+                                    {crypto.price_change_percentage_24h >= 0 ? (
                                       <TrendingUp className="h-3 w-3" />
                                     ) : (
                                       <TrendingDown className="h-3 w-3" />
                                     )}
-                                    <span>{formatPercentage(listing.price_change_24h)}</span>
+                                    <span>{formatPercentage(crypto.price_change_percentage_24h)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -680,49 +689,50 @@ const ProfessionalCrypto = () => {
                           ))
                         ) : (
                           <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                            No GemW listings available
+                            No gainers available
                           </div>
                         )}
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="new_listings" className="p-0 mt-0">
+                    <TabsContent value="losers" className="p-0 mt-0">
                       <div className="divide-y dark:divide-slate-700">
-                        {newListings.length > 0 ? (
-                          newListings.map((listing) => (
+                        {losersListings.length > 0 ? (
+                          losersListings.map((crypto) => (
                             <div
-                              key={listing.id}
+                              key={crypto.id}
+                              onClick={() => handleNavigateToTrade(crypto.id)}
                               className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
                             >
                               <div className="flex items-center gap-4 flex-1 min-w-0">
                                 <img
-                                  src={listing.image_url || 'https://via.placeholder.com/48'}
-                                  alt={listing.name}
+                                  src={crypto.image}
+                                  alt={crypto.name}
                                   className="w-12 h-12 rounded-full ring-2 ring-gray-200 dark:ring-slate-600"
                                 />
                                 <div className="min-w-0 flex-1">
                                   <p className="font-semibold text-gray-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
-                                    {listing.symbol.toUpperCase()}/USDT
+                                    {crypto.symbol.toUpperCase()}/USDT
                                   </p>
-                                  <p className="text-sm text-gray-600 dark:text-gray-400">{listing.name}</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-400">{crypto.name}</p>
                                 </div>
                               </div>
                               <div className="text-right flex-shrink-0 flex items-center gap-3">
-                                <Badge className="bg-red-400 text-white border-0 font-semibold">New</Badge>
+                                <Badge className="bg-red-400 text-white border-0 font-semibold">−</Badge>
                                 <div>
-                                  <p className="font-bold text-gray-900 dark:text-white">${listing.current_price?.toFixed(8) || '-.--'}</p>
+                                  <p className="font-bold text-gray-900 dark:text-white">{formatCurrency(convertAmount(crypto.current_price, "USD", selectedCurrency?.code || "USD"))}</p>
                                   <div className={cn(
                                     "flex items-center gap-1 justify-end px-2 py-1 rounded-full text-xs font-semibold mt-1",
-                                    listing.price_change_24h >= 0
+                                    crypto.price_change_percentage_24h >= 0
                                       ? "text-green-600 dark:text-green-400"
                                       : "text-red-600 dark:text-red-400"
                                   )}>
-                                    {listing.price_change_24h >= 0 ? (
+                                    {crypto.price_change_percentage_24h >= 0 ? (
                                       <TrendingUp className="h-3 w-3" />
                                     ) : (
                                       <TrendingDown className="h-3 w-3" />
                                     )}
-                                    <span>{formatPercentage(listing.price_change_24h)}</span>
+                                    <span>{formatPercentage(crypto.price_change_percentage_24h)}</span>
                                   </div>
                                 </div>
                               </div>
@@ -730,7 +740,7 @@ const ProfessionalCrypto = () => {
                           ))
                         ) : (
                           <div className="p-6 text-center text-gray-500 dark:text-gray-400">
-                            No new listings available
+                            No losers available
                           </div>
                         )}
                       </div>

@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { blogService } from "./blogService";
+import { courseService } from "./courseService";
 
 export interface FeaturedCryptoListing {
   id: string;
@@ -83,29 +85,199 @@ export class FeaturedCryptoService {
     limit: number = 5
   ): Promise<CommunityFeaturedPost[]> {
     try {
-      let query = supabase
-        .from('community_featured_posts')
-        .select('*')
-        .eq('is_featured', true);
-
-      if (category) {
-        query = query.eq('category', category);
+      // Try to fetch from different sources based on category
+      if (category === 'discover') {
+        return this.getDiscoverPosts(limit);
+      } else if (category === 'announcement') {
+        return this.getAnnouncementPosts(limit);
+      } else if (category === 'event') {
+        return this.getEventPosts(limit);
+      } else if (category === 'community') {
+        return this.getCommunityPosts(limit);
       }
 
-      const { data, error } = await query
-        .order('order_index', { ascending: true })
-        .order('featured_at', { ascending: false })
-        .limit(limit);
+      // If no category, try to fetch from database first
+      try {
+        let query = supabase
+          .from('community_featured_posts')
+          .select('*')
+          .eq('is_featured', true);
 
-      if (error) {
-        console.warn('[FeaturedCrypto] Error fetching community posts:', error);
-        return this.getMockCommunityPosts(category, limit);
+        const { data, error } = await query
+          .order('order_index', { ascending: true })
+          .order('featured_at', { ascending: false })
+          .limit(limit);
+
+        if (error) throw error;
+        if (data && data.length > 0) return data;
+      } catch (dbError) {
+        console.warn('[FeaturedCrypto] Database query failed:', dbError);
       }
 
-      return data || [];
+      // Fallback to mock
+      return this.getMockCommunityPosts(category, limit);
     } catch (err) {
       console.warn('[FeaturedCrypto] Exception fetching community posts:', err);
       return this.getMockCommunityPosts(category, limit);
+    }
+  }
+
+  static async getDiscoverPosts(limit: number = 5): Promise<CommunityFeaturedPost[]> {
+    try {
+      // Fetch from blog posts and courses for discover section
+      const [blogPosts, courses] = await Promise.all([
+        blogService.getBlogPostsSimple(undefined, undefined, 'published', Math.ceil(limit * 0.6)),
+        courseService.getAllCourses().slice(0, Math.ceil(limit * 0.4))
+      ]);
+
+      const posts: CommunityFeaturedPost[] = [];
+
+      // Add blog posts
+      blogPosts.forEach((post, idx) => {
+        if (idx < Math.ceil(limit * 0.6)) {
+          posts.push({
+            id: post.id,
+            user_id: '',
+            username: 'Eloity Learn',
+            avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eloity-learn',
+            title: post.title,
+            content: post.excerpt || post.content.substring(0, 150),
+            category: 'discover',
+            sentiment: 'positive',
+            impact_percentage: 5.5,
+            is_featured: true,
+            engagement_count: post.views || 0,
+            created_at: post.publishedAt || new Date().toISOString(),
+            updated_at: post.updatedAt || new Date().toISOString(),
+          });
+        }
+      });
+
+      // Add courses
+      courses.forEach((course, idx) => {
+        if (posts.length < limit) {
+          posts.push({
+            id: `course_${course.id}`,
+            user_id: '',
+            username: 'Eloity Academy',
+            avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eloity-academy',
+            title: course.title,
+            content: course.description || `Learn ${course.title}`,
+            category: 'discover',
+            sentiment: 'positive',
+            impact_percentage: 0,
+            is_featured: true,
+            engagement_count: course.enrollments?.length || 0,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          });
+        }
+      });
+
+      return posts.slice(0, limit);
+    } catch (err) {
+      console.warn('[FeaturedCrypto] Error fetching discover posts:', err);
+      return [];
+    }
+  }
+
+  static async getAnnouncementPosts(limit: number = 5): Promise<CommunityFeaturedPost[]> {
+    try {
+      // Fetch blog posts tagged as announcements
+      const posts = await blogService.getBlogPostsSimple(undefined, ['announcement', 'news', 'update'], 'published', limit);
+
+      return posts.map((post) => ({
+        id: post.id,
+        user_id: '',
+        username: 'Eloity Announcements',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eloity-announce',
+        title: post.title,
+        content: post.excerpt || post.content.substring(0, 150),
+        category: 'announcement',
+        sentiment: 'neutral',
+        impact_percentage: 0,
+        is_featured: true,
+        engagement_count: post.views || 0,
+        created_at: post.publishedAt || new Date().toISOString(),
+        updated_at: post.updatedAt || new Date().toISOString(),
+      }));
+    } catch (err) {
+      console.warn('[FeaturedCrypto] Error fetching announcements:', err);
+      return [];
+    }
+  }
+
+  static async getEventPosts(limit: number = 5): Promise<CommunityFeaturedPost[]> {
+    try {
+      // Try to fetch from events table
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('event_type', 'crypto')
+        .gte('event_date', new Date().toISOString())
+        .order('event_date', { ascending: true })
+        .limit(limit);
+
+      if (error || !data || data.length === 0) {
+        // Return mock events if no database data
+        return this.getMockEventPosts(limit);
+      }
+
+      return data.map((event: any) => ({
+        id: event.id,
+        user_id: event.user_id || '',
+        username: event.organizer || 'Eloity Events',
+        avatar_url: event.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=eloity-events',
+        title: event.title,
+        content: event.description || 'Upcoming crypto event',
+        category: 'event',
+        sentiment: 'positive',
+        impact_percentage: 0,
+        is_featured: true,
+        engagement_count: event.attendees_count || 0,
+        created_at: event.created_at || new Date().toISOString(),
+        updated_at: event.updated_at || new Date().toISOString(),
+      }));
+    } catch (err) {
+      console.warn('[FeaturedCrypto] Error fetching events:', err);
+      return this.getMockEventPosts(limit);
+    }
+  }
+
+  static async getCommunityPosts(limit: number = 5): Promise<CommunityFeaturedPost[]> {
+    try {
+      // Fetch crypto-related posts from feed
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*, profiles:user_id(*)')
+        .ilike('content', '%crypto%')
+        .ilike('content', '%trading%,bitcoin,ethereum')
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (error || !data || data.length === 0) {
+        return this.getMockCommunityPosts('community', limit);
+      }
+
+      return data.map((post: any) => ({
+        id: post.id,
+        user_id: post.user_id,
+        username: post.profiles?.full_name || post.profiles?.username || 'Anonymous',
+        avatar_url: post.profiles?.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user',
+        title: '',
+        content: post.content,
+        category: 'community',
+        sentiment: 'positive',
+        impact_percentage: 0,
+        is_featured: true,
+        engagement_count: (post.likes_count || 0) + (post.shares_count || 0),
+        created_at: post.created_at,
+        updated_at: post.updated_at || post.created_at,
+      }));
+    } catch (err) {
+      console.warn('[FeaturedCrypto] Error fetching community posts:', err);
+      return this.getMockCommunityPosts('community', limit);
     }
   }
 
@@ -270,6 +442,43 @@ export class FeaturedCryptoService {
     }
 
     return mockPosts.slice(0, limit);
+  }
+
+  private static getMockEventPosts(limit: number = 5): CommunityFeaturedPost[] {
+    const mockEvents: CommunityFeaturedPost[] = [
+      {
+        id: 'event_1',
+        user_id: '',
+        username: 'Eloity Events',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eloity-events',
+        title: 'Crypto Trading Masterclass',
+        content: 'Join us for an exclusive masterclass on advanced crypto trading strategies. Live Q&A with industry experts.',
+        category: 'event',
+        sentiment: 'positive',
+        impact_percentage: 0,
+        is_featured: true,
+        engagement_count: 234,
+        created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'event_2',
+        user_id: '',
+        username: 'Eloity Events',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eloity-events',
+        title: 'DeFi Innovation Summit 2025',
+        content: 'Explore the latest innovations in decentralized finance. Network with leading DeFi developers and investors.',
+        category: 'event',
+        sentiment: 'positive',
+        impact_percentage: 0,
+        is_featured: true,
+        engagement_count: 567,
+        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ];
+
+    return mockEvents.slice(0, limit);
   }
 }
 
