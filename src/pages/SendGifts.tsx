@@ -95,7 +95,8 @@ const SendGifts = () => {
         totalSpent: totalGiftsSpent + totalTipsSpent,
       });
     } catch (error) {
-      console.error('Error loading virtual gifts data:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error loading virtual gifts data:', errorMessage);
       toast({
         title: 'Error',
         description: 'Failed to load gift data. Please try again.',
