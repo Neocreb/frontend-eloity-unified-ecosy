@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useCurrency } from "@/contexts/CurrencyContext";
 
 interface FreelanceFABProps {
   className?: string;
@@ -29,13 +28,22 @@ const FreelanceFAB: React.FC<FreelanceFABProps> = ({ className }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const { formatCurrency } = useCurrency();
 
   // Don't show on freelance pages to avoid duplication
   const hiddenPaths = ["/app/freelance", "/auth", "/"];
   if (hiddenPaths.some((path) => location.pathname.startsWith(path))) {
     return null;
   }
+
+  // Fallback currency formatter - no context dependency
+  const formatCurrency = (amount: number, currency = "USD") => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
 
   const quickStats = [
     { label: "Active Bids", value: "3", icon: <Clock className="w-3 h-3" /> },
