@@ -79,9 +79,9 @@ const TradingPairSelector: React.FC<TradingPairSelectorProps> = ({
   };
 
   const filteredPairs = tradingPairs
-    .filter((pair) => pair.quoteAsset === activeQuote)
+    .filter((pair) => pair && pair.quoteAsset === activeQuote)
     .filter((pair) =>
-      searchQuery === "" ||
+      !pair || searchQuery === "" ||
       pair.baseAsset.toLowerCase().includes(searchQuery.toLowerCase()) ||
       pair.symbol.toLowerCase().includes(searchQuery.toLowerCase())
     );
