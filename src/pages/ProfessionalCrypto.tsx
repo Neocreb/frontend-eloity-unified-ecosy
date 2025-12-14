@@ -76,8 +76,11 @@ const ProfessionalCrypto = () => {
   const [totalChangeUSD, setTotalChangeUSD] = useState(0);
   const [totalChangePct, setTotalChangePct] = useState(0);
   const [primaryAsset, setPrimaryAsset] = useState<{ symbol: string; balance: number; value: number; valueInUserCurrency: number }>({ symbol: "USDT", balance: 0, value: 0, valueInUserCurrency: 0 });
-  const [activeMarketTab, setActiveMarketTab] = useState<"favorites" | "trending">("trending");
-  const [activeCommunityTab, setActiveCommunityTab] = useState<"discover" | "community" | "events" | "announcements">("discover");
+  const [activeMarketTab, setActiveMarketTab] = useState<"favorites" | "trending" | "gemw" | "new_listings">("trending");
+  const [activeCommunityTab, setActiveCommunityTab] = useState<"discover" | "community" | "event" | "announcement">("discover");
+  const [gemwListings, setGemwListings] = useState<FeaturedCryptoListing[]>([]);
+  const [newListings, setNewListings] = useState<FeaturedCryptoListing[]>([]);
+  const [communityPosts, setCommunityPosts] = useState<CommunityFeaturedPost[]>([]);
 
   useEffect(() => {
     loadData();
