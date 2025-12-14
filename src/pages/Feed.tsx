@@ -43,6 +43,8 @@ import HybridFeedContent from "@/components/feed/HybridFeedContent";
 import UnifiedFeedContent from "@/components/feed/UnifiedFeedContent";
 import SuggestedSidebar from "@/components/feed/SuggestedSidebar";
 import FeedSidebar from "@/components/feed/FeedSidebar";
+import { supabase } from "@/integrations/supabase/client";
+import { storiesService } from "@/services/storiesService";
 
 // Main Feed Component
 const Feed = () => {
