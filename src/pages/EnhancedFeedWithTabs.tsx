@@ -194,6 +194,7 @@ const EnhancedFeedWithTabs = () => {
               userStories={userStories}
               onViewStory={handleViewStory}
               onStoriesFetched={handleStoriesFetched}
+              refetchTrigger={refetchTrigger}
             />
 
             {/* Tabs */}
