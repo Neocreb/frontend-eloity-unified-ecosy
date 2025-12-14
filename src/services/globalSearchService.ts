@@ -522,9 +522,9 @@ class GlobalSearchService {
       // Validate input
       if (!query || typeof query !== 'string') {
         console.warn('Invalid search query provided for products:', query);
-        return [];
+        return this.filterMockData(mockProducts, query);
       }
-      
+
       const response = await fetch(`${this.baseUrl}/products/search?q=${encodeURIComponent(query)}`);
 
       // Read body once to avoid "body stream already read" errors
@@ -540,13 +540,13 @@ class GlobalSearchService {
       } catch (parseError) {
         throw new Error(`Failed to parse products search response: ${parseError}`);
       }
-      
+
       // Validate response data
       if (!data || !Array.isArray(data.products)) {
-        console.warn('Invalid products data received:', data);
-        return [];
+        console.warn('Invalid products data received, using mock data:', data);
+        return this.filterMockData(mockProducts, query);
       }
-      
+
       return data.products.map((product: any) => ({
         id: product.id || `product-${Date.now()}-${Math.random()}`,
         type: 'product' as const,
@@ -557,19 +557,19 @@ class GlobalSearchService {
         rating: product.rating || 0,
         category: product.category || 'Uncategorized',
         tags: Array.isArray(product.tags) ? product.tags : [],
-        author: { 
-          name: product.seller?.name || 'Unknown Seller', 
-          verified: product.seller?.verified || false 
+        author: {
+          name: product.seller?.name || 'Unknown Seller',
+          verified: product.seller?.verified || false
         },
-        stats: { 
-          views: product.views || 0, 
-          likes: product.likes || 0 
+        stats: {
+          views: product.views || 0,
+          likes: product.likes || 0
         },
       })) || [];
     } catch (error) {
-      console.error('Products search failed:', error);
-      // Return empty array instead of failing completely
-      return [];
+      console.warn('Products search API unavailable, using mock data:', error);
+      // Fall back to mock data when API is unavailable
+      return this.filterMockData(mockProducts, query);
     }
   }
 
