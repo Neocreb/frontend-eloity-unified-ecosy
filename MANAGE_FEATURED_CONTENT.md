@@ -146,22 +146,32 @@ WHERE id = 'uuid-here';
 
 ## Categories Explained
 
-### Crypto Categories
-- **gemw**: Emerging/high-potential tokens (shows "Hot" badge)
-- **new_listing**: Recently launched cryptocurrencies (shows "New" badge)
+### Crypto Categories (for featured_crypto_listings)
+- **gainers**: Top cryptocurrencies by positive 24h price change
+- **losers**: Top cryptocurrencies by negative 24h price change
 - **trending**: High volume, popular cryptocurrencies
-- **hot**: Rapidly moving prices or high momentum
+- **hot**: Rapidly moving prices with high momentum
+- **gemw**: Emerging/high-potential tokens (legacy)
+- **new_listing**: Recently launched cryptocurrencies (legacy)
 
-### Community Categories
-- **discover**: New opportunities and insights (featured on Discover tab)
-- **community**: User discussions and advice (featured on Community tab)
-- **announcement**: Official news and updates
+### Community Categories (for community_featured_posts)
+- **discover**: New opportunities, articles, and courses
+  - Displays learning content and educational resources
+  - Shows engagement count (views/reads)
+- **community**: User discussions and advice
+  - Shows crypto-related posts from users
+  - Displays engagement count (likes/shares)
+- **announcement**: Official news and platform updates
+  - Shows system announcements and news
+  - Displayed with neutral sentiment
 - **event**: Upcoming webinars and events
+  - Shows upcoming crypto events
+  - Displays attendee count
 
 ### Sentiments
-- **positive** 🟢: Bullish content, price increases
-- **negative** 🔴: Bearish content, price decreases
-- **neutral** ⚪: Informational content
+- **positive** 🟢: Bullish content, price increases, good news
+- **negative** 🔴: Bearish content, price decreases, warnings
+- **neutral** ⚪: Informational content, announcements
 
 ## Ordering & Featured Status
 
