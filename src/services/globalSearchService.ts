@@ -478,6 +478,15 @@ class GlobalSearchService {
     };
   }
 
+  // Helper method to filter mock data by query
+  private filterMockData(mockData: SearchResult[], query: string): SearchResult[] {
+    const lowerQuery = query.toLowerCase();
+    return mockData.filter((item) => {
+      const searchText = `${item.title} ${item.description} ${item.tags?.join(" ") || ""}`.toLowerCase();
+      return searchText.includes(lowerQuery);
+    });
+  }
+
   // Real API search methods
   private async searchUsers(query: string, filters: SearchFilters): Promise<SearchResult[]> {
     try {
