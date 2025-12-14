@@ -1,4 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
+import { blogService } from "./blogService";
+import { courseService } from "./courseService";
 
 export interface FeaturedCryptoListing {
   id: string;
