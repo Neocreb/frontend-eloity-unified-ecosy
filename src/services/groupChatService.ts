@@ -16,86 +16,71 @@ export class GroupChatService {
   // Group CRUD Operations
   async createGroup(request: CreateGroupRequest): Promise<GroupChatThread> {
     try {
-      // Always use the Supabase function endpoint to avoid RLS issues
+      // Try the Supabase function endpoint first
       const supabaseUrl = import.meta.env?.VITE_SUPABASE_URL || 'https://hjebzdekquczudhrygns.supabase.co';
-      
+
       if (supabaseUrl) {
-        // Use the Supabase function endpoint
-        const token = (await supabase.auth.getSession()).data.session?.access_token;
-        if (!token) {
-          throw new Error('User not authenticated');
-        }
-
-        const requestBody = {
-          name: request.name,
-          description: request.description || '',
-          avatar: request.avatar,
-          participants: [request.createdBy, ...request.participants.filter(p => p !== request.createdBy)],
-          settings: request.settings
-        };
-
-        console.log('Sending group creation request:', requestBody);
-
-        const response = await fetch(`${supabaseUrl}/functions/v1/create-group-with-participants`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(requestBody)
-        });
-
-        console.log('Group creation response status:', response.status);
-
-        // Read body once to avoid "body stream already read" errors
-        const responseText = await response.text();
-        const contentType = response.headers.get('content-type');
-
-        let result;
         try {
-          if (contentType?.includes('application/json')) {
-            result = responseText ? JSON.parse(responseText) : null;
-          } else {
-            result = responseText ? JSON.parse(responseText) : null;
+          // Use the Supabase function endpoint
+          const token = (await supabase.auth.getSession()).data.session?.access_token;
+          if (!token) {
+            throw new Error('User not authenticated');
           }
-        } catch (parseError) {
+
+          const requestBody = {
+            name: request.name,
+            description: request.description || '',
+            avatar: request.avatar,
+            participants: [request.createdBy, ...request.participants.filter(p => p !== request.createdBy)],
+            settings: request.settings
+          };
+
+          console.log('Sending group creation request via Edge Function:', requestBody);
+
+          const response = await fetch(`${supabaseUrl}/functions/v1/create-group-with-participants`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody)
+          });
+
+          console.log('Group creation response status:', response.status);
+
+          // Read body once to avoid "body stream already read" errors
+          const responseText = await response.text();
+          const contentType = response.headers.get('content-type');
+
+          let result;
+          try {
+            if (contentType?.includes('application/json')) {
+              result = responseText ? JSON.parse(responseText) : null;
+            } else {
+              result = responseText ? JSON.parse(responseText) : null;
+            }
+          } catch (parseError) {
+            if (!response.ok) {
+              const errorMessage = responseText || 'Failed to create group via function endpoint';
+              console.error('Parse error response:', errorMessage);
+              throw new Error(`${errorMessage} (Status: ${response.status})`);
+            }
+            throw new Error('Failed to parse group creation response');
+          }
+
           if (!response.ok) {
-            const errorMessage = responseText || 'Failed to create group via function endpoint';
+            const errorMessage = result?.error || result?.details || responseText || 'Failed to create group via function endpoint';
+            console.error('Edge Function error:', errorMessage);
             throw new Error(`${errorMessage} (Status: ${response.status})`);
           }
-          throw new Error('Failed to parse group creation response');
-        }
+          console.log('Group creation successful via Edge Function:', result);
 
-        if (!response.ok) {
-          const errorMessage = result?.error || responseText || 'Failed to create group via function endpoint';
-          throw new Error(`${errorMessage} (Status: ${response.status})`);
+          return this.formatGroupThread(result.group, request.settings);
+        } catch (functionError: any) {
+          console.warn('Edge Function failed, trying direct Supabase approach:', functionError.message);
+          // Fall back to direct Supabase approach
+          return await this.createGroupDirect(request);
         }
-        console.log('Group creation successful:', result);
-        
-        return {
-          id: result.group.id,
-          type: 'group',
-          groupName: result.group.name,
-          groupDescription: result.group.description,
-          groupAvatar: result.group.avatar,
-          participants: [], // Will be populated when needed
-          settings: request.settings || {
-            isPrivate: result.group.privacy === 'private',
-            allowInvites: true,
-            allowMessaging: true
-          },
-          createdBy: result.group.created_by,
-          createdAt: result.group.created_at,
-          lastActivity: result.group.last_activity,
-          totalMembers: result.group.member_count,
-          onlineMembers: 0,
-          pinnedMessages: [],
-          inviteLinks: [],
-          adminIds: [],
-          maxParticipants: 256,
-          groupType: result.group.privacy === 'private' ? 'private' : 'public',
-          isGroup: true
-        };
       } else {
         throw new Error('Supabase URL not configured');
       }
