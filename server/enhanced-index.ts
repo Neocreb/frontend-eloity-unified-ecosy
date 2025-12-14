@@ -598,6 +598,9 @@ app.use('/api/creator/courses', creatorCoursesRouter);
 app.use('/api/landing', landingRouter);
 app.use('/api/admin/landing', adminLandingRouter);
 
+// Mount Bybit routes
+app.use('/api/bybit', bybitRouter);
+
 // =============================================================================
 // CORE AUTHENTICATION ENDPOINTS
 // =============================================================================
