@@ -45,7 +45,10 @@ const TradingPairSelector: React.FC<TradingPairSelectorProps> = ({
 
   const quoteAssets = ["USDT", "USDC", "BTC", "ETH"];
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | undefined) => {
+    if (!price || isNaN(price)) {
+      return "0.00";
+    }
     if (price < 1) {
       return price.toFixed(4);
     } else if (price < 100) {
@@ -55,7 +58,10 @@ const TradingPairSelector: React.FC<TradingPairSelectorProps> = ({
     }
   };
 
-  const formatVolume = (volume: number) => {
+  const formatVolume = (volume: number | undefined) => {
+    if (!volume || isNaN(volume)) {
+      return "0.00K";
+    }
     if (volume >= 1000000000) {
       return `${(volume / 1000000000).toFixed(2)}B`;
     } else if (volume >= 1000000) {
