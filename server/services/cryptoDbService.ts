@@ -31,19 +31,42 @@ export async function getDetailedPriceData(symbol: string, vsCurrency: string, t
 
 export async function getEstimatedMatches(orderData: any) {
   try {
-    // In a real implementation, you would query the P2P orders table
-    // For now, we'll return mock data
-    const potentialMatches = Math.floor(Math.random() * 10) + 1;
-    const averagePrice = orderData.price * (0.95 + Math.random() * 0.1);
-    
+    // Query the P2P orders table to find matching orders
+    const orders = await db.select('p2p_orders', (record) => {
+      // Find orders with opposite type (buy vs sell)
+      if (record.type === orderData.type) return false;
+      // Match on cryptocurrency and fiat currency
+      if (record.cryptocurrency !== orderData.cryptocurrency) return false;
+      if (record.fiatCurrency !== orderData.fiatCurrency) return false;
+      // Only active orders
+      if (record.status !== 'active') return false;
+      return true;
+    });
+
+    if (!orders || orders.length === 0) {
+      return {
+        potentialMatches: 0,
+        averagePrice: null,
+        estimatedTime: null
+      };
+    }
+
+    // Calculate average price from matching orders
+    const totalPrice = orders.reduce((sum, order) => sum + parseFloat(order.price?.toString() || '0'), 0);
+    const averagePrice = totalPrice / orders.length;
+
     return {
-      potentialMatches,
+      potentialMatches: orders.length,
       averagePrice: parseFloat(averagePrice.toFixed(2)),
-      estimatedTime: `${5 + Math.floor(Math.random() * 25)}-${10 + Math.floor(Math.random() * 30)} minutes`
+      estimatedTime: null
     };
   } catch (error) {
     logger.error('Error fetching estimated matches:', error);
-    throw error;
+    return {
+      potentialMatches: 0,
+      averagePrice: null,
+      estimatedTime: null
+    };
   }
 }
 
