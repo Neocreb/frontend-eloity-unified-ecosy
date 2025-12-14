@@ -171,7 +171,13 @@ export class AdminService {
         .single();
 
       if (error) {
-        console.error("Error fetching admin user from Supabase:", error);
+        console.error("Error fetching admin user from Supabase:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          status: error.status,
+        });
         return null;
       }
 
