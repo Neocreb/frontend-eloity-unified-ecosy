@@ -12,6 +12,14 @@ import {
   getBybitWithdrawalFee,
   getBybitTradingFees,
   getBybitLeverageTokens,
+  getBybitRecentTrades,
+  getBybitTradeHistory,
+  getBybitSettlementHistory,
+  getBybitFundingRate,
+  getBybitFundingRateHistory,
+  getBybitOpenInterest,
+  getBybitLiquidations,
+  getBybitLongShortRatio,
   verifyBybitConnection
 } from '../services/bybitService.js';
 
