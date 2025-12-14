@@ -131,6 +131,7 @@ const CryptoConvert = () => {
   const [conversionHistory, setConversionHistory] = useState<ConversionResult[]>([]);
   const [isConverting, setIsConverting] = useState(false);
   const [showRate, setShowRate] = useState(false);
+  const [eloitsBalance, setEloitsBalance] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -142,6 +143,27 @@ const CryptoConvert = () => {
       navigate("/auth");
       return;
     }
+
+    // Fetch real Eloits balance from database
+    const fetchEloitsBalance = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("user_rewards_summary")
+          .select("available_balance")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching balance:", error);
+        } else if (data) {
+          setEloitsBalance(data.available_balance || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch Eloits balance:", err);
+      }
+    };
+
+    fetchEloitsBalance();
 
     // Load conversion history from localStorage
     const saved = localStorage.getItem("crypto_conversion_history");
