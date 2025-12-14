@@ -184,110 +184,25 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
 
 export async function getOrderBook(pair: string, depth: number = 20) {
   try {
-    // Extract base and quote assets from pair (e.g., "BTCUSDT" -> "BTC", "USDT")
-    const pairUpper = pair.toUpperCase();
+    const { getBybitOrderBook } = await import('./bybitService.js');
 
-    // Try to get current price from CryptoAPIs
-    try {
-      const cryptoapisBase = 'https://rest.cryptoapis.io/v2';
-      const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
+    logger.info(`Fetching orderbook for ${pair} from Bybit`);
+    const orderbook = await getBybitOrderBook(pair, depth, 'spot');
 
-      if (cryptoapisKey && pairUpper.includes('USDT')) {
-        const baseAsset = pairUpper.replace('USDT', '');
-        const url = `${cryptoapisBase}/market-data/exchange-rates/realtime/${baseAsset}/USD`;
-
-        logger.info(`Fetching current price for ${baseAsset} from CryptoAPIs`);
-        const resp = await axios.get(url, {
-          timeout: 10000,
-          headers: {
-            'X-API-Key': cryptoapisKey,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (resp.data.data && resp.data.data.rate) {
-          const basePrice = parseFloat(resp.data.data.rate);
-          logger.info(`Using CryptoAPIs price for ${baseAsset}: $${basePrice}`);
-
-          // Generate realistic orderbook from the base price
-          const generateOrderbook = (currentPrice: number, levels: number) => {
-            const asks = [];
-            const bids = [];
-
-            // Generate asks (selling orders) - prices above current
-            for (let i = 1; i <= levels; i++) {
-              const askPrice = currentPrice * (1 + (i * 0.001));
-              asks.push({
-                price: parseFloat(askPrice.toFixed(2)),
-                quantity: parseFloat((Math.random() * 2 + 0.1).toFixed(8)),
-                total: parseFloat((askPrice * (Math.random() * 2 + 0.1)).toFixed(2))
-              });
-            }
-
-            // Generate bids (buying orders) - prices below current
-            for (let i = 1; i <= levels; i++) {
-              const bidPrice = currentPrice * (1 - (i * 0.001));
-              bids.push({
-                price: parseFloat(bidPrice.toFixed(2)),
-                quantity: parseFloat((Math.random() * 2 + 0.1).toFixed(8)),
-                total: parseFloat((bidPrice * (Math.random() * 2 + 0.1)).toFixed(2))
-              });
-            }
-
-            return { asks, bids };
-          };
-
-          const orderbook = generateOrderbook(basePrice, depth);
-          return {
-            ...orderbook,
-            timestamp: Date.now()
-          };
-        }
-      }
-    } catch (err) {
-      logger.debug('CryptoAPIs orderbook fetch failed:', err?.message || err);
+    if (orderbook && orderbook.bids.length > 0 && orderbook.asks.length > 0) {
+      logger.info(`Successfully fetched orderbook for ${pair}: ${orderbook.bids.length} bids, ${orderbook.asks.length} asks`);
+      return orderbook;
     }
 
-    // Fallback to mock orderbook for development
-    const basePrice = 45000; // Mock BTC price
-    const spread = 50; // $50 spread
-    
-    // Define types for bids and asks
-    interface OrderBookEntry {
-      price: number;
-      quantity: number;
-      total: number;
-    }
-    
-    const bids: OrderBookEntry[] = [];
-    const asks: OrderBookEntry[] = [];
-    
-    for (let i = 0; i < depth; i++) {
-      const bidPrice = basePrice - spread/2 - (i * 10);
-      const askPrice = basePrice + spread/2 + (i * 10);
-      const quantity = Math.random() * 2 + 0.1;
-      
-      bids.push({
-        price: bidPrice,
-        quantity: quantity,
-        total: bidPrice * quantity
-      });
-      
-      asks.push({
-        price: askPrice,
-        quantity: quantity,
-        total: askPrice * quantity
-      });
-    }
-    
+    logger.warn(`Bybit returned empty orderbook for ${pair}`);
     return {
-      bids: bids.sort((a, b) => b.price - a.price),
-      asks: asks.sort((a, b) => a.price - b.price),
+      bids: [],
+      asks: [],
       timestamp: Date.now()
     };
   } catch (error) {
     logger.error('Orderbook fetch error:', error);
-    // Return empty orderbook as fallback
+    // Return empty orderbook on error
     return {
       bids: [],
       asks: [],
