@@ -207,4 +207,17 @@ const FreelanceFABContent: React.FC<{ className?: string }> = ({ className }) =>
   );
 };
 
+// Wrapper component that handles the CurrencyProvider availability
+const FreelanceFAB: React.FC<FreelanceFABProps> = (props) => {
+  try {
+    // Try to use the context to check if provider is available
+    useCurrency();
+    // If no error, render the full component
+    return <FreelanceFABContent {...props} />;
+  } catch (error) {
+    // If CurrencyProvider is not available, render a simpler version
+    return null;
+  }
+};
+
 export default FreelanceFAB;
