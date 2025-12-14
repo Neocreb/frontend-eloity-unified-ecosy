@@ -65,7 +65,10 @@ const TradingPairSelector: React.FC<TradingPairSelectorProps> = ({
     }
   };
 
-  const formatChange = (change: number) => {
+  const formatChange = (change: number | undefined) => {
+    if (change === undefined || change === null || isNaN(change)) {
+      return "0.00%";
+    }
     return `${change >= 0 ? "+" : ""}${change.toFixed(2)}%`;
   };
 
