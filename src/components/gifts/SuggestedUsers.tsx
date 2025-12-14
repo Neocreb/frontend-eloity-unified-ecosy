@@ -66,29 +66,25 @@ export const SuggestedUsers: React.FC<SuggestedUsersProps> = ({
     }
   };
 
-  const handleSendGift = (userId: string) => {
-    // This would typically use a default gift or prompt user to select one
-    if (onSendGift) {
-      // Mock gift for demonstration - in a real app, this would be fetched from DB
-      const mockGift: VirtualGift = {
-          id: 'heart',
-          name: 'Heart',
-          emoji: '❤️',
-          description: 'Show some love',
-          price: 0.99,
-          currency: 'USD',
-          category: 'basic',
-          rarity: 'common',
-          available: true,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          animation: null,
-          sound: null,
-          effects: null,
-          seasonal_start: null,
-          seasonal_end: null
-      };
-      onSendGift(mockGift, 1, userId);
+  const handleSendGift = async (userId: string) => {
+    if (!onSendGift) return;
+
+    try {
+      // Fetch the first available gift from the database
+      const { data, error } = await supabase
+        .from('virtual_gifts')
+        .select('*')
+        .eq('available', true)
+        .order('price', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (error) throw error;
+      if (data) {
+        onSendGift(data, 1, userId);
+      }
+    } catch (error) {
+      console.error('Error fetching gift:', error);
     }
   };
 
