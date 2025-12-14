@@ -447,26 +447,29 @@ const ProfessionalCrypto = () => {
 
         {/* FLOATING ACTION BUTTONS - positioned above divider */}
         <div className="relative z-20 -mt-16 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-          <div className="flex gap-2 sm:gap-4 justify-center sm:justify-start">
+          <div className="flex gap-2 sm:gap-4 justify-center sm:justify-start w-full">
             <Button
               onClick={handleDeposit}
-              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-2 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-xs sm:text-base flex-1 sm:flex-none justify-center whitespace-nowrap"
             >
-              <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Plus className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="inline sm:hidden text-xs font-semibold">Deposit</span>
               <span className="hidden sm:inline">Deposit</span>
             </Button>
             <Button
               onClick={handleConvert}
-              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-2 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-xs sm:text-base flex-1 sm:flex-none justify-center whitespace-nowrap"
             >
-              <Zap className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Zap className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="inline sm:hidden text-xs font-semibold">Convert</span>
               <span className="hidden sm:inline">Convert</span>
             </Button>
             <Button
               onClick={handleWithdraw}
-              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-3 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-sm sm:text-base flex-1 sm:flex-none justify-center"
+              className="bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:shadow-lg shadow-lg rounded-xl h-10 sm:h-12 px-2 sm:px-6 font-semibold flex items-center gap-1 sm:gap-2 transition-all text-xs sm:text-base flex-1 sm:flex-none justify-center whitespace-nowrap"
             >
-              <Send className="h-4 w-4 sm:h-5 sm:w-5" />
+              <Send className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
+              <span className="inline sm:hidden text-xs font-semibold">Withdraw</span>
               <span className="hidden sm:inline">Withdraw</span>
             </Button>
           </div>
