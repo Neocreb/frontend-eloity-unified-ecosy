@@ -52,11 +52,11 @@ async function applyRLSPolicies() {
     console.log("\n🔐 Creating RLS policies...");
 
     // Use the Postgres admin function to execute SQL
-    const policies = [
+    const policiesToApply = [
       {
         name: "Users can read their own admin record",
         sql: `CREATE POLICY IF NOT EXISTS "Users can read their own admin record" ON public.admin_users
-            FOR SELECT 
+            FOR SELECT
             USING (user_id = auth.uid());`,
       },
       {
@@ -65,8 +65,8 @@ async function applyRLSPolicies() {
             FOR SELECT
             USING (
                 EXISTS (
-                    SELECT 1 FROM public.admin_users 
-                    WHERE user_id = auth.uid() 
+                    SELECT 1 FROM public.admin_users
+                    WHERE user_id = auth.uid()
                     AND is_active = true
                 )
             );`,
@@ -74,7 +74,7 @@ async function applyRLSPolicies() {
     ];
 
     // Try to execute policies through Postgres function if available
-    for (const policy of policies) {
+    for (const policy of policiesToApply) {
       try {
         // Attempt using rpc if available
         const { error } = await (supabase as any).rpc('exec_sql', { 
