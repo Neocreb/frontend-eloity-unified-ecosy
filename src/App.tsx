@@ -103,6 +103,7 @@ import UniversalCryptoPayment from "./pages/UniversalCryptoPayment";
 import CryptoDeposit from "./pages/crypto/CryptoDeposit";
 import CryptoWithdraw from "./pages/crypto/CryptoWithdraw";
 import CreateP2POffer from "./pages/crypto/CreateP2POffer";
+import CryptoConvert from "./pages/crypto/CryptoConvert";
 // Freelance pages
 import CreateJob from "./pages/freelance/CreateJob";
 import ApplyJob from "./pages/freelance/ApplyJob";
@@ -720,6 +721,7 @@ const AppRoutes = () => {
 
           <Route path="crypto" element={<ProfessionalCrypto />} />
           <Route path="crypto-trading" element={<CryptoTrading />} />
+          <Route path="crypto-convert" element={<CryptoConvert />} />
           <Route path="crypto-p2p" element={<CryptoP2P />} />
           <Route path="crypto-portfolio" element={<CryptoPortfolio />} />
           <Route path="crypto-learn" element={<CryptoLearn />} />
