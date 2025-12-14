@@ -61,7 +61,7 @@ router.get('/server/time', async (req, res) => {
 });
 
 /**
- * Get ticker data for a symbol
+ * Get ticker data for a symbol (with caching)
  * Query params: symbol (required), category (optional: spot|linear|inverse, default: spot)
  */
 router.get('/market/ticker', async (req, res) => {
@@ -72,7 +72,14 @@ router.get('/market/ticker', async (req, res) => {
       return res.status(400).json({ error: 'Symbol is required' });
     }
 
-    const ticker = await getBybitTicker(symbol.toUpperCase(), category as 'spot' | 'linear' | 'inverse');
+    const upperSymbol = symbol.toUpperCase();
+
+    // Use cache for ticker data
+    const ticker = await bybitCache.getOrFetchTicker(
+      upperSymbol,
+      (sym) => getBybitTicker(sym, category as 'spot' | 'linear' | 'inverse'),
+      30 * 1000 // 30 second TTL
+    );
 
     if (!ticker) {
       return res.status(404).json({ error: `No ticker data found for ${symbol}` });
