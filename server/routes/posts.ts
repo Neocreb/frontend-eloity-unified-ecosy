@@ -6,6 +6,56 @@ import { supabase } from '../../src/integrations/supabase/client.js';
 
 const router = express.Router();
 
+// Search endpoint for global search
+router.get('/search', async (req, res) => {
+  try {
+    const { q, limit = 20, offset = 0 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const searchQuery = `%${q}%`;
+
+    // Search posts from Supabase
+    const { data: postsResult, error } = await supabase
+      .from('posts')
+      .select('id, content, created_at, user_id, likes_count, comments_count, shares_count')
+      .or(`content.ilike.${searchQuery}`)
+      .order('created_at', { ascending: false })
+      .range(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string) - 1);
+
+    if (error) {
+      logger.warn('Error searching posts from Supabase:', error);
+      return res.json({ posts: [] });
+    }
+
+    const posts = (postsResult || []).map((post: any) => ({
+      id: post.id,
+      title: post.content ? post.content.substring(0, 50) + '...' : 'Untitled Post',
+      content: post.content || 'No content available',
+      category: 'General',
+      author: {
+        id: post.user_id,
+        name: 'User',
+        verified: false
+      },
+      stats: {
+        views: 0,
+        likes: post.likes_count || 0,
+        comments: post.comments_count || 0,
+        shares: post.shares_count || 0
+      },
+      createdAt: post.created_at
+    }));
+
+    res.json({ posts });
+  } catch (error) {
+    logger.error('Error searching posts:', error);
+    res.status(500).json({ error: 'Failed to search posts' });
+  }
+});
+
 // Get all posts (with pagination, filtering)
 router.get('/', async (req, res) => {
   try {
