@@ -225,43 +225,55 @@ https://api.dicebear.com/7.x/avataaars/svg?seed=crypto_guru
 
 ## Common Tasks
 
-### Update Bitcoin Price
+### Via Admin Interface
+
+**Toggle Featured Status**:
+1. Click the eye icon to show/hide content
+2. Changes apply immediately
+
+**Delete Content**:
+1. Click the trash icon
+2. Confirm deletion
+3. Content removed from database
+
+**Change Display Order**:
+1. Edit the order_index field
+2. Lower numbers appear first
+3. Recommended: Use 1, 2, 3, etc. sequentially
+
+### Via SQL Commands
+
+**Update Crypto Price** (Manual update):
 ```sql
-UPDATE featured_crypto_listings 
-SET current_price = 45000, price_change_24h = 7.5 
+UPDATE featured_crypto_listings
+SET current_price = 45000, price_change_24h = 7.5, updated_at = NOW()
 WHERE symbol = 'BTC';
 ```
 
-### Feature Top Performing Crypto
+**Feature Top Performer**:
 ```sql
-UPDATE featured_crypto_listings 
-SET is_featured = true, order_index = 1, category = 'hot' 
+UPDATE featured_crypto_listings
+SET is_featured = true, order_index = 1, category = 'hot', updated_at = NOW()
 WHERE symbol = 'SOL';
 ```
 
-### Rotate Community Posts
+**Rotate Community Posts** (Hide old, show new):
 ```sql
--- Hide old post
-UPDATE community_featured_posts 
-SET is_featured = false 
+-- Hide posts older than 30 days
+UPDATE community_featured_posts
+SET is_featured = false, updated_at = NOW()
 WHERE created_at < NOW() - INTERVAL '30 days';
 
--- Show new post and set order
-UPDATE community_featured_posts 
-SET is_featured = true, order_index = 1 
+-- Show new post
+UPDATE community_featured_posts
+SET is_featured = true, order_index = 1, updated_at = NOW()
 WHERE username = 'NewCreator';
 ```
 
-### Clear All Featured Content
+**Hide All Content** (Temporary):
 ```sql
--- Temporarily hide everything
-UPDATE featured_crypto_listings SET is_featured = false;
-UPDATE community_featured_posts SET is_featured = false;
-
--- Or reset to defaults
-DELETE FROM featured_crypto_listings;
-DELETE FROM community_featured_posts;
-INSERT INTO featured_crypto_listings ... -- re-insert defaults
+UPDATE featured_crypto_listings SET is_featured = false, updated_at = NOW();
+UPDATE community_featured_posts SET is_featured = false, updated_at = NOW();
 ```
 
 ## Best Practices
