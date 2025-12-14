@@ -50,17 +50,17 @@ router.get('/search', async (req, res) => {
     // Search cryptocurrencies by name or symbol
     const searchLower = (q as string).toLowerCase();
     const allCryptos = [
-      { id: 'bitcoin', title: 'Bitcoin', symbol: 'BTC', price: FALLBACK_PRICES_RESPONSE.bitcoin.usd },
-      { id: 'ethereum', title: 'Ethereum', symbol: 'ETH', price: FALLBACK_PRICES_RESPONSE.ethereum.usd },
-      { id: 'tether', title: 'Tether', symbol: 'USDT', price: FALLBACK_PRICES_RESPONSE.tether.usd },
-      { id: 'binancecoin', title: 'Binance Coin', symbol: 'BNB', price: FALLBACK_PRICES_RESPONSE.binancecoin.usd },
-      { id: 'solana', title: 'Solana', symbol: 'SOL', price: FALLBACK_PRICES_RESPONSE.solana.usd },
-      { id: 'cardano', title: 'Cardano', symbol: 'ADA', price: FALLBACK_PRICES_RESPONSE.cardano.usd },
-      { id: 'chainlink', title: 'Chainlink', symbol: 'LINK', price: FALLBACK_PRICES_RESPONSE.chainlink.usd },
-      { id: 'polygon', title: 'Polygon', symbol: 'MATIC', price: FALLBACK_PRICES_RESPONSE.polygon.usd },
-      { id: 'avalanche', title: 'Avalanche', symbol: 'AVAX', price: FALLBACK_PRICES_RESPONSE.avalanche.usd },
-      { id: 'polkadot', title: 'Polkadot', symbol: 'DOT', price: FALLBACK_PRICES_RESPONSE.polkadot.usd },
-      { id: 'dogecoin', title: 'Dogecoin', symbol: 'DOGE', price: FALLBACK_PRICES_RESPONSE.dogecoin.usd }
+      { id: 'bitcoin', title: 'Bitcoin', symbol: 'BTC' },
+      { id: 'ethereum', title: 'Ethereum', symbol: 'ETH' },
+      { id: 'tether', title: 'Tether', symbol: 'USDT' },
+      { id: 'binancecoin', title: 'Binance Coin', symbol: 'BNB' },
+      { id: 'solana', title: 'Solana', symbol: 'SOL' },
+      { id: 'cardano', title: 'Cardano', symbol: 'ADA' },
+      { id: 'chainlink', title: 'Chainlink', symbol: 'LINK' },
+      { id: 'polygon', title: 'Polygon', symbol: 'MATIC' },
+      { id: 'avalanche', title: 'Avalanche', symbol: 'AVAX' },
+      { id: 'polkadot', title: 'Polkadot', symbol: 'DOT' },
+      { id: 'dogecoin', title: 'Dogecoin', symbol: 'DOGE' }
     ];
 
     const filtered = allCryptos.filter(crypto =>
@@ -74,7 +74,6 @@ router.get('/search', async (req, res) => {
       title: crypto.title,
       symbol: crypto.symbol,
       description: `${crypto.title} (${crypto.symbol})`,
-      price: crypto.price,
       category: 'Cryptocurrency',
       tags: [crypto.symbol, 'crypto'],
       stats: { views: 0 }
@@ -90,21 +89,6 @@ router.get('/search', async (req, res) => {
 // =============================================================================
 // CRYPTOCURRENCY PRICE DATA
 // =============================================================================
-
-// Hardcoded fallback prices (always available, no external API needed)
-const FALLBACK_PRICES_RESPONSE: Record<string, any> = {
-  bitcoin: { usd: 45000, usd_24h_change: 2.5, usd_market_cap: 880000000000, usd_24h_vol: 28000000000 },
-  ethereum: { usd: 2500, usd_24h_change: 1.8, usd_market_cap: 300000000000, usd_24h_vol: 15000000000 },
-  tether: { usd: 1.0, usd_24h_change: 0.1, usd_market_cap: 100000000000, usd_24h_vol: 80000000000 },
-  binancecoin: { usd: 620, usd_24h_change: 3.2, usd_market_cap: 95000000000, usd_24h_vol: 2500000000 },
-  solana: { usd: 140, usd_24h_change: 4.1, usd_market_cap: 62000000000, usd_24h_vol: 3800000000 },
-  cardano: { usd: 1.05, usd_24h_change: 2.2, usd_market_cap: 37000000000, usd_24h_vol: 1200000000 },
-  chainlink: { usd: 28, usd_24h_change: 1.9, usd_market_cap: 12500000000, usd_24h_vol: 780000000 },
-  polygon: { usd: 0.85, usd_24h_change: 3.5, usd_market_cap: 8500000000, usd_24h_vol: 650000000 },
-  avalanche: { usd: 35, usd_24h_change: 2.8, usd_market_cap: 1200000000, usd_24h_vol: 420000000 },
-  polkadot: { usd: 9.5, usd_24h_change: 2.1, usd_market_cap: 12500000000, usd_24h_vol: 850000000 },
-  dogecoin: { usd: 0.35, usd_24h_change: 3.8, usd_market_cap: 52000000000, usd_24h_vol: 2800000000 }
-};
 
 // Get current cryptocurrency prices
 router.get('/prices', async (req, res) => {
