@@ -236,6 +236,18 @@ try {
   console.error('Failed to start crypto data sync:', e);
 }
 
+// Start Bybit data sync if API key is configured
+try {
+  if (process.env.BYBIT_PUBLIC_API) {
+    startBybitDataSync(3 * 60 * 1000); // Sync every 3 minutes
+    console.log('✅ Bybit data sync started');
+  } else {
+    console.warn('⚠️  BYBIT_PUBLIC_API not set, Bybit data sync disabled');
+  }
+} catch (e) {
+  console.error('Failed to start Bybit data sync:', e);
+}
+
 // Optional: start BullMQ-based queue if REDIS_URL is provided for more robust scheduling
 import { startMetricsQueue } from './queue/metricsQueue.js';
 try {
