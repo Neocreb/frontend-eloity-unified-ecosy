@@ -305,13 +305,13 @@ UPDATE community_featured_posts SET is_featured = false, updated_at = NOW();
 - **Events**: Post 48+ hours in advance
 - **Announcements**: Keep clear and concise
 
-## Monitoring
+## Monitoring & Verification
 
-### Check What's Currently Displayed
+### Check Currently Displayed Content
 
 ```sql
--- Featured cryptos by category
-SELECT 
+-- Featured cryptos
+SELECT
   category,
   symbol,
   name,
@@ -321,8 +321,8 @@ FROM featured_crypto_listings
 WHERE is_featured = true
 ORDER BY category, order_index;
 
--- Featured community posts
-SELECT 
+-- Featured posts
+SELECT
   category,
   username,
   title,
@@ -333,11 +333,42 @@ WHERE is_featured = true
 ORDER BY category, order_index;
 ```
 
-### Check Total Count
+### Monitor Content Counts
 
 ```sql
-SELECT COUNT(*) as featured_cryptos FROM featured_crypto_listings WHERE is_featured = true;
-SELECT COUNT(*) as featured_posts FROM community_featured_posts WHERE is_featured = true;
+-- Count featured items
+SELECT
+  'Cryptos' as type,
+  COUNT(*) as count
+FROM featured_crypto_listings
+WHERE is_featured = true
+UNION ALL
+SELECT
+  'Posts' as type,
+  COUNT(*) as count
+FROM community_featured_posts
+WHERE is_featured = true;
+```
+
+### Check Recent Changes
+
+```sql
+-- Recently updated content
+SELECT
+  'Crypto' as type,
+  symbol,
+  updated_at
+FROM featured_crypto_listings
+WHERE updated_at > NOW() - INTERVAL '7 days'
+ORDER BY updated_at DESC
+UNION ALL
+SELECT
+  'Post' as type,
+  title,
+  updated_at
+FROM community_featured_posts
+WHERE updated_at > NOW() - INTERVAL '7 days'
+ORDER BY updated_at DESC;
 ```
 
 ## Troubleshooting
