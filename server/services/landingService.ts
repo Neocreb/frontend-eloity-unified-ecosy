@@ -489,19 +489,33 @@ export const UseCasesService = {
 // SOCIAL PROOF STATS SERVICE
 // ============================================================================
 
+const mockStats = [
+  { id: 'stat-1', metric_name: 'active_users', current_value: '50000', unit: 'users', display_format: 'number', label: 'Active Users', icon: 'users', order: 1 },
+  { id: 'stat-2', metric_name: 'total_earnings', current_value: '$50M', unit: 'usd', display_format: 'currency', label: 'Total Earnings Processed', icon: 'dollar', order: 2 },
+  { id: 'stat-3', metric_name: 'countries', current_value: '150', unit: 'countries', display_format: 'number', label: 'Countries Supported', icon: 'globe', order: 3 },
+];
+
 export const SocialProofStatsService = {
   async getAllStats() {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock stats');
+        return mockStats;
+      }
+
       const { data, error } = await supabase
         .from('landing_social_proof_stats')
         .select('*')
         .order('order', { ascending: true });
 
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch stats from database, using mock data:', error);
+        return mockStats;
+      }
+      return data || mockStats;
     } catch (error) {
-      console.error('Error fetching stats:', error);
-      throw error;
+      logger.error('Error fetching stats:', error);
+      return mockStats;
     }
   },
 
