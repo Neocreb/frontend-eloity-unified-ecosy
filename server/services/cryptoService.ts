@@ -21,7 +21,7 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
 
     const bybitKey = process.env.BYBIT_PUBLIC_API;
 
-    // Symbol to Bybit trading pair mapping
+    // Symbol to Bybit trading pair mapping (extended list for better coverage)
     const symbolToBybitPair: Record<string, string> = {
       bitcoin: 'BTCUSDT',
       ethereum: 'ETHUSDT',
@@ -33,7 +33,27 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
       polygon: 'MATICUSDT',
       avalanche: 'AVAXUSDT',
       polkadot: 'DOTUSDT',
-      dogecoin: 'DOGEUSDT'
+      dogecoin: 'DOGEUSDT',
+      ripple: 'XRPUSDT',
+      litecoin: 'LTCUSDT',
+      'stellar-lumens': 'XLMUSDT',
+      cosmos: 'ATOMUSDT',
+      neo: 'NEOUSDT',
+      uniswap: 'UNIUSDT',
+      monero: 'XMRUSDT',
+      zcash: 'ZECUSDT',
+      dash: 'DASHUSDT',
+      'bitcoin-cash': 'BCHUSDT',
+      'ethereum-classic': 'ETCUSDT',
+      tezos: 'XTZUSDT',
+      vechain: 'VETUSDT',
+      filecoin: 'FILUSDT',
+      decentraland: 'MANAUSDT',
+      'the-sandbox': 'SANDUSDT',
+      maker: 'MKRUSDT',
+      aave: 'AAVEUSDT',
+      curve: 'CRVUSDT',
+      'yearn-finance': 'YFIIUSDT'
     };
 
     // Try Bybit as PRIMARY source
