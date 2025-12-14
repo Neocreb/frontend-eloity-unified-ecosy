@@ -166,6 +166,7 @@ import CryptoTrading from "./pages/CryptoTrading";
 import CryptoP2P from "./pages/CryptoP2P";
 import CryptoPortfolio from "./pages/CryptoPortfolio";
 import CryptoLearn from "./pages/CryptoLearn";
+import ViewAllCoins from "./pages/crypto/ViewAllCoins";
 import DeFi from "./pages/DeFi";
 import CourseDetail from "./pages/CourseDetail";
 import LessonViewer from "./pages/LessonViewer";
@@ -720,6 +721,7 @@ const AppRoutes = () => {
           <Route path="delivery/track/:trackingNumber" element={<DeliveryTracking />} />
 
           <Route path="crypto" element={<ProfessionalCrypto />} />
+          <Route path="crypto/view-all" element={<ViewAllCoins />} />
           <Route path="crypto-trading" element={<CryptoTrading />} />
           <Route path="crypto-convert" element={<CryptoConvert />} />
           <Route path="crypto-p2p" element={<CryptoP2P />} />

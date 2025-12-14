@@ -332,30 +332,55 @@ export class CryptoService {
         } as Portfolio;
       } else {
         // Client-side fallback - make API call to our own backend
-        const response = await fetch('/api/crypto/portfolio');
-
-        // Check status first before reading body
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        // Read body from cloned response to avoid "body stream already read" errors
-        let responseText: string;
         try {
-          const clonedResponse = response.clone();
-          responseText = await clonedResponse.text();
-        } catch (readError) {
-          console.error("Error reading response body:", readError);
-          throw new Error(`Failed to read response: ${response.status}`);
-        }
+          const response = await fetch('/api/crypto/portfolio');
 
-        let data;
-        try {
-          data = responseText ? JSON.parse(responseText) : null;
-        } catch (parseError) {
-          throw new Error('Failed to parse portfolio response');
+          // Return default portfolio if not authenticated
+          if (response.status === 401) {
+            console.warn("Unauthenticated portfolio fetch, returning default");
+            return {
+              totalValue: 0,
+              totalChange24h: 0,
+              totalChangePercent24h: 0,
+              assets: [],
+              allocation: [],
+            } as Portfolio;
+          }
+
+          // Check status for other errors
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+
+          // Read body from cloned response to avoid "body stream already read" errors
+          let responseText: string;
+          try {
+            const clonedResponse = response.clone();
+            responseText = await clonedResponse.text();
+          } catch (readError) {
+            console.error("Error reading response body:", readError);
+            throw new Error(`Failed to read response: ${response.status}`);
+          }
+
+          let data;
+          try {
+            data = responseText ? JSON.parse(responseText) : null;
+          } catch (parseError) {
+            throw new Error('Failed to parse portfolio response');
+          }
+          return data;
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+          console.error("Error fetching portfolio from API:", errorMessage);
+          // Return default portfolio on any error
+          return {
+            totalValue: 0,
+            totalChange24h: 0,
+            totalChangePercent24h: 0,
+            assets: [],
+            allocation: [],
+          } as Portfolio;
         }
-        return data;
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
@@ -473,30 +498,42 @@ export class CryptoService {
         }));
       } else {
         // Client-side fallback - make API call to our own backend
-        const response = await fetch(`/api/crypto/staking-positions?userId=${userId}`);
-
-        // Check status first before reading body
-        if (!response.ok) {
-          throw new Error(`API error: ${response.status}`);
-        }
-
-        // Read body from cloned response to avoid "body stream already read" errors
-        let responseText: string;
         try {
-          const clonedResponse = response.clone();
-          responseText = await clonedResponse.text();
-        } catch (readError) {
-          console.error("Error reading response body:", readError);
-          throw new Error(`Failed to read response: ${response.status}`);
-        }
+          const response = await fetch(`/api/crypto/staking-positions?userId=${userId}`);
 
-        let data;
-        try {
-          data = responseText ? JSON.parse(responseText) : null;
-        } catch (parseError) {
-          throw new Error('Failed to parse staking positions response');
+          // Return empty array if not authenticated
+          if (response.status === 401) {
+            console.warn("Unauthenticated staking positions fetch, returning empty array");
+            return [];
+          }
+
+          // Check status for other errors
+          if (!response.ok) {
+            throw new Error(`API error: ${response.status}`);
+          }
+
+          // Read body from cloned response to avoid "body stream already read" errors
+          let responseText: string;
+          try {
+            const clonedResponse = response.clone();
+            responseText = await clonedResponse.text();
+          } catch (readError) {
+            console.error("Error reading response body:", readError);
+            throw new Error(`Failed to read response: ${response.status}`);
+          }
+
+          let data;
+          try {
+            data = responseText ? JSON.parse(responseText) : null;
+          } catch (parseError) {
+            throw new Error('Failed to parse staking positions response');
+          }
+          return data || [];
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+          console.error("Error fetching staking positions from API:", errorMessage);
+          return [];
         }
-        return data;
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
