@@ -173,25 +173,43 @@ The Quick Access items use these existing routes (no new routes created):
 - DeFi → `/app/defi`
 - Convert → `/app/crypto-trading?type=convert`
 
-## API Endpoints Used
+## Data Sources & API Integration
 
-### Data Fetching
-- `/api/crypto/prices` - Get current cryptocurrency prices (existing)
-- Supabase client - Featured listings and community posts (new)
+### Real-Time Data Sources
+1. **Cryptocurrency Prices** (for Gainers/Losers)
+   - Uses existing `/api/crypto/prices` endpoint
+   - Automatically calculates gainers/losers from price changes
+   - No admin configuration needed
+
+2. **Blog Posts & Courses** (for Discover)
+   - Fetches from `blogService.getBlogPostsSimple()`
+   - Fetches from `courseService.getAllCourses()`
+   - Displays published content only
+
+3. **Feed Posts** (for Community)
+   - Queries `posts` table filtered by crypto keywords
+   - Includes user profiles and engagement metrics
+
+4. **Events** (for Events tab)
+   - Queries `events` table
+   - Filters by event_type = 'crypto'
+   - Sorts by upcoming dates
+
+5. **Tagged Content** (for Announcements)
+   - Fetches blog posts with tags: announcement, news, update
+   - Prioritizes recent published posts
 
 ### Service Methods
 ```typescript
-// Get featured listings by category
-FeaturedCryptoService.getFeaturedListingsByCategory('gemw', 6)
+// Get gainers/losers (auto-calculated from prices)
+const gainers = cryptos.sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h).slice(0, 6);
+const losers = cryptos.sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h).slice(0, 6);
 
-// Get community posts
-FeaturedCryptoService.getCommunityFeaturedPosts('discover', 5)
-
-// Create new post
-FeaturedCryptoService.createCommunityPost(post)
-
-// Update engagement
-FeaturedCryptoService.updateCommunityPostEngagement(postId, increment)
+// Get real community data
+FeaturedCryptoService.getDiscoverPosts(limit)  // Blog + Courses
+FeaturedCryptoService.getCommunityPosts(limit)  // Feed posts
+FeaturedCryptoService.getEventPosts(limit)  // Events
+FeaturedCryptoService.getAnnouncementPosts(limit)  // Tagged posts
 ```
 
 ## Styling & Theme
