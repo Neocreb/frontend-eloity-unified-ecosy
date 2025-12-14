@@ -163,6 +163,9 @@ export class AdminService {
   // Get admin user directly from Supabase without API call
   static async getAdminUserDirect(userId: string): Promise<AdminUser | null> {
     try {
+      console.log("🔍 Fetching admin user for userId:", userId);
+
+      // First try: Query with both filters
       const { data, error } = await supabase
         .from('admin_users')
         .select('*')
@@ -171,14 +174,55 @@ export class AdminService {
         .single();
 
       if (error) {
-        console.error("Error fetching admin user from Supabase:", error);
-        return null;
+        console.error("Error fetching admin user from Supabase:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          status: error.status,
+        });
+
+        // Fallback: Try without .single() to see if record exists
+        console.log("🔄 Trying fallback query without .single()...");
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('admin_users')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('is_active', true);
+
+        if (fallbackError) {
+          console.error("Fallback query also failed:", {
+            code: fallbackError.code,
+            message: fallbackError.message,
+          });
+          return null;
+        }
+
+        if (!fallbackData || fallbackData.length === 0) {
+          console.warn("No admin user found with userId:", userId);
+          return null;
+        }
+
+        console.log("✅ Fallback query succeeded, found record:", fallbackData[0]);
+        const data = fallbackData[0];
+        return {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          avatar: data.avatar_url,
+          roles: data.roles,
+          permissions: data.permissions,
+          isActive: data.is_active,
+          createdAt: data.created_at,
+        };
       }
 
       if (!data) {
+        console.warn("Query succeeded but no data returned");
         return null;
       }
 
+      console.log("✅ Admin user found:", data.email);
       return {
         id: data.id,
         name: data.name,
