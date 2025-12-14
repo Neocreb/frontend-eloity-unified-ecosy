@@ -807,64 +807,133 @@ const ProfessionalCrypto = () => {
                     </div>
 
                     <TabsContent value="discover" className="p-6 mt-0 space-y-4">
-                      {sampleCommunityPosts.map((post) => (
-                        <div
-                          key={post.id}
-                          className="p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border dark:border-slate-700"
-                        >
-                          <div className="flex gap-4">
-                            <img
-                              src={post.avatar}
-                              alt={post.username}
-                              className="w-12 h-12 rounded-full flex-shrink-0"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <p className="font-semibold text-gray-900 dark:text-white">{post.username}</p>
-                                <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
-                                  {post.timestamp}
-                                </span>
-                              </div>
-                              <p className="text-gray-700 dark:text-gray-300 mb-3">{post.content}</p>
-                              <div className={cn(
-                                "inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold",
-                                post.changeType === "positive"
-                                  ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-                                  : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-                              )}>
-                                {post.changeType === "positive" ? (
-                                  <TrendingUp className="h-4 w-4" />
-                                ) : (
-                                  <TrendingDown className="h-4 w-4" />
-                                )}
-                                {post.change}
+                      {communityPosts.length > 0 ? (
+                        communityPosts.map((post) => (
+                          <div
+                            key={post.id}
+                            className="p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border dark:border-slate-700 relative"
+                          >
+                            {post.is_featured && (
+                              <Badge className="absolute top-4 right-4 bg-yellow-400 text-yellow-900 border-0 font-semibold">
+                                Selected
+                              </Badge>
+                            )}
+                            <div className="flex gap-4">
+                              <img
+                                src={post.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'}
+                                alt={post.username}
+                                className="w-12 h-12 rounded-full flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0 pr-12">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white">{post.username}</p>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {new Date(post.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                {post.title && <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{post.title}</p>}
+                                <p className="text-gray-700 dark:text-gray-300 mb-3">{post.content}</p>
+                                <div className={cn(
+                                  "inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-semibold",
+                                  post.sentiment === "positive"
+                                    ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                    : post.sentiment === "negative"
+                                    ? "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                    : "bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300"
+                                )}>
+                                  {post.sentiment === "positive" ? (
+                                    <TrendingUp className="h-4 w-4" />
+                                  ) : (
+                                    <TrendingDown className="h-4 w-4" />
+                                  )}
+                                  {post.sentiment === "positive" ? "+" : ""}{post.impact_percentage}%
+                                </div>
                               </div>
                             </div>
                           </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          <Sparkles className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>Discover new opportunities in the crypto community</p>
                         </div>
-                      ))}
+                      )}
                     </TabsContent>
 
-                    <TabsContent value="community" className="p-6 mt-0">
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Join our crypto community to connect with other traders</p>
-                      </div>
+                    <TabsContent value="community" className="p-6 mt-0 space-y-4">
+                      {communityPosts.filter(p => p.category === 'community').length > 0 ? (
+                        communityPosts.filter(p => p.category === 'community').map((post) => (
+                          <div
+                            key={post.id}
+                            className="p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border dark:border-slate-700"
+                          >
+                            <div className="flex gap-4">
+                              <img
+                                src={post.avatar_url || 'https://api.dicebear.com/7.x/avataaars/svg?seed=user'}
+                                alt={post.username}
+                                className="w-12 h-12 rounded-full flex-shrink-0"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white">{post.username}</p>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {new Date(post.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                <p className="text-gray-700 dark:text-gray-300 mb-3">{post.content}</p>
+                                <span className="text-blue-600 dark:text-blue-400 hover:underline font-medium text-sm cursor-pointer">Follow</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>Join our crypto community to connect with other traders</p>
+                        </div>
+                      )}
                     </TabsContent>
 
-                    <TabsContent value="events" className="p-6 mt-0">
+                    <TabsContent value="event" className="p-6 mt-0">
                       <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                         <Clock className="h-12 w-12 mx-auto mb-4 opacity-50" />
                         <p>Upcoming crypto events and webinars coming soon</p>
                       </div>
                     </TabsContent>
 
-                    <TabsContent value="announcements" className="p-6 mt-0">
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                        <p>Latest announcements and market updates</p>
-                      </div>
+                    <TabsContent value="announcement" className="p-6 mt-0 space-y-4">
+                      {communityPosts.filter(p => p.category === 'announcement').length > 0 ? (
+                        communityPosts.filter(p => p.category === 'announcement').map((post) => (
+                          <div
+                            key={post.id}
+                            className="p-4 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors border dark:border-slate-700"
+                          >
+                            <div className="flex gap-4">
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center flex-shrink-0">
+                                <Star className="h-6 w-6 text-white" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="font-semibold text-gray-900 dark:text-white">{post.username}</p>
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {new Date(post.created_at).toLocaleDateString()}
+                                  </span>
+                                </div>
+                                {post.title && <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{post.title}</p>}
+                                <p className="text-gray-700 dark:text-gray-300">{post.content}</p>
+                              </div>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                          <Star className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                          <p>Latest announcements and market updates</p>
+                        </div>
+                      )}
                     </TabsContent>
                   </Tabs>
                 </CardContent>
