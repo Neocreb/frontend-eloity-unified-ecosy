@@ -572,6 +572,9 @@ export function useCrypto() {
   // Utility functions
   const getCryptocurrency = useCallback(
     (id: string) => {
+      if (!Array.isArray(state.cryptocurrencies)) {
+        return undefined;
+      }
       return state.cryptocurrencies.find((crypto) => crypto.id === id);
     },
     [state.cryptocurrencies],
@@ -579,6 +582,9 @@ export function useCrypto() {
 
   const getTradingPair = useCallback(
     (symbol: string) => {
+      if (!Array.isArray(state.tradingPairs)) {
+        return undefined;
+      }
       return state.tradingPairs.find((pair) => pair.symbol === symbol);
     },
     [state.tradingPairs],
