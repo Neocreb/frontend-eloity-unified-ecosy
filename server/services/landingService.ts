@@ -305,17 +305,25 @@ export const FAQsService = {
 
   async getFAQById(id: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock FAQ');
+        return mockFAQs.find(f => f.id === id);
+      }
+
       const { data, error } = await supabase
         .from('landing_faqs')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch FAQ from database, using mock data:', error);
+        return mockFAQs.find(f => f.id === id);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching FAQ:', error);
-      throw error;
+      logger.error('Error fetching FAQ:', error);
+      return mockFAQs.find(f => f.id === id);
     }
   },
 
