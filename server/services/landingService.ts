@@ -576,6 +576,11 @@ export const ComparisonMatrixService = {
     active?: boolean;
   }) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock comparisons');
+        return mockComparisons.filter(c => !filters?.active || c.is_active !== false);
+      }
+
       let query = supabase
         .from('landing_comparison_matrix')
         .select('*');
@@ -588,11 +593,14 @@ export const ComparisonMatrixService = {
       }
 
       const { data, error } = await query.order('order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch comparisons from database, using mock data:', error);
+        return mockComparisons.filter(c => !filters?.active || c.is_active !== false);
+      }
+      return data || mockComparisons;
     } catch (error) {
-      console.error('Error fetching comparisons:', error);
-      throw error;
+      logger.error('Error fetching comparisons:', error);
+      return mockComparisons;
     }
   },
 
