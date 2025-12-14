@@ -8,21 +8,6 @@ import { db } from '../utils/db.js';
 import axios from 'axios';
 import { getBybitTicker } from './bybitService.js';
 
-// Fallback prices for when all APIs fail
-const FALLBACK_PRICES: Record<string, any> = {
-  bitcoin: { usd: 45000, usd_24h_change: 2.5, usd_market_cap: 880000000000, usd_24h_vol: 28000000000 },
-  ethereum: { usd: 2500, usd_24h_change: 1.8, usd_market_cap: 300000000000, usd_24h_vol: 15000000000 },
-  tether: { usd: 1.0, usd_24h_change: 0.1, usd_market_cap: 100000000000, usd_24h_vol: 80000000000 },
-  binancecoin: { usd: 620, usd_24h_change: 3.2, usd_market_cap: 95000000000, usd_24h_vol: 2500000000 },
-  solana: { usd: 140, usd_24h_change: 4.1, usd_market_cap: 62000000000, usd_24h_vol: 3800000000 },
-  cardano: { usd: 1.05, usd_24h_change: 2.2, usd_market_cap: 37000000000, usd_24h_vol: 1200000000 },
-  chainlink: { usd: 28, usd_24h_change: 1.9, usd_market_cap: 12500000000, usd_24h_vol: 780000000 },
-  polygon: { usd: 0.85, usd_24h_change: 3.5, usd_market_cap: 8500000000, usd_24h_vol: 650000000 },
-  avalanche: { usd: 35, usd_24h_change: 2.8, usd_market_cap: 1200000000, usd_24h_vol: 420000000 },
-  polkadot: { usd: 9.5, usd_24h_change: 2.1, usd_market_cap: 12500000000, usd_24h_vol: 850000000 },
-  dogecoin: { usd: 0.35, usd_24h_change: 3.8, usd_market_cap: 52000000000, usd_24h_vol: 2800000000 }
-};
-
 export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'usd') {
   logger.info('getCryptoPrices called with symbols:', { symbols, vsCurrency });
   try {
@@ -31,11 +16,9 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
     // Validate inputs
     if (!Array.isArray(symbols) || symbols.length === 0) {
       logger.warn('getCryptoPrices called with invalid symbols', { symbols });
-      return FALLBACK_PRICES;
+      return {};
     }
 
-    // Check if CryptoAPIs API key is available
-    const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
     const bybitKey = process.env.BYBIT_PUBLIC_API;
 
     // Symbol to Bybit trading pair mapping
@@ -53,83 +36,9 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
       dogecoin: 'DOGEUSDT'
     };
 
-    // If CryptoAPIs is configured, use it as PRIMARY source for reliability
-    if (cryptoapisKey) {
-      logger.info('CRYPTOAPIS_API_KEY configured - using CryptoAPIs as primary source');
-
-      const cryptoapisBase = 'https://rest.cryptoapis.io';
-      const assetMap: Record<string, string> = {
-        bitcoin: 'BTC',
-        ethereum: 'ETH',
-        tether: 'USDT',
-        binancecoin: 'BNB',
-        solana: 'SOL',
-        cardano: 'ADA',
-        chainlink: 'LINK',
-        polygon: 'MATIC',
-        avalanche: 'AVAX',
-        polkadot: 'DOT',
-        dogecoin: 'DOGE'
-      };
-
-      const fetchPromises = symbols.map(async (symbol) => {
-        const lower = symbol.toLowerCase();
-
-        try {
-          if (!Object.prototype.hasOwnProperty.call(assetMap, lower)) {
-            logger.warn(`Symbol "${symbol}" is not supported for price lookup.`);
-            return;
-          }
-
-          const assetId = assetMap[lower];
-          const url = `${cryptoapisBase}/market-data/exchange-rates/realtime/${assetId}/USD`;
-          logger.info(`Fetching CryptoAPIs data for ${lower}`);
-
-          const resp = await axios.get(url, {
-            timeout: 10000,
-            validateStatus: () => true,
-            headers: {
-              'X-API-Key': cryptoapisKey,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
-
-          if (resp.status === 200 && resp.data && resp.data.data && typeof resp.data.data.rate === 'number') {
-            const rate = parseFloat(String(resp.data.data.rate));
-            if (rate > 0) {
-              result[lower] = {
-                usd: rate,
-                usd_24h_change: 0,
-                usd_market_cap: null,
-                usd_24h_vol: null
-              };
-              logger.info(`Successfully fetched CryptoAPIs data for ${lower}: $${rate}`);
-              return;
-            }
-          }
-          logger.warn(`CryptoAPIs returned invalid data for ${lower}: status=${resp.status}`);
-        } catch (err) {
-          logger.error('CryptoAPIs price fetch failed for', lower, {
-            message: err instanceof Error ? err.message : String(err)
-          });
-        }
-      });
-
-      await Promise.all(fetchPromises);
-
-      // If we got data from CryptoAPIs, return it
-      if (Object.keys(result).length > 0) {
-        logger.info('Successfully fetched prices from CryptoAPIs', { symbolCount: Object.keys(result).length });
-        return result;
-      }
-
-      logger.warn('CryptoAPIs returned no valid data, falling back to Bybit');
-    }
-
-    // Fallback to Bybit if CryptoAPIs is not configured or failed
-    if (bybitKey && bybitKey !== 'your-bybit-public-api-key' && Object.keys(result).length === 0) {
-      logger.info('Attempting to fetch data from Bybit as fallback');
+    // Try Bybit as PRIMARY source
+    if (bybitKey && bybitKey !== 'your-bybit-public-api-key') {
+      logger.info('Using Bybit as primary price source');
 
       const fetchPromises = symbols.map(async (symbol) => {
         const lower = symbol.toLowerCase();
@@ -258,152 +167,42 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
       return result;
     }
 
-    // Final fallback: Use hardcoded fallback prices for all requested symbols
-    logger.warn('All API sources failed, using hardcoded fallback prices');
-    for (const symbol of symbols) {
-      const lower = symbol.toLowerCase();
-      if (!result[lower]) {
-        result[lower] = FALLBACK_PRICES[lower] || {
-          usd: 0,
-          usd_24h_change: 0,
-          usd_market_cap: 0,
-          usd_24h_vol: 0
-        };
-      }
-    }
-    logger.info('Returning fallback prices', {
-      symbolCount: Object.keys(result).length,
-      symbols: Object.keys(result)
-    });
-    return result;
+    // All API sources failed, return empty
+    logger.warn('All API sources failed, returning empty prices');
+    return {};
   } catch (error) {
     logger.error('Price fetch error:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
 
-    // Even on error, return fallback prices instead of throwing
-    const result: any = {};
-    for (const symbol of symbols) {
-      const lower = symbol.toLowerCase();
-      result[lower] = FALLBACK_PRICES[lower] || {
-        usd: 0,
-        usd_24h_change: 0,
-        usd_market_cap: 0,
-        usd_24h_vol: 0
-      };
-    }
-    logger.warn('Returning fallback prices due to error');
-    return result;
+    // Return empty on error instead of fallback prices
+    logger.warn('Returning empty prices due to error');
+    return {};
   }
 }
 
 export async function getOrderBook(pair: string, depth: number = 20) {
   try {
-    // Extract base and quote assets from pair (e.g., "BTCUSDT" -> "BTC", "USDT")
-    const pairUpper = pair.toUpperCase();
+    const { getBybitOrderBook } = await import('./bybitService.js');
 
-    // Try to get current price from CryptoAPIs
-    try {
-      const cryptoapisBase = 'https://rest.cryptoapis.io/v2';
-      const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
+    logger.info(`Fetching orderbook for ${pair} from Bybit`);
+    const orderbook = await getBybitOrderBook(pair, depth, 'spot');
 
-      if (cryptoapisKey && pairUpper.includes('USDT')) {
-        const baseAsset = pairUpper.replace('USDT', '');
-        const url = `${cryptoapisBase}/market-data/exchange-rates/realtime/${baseAsset}/USD`;
-
-        logger.info(`Fetching current price for ${baseAsset} from CryptoAPIs`);
-        const resp = await axios.get(url, {
-          timeout: 10000,
-          headers: {
-            'X-API-Key': cryptoapisKey,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (resp.data.data && resp.data.data.rate) {
-          const basePrice = parseFloat(resp.data.data.rate);
-          logger.info(`Using CryptoAPIs price for ${baseAsset}: $${basePrice}`);
-
-          // Generate realistic orderbook from the base price
-          const generateOrderbook = (currentPrice: number, levels: number) => {
-            const asks = [];
-            const bids = [];
-
-            // Generate asks (selling orders) - prices above current
-            for (let i = 1; i <= levels; i++) {
-              const askPrice = currentPrice * (1 + (i * 0.001));
-              asks.push({
-                price: parseFloat(askPrice.toFixed(2)),
-                quantity: parseFloat((Math.random() * 2 + 0.1).toFixed(8)),
-                total: parseFloat((askPrice * (Math.random() * 2 + 0.1)).toFixed(2))
-              });
-            }
-
-            // Generate bids (buying orders) - prices below current
-            for (let i = 1; i <= levels; i++) {
-              const bidPrice = currentPrice * (1 - (i * 0.001));
-              bids.push({
-                price: parseFloat(bidPrice.toFixed(2)),
-                quantity: parseFloat((Math.random() * 2 + 0.1).toFixed(8)),
-                total: parseFloat((bidPrice * (Math.random() * 2 + 0.1)).toFixed(2))
-              });
-            }
-
-            return { asks, bids };
-          };
-
-          const orderbook = generateOrderbook(basePrice, depth);
-          return {
-            ...orderbook,
-            timestamp: Date.now()
-          };
-        }
-      }
-    } catch (err) {
-      logger.debug('CryptoAPIs orderbook fetch failed:', err?.message || err);
+    if (orderbook && orderbook.bids.length > 0 && orderbook.asks.length > 0) {
+      logger.info(`Successfully fetched orderbook for ${pair}: ${orderbook.bids.length} bids, ${orderbook.asks.length} asks`);
+      return orderbook;
     }
 
-    // Fallback to mock orderbook for development
-    const basePrice = 45000; // Mock BTC price
-    const spread = 50; // $50 spread
-    
-    // Define types for bids and asks
-    interface OrderBookEntry {
-      price: number;
-      quantity: number;
-      total: number;
-    }
-    
-    const bids: OrderBookEntry[] = [];
-    const asks: OrderBookEntry[] = [];
-    
-    for (let i = 0; i < depth; i++) {
-      const bidPrice = basePrice - spread/2 - (i * 10);
-      const askPrice = basePrice + spread/2 + (i * 10);
-      const quantity = Math.random() * 2 + 0.1;
-      
-      bids.push({
-        price: bidPrice,
-        quantity: quantity,
-        total: bidPrice * quantity
-      });
-      
-      asks.push({
-        price: askPrice,
-        quantity: quantity,
-        total: askPrice * quantity
-      });
-    }
-    
+    logger.warn(`Bybit returned empty orderbook for ${pair}`);
     return {
-      bids: bids.sort((a, b) => b.price - a.price),
-      asks: asks.sort((a, b) => a.price - b.price),
+      bids: [],
+      asks: [],
       timestamp: Date.now()
     };
   } catch (error) {
     logger.error('Orderbook fetch error:', error);
-    // Return empty orderbook as fallback
+    // Return empty orderbook on error
     return {
       bids: [],
       asks: [],
@@ -1021,15 +820,26 @@ export async function getRiskAssessment(userId: string) {
 // =============================================================================
 
 async function generateCryptoAddress(currency: string): Promise<string> {
-  // In production, generate real crypto addresses using appropriate libraries
-  const mockAddresses = {
-    'BTC': '1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2',
-    'ETH': '0x742c82F23Cfa38a6c69b4Cc85a5C3A5b8Aa8bBBb',
-    'USDT': '0x742c82F23Cfa38a6c69b4Cc85a5C3A5b8Aa8bBBb',
-    'BNB': 'bnb1grpf0955h0ykzq3ar5nmum7y6gdfl6lxfn46h2'
-  };
-  
-  return mockAddresses[currency] || `mock_${currency.toLowerCase()}_address_${Date.now()}`;
+  // Use Bybit to get real deposit addresses
+  try {
+    const { getBybitDepositAddress } = await import('./bybitService.js');
+
+    logger.info(`Fetching deposit address for ${currency} from Bybit`);
+    const depositInfo = await getBybitDepositAddress(currency);
+
+    if (depositInfo && depositInfo.chains && depositInfo.chains.length > 0) {
+      // Return the first available deposit address
+      const address = depositInfo.chains[0].address;
+      logger.info(`Got deposit address for ${currency}: ${address.substring(0, 10)}...`);
+      return address;
+    }
+
+    logger.warn(`No deposit address found for ${currency} on Bybit`);
+    return null;
+  } catch (error) {
+    logger.error(`Failed to get deposit address for ${currency}:`, error);
+    return null;
+  }
 }
 
 async function getCurrencyBalance(address: string, currency: string): Promise<number> {
@@ -1094,14 +904,34 @@ function getRequiredConfirmations(currency: string): number {
 }
 
 async function calculateWithdrawalFee(currency: string, amount: number): Promise<number> {
-  const feeStructure = {
-    'BTC': 0.0005,  // Fixed BTC fee
-    'ETH': 0.005,   // Fixed ETH fee
-    'USDT': 1.0,    // Fixed USDT fee
-    'BNB': 0.001    // Fixed BNB fee
+  // Try to get real withdrawal fees from Bybit
+  try {
+    const { getBybitWithdrawalFee } = await import('./bybitService.js');
+
+    logger.info(`Fetching withdrawal fee for ${currency} from Bybit`);
+    const feeInfo = await getBybitWithdrawalFee(currency);
+
+    if (feeInfo && feeInfo.chains && feeInfo.chains.length > 0) {
+      // Return the fee from the first available chain
+      const fee = parseFloat(feeInfo.chains[0].withdrawFee);
+      logger.info(`Withdrawal fee for ${currency}: ${fee}`);
+      return fee;
+    }
+
+    logger.warn(`No withdrawal fee found for ${currency} on Bybit, using default`);
+  } catch (error) {
+    logger.error(`Failed to get withdrawal fee for ${currency} from Bybit:`, error);
+  }
+
+  // Fallback to default fees if Bybit API fails
+  const defaultFees = {
+    'BTC': 0.0005,
+    'ETH': 0.005,
+    'USDT': 1.0,
+    'BNB': 0.001
   };
-  
-  return feeStructure[currency.toUpperCase()] || 0.001;
+
+  return defaultFees[currency.toUpperCase()] || 0.001;
 }
 
 async function validateCryptoAddress(address: string, currency: string): Promise<boolean> {
@@ -1607,276 +1437,3 @@ export async function executeTrade(tradeData: any) {
 // =============================================================================
 // ADDITIONAL HELPER FUNCTIONS FOR CRYPTO ROUTES
 // =============================================================================
-
-export async function getDetailedPriceData(symbol: string, vsCurrency: string, timeframe: string) {
-  try {
-    // In production, fetch from a price API
-    const mockPriceData = {
-      'bitcoin': {
-        current_price: 45000,
-        price_change_24h: 1250.50,
-        price_change_percentage_24h: 2.85,
-        market_cap: 850000000000,
-        volume_24h: 25000000000,
-        high_24h: 46000,
-        low_24h: 43500
-      },
-      'ethereum': {
-        current_price: 3200,
-        price_change_24h: 95.20,
-        price_change_percentage_24h: 3.05,
-        market_cap: 380000000000,
-        volume_24h: 15000000000,
-        high_24h: 3300,
-        low_24h: 3100
-      },
-      'tether': {
-        current_price: 1.0,
-        price_change_24h: 0.001,
-        price_change_percentage_24h: 0.1,
-        market_cap: 95000000000,
-        volume_24h: 45000000000,
-        high_24h: 1.005,
-        low_24h: 0.995
-      },
-      'binancecoin': {
-        current_price: 320,
-        price_change_24h: -2.5,
-        price_change_percentage_24h: -0.78,
-        market_cap: 48000000000,
-        volume_24h: 2000000000,
-        high_24h: 330,
-        low_24h: 315
-      }
-    };
-
-    const data = mockPriceData[symbol] || mockPriceData['bitcoin'];
-    
-    return {
-      ...data,
-      last_updated: new Date().toISOString()
-    };
-  } catch (error) {
-    logger.error('Detailed price data fetch error:', error);
-    throw error;
-  }
-}
-
-export async function getEstimatedMatches(orderData: any) {
-  // Mock estimated matches based on order data
-  const potentialMatches = Math.floor(Math.random() * 10) + 1;
-  const averagePrice = orderData.price * (0.95 + Math.random() * 0.1);
-  
-  return {
-    potentialMatches,
-    averagePrice: parseFloat(averagePrice.toFixed(2)),
-    estimatedTime: `${5 + Math.floor(Math.random() * 25)}-${10 + Math.floor(Math.random() * 30)} minutes`
-  };
-}
-
-export async function getP2POrders(filters: any, page: number, limit: number) {
-  // Mock P2P orders based on filters
-  const mockOrders: any[] = [];
-  const totalOrders = 50;
-  
-  // Generate mock orders
-  for (let i = 0; i < Math.min(limit, totalOrders - (page - 1) * limit); i++) {
-    const orderId = `order_${Date.now()}_${i}`;
-    const isBuyOrder = Math.random() > 0.5;
-    
-    mockOrders.push({
-      id: orderId,
-      userId: `user_${Math.floor(Math.random() * 1000)}`,
-      type: isBuyOrder ? 'buy' : 'sell',
-      cryptocurrency: filters.cryptocurrency || 'BTC',
-      fiatCurrency: filters.fiatCurrency || 'USD',
-      amount: parseFloat((Math.random() * 10).toFixed(4)),
-      price: parseFloat((45000 + (Math.random() * 2000 - 1000)).toFixed(2)),
-      minOrderAmount: parseFloat((Math.random() * 0.5).toFixed(4)),
-      maxOrderAmount: parseFloat((Math.random() * 5 + 0.5).toFixed(4)),
-      paymentMethods: ['bank_transfer', 'paypal'],
-      timeLimit: 30,
-      status: 'active',
-      reputation: parseFloat((4 + Math.random() * 1).toFixed(1)),
-      createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-      completedTrades: Math.floor(Math.random() * 100)
-    });
-  }
-  
-  return {
-    orders: mockOrders,
-    total: totalOrders
-  };
-}
-
-export async function getUserP2POrders(userId: string, options: any) {
-  // Mock user P2P orders
-  const mockOrders: any[] = [];
-  const totalOrders = Math.floor(Math.random() * 10) + 1;
-  
-  for (let i = 0; i < totalOrders; i++) {
-    const orderId = `user_order_${userId}_${i}`;
-    const isBuyOrder = Math.random() > 0.5;
-    
-    mockOrders.push({
-      id: orderId,
-      userId,
-      type: isBuyOrder ? 'buy' : 'sell',
-      cryptocurrency: 'BTC',
-      fiatCurrency: 'USD',
-      amount: parseFloat((Math.random() * 5).toFixed(4)),
-      price: parseFloat((45000 + (Math.random() * 1000 - 500)).toFixed(2)),
-      minOrderAmount: parseFloat((Math.random() * 0.1).toFixed(4)),
-      maxOrderAmount: parseFloat((Math.random() * 2 + 0.1).toFixed(4)),
-      paymentMethods: ['bank_transfer'],
-      timeLimit: Math.floor(Math.random() * 60) + 15,
-      status: options.status || (Math.random() > 0.7 ? 'completed' : 'active'),
-      createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-      completedTrades: Math.floor(Math.random() * 50)
-    });
-  }
-  
-  return {
-    orders: mockOrders,
-    total: totalOrders
-  };
-}
-
-export async function getP2POrderById(orderId: string) {
-  // Mock P2P order by ID
-  return {
-    id: orderId,
-    userId: `user_${Math.floor(Math.random() * 1000)}`,
-    type: Math.random() > 0.5 ? 'buy' : 'sell',
-    cryptocurrency: 'BTC',
-    fiatCurrency: 'USD',
-    amount: parseFloat((Math.random() * 5).toFixed(4)),
-    price: parseFloat((45000 + (Math.random() * 1000 - 500)).toFixed(2)),
-    minOrderAmount: parseFloat((Math.random() * 0.1).toFixed(4)),
-    maxOrderAmount: parseFloat((Math.random() * 2 + 0.1).toFixed(4)),
-    paymentMethods: ['bank_transfer', 'paypal'],
-    timeLimit: 30,
-    status: 'active',
-    autoReply: 'Thanks for your interest! Please complete payment within 30 minutes.',
-    terms: 'Payment must be completed within the time limit. No refunds after release.',
-    createdAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
-    completedTrades: Math.floor(Math.random() * 100),
-    reputation: parseFloat((4 + Math.random() * 1).toFixed(1))
-  };
-}
-
-export async function initiatePeerToPeerTrade(tradeData: any) {
-  try {
-    const tradeId = `trade_${Date.now()}`;
-    const escrowId = `escrow_${Date.now()}`;
-    
-    // In production, this would create actual trade and escrow records
-    logger.info('P2P trade initiated', { tradeId, escrowId, ...tradeData });
-    
-    return {
-      success: true,
-      tradeId,
-      escrowId,
-      trade: { id: tradeId, ...tradeData },
-      instructions: `Please complete payment of ${tradeData.amount * tradeData.price} ${tradeData.fiatCurrency} within ${tradeData.timeLimit} minutes.`
-    };
-  } catch (error) {
-    logger.error('P2P trade initiation error:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-}
-
-export async function getEscrowTransaction(escrowId: string) {
-  // Mock escrow transaction
-  return {
-    id: escrowId,
-    buyerId: `buyer_${Math.floor(Math.random() * 1000)}`,
-    sellerId: `seller_${Math.floor(Math.random() * 1000)}`,
-    status: 'pending_payment',
-    amount: parseFloat((Math.random() * 5).toFixed(4)),
-    cryptocurrency: 'BTC',
-    fiatAmount: parseFloat((Math.random() * 200000).toFixed(2)),
-    fiatCurrency: 'USD',
-    timeLimit: 30,
-    createdAt: new Date(Date.now() - Math.random() * 60 * 60 * 1000),
-    expiresAt: new Date(Date.now() + 30 * 60 * 1000)
-  };
-}
-
-export async function confirmEscrowPayment(escrowId: string, data: any) {
-  try {
-    // In production, this would verify payment proof and update escrow status
-    logger.info('Escrow payment confirmed', { escrowId, ...data });
-    
-    return {
-      success: true
-    };
-  } catch (error) {
-    logger.error('Escrow payment confirmation error:', error);
-    return {
-      success: false,
-      error: error.message
-    };
-  }
-}
-
-export async function getUserTradingHistory(userId: string, filters: any, page: number, limit: number) {
-  // Mock trading history
-  const mockTrades: any[] = [];
-  const totalTrades = 50;
-  
-  for (let i = 0; i < Math.min(limit, totalTrades - (page - 1) * limit); i++) {
-    const tradeId = `trade_${userId}_${Date.now()}_${i}`;
-    const isBuy = Math.random() > 0.5;
-    
-    mockTrades.push({
-      id: tradeId,
-      userId,
-      pair: 'BTC/USD',
-      side: isBuy ? 'buy' : 'sell',
-      price: parseFloat((45000 + (Math.random() * 2000 - 1000)).toFixed(2)),
-      amount: parseFloat((Math.random() * 2).toFixed(4)),
-      totalValue: parseFloat((Math.random() * 90000).toFixed(2)),
-      fee: parseFloat((Math.random() * 100).toFixed(2)),
-      feeCurrency: 'USD',
-      status: 'completed',
-      orderType: 'market',
-      timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-      metadata: {}
-    });
-  }
-  
-  // Mock summary
-  const summary = {
-    totalTrades: totalTrades,
-    buyTrades: Math.floor(totalTrades * 0.55),
-    sellTrades: Math.floor(totalTrades * 0.45),
-    totalVolume: parseFloat((totalTrades * 50000).toFixed(2)),
-    totalFees: parseFloat((totalTrades * 50).toFixed(2))
-  };
-  
-  return {
-    trades: mockTrades,
-    summary,
-    total: totalTrades
-  };
-}
-
-export async function getTradingStatistics(userId: string, timeframe: string) {
-  // Mock trading statistics
-  return {
-    totalTrades: Math.floor(Math.random() * 100) + 20,
-    successfulTrades: Math.floor(Math.random() * 90) + 15,
-    successRate: parseFloat((85 + Math.random() * 15).toFixed(2)),
-    totalVolume: parseFloat((Math.random() * 500000 + 50000).toFixed(2)),
-    averageTradeSize: parseFloat((Math.random() * 5000 + 1000).toFixed(2)),
-    tradingPairs: ['BTC/USD', 'ETH/USD', 'BTC/EUR'],
-    profitLoss: parseFloat((Math.random() * 10000 - 5000).toFixed(2)),
-    reputation: parseFloat((4 + Math.random() * 1).toFixed(1)),
-    averageResponseTime: Math.floor(Math.random() * 10) + 1, // minutes
-    averageCompletionTime: Math.floor(Math.random() * 30) + 10 // minutes
-  };
-}

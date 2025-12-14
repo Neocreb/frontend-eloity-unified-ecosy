@@ -31,128 +31,110 @@ export async function getDetailedPriceData(symbol: string, vsCurrency: string, t
 
 export async function getEstimatedMatches(orderData: any) {
   try {
-    // In a real implementation, you would query the P2P orders table
-    // For now, we'll return mock data
-    const potentialMatches = Math.floor(Math.random() * 10) + 1;
-    const averagePrice = orderData.price * (0.95 + Math.random() * 0.1);
-    
+    // Query the P2P orders table to find matching orders
+    const orders = await db.select('p2p_orders', (record) => {
+      // Find orders with opposite type (buy vs sell)
+      if (record.type === orderData.type) return false;
+      // Match on cryptocurrency and fiat currency
+      if (record.cryptocurrency !== orderData.cryptocurrency) return false;
+      if (record.fiatCurrency !== orderData.fiatCurrency) return false;
+      // Only active orders
+      if (record.status !== 'active') return false;
+      return true;
+    });
+
+    if (!orders || orders.length === 0) {
+      return {
+        potentialMatches: 0,
+        averagePrice: null,
+        estimatedTime: null
+      };
+    }
+
+    // Calculate average price from matching orders
+    const totalPrice = orders.reduce((sum, order) => sum + parseFloat(order.price?.toString() || '0'), 0);
+    const averagePrice = totalPrice / orders.length;
+
     return {
-      potentialMatches,
+      potentialMatches: orders.length,
       averagePrice: parseFloat(averagePrice.toFixed(2)),
-      estimatedTime: `${5 + Math.floor(Math.random() * 25)}-${10 + Math.floor(Math.random() * 30)} minutes`
+      estimatedTime: null
     };
   } catch (error) {
     logger.error('Error fetching estimated matches:', error);
-    throw error;
+    return {
+      potentialMatches: 0,
+      averagePrice: null,
+      estimatedTime: null
+    };
   }
 }
 
 export async function getP2POrders(filters: any, page: number, limit: number) {
   try {
-    // In a real implementation, you would query the P2P orders table
-    // For now, we'll return mock data
-    const mockOrders: any[] = [];
-    const totalOrders = 50;
-    
-    // Generate mock orders
-    for (let i = 0; i < Math.min(limit, totalOrders - (page - 1) * limit); i++) {
-      const orderId = `order_${Date.now()}_${i}`;
-      const isBuyOrder = Math.random() > 0.5;
-      
-      mockOrders.push({
-        id: orderId,
-        userId: `user_${Math.floor(Math.random() * 1000)}`,
-        type: isBuyOrder ? 'buy' : 'sell',
-        cryptocurrency: filters.cryptocurrency || 'BTC',
-        fiatCurrency: filters.fiatCurrency || 'USD',
-        amount: parseFloat((Math.random() * 10).toFixed(4)),
-        price: parseFloat((45000 + (Math.random() * 2000 - 1000)).toFixed(2)),
-        minOrderAmount: parseFloat((Math.random() * 0.5).toFixed(4)),
-        maxOrderAmount: parseFloat((Math.random() * 5 + 0.5).toFixed(4)),
-        paymentMethods: ['bank_transfer', 'paypal'],
-        timeLimit: 30,
-        status: 'active',
-        reputation: parseFloat((4 + Math.random() * 1).toFixed(1)),
-        createdAt: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
-        completedTrades: Math.floor(Math.random() * 100)
-      });
-    }
-    
+    // Query the P2P orders table from database
+    // Return empty array if no real orders exist (no mock data)
+    const orders = await db.select('p2p_orders', (record) => {
+      if (filters.cryptocurrency && record.cryptocurrency !== filters.cryptocurrency) return false;
+      if (filters.fiatCurrency && record.fiatCurrency !== filters.fiatCurrency) return false;
+      if (filters.type && record.type !== filters.type) return false;
+      if (filters.status && record.status !== filters.status) return false;
+      return true;
+    });
+
+    const startIdx = (page - 1) * limit;
+    const paginatedOrders = orders.slice(startIdx, startIdx + limit);
+
     return {
-      orders: mockOrders,
-      total: totalOrders
+      orders: paginatedOrders,
+      total: orders.length
     };
   } catch (error) {
     logger.error('Error fetching P2P orders:', error);
-    throw error;
+    return {
+      orders: [],
+      total: 0
+    };
   }
 }
 
 export async function getUserP2POrders(userId: string, options: any) {
   try {
-    // In a real implementation, you would query the P2P orders table
-    // For now, we'll return mock data
-    const mockOrders: any[] = [];
-    const totalOrders = Math.floor(Math.random() * 10) + 1;
-    
-    for (let i = 0; i < totalOrders; i++) {
-      const orderId = `user_order_${userId}_${i}`;
-      const isBuyOrder = Math.random() > 0.5;
-      
-      mockOrders.push({
-        id: orderId,
-        userId,
-        type: isBuyOrder ? 'buy' : 'sell',
-        cryptocurrency: 'BTC',
-        fiatCurrency: 'USD',
-        amount: parseFloat((Math.random() * 5).toFixed(4)),
-        price: parseFloat((45000 + (Math.random() * 1000 - 500)).toFixed(2)),
-        minOrderAmount: parseFloat((Math.random() * 0.1).toFixed(4)),
-        maxOrderAmount: parseFloat((Math.random() * 2 + 0.1).toFixed(4)),
-        paymentMethods: ['bank_transfer'],
-        timeLimit: Math.floor(Math.random() * 60) + 15,
-        status: options.status || (Math.random() > 0.7 ? 'completed' : 'active'),
-        createdAt: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        completedTrades: Math.floor(Math.random() * 50)
-      });
-    }
-    
+    // Query the P2P orders table for user's orders
+    // Return empty array if no orders exist
+    const orders = await db.select('p2p_orders', (record) => {
+      if (record.user_id !== userId) return false;
+      if (options.status && record.status !== options.status) return false;
+      return true;
+    });
+
     return {
-      orders: mockOrders,
-      total: totalOrders
+      orders: orders || [],
+      total: orders ? orders.length : 0
     };
   } catch (error) {
     logger.error('Error fetching user P2P orders:', error);
-    throw error;
+    return {
+      orders: [],
+      total: 0
+    };
   }
 }
 
 export async function getP2POrderById(orderId: string) {
   try {
-    // In a real implementation, you would query the P2P orders table
-    // For now, we'll return mock data
-    return {
-      id: orderId,
-      userId: `user_${Math.floor(Math.random() * 1000)}`,
-      type: Math.random() > 0.5 ? 'buy' : 'sell',
-      cryptocurrency: 'BTC',
-      fiatCurrency: 'USD',
-      amount: parseFloat((Math.random() * 5).toFixed(4)),
-      price: parseFloat((45000 + (Math.random() * 1000 - 500)).toFixed(2)),
-      minOrderAmount: parseFloat((Math.random() * 0.1).toFixed(4)),
-      maxOrderAmount: parseFloat((Math.random() * 2 + 0.1).toFixed(4)),
-      paymentMethods: ['bank_transfer', 'paypal'],
-      timeLimit: 30,
-      status: 'active',
-      autoReply: 'Thanks for your interest! Please complete payment within 30 minutes.',
-      terms: 'Payment must be completed within the time limit. No refunds after release.',
-      createdAt: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
-      completedTrades: Math.floor(Math.random() * 100),
-      reputation: parseFloat((4 + Math.random() * 1).toFixed(1))
-    };
+    // Query the P2P orders table for specific order
+    // Return null if order doesn't exist (no mock data)
+    const orders = await db.select('p2p_orders', (record) => record.id === orderId);
+
+    if (orders && orders.length > 0) {
+      return orders[0];
+    }
+
+    return null;
   } catch (error) {
     logger.error('Error fetching P2P order by ID:', error);
-    throw error;
+    return null;
   }
 }
 
@@ -220,70 +202,117 @@ export async function confirmEscrowPayment(escrowId: string, data: any) {
 
 export async function getUserTradingHistory(userId: string, filters: any, page: number, limit: number) {
   try {
-    // In a real implementation, you would query the trading history table
-    // For now, we'll return mock data
-    const mockTrades: any[] = [];
-    const totalTrades = 50;
-    
-    for (let i = 0; i < Math.min(limit, totalTrades - (page - 1) * limit); i++) {
-      const tradeId = `trade_${userId}_${Date.now()}_${i}`;
-      const isBuy = Math.random() > 0.5;
-      
-      mockTrades.push({
-        id: tradeId,
-        userId,
-        pair: 'BTC/USD',
-        side: isBuy ? 'buy' : 'sell',
-        price: parseFloat((45000 + (Math.random() * 2000 - 1000)).toFixed(2)),
-        amount: parseFloat((Math.random() * 2).toFixed(4)),
-        totalValue: parseFloat((Math.random() * 90000).toFixed(2)),
-        fee: parseFloat((Math.random() * 100).toFixed(2)),
-        feeCurrency: 'USD',
-        status: 'completed',
-        orderType: 'market',
-        timestamp: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
-        metadata: {}
-      });
+    // Query the crypto_transactions table for user's trading history
+    const trades = await db.select('crypto_transactions', (record) => {
+      if (record.user_id !== userId) return false;
+      if (filters.type && record.transaction_type !== filters.type) return false;
+      if (filters.status && record.status !== filters.status) return false;
+      return true;
+    });
+
+    if (!trades || trades.length === 0) {
+      return {
+        trades: [],
+        summary: {
+          totalTrades: 0,
+          buyTrades: 0,
+          sellTrades: 0,
+          totalVolume: 0,
+          totalFees: 0
+        },
+        total: 0
+      };
     }
-    
-    // Mock summary
+
+    const startIdx = (page - 1) * limit;
+    const paginatedTrades = trades.slice(startIdx, startIdx + limit);
+
+    // Calculate summary statistics
+    const buyTrades = trades.filter((t: any) => t.transaction_type === 'buy').length;
+    const sellTrades = trades.filter((t: any) => t.transaction_type === 'sell').length;
+    const totalVolume = trades.reduce((sum: number, t: any) => sum + parseFloat(t.amount?.toString() || '0'), 0);
+    const totalFees = trades.reduce((sum: number, t: any) => sum + parseFloat(t.transaction_fee?.toString() || '0'), 0);
+
     const summary = {
-      totalTrades: totalTrades,
-      buyTrades: Math.floor(totalTrades * 0.55),
-      sellTrades: Math.floor(totalTrades * 0.45),
-      totalVolume: parseFloat((totalTrades * 50000).toFixed(2)),
-      totalFees: parseFloat((totalTrades * 50).toFixed(2))
+      totalTrades: trades.length,
+      buyTrades,
+      sellTrades,
+      totalVolume: parseFloat(totalVolume.toFixed(8)),
+      totalFees: parseFloat(totalFees.toFixed(8))
     };
-    
+
     return {
-      trades: mockTrades,
+      trades: paginatedTrades,
       summary,
-      total: totalTrades
+      total: trades.length
     };
   } catch (error) {
     logger.error('Error fetching user trading history:', error);
-    throw error;
+    return {
+      trades: [],
+      summary: {
+        totalTrades: 0,
+        buyTrades: 0,
+        sellTrades: 0,
+        totalVolume: 0,
+        totalFees: 0
+      },
+      total: 0
+    };
   }
 }
 
 export async function getTradingStatistics(userId: string, timeframe: string) {
   try {
-    // In a real implementation, you would query the trading statistics table
-    // For now, we'll return mock data
+    // Query the crypto_transactions table to calculate trading statistics
+    const trades = await db.select('crypto_transactions', (record) => record.user_id === userId);
+
+    if (!trades || trades.length === 0) {
+      return {
+        totalTrades: 0,
+        successfulTrades: 0,
+        successRate: 0,
+        totalVolume: 0,
+        averageTradeSize: 0,
+        tradingPairs: [],
+        profitLoss: 0,
+        reputation: 0,
+        averageResponseTime: 0,
+        averageCompletionTime: 0
+      };
+    }
+
+    const successfulTrades = trades.filter((t: any) => t.status === 'completed').length;
+    const successRate = (successfulTrades / trades.length) * 100;
+    const totalVolume = trades.reduce((sum: number, t: any) => sum + parseFloat(t.amount?.toString() || '0'), 0);
+    const averageTradeSize = totalVolume / trades.length;
+    const tradingPairs = Array.from(new Set(trades.map((t: any) => t.currency)));
+
     return {
-      totalTrades: Math.floor(Math.random() * 100) + 20,
-      successfulTrades: Math.floor(Math.random() * 90) + 15,
-      successRate: parseFloat((85 + Math.random() * 15).toFixed(2)),
-      totalVolume: parseFloat((Math.random() * 500000 + 50000).toFixed(2)),
-      averageTradeSize: parseFloat((Math.random() * 5000 + 1000).toFixed(2)),
-      tradingPairs: ['BTC/USD', 'ETH/USD', 'BTC/EUR'],
-      profitLoss: parseFloat((Math.random() * 10000 - 5000).toFixed(2)),
-      reputation: parseFloat((4 + Math.random() * 1).toFixed(1)),
-      averageResponseTime: Math.floor(Math.random() * 10) + 1, // minutes
-      averageCompletionTime: Math.floor(Math.random() * 30) + 10 // minutes
+      totalTrades: trades.length,
+      successfulTrades,
+      successRate: parseFloat(successRate.toFixed(2)),
+      totalVolume: parseFloat(totalVolume.toFixed(8)),
+      averageTradeSize: parseFloat(averageTradeSize.toFixed(8)),
+      tradingPairs,
+      profitLoss: 0,
+      reputation: 0,
+      averageResponseTime: 0,
+      averageCompletionTime: 0
     };
   } catch (error) {
     logger.error('Error fetching trading statistics:', error);
-    throw error;
+    return {
+      totalTrades: 0,
+      successfulTrades: 0,
+      successRate: 0,
+      totalVolume: 0,
+      averageTradeSize: 0,
+      tradingPairs: [],
+      profitLoss: 0,
+      reputation: 0,
+      averageResponseTime: 0,
+      averageCompletionTime: 0
+    };
   }
 }
