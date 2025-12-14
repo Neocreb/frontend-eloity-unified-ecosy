@@ -226,16 +226,16 @@ router.get('/orderbook/:pair', async (req, res) => {
     try {
       orderbook = await getOrderBook(pair, parseInt(depth as string));
     } catch (fetchError) {
-      logger.warn('[Orderbook API] getOrderBook failed, using fallback', {
+      logger.warn('[Orderbook API] getOrderBook failed', {
         pair,
         error: fetchError instanceof Error ? fetchError.message : String(fetchError)
       });
-      // Fallback orderbook data
+      // Return empty orderbook when data is unavailable
       orderbook = {
         bids: [],
         asks: [],
-        timestamp: new Date().toISOString(),
-        source: 'fallback'
+        timestamp: Date.now(),
+        symbol: pair
       };
     }
 
@@ -243,7 +243,7 @@ router.get('/orderbook/:pair', async (req, res) => {
       pair,
       orderbook,
       timestamp: new Date().toISOString(),
-      status: 'success'
+      status: orderbook.bids?.length > 0 || orderbook.asks?.length > 0 ? 'success' : 'no_data'
     };
 
     return res.status(200).json(response);
@@ -255,11 +255,11 @@ router.get('/orderbook/:pair', async (req, res) => {
 
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     return res.status(200).json({
-      error: 'Failed to fetch orderbook',
+      error: process.env.NODE_ENV === 'development' ? (error instanceof Error ? error.message : String(error)) : 'Failed to fetch orderbook',
       orderbook: {
         bids: [],
         asks: [],
-        source: 'fallback'
+        timestamp: Date.now()
       },
       timestamp: new Date().toISOString(),
       status: 'error'
