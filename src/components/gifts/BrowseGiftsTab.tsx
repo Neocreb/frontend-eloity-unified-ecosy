@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,12 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import { VirtualGift } from '@/types/gifts';
-import { 
-  Search, 
-  Filter, 
-  Gift, 
-  Crown, 
-  Heart, 
+import { supabase } from '@/lib/supabase';
+import {
+  Search,
+  Filter,
+  Gift,
+  Crown,
+  Heart,
   Star,
   Zap,
   Flower2,
@@ -20,7 +21,8 @@ import {
   Gamepad2,
   Music,
   Film,
-  Palette
+  Palette,
+  Loader2
 } from 'lucide-react';
 
 interface BrowseGiftsTabProps {
@@ -33,9 +35,51 @@ const BrowseGiftsTab = ({ onSelectGift }: BrowseGiftsTabProps) => {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [rarityFilter, setRarityFilter] = useState('all');
   const [sortBy, setSortBy] = useState('popular');
+  const [virtualGifts, setVirtualGifts] = useState<VirtualGift[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Sample virtual gifts data
-  const virtualGifts: VirtualGift[] = [
+  useEffect(() => {
+    fetchVirtualGifts();
+  }, []);
+
+  const fetchVirtualGifts = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from('virtual_gifts')
+        .select('*')
+        .eq('available', true)
+        .order('price', { ascending: true });
+
+      if (error) throw error;
+      setVirtualGifts(data || []);
+    } catch (error) {
+      console.error('Error loading virtual gifts:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load virtual gifts. Please try again.',
+        variant: 'destructive',
+      });
+      setVirtualGifts([]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-8 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Loading virtual gifts...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const dummyVirtualGifts: VirtualGift[] = [
     {
       id: '1',
       name: 'Red Rose',
