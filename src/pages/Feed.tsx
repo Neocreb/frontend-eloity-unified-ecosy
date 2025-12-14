@@ -139,6 +139,8 @@ const Feed = () => {
       });
 
       setShowCreateStoryModal(false);
+      // Trigger refetch of stories in EnhancedStoriesSection
+      setRefetchTrigger(prev => prev + 1);
     } catch (error) {
       console.error("Error creating story:", error);
       toast({
