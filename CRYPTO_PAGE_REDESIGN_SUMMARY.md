@@ -93,21 +93,26 @@ src/pages/
 ## Database Schema
 
 ### Tables Created
-1. **featured_crypto_listings**
-   - Stores featured crypto with categories (gemw, new_listing, trending, hot)
+1. **featured_crypto_listings** (Optional for custom management)
+   - Stores curated featured crypto listings
+   - Categories: gainers, losers, trending, hot, gemw, new_listing
    - Price data and 24h change tracking
    - Ordering system for custom display sequence
-   - Auto-sync with CoinGecko IDs
+   - Admin-only write access via RLS policies
+   - Used for manual curation when needed
 
-2. **community_featured_posts**
-   - User-generated content with engagement metrics
+2. **community_featured_posts** (Optional for custom management)
+   - User-generated or admin-curated community content
    - Categories: discover, community, announcement, event
    - Sentiment analysis (positive, negative, neutral)
    - Impact percentage for market-related posts
+   - Can be created by users or admins
+   - Featured/hidden status for moderation
 
-3. **crypto_categories**
-   - Reference table for category definitions
-   - Includes: GemW, New Listing, Hot, Top Performers, DeFi, Layer 2
+3. **crypto_categories** (Reference table)
+   - Category definitions and metadata
+   - Includes: Gainers, Losers, Trending, Hot, GemW, New Listing
+   - Icons and descriptions for UI display
 
 ## Setup Steps
 
