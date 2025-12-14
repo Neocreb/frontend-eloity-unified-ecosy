@@ -199,6 +199,19 @@ const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
     });
   };
 
+  if (isLoading) {
+    return (
+      <Card>
+        <CardContent className="p-8 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">Loading analytics...</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6">
       {/* Stats Cards */}
