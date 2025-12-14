@@ -322,3 +322,7 @@ export function isCacheValid(): boolean {
 export function getCachedRateCount(): number {
   return exchangeRateCache.size;
 }
+
+export function isServiceInitialized(): boolean {
+  return isInitialized;
+}
