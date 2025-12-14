@@ -76,7 +76,8 @@ class StoriesService {
           media_url,
           media_type,
           caption,
-          views_count
+          views_count,
+          profiles:user_id(id, username, full_name, avatar_url)
         `)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
