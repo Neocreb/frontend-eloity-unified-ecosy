@@ -17,6 +17,28 @@ import { logger } from '../utils/logger.js';
 
 const router = express.Router();
 
+// Search endpoint for global search
+router.get('/search', async (req, res) => {
+  try {
+    const { q, limit = 20, offset = 0 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const searchQuery = `%${q}%`;
+
+    // Search videos from database
+    // This is a placeholder - adjust based on your actual video table structure
+    const videos = [];
+
+    res.json({ videos });
+  } catch (error) {
+    logger.error('Error searching videos:', error);
+    res.status(500).json({ error: 'Failed to search videos' });
+  }
+});
+
 // Configure video upload
 const videoStorage = multer.diskStorage({
   destination: (req, file, cb) => {
