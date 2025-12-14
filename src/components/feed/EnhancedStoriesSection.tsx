@@ -106,6 +106,7 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
           caption: story.caption,
           expires_at: story.expires_at,
           views_count: story.views_count,
+          views: story.views_count,
           created_at: story.created_at,
           user_id: story.user_id,
           profiles: profile,
