@@ -84,21 +84,35 @@ class SafeCurrencyProvider extends Component<
   SafeCurrencyProviderProps,
   SafeCurrencyProviderState
 > {
+  private mounted = false;
+
   constructor(props: SafeCurrencyProviderProps) {
     super(props);
     this.state = { hasError: false, CurrencyProvider: undefined };
+  }
+
+  componentDidMount() {
+    this.mounted = true;
     this.loadCurrencyProvider();
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
   }
 
   async loadCurrencyProvider() {
     try {
-      if (!this.state.CurrencyProvider) {
+      if (!this.state.CurrencyProvider && this.mounted) {
         const module = await import("./CurrencyContext");
-        this.setState({ CurrencyProvider: module.CurrencyProvider });
+        if (this.mounted) {
+          this.setState({ CurrencyProvider: module.CurrencyProvider });
+        }
       }
     } catch (error) {
       console.error("Failed to load CurrencyProvider:", error);
-      this.setState({ hasError: true, error: error as Error });
+      if (this.mounted) {
+        this.setState({ hasError: true, error: error as Error });
+      }
     }
   }
 
