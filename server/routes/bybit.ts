@@ -296,7 +296,7 @@ router.get('/spot-lever-token/list', async (req, res) => {
 });
 
 /**
- * Get recent trades for a symbol
+ * Get recent trades for a symbol with caching
  * Query params: symbol (required), limit (optional, default: 100), category (optional)
  */
 router.get('/market/recent-trades', async (req, res) => {
@@ -307,13 +307,18 @@ router.get('/market/recent-trades', async (req, res) => {
       return res.status(400).json({ error: 'Symbol is required' });
     }
 
-    const trades = await getBybitRecentTrades(
-      symbol.toUpperCase(),
-      parseInt(limit as string, 10),
-      category as 'spot' | 'linear' | 'inverse'
+    const upperSymbol = symbol.toUpperCase();
+    const limitNum = parseInt(limit as string, 10);
+
+    // Use cache for recent trades
+    const trades = await bybitCache.getOrFetchRecentTrades(
+      upperSymbol,
+      limitNum,
+      (sym, lim) => getBybitRecentTrades(sym, lim, category as 'spot' | 'linear' | 'inverse'),
+      10 * 1000 // 10 second TTL
     );
 
-    res.json({ symbol: symbol.toUpperCase(), count: trades.length, trades });
+    res.json({ symbol: upperSymbol, count: trades.length, trades });
   } catch (error) {
     logger.error('Error getting recent trades:', error);
     res.status(500).json({ error: 'Failed to get recent trades' });
