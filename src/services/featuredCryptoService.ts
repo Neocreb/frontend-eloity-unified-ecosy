@@ -443,6 +443,43 @@ export class FeaturedCryptoService {
 
     return mockPosts.slice(0, limit);
   }
+
+  private static getMockEventPosts(limit: number = 5): CommunityFeaturedPost[] {
+    const mockEvents: CommunityFeaturedPost[] = [
+      {
+        id: 'event_1',
+        user_id: '',
+        username: 'Eloity Events',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eloity-events',
+        title: 'Crypto Trading Masterclass',
+        content: 'Join us for an exclusive masterclass on advanced crypto trading strategies. Live Q&A with industry experts.',
+        category: 'event',
+        sentiment: 'positive',
+        impact_percentage: 0,
+        is_featured: true,
+        engagement_count: 234,
+        created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: 'event_2',
+        user_id: '',
+        username: 'Eloity Events',
+        avatar_url: 'https://api.dicebear.com/7.x/avataaars/svg?seed=eloity-events',
+        title: 'DeFi Innovation Summit 2025',
+        content: 'Explore the latest innovations in decentralized finance. Network with leading DeFi developers and investors.',
+        category: 'event',
+        sentiment: 'positive',
+        impact_percentage: 0,
+        is_featured: true,
+        engagement_count: 567,
+        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
+        updated_at: new Date().toISOString()
+      }
+    ];
+
+    return mockEvents.slice(0, limit);
+  }
 }
 
 export default FeaturedCryptoService;
