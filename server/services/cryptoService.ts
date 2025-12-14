@@ -8,21 +8,6 @@ import { db } from '../utils/db.js';
 import axios from 'axios';
 import { getBybitTicker } from './bybitService.js';
 
-// Fallback prices for when all APIs fail
-const FALLBACK_PRICES: Record<string, any> = {
-  bitcoin: { usd: 45000, usd_24h_change: 2.5, usd_market_cap: 880000000000, usd_24h_vol: 28000000000 },
-  ethereum: { usd: 2500, usd_24h_change: 1.8, usd_market_cap: 300000000000, usd_24h_vol: 15000000000 },
-  tether: { usd: 1.0, usd_24h_change: 0.1, usd_market_cap: 100000000000, usd_24h_vol: 80000000000 },
-  binancecoin: { usd: 620, usd_24h_change: 3.2, usd_market_cap: 95000000000, usd_24h_vol: 2500000000 },
-  solana: { usd: 140, usd_24h_change: 4.1, usd_market_cap: 62000000000, usd_24h_vol: 3800000000 },
-  cardano: { usd: 1.05, usd_24h_change: 2.2, usd_market_cap: 37000000000, usd_24h_vol: 1200000000 },
-  chainlink: { usd: 28, usd_24h_change: 1.9, usd_market_cap: 12500000000, usd_24h_vol: 780000000 },
-  polygon: { usd: 0.85, usd_24h_change: 3.5, usd_market_cap: 8500000000, usd_24h_vol: 650000000 },
-  avalanche: { usd: 35, usd_24h_change: 2.8, usd_market_cap: 1200000000, usd_24h_vol: 420000000 },
-  polkadot: { usd: 9.5, usd_24h_change: 2.1, usd_market_cap: 12500000000, usd_24h_vol: 850000000 },
-  dogecoin: { usd: 0.35, usd_24h_change: 3.8, usd_market_cap: 52000000000, usd_24h_vol: 2800000000 }
-};
-
 export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'usd') {
   logger.info('getCryptoPrices called with symbols:', { symbols, vsCurrency });
   try {
@@ -31,11 +16,9 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
     // Validate inputs
     if (!Array.isArray(symbols) || symbols.length === 0) {
       logger.warn('getCryptoPrices called with invalid symbols', { symbols });
-      return FALLBACK_PRICES;
+      return {};
     }
 
-    // Check if CryptoAPIs API key is available
-    const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
     const bybitKey = process.env.BYBIT_PUBLIC_API;
 
     // Symbol to Bybit trading pair mapping
@@ -53,83 +36,9 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
       dogecoin: 'DOGEUSDT'
     };
 
-    // If CryptoAPIs is configured, use it as PRIMARY source for reliability
-    if (cryptoapisKey) {
-      logger.info('CRYPTOAPIS_API_KEY configured - using CryptoAPIs as primary source');
-
-      const cryptoapisBase = 'https://rest.cryptoapis.io';
-      const assetMap: Record<string, string> = {
-        bitcoin: 'BTC',
-        ethereum: 'ETH',
-        tether: 'USDT',
-        binancecoin: 'BNB',
-        solana: 'SOL',
-        cardano: 'ADA',
-        chainlink: 'LINK',
-        polygon: 'MATIC',
-        avalanche: 'AVAX',
-        polkadot: 'DOT',
-        dogecoin: 'DOGE'
-      };
-
-      const fetchPromises = symbols.map(async (symbol) => {
-        const lower = symbol.toLowerCase();
-
-        try {
-          if (!Object.prototype.hasOwnProperty.call(assetMap, lower)) {
-            logger.warn(`Symbol "${symbol}" is not supported for price lookup.`);
-            return;
-          }
-
-          const assetId = assetMap[lower];
-          const url = `${cryptoapisBase}/market-data/exchange-rates/realtime/${assetId}/USD`;
-          logger.info(`Fetching CryptoAPIs data for ${lower}`);
-
-          const resp = await axios.get(url, {
-            timeout: 10000,
-            validateStatus: () => true,
-            headers: {
-              'X-API-Key': cryptoapisKey,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            }
-          });
-
-          if (resp.status === 200 && resp.data && resp.data.data && typeof resp.data.data.rate === 'number') {
-            const rate = parseFloat(String(resp.data.data.rate));
-            if (rate > 0) {
-              result[lower] = {
-                usd: rate,
-                usd_24h_change: 0,
-                usd_market_cap: null,
-                usd_24h_vol: null
-              };
-              logger.info(`Successfully fetched CryptoAPIs data for ${lower}: $${rate}`);
-              return;
-            }
-          }
-          logger.warn(`CryptoAPIs returned invalid data for ${lower}: status=${resp.status}`);
-        } catch (err) {
-          logger.error('CryptoAPIs price fetch failed for', lower, {
-            message: err instanceof Error ? err.message : String(err)
-          });
-        }
-      });
-
-      await Promise.all(fetchPromises);
-
-      // If we got data from CryptoAPIs, return it
-      if (Object.keys(result).length > 0) {
-        logger.info('Successfully fetched prices from CryptoAPIs', { symbolCount: Object.keys(result).length });
-        return result;
-      }
-
-      logger.warn('CryptoAPIs returned no valid data, falling back to Bybit');
-    }
-
-    // Fallback to Bybit if CryptoAPIs is not configured or failed
-    if (bybitKey && bybitKey !== 'your-bybit-public-api-key' && Object.keys(result).length === 0) {
-      logger.info('Attempting to fetch data from Bybit as fallback');
+    // Try Bybit as PRIMARY source
+    if (bybitKey && bybitKey !== 'your-bybit-public-api-key') {
+      logger.info('Using Bybit as primary price source');
 
       const fetchPromises = symbols.map(async (symbol) => {
         const lower = symbol.toLowerCase();
@@ -258,43 +167,18 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
       return result;
     }
 
-    // Final fallback: Use hardcoded fallback prices for all requested symbols
-    logger.warn('All API sources failed, using hardcoded fallback prices');
-    for (const symbol of symbols) {
-      const lower = symbol.toLowerCase();
-      if (!result[lower]) {
-        result[lower] = FALLBACK_PRICES[lower] || {
-          usd: 0,
-          usd_24h_change: 0,
-          usd_market_cap: 0,
-          usd_24h_vol: 0
-        };
-      }
-    }
-    logger.info('Returning fallback prices', {
-      symbolCount: Object.keys(result).length,
-      symbols: Object.keys(result)
-    });
-    return result;
+    // All API sources failed, return empty
+    logger.warn('All API sources failed, returning empty prices');
+    return {};
   } catch (error) {
     logger.error('Price fetch error:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });
 
-    // Even on error, return fallback prices instead of throwing
-    const result: any = {};
-    for (const symbol of symbols) {
-      const lower = symbol.toLowerCase();
-      result[lower] = FALLBACK_PRICES[lower] || {
-        usd: 0,
-        usd_24h_change: 0,
-        usd_market_cap: 0,
-        usd_24h_vol: 0
-      };
-    }
-    logger.warn('Returning fallback prices due to error');
-    return result;
+    // Return empty on error instead of fallback prices
+    logger.warn('Returning empty prices due to error');
+    return {};
   }
 }
 
