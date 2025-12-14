@@ -32,6 +32,7 @@ const EnhancedFeedWithTabs = () => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [userStories, setUserStories] = useState<any[]>([]);
   const [fetchedStories, setFetchedStories] = useState<any[]>([]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
