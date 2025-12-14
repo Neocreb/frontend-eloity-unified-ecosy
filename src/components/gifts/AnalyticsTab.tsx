@@ -146,10 +146,11 @@ const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
       (giftTxData || []).forEach(tx => {
         const profile = profilesMap.get(tx.to_user_id);
         const key = tx.to_user_id;
+        const username = profile?.username || profile?.full_name || tx.to_user_id.substring(0, 8);
         const current = recipientMap.get(key) || {
           gifts: 0,
           tips: 0,
-          username: profile?.username || profile?.full_name || 'Unknown',
+          username,
           avatar_url: profile?.avatar_url || '/placeholder-user.jpg'
         };
         current.gifts += 1;
@@ -159,10 +160,11 @@ const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
       (tipTxData || []).forEach(tx => {
         const profile = profilesMap.get(tx.to_user_id);
         const key = tx.to_user_id;
+        const username = profile?.username || profile?.full_name || tx.to_user_id.substring(0, 8);
         const current = recipientMap.get(key) || {
           gifts: 0,
           tips: 0,
-          username: profile?.username || profile?.full_name || 'Unknown',
+          username,
           avatar_url: profile?.avatar_url || '/placeholder-user.jpg'
         };
         current.tips += 1;
