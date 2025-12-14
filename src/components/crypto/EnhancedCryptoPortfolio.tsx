@@ -332,13 +332,13 @@ function EnhancedCryptoPortfolioContent({
                     <div
                       className={cn(
                         "flex items-center gap-1 text-sm",
-                        getChangeColor(totalPnlPercent),
+                        getChangeColor(totalPnLPercent),
                       )}
                     >
-                      {React.createElement(getChangeIcon(totalPnlPercent), {
+                      {React.createElement(getChangeIcon(totalPnLPercent), {
                         className: "h-4 w-4",
                       })}
-                      {showValues ? formatPercent(totalPnlPercent) : "••••"}
+                      {showValues ? formatPercent(totalPnLPercent) : "••••"}
                     </div>
                   </div>
                   <Wallet className="h-8 w-8 text-blue-500" />
@@ -385,13 +385,13 @@ function EnhancedCryptoPortfolioContent({
                     <div
                       className={cn(
                         "flex items-center gap-1 text-sm",
-                        getChangeColor(totalPnlPercent),
+                        getChangeColor(totalPnLPercent),
                       )}
                     >
-                      {React.createElement(getChangeIcon(totalPnlPercent), {
+                      {React.createElement(getChangeIcon(totalPnLPercent), {
                         className: "h-4 w-4",
                       })}
-                      {showValues ? formatPercent(totalPnlPercent) : "••••"}
+                      {showValues ? formatPercent(totalPnLPercent) : "••••"}
                     </div>
                   </div>
                   <Target className="h-8 w-8 text-purple-500" />
