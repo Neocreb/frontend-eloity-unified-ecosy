@@ -104,7 +104,7 @@ const PLATFORM_TOKEN = {
   name: "Eloity Points",
   price: 0.50,
   image: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
-  balance: 1250,
+  balance: 0, // This will be updated with real data
   description: "Platform native token for rewards and transactions",
 };
 
