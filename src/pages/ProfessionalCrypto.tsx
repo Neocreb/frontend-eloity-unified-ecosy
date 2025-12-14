@@ -564,14 +564,20 @@ const ProfessionalCrypto = () => {
 
               <Card className="dark:bg-slate-800 dark:border-slate-700">
                 <CardContent className="p-0">
-                  <Tabs value={activeMarketTab} onValueChange={(value) => setActiveMarketTab(value as "favorites" | "trending")} className="w-full">
+                  <Tabs value={activeMarketTab} onValueChange={(value) => setActiveMarketTab(value as any)} className="w-full">
                     <div className="border-b dark:border-slate-700 px-6 pt-6">
-                      <TabsList className="grid w-full max-w-xs grid-cols-2 dark:bg-slate-700">
-                        <TabsTrigger value="favorites" className="dark:data-[state=active]:bg-slate-800">
+                      <TabsList className="grid w-full max-w-2xl grid-cols-4 dark:bg-slate-700">
+                        <TabsTrigger value="favorites" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
                           Favorites
                         </TabsTrigger>
-                        <TabsTrigger value="trending" className="dark:data-[state=active]:bg-slate-800">
+                        <TabsTrigger value="trending" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
                           Trending
+                        </TabsTrigger>
+                        <TabsTrigger value="gemw" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          GemW
+                        </TabsTrigger>
+                        <TabsTrigger value="new_listings" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          New Listings
                         </TabsTrigger>
                       </TabsList>
                     </div>
