@@ -8,6 +8,64 @@ import { eq, and, or, desc, asc, like, sql, count, inArray } from 'drizzle-orm';
 
 const router = express.Router();
 
+// Search endpoint for global search
+router.get('/search', async (req, res) => {
+  try {
+    const { q, limit = 20, offset = 0 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    const searchQuery = `%${q}%`;
+    let productsQuery = db.select().from(products)
+      .where(or(
+        like(products.title, searchQuery),
+        like(products.description, searchQuery),
+        like(products.tags, searchQuery)
+      ))
+      .orderBy(desc(products.created_at))
+      .limit(parseInt(limit as string))
+      .offset(parseInt(offset as string));
+
+    const productsResult = await productsQuery.execute();
+
+    // Get seller information
+    const sellerIds = [...new Set(productsResult.map(p => p.seller_id))];
+    let sellersResult = [];
+    if (sellerIds.length > 0) {
+      sellersResult = await db.select().from(profiles).where(inArray(profiles.user_id, sellerIds)).execute();
+    }
+    const sellersMap = sellersResult.reduce((acc, seller) => {
+      acc[seller.user_id] = seller;
+      return acc;
+    }, {} as Record<string, any>);
+
+    const products_data = productsResult.map(product => ({
+      id: product.id,
+      name: product.title,
+      title: product.title,
+      description: product.description,
+      price: product.price,
+      images: product.images ? JSON.parse(product.images) : ['/placeholder.svg'],
+      category: product.category,
+      seller: {
+        id: product.seller_id,
+        name: sellersMap[product.seller_id]?.full_name || sellersMap[product.seller_id]?.username || 'Unknown',
+        verified: sellersMap[product.seller_id]?.is_verified || false
+      },
+      rating: product.rating,
+      views: product.views_count || 0,
+      likes: product.favorites_count || 0
+    }));
+
+    res.json({ products: products_data });
+  } catch (error) {
+    logger.error('Error searching products:', error);
+    res.status(500).json({ error: 'Failed to search products' });
+  }
+});
+
 // Get all products (with filtering, pagination, search)
 router.get('/', async (req, res) => {
   try {
