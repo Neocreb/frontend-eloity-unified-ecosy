@@ -373,50 +373,92 @@ ORDER BY updated_at DESC;
 
 ## Troubleshooting
 
-### Changes Not Showing?
-1. Verify `is_featured = true`
-2. Refresh the page (Cmd+R or Ctrl+R)
+### Changes Not Showing on Crypto Page?
+
+**Check the basics**:
+1. Verify `is_featured = true` in database
+2. Refresh page and clear browser cache (Cmd+Shift+R or Ctrl+Shift+R)
 3. Check browser console for errors
 4. Verify category spelling (case-sensitive)
 
-### Wrong Order?
-- Recheck `order_index` values
-- Ensure they're sequential: 1, 2, 3, 4...
-- Update existing rows if needed
+**For Admin Interface**:
+1. Ensure you're logged in as admin
+2. Check that tables exist in Supabase
+3. Verify RLS policies allow admin access
 
-### Missing Images?
-- Verify URL is accessible
-- Check HTTPS (not HTTP)
-- Test URL in browser first
-- Use CoinGecko URLs for crypto logos
+**For Automatic Data**:
+1. Gainers/Losers: Check crypto prices are loading
+2. Discover: Verify blog posts exist and are published
+3. Community: Check feed posts exist with crypto keywords
+4. Events: Verify events table has crypto type events
+5. Announcements: Check blog posts have announcement tags
 
-## Automation Ideas
+### Content Order Issues
+- Verify `order_index` is sequential: 1, 2, 3, 4...
+- No gaps in order_index values
+- Lower numbers display first
+- Use `ORDER BY order_index ASC` in queries
 
-Schedule updates with:
-- **Supabase Functions**: Auto-fetch prices from CoinGecko
-- **Zapier/Make**: Sync posts from social media
-- **Custom API**: Build admin endpoint for bulk updates
-- **Webhooks**: Listen to price changes and auto-update
+### Missing Images
+- Verify URL is valid and accessible
+- Use HTTPS URLs only (not HTTP)
+- Test URL in browser directly
+- For cryptos: Use CoinGecko URLs
+- For avatars: Use Dicebear API or similar
+
+### Database Connection Issues
+- Verify `VITE_SUPABASE_URL` is set
+- Verify `VITE_SUPABASE_ANON_KEY` is set
+- Check Supabase project status
+- Verify RLS policies allow queries
+- Check browser console for network errors
+
+## Advanced Management
+
+### Automation with Supabase Functions
+Create scheduled functions to auto-update:
+```sql
+-- Example: Auto-update featured_at for fresh content
+UPDATE community_featured_posts
+SET featured_at = NOW()
+WHERE category = 'announcement'
+AND created_at > NOW() - INTERVAL '7 days'
+AND is_featured = true;
+```
+
+### Bulk Operations
+```sql
+-- Reorder all gainers content
+UPDATE featured_crypto_listings
+SET order_index = ROW_NUMBER() OVER (ORDER BY price_change_24h DESC)
+WHERE category = 'gainers';
+
+-- Archive old community posts
+UPDATE community_featured_posts
+SET is_featured = false
+WHERE created_at < NOW() - INTERVAL '30 days';
+```
 
 ---
 
-**Quick Command Reference:**
-```sql
--- Show featured cryptos
-SELECT * FROM featured_crypto_listings WHERE is_featured = true ORDER BY order_index;
+## Quick Reference
 
--- Show featured posts
-SELECT * FROM community_featured_posts WHERE is_featured = true ORDER BY order_index;
+**Admin Interface**:
+- Access: `/admin/featured-crypto`
+- Requires: Admin user role
+- Features: Add, edit, delete, toggle visibility
 
--- Hide everything
-UPDATE featured_crypto_listings SET is_featured = false;
-UPDATE community_featured_posts SET is_featured = false;
+**Automatic Content**:
+- Gainers: Calculated from crypto prices
+- Losers: Calculated from crypto prices
+- Discover: From blog posts and courses
+- Community: From feed posts
+- Events: From events table
+- Announcements: From tagged blog posts
 
--- Reset featured_at timestamp
-UPDATE featured_crypto_listings SET featured_at = NOW() WHERE id = 'uuid';
-```
-
-**Need Help?**
-- Check `FEATURED_CRYPTO_SETUP.md` for detailed setup
-- Review `CRYPTO_PAGE_REDESIGN_SUMMARY.md` for full documentation
-- See `src/services/featuredCryptoService.ts` for code examples
+**Support Resources**:
+- Setup Guide: `FEATURED_CRYPTO_SETUP.md`
+- Implementation Guide: `CRYPTO_PAGE_REDESIGN_SUMMARY.md`
+- Service Code: `src/services/featuredCryptoService.ts`
+- Admin Component: `src/pages/admin/AdminFeaturedCrypto.tsx`
+- Main Component: `src/pages/ProfessionalCrypto.tsx`
