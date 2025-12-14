@@ -17,6 +17,12 @@ router.get('/search', async (req, res) => {
       return res.status(400).json({ error: 'Search query is required' });
     }
 
+    // Check if running in mock mode
+    if ((global as any).useMockData) {
+      logger.warn('Products search called in mock mode, returning empty results');
+      return res.json({ products: [] });
+    }
+
     const searchQuery = `%${q}%`;
     let productsQuery = db.select().from(products)
       .where(or(
@@ -62,6 +68,11 @@ router.get('/search', async (req, res) => {
     res.json({ products: products_data });
   } catch (error) {
     logger.error('Error searching products:', error);
+    logger.error('Products search error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      query: req.query
+    });
     res.status(500).json({ error: 'Failed to search products' });
   }
 });
