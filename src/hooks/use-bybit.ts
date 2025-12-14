@@ -251,6 +251,90 @@ export function useBybitWallet(options: UseBybitWalletOptions = {}) {
 }
 
 /**
+ * Hook to fetch recent trades for a symbol
+ */
+export function useBybitRecentTrades(options: { symbol?: string; limit?: number; enabled?: boolean } = {}) {
+  const { symbol = 'BTCUSDT', limit = 100, enabled = true } = options;
+  const [trades, setTrades] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enabled || !symbol) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchTrades = async () => {
+      try {
+        const data = await bybitClient.getRecentTrades(symbol, limit);
+        setTrades(data);
+        setLoading(false);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch recent trades');
+        setLoading(false);
+      }
+    };
+
+    fetchTrades();
+  }, [symbol, limit, enabled]);
+
+  return { trades, loading, error };
+}
+
+/**
+ * Hook to fetch funding rates and market data for futures symbols
+ */
+export function useBybitMarketAnalysis(options: { symbol?: string; enabled?: boolean } = {}) {
+  const { symbol = 'BTCUSDT', enabled = true } = options;
+  const [fundingRate, setFundingRate] = useState<any | null>(null);
+  const [liquidations, setLiquidations] = useState<any[]>([]);
+  const [longShortRatio, setLongShortRatio] = useState<any[]>([]);
+  const [openInterest, setOpenInterest] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!enabled || !symbol) {
+      setLoading(false);
+      return;
+    }
+
+    const fetchAnalysis = async () => {
+      try {
+        const [funding, liqData, ratioData, oiData] = await Promise.allSettled([
+          bybitClient.getFundingRate(symbol),
+          bybitClient.getLiquidations(symbol, 50),
+          bybitClient.getLongShortRatio(symbol, 50),
+          bybitClient.getOpenInterest(symbol, 50)
+        ]);
+
+        if (funding.status === 'fulfilled') setFundingRate(funding.value);
+        if (liqData.status === 'fulfilled') setLiquidations(liqData.value);
+        if (ratioData.status === 'fulfilled') setLongShortRatio(ratioData.value);
+        if (oiData.status === 'fulfilled') setOpenInterest(oiData.value);
+
+        setLoading(false);
+        setError(null);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch market analysis');
+        setLoading(false);
+      }
+    };
+
+    fetchAnalysis();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchAnalysis, 30000);
+
+    return () => clearInterval(interval);
+  }, [symbol, enabled]);
+
+  return { fundingRate, liquidations, longShortRatio, openInterest, loading, error };
+}
+
+/**
  * Hook to check Bybit API health
  */
 export function useBybitHealth() {

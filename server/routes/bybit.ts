@@ -1,6 +1,7 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
+import bybitCache from '../services/bybitCacheService.js';
 import {
   getBybitServerTime,
   getBybitTicker,
@@ -12,6 +13,14 @@ import {
   getBybitWithdrawalFee,
   getBybitTradingFees,
   getBybitLeverageTokens,
+  getBybitRecentTrades,
+  getBybitTradeHistory,
+  getBybitSettlementHistory,
+  getBybitFundingRate,
+  getBybitFundingRateHistory,
+  getBybitOpenInterest,
+  getBybitLiquidations,
+  getBybitLongShortRatio,
   verifyBybitConnection
 } from '../services/bybitService.js';
 
@@ -52,7 +61,7 @@ router.get('/server/time', async (req, res) => {
 });
 
 /**
- * Get ticker data for a symbol
+ * Get ticker data for a symbol (with caching)
  * Query params: symbol (required), category (optional: spot|linear|inverse, default: spot)
  */
 router.get('/market/ticker', async (req, res) => {
@@ -63,7 +72,14 @@ router.get('/market/ticker', async (req, res) => {
       return res.status(400).json({ error: 'Symbol is required' });
     }
 
-    const ticker = await getBybitTicker(symbol.toUpperCase(), category as 'spot' | 'linear' | 'inverse');
+    const upperSymbol = symbol.toUpperCase();
+
+    // Use cache for ticker data
+    const ticker = await bybitCache.getOrFetchTicker(
+      upperSymbol,
+      (sym) => getBybitTicker(sym, category as 'spot' | 'linear' | 'inverse'),
+      30 * 1000 // 30 second TTL
+    );
 
     if (!ticker) {
       return res.status(404).json({ error: `No ticker data found for ${symbol}` });
@@ -77,7 +93,7 @@ router.get('/market/ticker', async (req, res) => {
 });
 
 /**
- * Get order book (market depth)
+ * Get order book (market depth) with caching
  * Query params: symbol (required), limit (optional, default: 25), category (optional)
  */
 router.get('/market/orderbook', async (req, res) => {
@@ -88,10 +104,15 @@ router.get('/market/orderbook', async (req, res) => {
       return res.status(400).json({ error: 'Symbol is required' });
     }
 
-    const orderbook = await getBybitOrderBook(
-      symbol.toUpperCase(),
-      parseInt(limit as string, 10),
-      category as 'spot' | 'linear' | 'inverse'
+    const upperSymbol = symbol.toUpperCase();
+    const limitNum = parseInt(limit as string, 10);
+
+    // Use cache for orderbook data
+    const orderbook = await bybitCache.getOrFetchOrderbook(
+      upperSymbol,
+      limitNum,
+      (sym, lim) => getBybitOrderBook(sym, lim, category as 'spot' | 'linear' | 'inverse'),
+      20 * 1000 // 20 second TTL
     );
 
     if (!orderbook) {
@@ -106,7 +127,7 @@ router.get('/market/orderbook', async (req, res) => {
 });
 
 /**
- * Get kline (candlestick) data
+ * Get kline (candlestick) data with caching
  * Query params: symbol (required), interval (optional, default: 1), limit (optional, default: 200), category (optional)
  */
 router.get('/market/klines', async (req, res) => {
@@ -117,11 +138,17 @@ router.get('/market/klines', async (req, res) => {
       return res.status(400).json({ error: 'Symbol is required' });
     }
 
-    const klines = await getBybitKlines(
-      symbol.toUpperCase(),
-      interval as string,
-      parseInt(limit as string, 10),
-      category as 'spot' | 'linear' | 'inverse'
+    const upperSymbol = symbol.toUpperCase();
+    const intervalStr = interval as string;
+    const limitNum = parseInt(limit as string, 10);
+
+    // Use cache for klines data
+    const klines = await bybitCache.getOrFetchKlines(
+      upperSymbol,
+      intervalStr,
+      limitNum,
+      (sym, intv, lim) => getBybitKlines(sym, intv, lim, category as 'spot' | 'linear' | 'inverse'),
+      5 * 60 * 1000 // 5 minute TTL
     );
 
     if (!klines) {
@@ -265,6 +292,216 @@ router.get('/spot-lever-token/list', async (req, res) => {
   } catch (error) {
     logger.error('Error getting leverage tokens:', error);
     res.status(500).json({ error: 'Failed to get leverage tokens' });
+  }
+});
+
+/**
+ * Get recent trades for a symbol with caching
+ * Query params: symbol (required), limit (optional, default: 100), category (optional)
+ */
+router.get('/market/recent-trades', async (req, res) => {
+  try {
+    const { symbol, limit = '100', category = 'spot' } = req.query;
+
+    if (!symbol || typeof symbol !== 'string') {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const upperSymbol = symbol.toUpperCase();
+    const limitNum = parseInt(limit as string, 10);
+
+    // Use cache for recent trades
+    const trades = await bybitCache.getOrFetchRecentTrades(
+      upperSymbol,
+      limitNum,
+      (sym, lim) => getBybitRecentTrades(sym, lim, category as 'spot' | 'linear' | 'inverse'),
+      10 * 1000 // 10 second TTL
+    );
+
+    res.json({ symbol: upperSymbol, count: trades.length, trades });
+  } catch (error) {
+    logger.error('Error getting recent trades:', error);
+    res.status(500).json({ error: 'Failed to get recent trades' });
+  }
+});
+
+/**
+ * Get trade history for a symbol
+ * Query params: symbol (required), limit (optional, default: 50), category (optional)
+ */
+router.get('/market/trade-history', async (req, res) => {
+  try {
+    const { symbol, limit = '50', category = 'spot' } = req.query;
+
+    if (!symbol || typeof symbol !== 'string') {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const trades = await getBybitTradeHistory(
+      symbol.toUpperCase(),
+      parseInt(limit as string, 10),
+      category as 'spot' | 'linear' | 'inverse'
+    );
+
+    res.json({ symbol: symbol.toUpperCase(), count: trades.length, trades });
+  } catch (error) {
+    logger.error('Error getting trade history:', error);
+    res.status(500).json({ error: 'Failed to get trade history' });
+  }
+});
+
+/**
+ * Get settlement history for a futures symbol
+ * Query params: symbol (required), limit (optional, default: 100), category (optional)
+ */
+router.get('/market/settlement-history', async (req, res) => {
+  try {
+    const { symbol, limit = '100', category = 'linear' } = req.query;
+
+    if (!symbol || typeof symbol !== 'string') {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const settlements = await getBybitSettlementHistory(
+      symbol.toUpperCase(),
+      parseInt(limit as string, 10),
+      category as 'linear' | 'inverse'
+    );
+
+    res.json({ symbol: symbol.toUpperCase(), count: settlements.length, settlements });
+  } catch (error) {
+    logger.error('Error getting settlement history:', error);
+    res.status(500).json({ error: 'Failed to get settlement history' });
+  }
+});
+
+/**
+ * Get current funding rate for a futures symbol
+ * Query params: symbol (required), category (optional)
+ */
+router.get('/market/funding-rate', async (req, res) => {
+  try {
+    const { symbol, category = 'linear' } = req.query;
+
+    if (!symbol || typeof symbol !== 'string') {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const fundingRate = await getBybitFundingRate(
+      symbol.toUpperCase(),
+      category as 'linear' | 'inverse'
+    );
+
+    if (!fundingRate) {
+      return res.status(404).json({ error: `No funding rate found for ${symbol}` });
+    }
+
+    res.json(fundingRate);
+  } catch (error) {
+    logger.error('Error getting funding rate:', error);
+    res.status(500).json({ error: 'Failed to get funding rate' });
+  }
+});
+
+/**
+ * Get funding rate history for a futures symbol
+ * Query params: symbol (required), limit (optional, default: 100), category (optional)
+ */
+router.get('/market/funding-rate-history', async (req, res) => {
+  try {
+    const { symbol, limit = '100', category = 'linear' } = req.query;
+
+    if (!symbol || typeof symbol !== 'string') {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const history = await getBybitFundingRateHistory(
+      symbol.toUpperCase(),
+      parseInt(limit as string, 10),
+      category as 'linear' | 'inverse'
+    );
+
+    res.json({ symbol: symbol.toUpperCase(), count: history.length, history });
+  } catch (error) {
+    logger.error('Error getting funding rate history:', error);
+    res.status(500).json({ error: 'Failed to get funding rate history' });
+  }
+});
+
+/**
+ * Get open interest data for a symbol
+ * Query params: symbol (required), period (optional), limit (optional), category (optional)
+ */
+router.get('/market/open-interest', async (req, res) => {
+  try {
+    const { symbol, period = '5min', limit = '100', category = 'linear' } = req.query;
+
+    if (!symbol || typeof symbol !== 'string') {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const openInterest = await getBybitOpenInterest(
+      symbol.toUpperCase(),
+      period as string,
+      category as 'linear' | 'inverse',
+      parseInt(limit as string, 10)
+    );
+
+    res.json({ symbol: symbol.toUpperCase(), count: openInterest.length, openInterest });
+  } catch (error) {
+    logger.error('Error getting open interest:', error);
+    res.status(500).json({ error: 'Failed to get open interest' });
+  }
+});
+
+/**
+ * Get liquidation data for a symbol
+ * Query params: symbol (required), limit (optional, default: 100), category (optional)
+ */
+router.get('/market/liquidations', async (req, res) => {
+  try {
+    const { symbol, limit = '100', category = 'linear' } = req.query;
+
+    if (!symbol || typeof symbol !== 'string') {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const liquidations = await getBybitLiquidations(
+      symbol.toUpperCase(),
+      parseInt(limit as string, 10),
+      category as 'linear' | 'inverse'
+    );
+
+    res.json({ symbol: symbol.toUpperCase(), count: liquidations.length, liquidations });
+  } catch (error) {
+    logger.error('Error getting liquidations:', error);
+    res.status(500).json({ error: 'Failed to get liquidations' });
+  }
+});
+
+/**
+ * Get long-short ratio for a symbol
+ * Query params: symbol (required), period (optional), limit (optional), category (optional)
+ */
+router.get('/market/long-short-ratio', async (req, res) => {
+  try {
+    const { symbol, period = '5min', limit = '100', category = 'linear' } = req.query;
+
+    if (!symbol || typeof symbol !== 'string') {
+      return res.status(400).json({ error: 'Symbol is required' });
+    }
+
+    const ratios = await getBybitLongShortRatio(
+      symbol.toUpperCase(),
+      period as string,
+      parseInt(limit as string, 10),
+      category as 'linear' | 'inverse'
+    );
+
+    res.json({ symbol: symbol.toUpperCase(), count: ratios.length, ratios });
+  } catch (error) {
+    logger.error('Error getting long-short ratio:', error);
+    res.status(500).json({ error: 'Failed to get long-short ratio' });
   }
 });
 
