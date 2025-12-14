@@ -589,9 +589,12 @@ export function useCrypto() {
   }, [state.portfolio]);
 
   const getStakingValue = useCallback(() => {
+    if (!Array.isArray(state.stakingPositions)) {
+      return 0;
+    }
     return state.stakingPositions.reduce((total, position) => {
       // In a real app, multiply by current market price
-      return total + position.amount;
+      return total + (position?.amount || 0);
     }, 0);
   }, [state.stakingPositions]);
 
