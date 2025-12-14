@@ -58,6 +58,7 @@ const Feed = () => {
   const [currentStoryIndex, setCurrentStoryIndex] = useState(0);
   const [userStories, setUserStories] = useState<any[]>([]);
   const [fetchedStories, setFetchedStories] = useState<any[]>([]);
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   // Update URL when tab changes
   useEffect(() => {
