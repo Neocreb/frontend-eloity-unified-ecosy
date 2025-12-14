@@ -127,7 +127,7 @@ router.get('/market/orderbook', async (req, res) => {
 });
 
 /**
- * Get kline (candlestick) data
+ * Get kline (candlestick) data with caching
  * Query params: symbol (required), interval (optional, default: 1), limit (optional, default: 200), category (optional)
  */
 router.get('/market/klines', async (req, res) => {
@@ -138,11 +138,17 @@ router.get('/market/klines', async (req, res) => {
       return res.status(400).json({ error: 'Symbol is required' });
     }
 
-    const klines = await getBybitKlines(
-      symbol.toUpperCase(),
-      interval as string,
-      parseInt(limit as string, 10),
-      category as 'spot' | 'linear' | 'inverse'
+    const upperSymbol = symbol.toUpperCase();
+    const intervalStr = interval as string;
+    const limitNum = parseInt(limit as string, 10);
+
+    // Use cache for klines data
+    const klines = await bybitCache.getOrFetchKlines(
+      upperSymbol,
+      intervalStr,
+      limitNum,
+      (sym, intv, lim) => getBybitKlines(sym, intv, lim, category as 'spot' | 'linear' | 'inverse'),
+      5 * 60 * 1000 // 5 minute TTL
     );
 
     if (!klines) {
