@@ -1,12 +1,12 @@
 import { logger } from '../utils/logger.js';
 import { db } from '../utils/db.js';
-import { logger } from '../utils/logger.js';
 
 // =============================================================================
 // CRYPTOCURRENCY PRICE SERVICE
 // =============================================================================
 
 import axios from 'axios';
+import { getBybitTicker } from './bybitService.js';
 
 // Fallback prices for when all APIs fail
 const FALLBACK_PRICES: Record<string, any> = {
@@ -36,6 +36,22 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
 
     // Check if CryptoAPIs API key is available
     const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
+    const bybitKey = process.env.BYBIT_PUBLIC_API;
+
+    // Symbol to Bybit trading pair mapping
+    const symbolToBybitPair: Record<string, string> = {
+      bitcoin: 'BTCUSDT',
+      ethereum: 'ETHUSDT',
+      tether: 'USDTUSDT',
+      binancecoin: 'BNBUSDT',
+      solana: 'SOLUSDT',
+      cardano: 'ADAUSDT',
+      chainlink: 'LINKUSDT',
+      polygon: 'MATICUSDT',
+      avalanche: 'AVAXUSDT',
+      polkadot: 'DOTUSDT',
+      dogecoin: 'DOGEUSDT'
+    };
 
     // If CryptoAPIs is configured, use it as PRIMARY source for reliability
     if (cryptoapisKey) {
@@ -108,10 +124,56 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
         return result;
       }
 
-      logger.warn('CryptoAPIs returned no valid data, falling back to CoinGecko');
+      logger.warn('CryptoAPIs returned no valid data, falling back to Bybit');
     }
 
-    // Fallback to CoinGecko only if CryptoAPIs is not configured or failed
+    // Fallback to Bybit if CryptoAPIs is not configured or failed
+    if (bybitKey && bybitKey !== 'your-bybit-public-api-key' && Object.keys(result).length === 0) {
+      logger.info('Attempting to fetch data from Bybit as fallback');
+
+      const fetchPromises = symbols.map(async (symbol) => {
+        const lower = symbol.toLowerCase();
+
+        try {
+          const pair = symbolToBybitPair[lower];
+          if (!pair) {
+            logger.warn(`Symbol "${symbol}" has no Bybit pair mapping`);
+            return;
+          }
+
+          logger.info(`Fetching Bybit data for ${lower} (pair: ${pair})`);
+          const ticker = await getBybitTicker(pair, 'spot');
+
+          if (ticker && ticker.lastPrice > 0) {
+            result[lower] = {
+              usd: ticker.lastPrice,
+              usd_24h_change: ticker.price24hPcnt,
+              usd_market_cap: null,
+              usd_24h_vol: ticker.volume24h
+            };
+            logger.info(`Successfully fetched Bybit data for ${lower}: $${ticker.lastPrice}`);
+            return;
+          }
+          logger.warn(`Bybit returned invalid data for ${pair}`);
+        } catch (err) {
+          logger.error('Bybit price fetch failed for', lower, {
+            message: err instanceof Error ? err.message : String(err)
+          });
+        }
+      });
+
+      await Promise.all(fetchPromises);
+
+      // If we got data from Bybit, return it
+      if (Object.keys(result).length > 0) {
+        logger.info('Successfully fetched prices from Bybit', { symbolCount: Object.keys(result).length });
+        return result;
+      }
+
+      logger.warn('Bybit returned no valid data, falling back to CoinGecko');
+    }
+
+    // Fallback to CoinGecko only if CryptoAPIs and Bybit are not configured or failed
     try {
       logger.info('Attempting to fetch data from CoinGecko as fallback');
       const cgIdMap: Record<string, string> = {
