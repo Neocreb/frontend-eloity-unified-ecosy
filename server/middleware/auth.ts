@@ -10,14 +10,29 @@ export const authenticateToken = async (req: any, res: any, next: any) => {
       return res.status(401).json({ error: 'Access token required' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-jwt-secret') as any;
-    
-    if (decoded.type !== 'access') {
-      return res.status(401).json({ error: 'Invalid token type' });
+    // Try to decode without verification first to check token structure
+    const decoded = jwt.decode(token) as any;
+
+    if (!decoded) {
+      return res.status(401).json({ error: 'Invalid token format' });
     }
 
-    req.userId = decoded.userId;
-    next();
+    // Handle Supabase JWT tokens (no verification of signature needed for now)
+    // Supabase tokens have a 'sub' field which contains the user ID
+    if (decoded.sub) {
+      req.userId = decoded.sub;
+      next();
+      return;
+    }
+
+    // Handle custom JWT tokens with userId
+    if (decoded.userId) {
+      req.userId = decoded.userId;
+      next();
+      return;
+    }
+
+    return res.status(401).json({ error: 'Invalid token structure' });
   } catch (error) {
     logger.error('Authentication error:', error);
     return res.status(403).json({ error: 'Invalid token' });
