@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CryptoAsset {
   id: string;
@@ -103,7 +104,7 @@ const PLATFORM_TOKEN = {
   name: "Eloity Points",
   price: 0.50,
   image: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
-  balance: 1250,
+  balance: 0, // This will be updated with real data
   description: "Platform native token for rewards and transactions",
 };
 
@@ -130,6 +131,7 @@ const CryptoConvert = () => {
   const [conversionHistory, setConversionHistory] = useState<ConversionResult[]>([]);
   const [isConverting, setIsConverting] = useState(false);
   const [showRate, setShowRate] = useState(false);
+  const [eloitsBalance, setEloitsBalance] = useState(0);
 
   useEffect(() => {
     if (!user) {
@@ -141,6 +143,27 @@ const CryptoConvert = () => {
       navigate("/auth");
       return;
     }
+
+    // Fetch real Eloits balance from database
+    const fetchEloitsBalance = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("user_rewards_summary")
+          .select("available_balance")
+          .eq("user_id", user.id)
+          .single();
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching balance:", error);
+        } else if (data) {
+          setEloitsBalance(data.available_balance || 0);
+        }
+      } catch (err) {
+        console.error("Failed to fetch Eloits balance:", err);
+      }
+    };
+
+    fetchEloitsBalance();
 
     // Load conversion history from localStorage
     const saved = localStorage.getItem("crypto_conversion_history");
@@ -341,44 +364,46 @@ const CryptoConvert = () => {
                     <Label htmlFor="from-asset" className="text-base font-semibold">
                       From
                     </Label>
-                    <div className="flex gap-3 items-end">
-                      <Select
-                        value={fromAsset.symbol}
-                        onValueChange={(value) => {
-                          if (value === "ELOITS") {
-                            setFromAsset(PLATFORM_TOKEN);
-                          } else {
-                            const selected = CRYPTO_ASSETS.find(
-                              (a) => a.symbol === value
-                            );
-                            if (selected) setFromAsset(selected);
-                          }
-                        }}
-                      >
-                        <SelectTrigger id="from-asset">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CRYPTO_ASSETS.map((asset) => (
-                            <SelectItem key={asset.id} value={asset.symbol}>
+                    <div className="flex gap-2 items-end">
+                      <div className="w-40 sm:w-48">
+                        <Select
+                          value={fromAsset.symbol}
+                          onValueChange={(value) => {
+                            if (value === "ELOITS") {
+                              setFromAsset(PLATFORM_TOKEN);
+                            } else {
+                              const selected = CRYPTO_ASSETS.find(
+                                (a) => a.symbol === value
+                              );
+                              if (selected) setFromAsset(selected);
+                            }
+                          }}
+                        >
+                          <SelectTrigger id="from-asset" className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CRYPTO_ASSETS.map((asset) => (
+                              <SelectItem key={asset.id} value={asset.symbol}>
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={asset.image}
+                                    alt={asset.name}
+                                    className="h-4 w-4 rounded-full"
+                                  />
+                                  {asset.symbol} - {asset.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="ELOITS">
                               <div className="flex items-center gap-2">
-                                <img
-                                  src={asset.image}
-                                  alt={asset.name}
-                                  className="h-4 w-4 rounded-full"
-                                />
-                                {asset.symbol} - {asset.name}
+                                <Zap className="h-4 w-4 text-yellow-500" />
+                                ELOITS - Eloity Points
                               </div>
                             </SelectItem>
-                          ))}
-                          <SelectItem value="ELOITS">
-                            <div className="flex items-center gap-2">
-                              <Zap className="h-4 w-4 text-yellow-500" />
-                              ELOITS - Eloity Points
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="flex-1">
                         <Input
                           id="from-amount"
@@ -417,44 +442,46 @@ const CryptoConvert = () => {
                     <Label htmlFor="to-asset" className="text-base font-semibold">
                       To
                     </Label>
-                    <div className="flex gap-3 items-end">
-                      <Select
-                        value={toAsset.symbol}
-                        onValueChange={(value) => {
-                          if (value === "ELOITS") {
-                            setToAsset(PLATFORM_TOKEN);
-                          } else {
-                            const selected = CRYPTO_ASSETS.find(
-                              (a) => a.symbol === value
-                            );
-                            if (selected) setToAsset(selected);
-                          }
-                        }}
-                      >
-                        <SelectTrigger id="to-asset">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {CRYPTO_ASSETS.map((asset) => (
-                            <SelectItem key={asset.id} value={asset.symbol}>
+                    <div className="flex gap-2 items-end">
+                      <div className="w-40 sm:w-48">
+                        <Select
+                          value={toAsset.symbol}
+                          onValueChange={(value) => {
+                            if (value === "ELOITS") {
+                              setToAsset(PLATFORM_TOKEN);
+                            } else {
+                              const selected = CRYPTO_ASSETS.find(
+                                (a) => a.symbol === value
+                              );
+                              if (selected) setToAsset(selected);
+                            }
+                          }}
+                        >
+                          <SelectTrigger id="to-asset" className="w-full">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {CRYPTO_ASSETS.map((asset) => (
+                              <SelectItem key={asset.id} value={asset.symbol}>
+                                <div className="flex items-center gap-2">
+                                  <img
+                                    src={asset.image}
+                                    alt={asset.name}
+                                    className="h-4 w-4 rounded-full"
+                                  />
+                                  {asset.symbol} - {asset.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                            <SelectItem value="ELOITS">
                               <div className="flex items-center gap-2">
-                                <img
-                                  src={asset.image}
-                                  alt={asset.name}
-                                  className="h-4 w-4 rounded-full"
-                                />
-                                {asset.symbol} - {asset.name}
+                                <Zap className="h-4 w-4 text-yellow-500" />
+                                ELOITS - Eloity Points
                               </div>
                             </SelectItem>
-                          ))}
-                          <SelectItem value="ELOITS">
-                            <div className="flex items-center gap-2">
-                              <Zap className="h-4 w-4 text-yellow-500" />
-                              ELOITS - Eloity Points
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="flex-1">
                         <Input
                           type="number"
@@ -547,10 +574,10 @@ const CryptoConvert = () => {
                       Eloity Points Balance
                     </p>
                     <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                      {PLATFORM_TOKEN.balance.toLocaleString()}
+                      {eloitsBalance.toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-500 mt-2">
-                      ${(PLATFORM_TOKEN.balance * PLATFORM_TOKEN.price).toFixed(2)} USD
+                      ${(eloitsBalance * PLATFORM_TOKEN.price).toFixed(2)} USD
                     </p>
                   </div>
 

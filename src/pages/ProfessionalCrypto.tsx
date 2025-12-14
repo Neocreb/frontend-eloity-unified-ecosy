@@ -308,7 +308,7 @@ const ProfessionalCrypto = () => {
 
   const handleDeposit = () => navigate("/app/crypto/deposit");
   const handleWithdraw = () => navigate("/app/crypto/withdraw");
-  const handleConvert = () => navigate("/app/crypto-trading?type=convert");
+  const handleConvert = () => navigate("/app/crypto-convert");
 
   const trendingCryptos = useMemo(
     () => cryptos.sort((a, b) => b.total_volume - a.total_volume).slice(0, 6),
