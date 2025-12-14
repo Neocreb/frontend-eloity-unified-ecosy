@@ -81,24 +81,24 @@ order_index: 1
 engagement_count: 342
 ```
 
-## Via SQL Commands
+## Managing Content via SQL (Advanced)
 
 ### Add Featured Crypto
 
 ```sql
-INSERT INTO featured_crypto_listings 
+INSERT INTO featured_crypto_listings
 (symbol, name, coingecko_id, image_url, current_price, price_change_24h, category, is_featured, order_index)
-VALUES 
-('ETH', 'Ethereum', 'ethereum', 'https://assets.coingecko.com/coins/images/279/large/ethereum.png', 2350.00, 5.42, 'trending', true, 2);
+VALUES
+('SOL', 'Solana', 'solana', 'https://assets.coingecko.com/coins/images/4128/large/solana.png', 245.50, 28.75, 'gainers', true, 1);
 ```
 
 ### Add Community Post
 
 ```sql
-INSERT INTO community_featured_posts 
+INSERT INTO community_featured_posts
 (username, avatar_url, title, content, category, sentiment, impact_percentage, is_featured, order_index, engagement_count)
-VALUES 
-('Blockchain Expert', 'https://api.dicebear.com/7.x/avataaars/svg?seed=expert', 'DeFi Opportunities', 'New yield farming strategies in 2025', 'community', 'positive', 15.50, true, 1, 256);
+VALUES
+('Crypto Analyst', 'https://api.dicebear.com/7.x/avataaars/svg?seed=analyst', 'Market Update', 'Bitcoin momentum continues on positive news', 'announcement', 'positive', 5.50, true, 1, 256);
 ```
 
 ### Update Featured Status
