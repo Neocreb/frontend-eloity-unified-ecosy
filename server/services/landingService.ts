@@ -267,6 +267,11 @@ export const FAQsService = {
     active?: boolean;
   }) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock FAQs');
+        return mockFAQs.filter(f => !filters?.active || f.is_active);
+      }
+
       let query = supabase
         .from('landing_faqs')
         .select('*');
@@ -279,11 +284,14 @@ export const FAQsService = {
       }
 
       const { data, error } = await query.order('order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch FAQs from database, using mock data:', error);
+        return mockFAQs.filter(f => !filters?.active || f.is_active);
+      }
+      return data || mockFAQs;
     } catch (error) {
-      console.error('Error fetching FAQs:', error);
-      throw error;
+      logger.error('Error fetching FAQs:', error);
+      return mockFAQs;
     }
   },
 
