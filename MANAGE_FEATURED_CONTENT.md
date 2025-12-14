@@ -49,27 +49,37 @@ Via Supabase Dashboard (Advanced):
 
 ### Add Community Featured Post
 
+Via Admin Interface:
+1. Click the "Add Post" button
+2. Fill in the form fields:
+   - **Username**: Display name (e.g., "Crypto Guru")
+   - **Title**: Optional post title
+   - **Content**: Post content (required)
+   - **Category**: discover, community, announcement, event
+   - **Sentiment**: positive, neutral, negative
+   - **Impact %**: Market impact percentage
+   - **Order Index**: Display order (1, 2, 3...)
+3. Click "Add Post"
+
+Via Supabase Dashboard (Advanced):
 1. Go to **Supabase Console** → Your Project
 2. Click **Table Editor**
 3. Select `community_featured_posts`
 4. Click **Insert row**
-5. Fill in the fields:
+5. Fill in fields and save
 
-| Field | Example | Notes |
-|-------|---------|-------|
-| user_id | 550e8400... | Leave as NULL for system posts |
-| username | Crypto Guru | Display name |
-| avatar_url | https://... | Profile picture URL |
-| title | Market Update | Optional post title |
-| content | Bitcoin at new ATH! | Main post content |
-| category | discover | Choose: discover, community, announcement, event |
-| sentiment | positive | Choose: positive, negative, neutral |
-| impact_percentage | 12.50 | Market impact percentage |
-| is_featured | true | Check to display |
-| order_index | 1 | Display order |
-| engagement_count | 342 | Number of likes/interactions |
-
-6. Click **Save**
+#### Example Values
+```
+username: Crypto Guru
+title: Market Update
+content: Bitcoin holding strong above resistance levels
+category: announcement
+sentiment: positive
+impact_percentage: 2.30
+is_featured: true
+order_index: 1
+engagement_count: 342
+```
 
 ## Via SQL Commands
 
