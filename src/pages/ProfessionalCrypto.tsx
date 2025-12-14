@@ -423,43 +423,36 @@ const ProfessionalCrypto = () => {
           {/* Content container */}
           <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Top greeting section */}
-            <div className="flex items-start justify-between mb-8">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-3xl sm:text-4xl font-bold text-white">
-                    Hi {user?.user_metadata?.full_name?.split(' ')[0] || 'User'} 👋
-                  </h1>
-                  <Badge className="bg-green-400 text-green-900 border-0 font-semibold">
-                    🔒 Secured
-                  </Badge>
-                </div>
-                <p className="text-white/80 text-sm sm:text-base">Digital asset portfolio</p>
-              </div>
+            <div className="flex items-center justify-between gap-2 mb-4">
+              <h1 className="text-2xl sm:text-4xl font-bold text-white">
+                Hi {user?.user_metadata?.full_name?.split(' ')[0] || 'User'} 👋
+              </h1>
+              <Badge className="bg-green-400 text-green-900 border-0 font-semibold shrink-0">
+                🔒 Secured
+              </Badge>
             </div>
+            <p className="text-white/80 text-sm sm:text-base mb-6">Digital asset portfolio</p>
 
             {/* Portfolio value section */}
-            <div className="mb-8">
-              <p className="text-white/70 text-sm font-medium mb-1">Total Portfolio Value</p>
-              <h2 className="text-5xl sm:text-6xl font-bold text-white mb-4">
-                {formatCompactCurrency(convertAmount(totalBalanceUSD, "USD", selectedCurrency?.code || "USD"))}
-              </h2>
-              <div className="flex items-center gap-4">
-                <div className="text-white/90">
-                  <p className="text-sm">Primary Asset</p>
-                  <p className="font-semibold">{primaryAsset.balance.toFixed(2)} {primaryAsset.symbol} ≈ {formatCurrency(primaryAsset.valueInUserCurrency)}</p>
-                </div>
+            <div className="mb-4">
+              <p className="text-white/70 text-xs sm:text-sm font-medium mb-2">Total Portfolio Value</p>
+              <div className="flex items-start justify-between gap-3">
+                <h2 className="text-4xl sm:text-6xl font-bold text-white flex-1">
+                  {formatCompactCurrency(convertAmount(totalBalanceUSD, "USD", selectedCurrency?.code || "USD"))}
+                </h2>
                 <div className={cn(
-                  "px-4 py-2 rounded-full font-semibold text-sm flex items-center gap-1",
+                  "px-2 sm:px-4 py-1 sm:py-2 rounded-full font-semibold text-xs sm:text-sm flex items-center gap-1 shrink-0 mt-1",
                   totalChangePct >= 0
                     ? "bg-green-400/20 text-green-100"
                     : "bg-red-400/20 text-red-100"
                 )}>
                   {totalChangePct >= 0 ? (
-                    <TrendingUp className="h-4 w-4" />
+                    <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
                   ) : (
-                    <TrendingDown className="h-4 w-4" />
+                    <TrendingDown className="h-3 w-3 sm:h-4 sm:w-4" />
                   )}
-                  {formatCurrency(convertAmount(totalChangeUSD, "USD", selectedCurrency?.code || "USD"))} ({formatPercentage(totalChangePct)}) 24h
+                  <span className="hidden sm:inline">{formatCurrency(convertAmount(totalChangeUSD, "USD", selectedCurrency?.code || "USD"))} ({formatPercentage(totalChangePct)}) 24h</span>
+                  <span className="sm:hidden">{formatPercentage(totalChangePct)} 24h</span>
                 </div>
               </div>
             </div>
