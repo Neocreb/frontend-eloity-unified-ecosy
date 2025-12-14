@@ -531,7 +531,7 @@ class GlobalSearchService {
       // Validate input
       if (!query || typeof query !== 'string') {
         console.warn('Invalid search query provided for products:', query);
-        return this.filterMockData(mockProducts, query);
+        return [];
       }
 
       const response = await fetch(`${this.baseUrl}/products/search?q=${encodeURIComponent(query)}`);
@@ -552,14 +552,14 @@ class GlobalSearchService {
 
       // Validate response data
       if (!data || !Array.isArray(data.products)) {
-        console.warn('Invalid products data received, using mock data:', data);
-        return this.filterMockData(mockProducts, query);
+        console.warn('Invalid products data received:', data);
+        return [];
       }
 
       return data.products.map((product: any) => ({
         id: product.id || `product-${Date.now()}-${Math.random()}`,
         type: 'product' as const,
-        title: product.name || 'Untitled Product',
+        title: product.name || product.title || 'Untitled Product',
         description: product.description || 'No description available',
         image: product.images?.[0] || '/placeholder.svg',
         price: product.price || 0,
@@ -576,9 +576,8 @@ class GlobalSearchService {
         },
       })) || [];
     } catch (error) {
-      console.warn('Products search API unavailable, using mock data:', error);
-      // Fall back to mock data when API is unavailable
-      return this.filterMockData(mockProducts, query);
+      console.error('Products search failed:', error);
+      return [];
     }
   }
 
