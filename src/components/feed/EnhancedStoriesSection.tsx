@@ -58,7 +58,8 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
           media_url,
           media_type,
           caption,
-          views_count
+          views_count,
+          profiles:user_id(id, full_name, username, avatar_url)
         `
         )
         .gt("expires_at", now)
