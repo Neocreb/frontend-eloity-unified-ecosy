@@ -235,6 +235,17 @@ const ProfessionalCrypto = () => {
       setTotalChangeUSD(delta);
       setTotalChangePct(sumUSDPrev > 0 ? (delta / sumUSDPrev) * 100 : 0);
       setPrimaryAsset(top);
+
+      // Load featured listings and community posts in parallel
+      const [gemwData, newListingsData, communityData] = await Promise.all([
+        FeaturedCryptoService.getFeaturedListingsByCategory('gemw', 6),
+        FeaturedCryptoService.getFeaturedListingsByCategory('new_listing', 6),
+        FeaturedCryptoService.getCommunityFeaturedPosts(undefined, 3),
+      ]);
+
+      setGemwListings(gemwData);
+      setNewListings(newListingsData);
+      setCommunityPosts(communityData);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       console.error("[Crypto] Error loading crypto prices:", errorMessage);
