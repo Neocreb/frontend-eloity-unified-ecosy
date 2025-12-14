@@ -35,6 +35,59 @@ import {
 const router = express.Router();
 
 // =============================================================================
+// SEARCH ENDPOINT
+// =============================================================================
+
+// Search endpoint for global search
+router.get('/search', async (req, res) => {
+  try {
+    const { q, limit = 20, offset = 0 } = req.query;
+
+    if (!q) {
+      return res.status(400).json({ error: 'Search query is required' });
+    }
+
+    // Search cryptocurrencies by name or symbol
+    const searchLower = (q as string).toLowerCase();
+    const allCryptos = [
+      { id: 'bitcoin', title: 'Bitcoin', symbol: 'BTC', price: FALLBACK_PRICES_RESPONSE.bitcoin.usd },
+      { id: 'ethereum', title: 'Ethereum', symbol: 'ETH', price: FALLBACK_PRICES_RESPONSE.ethereum.usd },
+      { id: 'tether', title: 'Tether', symbol: 'USDT', price: FALLBACK_PRICES_RESPONSE.tether.usd },
+      { id: 'binancecoin', title: 'Binance Coin', symbol: 'BNB', price: FALLBACK_PRICES_RESPONSE.binancecoin.usd },
+      { id: 'solana', title: 'Solana', symbol: 'SOL', price: FALLBACK_PRICES_RESPONSE.solana.usd },
+      { id: 'cardano', title: 'Cardano', symbol: 'ADA', price: FALLBACK_PRICES_RESPONSE.cardano.usd },
+      { id: 'chainlink', title: 'Chainlink', symbol: 'LINK', price: FALLBACK_PRICES_RESPONSE.chainlink.usd },
+      { id: 'polygon', title: 'Polygon', symbol: 'MATIC', price: FALLBACK_PRICES_RESPONSE.polygon.usd },
+      { id: 'avalanche', title: 'Avalanche', symbol: 'AVAX', price: FALLBACK_PRICES_RESPONSE.avalanche.usd },
+      { id: 'polkadot', title: 'Polkadot', symbol: 'DOT', price: FALLBACK_PRICES_RESPONSE.polkadot.usd },
+      { id: 'dogecoin', title: 'Dogecoin', symbol: 'DOGE', price: FALLBACK_PRICES_RESPONSE.dogecoin.usd }
+    ];
+
+    const filtered = allCryptos.filter(crypto =>
+      crypto.title.toLowerCase().includes(searchLower) ||
+      crypto.symbol.toLowerCase().includes(searchLower) ||
+      crypto.id.toLowerCase().includes(searchLower)
+    ).slice(parseInt(offset as string), parseInt(offset as string) + parseInt(limit as string));
+
+    const cryptos = filtered.map(crypto => ({
+      id: crypto.id,
+      title: crypto.title,
+      symbol: crypto.symbol,
+      description: `${crypto.title} (${crypto.symbol})`,
+      price: crypto.price,
+      category: 'Cryptocurrency',
+      tags: [crypto.symbol, 'crypto'],
+      stats: { views: 0 }
+    }));
+
+    res.json({ cryptos });
+  } catch (error) {
+    logger.error('Error searching crypto:', error);
+    res.status(500).json({ error: 'Failed to search crypto' });
+  }
+});
+
+// =============================================================================
 // CRYPTOCURRENCY PRICE DATA
 // =============================================================================
 
