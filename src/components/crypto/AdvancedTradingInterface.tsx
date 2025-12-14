@@ -174,21 +174,22 @@ const AdvancedTradingInterface: React.FC<AdvancedTradingInterfaceProps> = ({
 
   const fetchOrderBook = async () => {
     try {
-      const token = localStorage.getItem('accessToken');
       const [baseAsset, quoteAsset] = selectedPair.split('/');
-      const url = `/api/cryptoapis/orderbook/${baseAsset}/${quoteAsset}?limit=25`;
-      const headers: HeadersInit = {
-        'Content-Type': 'application/json',
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
+      // Bybit format: BTCUSDT, ETHUSDT, etc.
+      const pair = `${baseAsset}${quoteAsset}`;
+      const url = `/api/crypto/orderbook/${pair}?depth=25`;
 
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
 
       // Check status first before reading body
       if (!response.ok) {
-        console.error(`Failed to fetch orderbook: HTTP ${response.status}`);
+        console.warn(`Failed to fetch orderbook: HTTP ${response.status}`);
+        setOrderBook({ asks: [], bids: [] });
         return;
       }
 
@@ -199,6 +200,7 @@ const AdvancedTradingInterface: React.FC<AdvancedTradingInterfaceProps> = ({
         responseText = await clonedResponse.text();
       } catch (readError) {
         console.error("Error reading response body:", readError);
+        setOrderBook({ asks: [], bids: [] });
         return;
       }
 
@@ -207,17 +209,22 @@ const AdvancedTradingInterface: React.FC<AdvancedTradingInterfaceProps> = ({
         data = responseText ? JSON.parse(responseText) : null;
       } catch (parseError) {
         console.error('Failed to parse orderbook response:', responseText);
+        setOrderBook({ asks: [], bids: [] });
         return;
       }
 
-      if (data && data.success && data.data) {
+      if (data && data.orderbook) {
         setOrderBook({
-          asks: data.data.asks || [],
-          bids: data.data.bids || []
+          asks: data.orderbook.asks || [],
+          bids: data.orderbook.bids || []
         });
+      } else {
+        // No data available
+        setOrderBook({ asks: [], bids: [] });
       }
     } catch (error) {
       console.error('Failed to fetch orderbook:', error instanceof Error ? error.message : error);
+      setOrderBook({ asks: [], bids: [] });
     }
   };
 
