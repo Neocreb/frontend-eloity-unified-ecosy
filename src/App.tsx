@@ -721,6 +721,7 @@ const AppRoutes = () => {
           <Route path="delivery/track/:trackingNumber" element={<DeliveryTracking />} />
 
           <Route path="crypto" element={<ProfessionalCrypto />} />
+          <Route path="crypto/view-all" element={<ViewAllCoins />} />
           <Route path="crypto-trading" element={<CryptoTrading />} />
           <Route path="crypto-convert" element={<CryptoConvert />} />
           <Route path="crypto-p2p" element={<CryptoP2P />} />
