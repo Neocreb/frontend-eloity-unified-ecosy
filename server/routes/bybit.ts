@@ -93,7 +93,7 @@ router.get('/market/ticker', async (req, res) => {
 });
 
 /**
- * Get order book (market depth)
+ * Get order book (market depth) with caching
  * Query params: symbol (required), limit (optional, default: 25), category (optional)
  */
 router.get('/market/orderbook', async (req, res) => {
@@ -104,10 +104,15 @@ router.get('/market/orderbook', async (req, res) => {
       return res.status(400).json({ error: 'Symbol is required' });
     }
 
-    const orderbook = await getBybitOrderBook(
-      symbol.toUpperCase(),
-      parseInt(limit as string, 10),
-      category as 'spot' | 'linear' | 'inverse'
+    const upperSymbol = symbol.toUpperCase();
+    const limitNum = parseInt(limit as string, 10);
+
+    // Use cache for orderbook data
+    const orderbook = await bybitCache.getOrFetchOrderbook(
+      upperSymbol,
+      limitNum,
+      (sym, lim) => getBybitOrderBook(sym, lim, category as 'spot' | 'linear' | 'inverse'),
+      20 * 1000 // 20 second TTL
     );
 
     if (!orderbook) {
