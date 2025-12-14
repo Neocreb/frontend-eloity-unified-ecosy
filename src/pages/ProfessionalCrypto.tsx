@@ -236,15 +236,20 @@ const ProfessionalCrypto = () => {
       setTotalChangePct(sumUSDPrev > 0 ? (delta / sumUSDPrev) * 100 : 0);
       setPrimaryAsset(top);
 
-      // Load featured listings and community posts in parallel
-      const [gemwData, newListingsData, communityData] = await Promise.all([
-        FeaturedCryptoService.getFeaturedListingsByCategory('gemw', 6),
-        FeaturedCryptoService.getFeaturedListingsByCategory('new_listing', 6),
-        FeaturedCryptoService.getCommunityFeaturedPosts(undefined, 3),
-      ]);
+      // Calculate gainers and losers from crypto prices
+      const gainers = list
+        .sort((a, b) => b.price_change_percentage_24h - a.price_change_percentage_24h)
+        .slice(0, 6);
 
-      setGemwListings(gemwData);
-      setNewListings(newListingsData);
+      const losers = list
+        .sort((a, b) => a.price_change_percentage_24h - b.price_change_percentage_24h)
+        .slice(0, 6);
+
+      setGainersListings(gainers);
+      setLosersListings(losers);
+
+      // Load community posts
+      const communityData = await FeaturedCryptoService.getCommunityFeaturedPosts(undefined, 3);
       setCommunityPosts(communityData);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
