@@ -107,6 +107,7 @@ import currencyRouter from './routes/currency.js';
 import { initializeCurrencyService } from './services/currencyService.js';
 import startMetricsSync from './tasks/metricsSync.js';
 import startCryptoDataSync from './tasks/syncCryptoData.js';
+import startBybitDataSync from './tasks/syncBybitData.js';
 import adminCoursesRouter from './routes/adminCourses.js';
 import adminArticlesRouter from './routes/adminArticles.js';
 import coursesRouter from './routes/courses.js';
