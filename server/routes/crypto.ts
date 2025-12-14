@@ -1083,6 +1083,7 @@ router.get('/trading-pairs', async (req, res) => {
       baseAsset: symbol.toUpperCase(),
       quoteAsset: 'USDT',
       price: data.usd || 0,
+      change24h: data.usd_24h_change || 0,
       priceChange: 0,
       priceChangePercent: data.usd_24h_change || 0,
       volume: data.usd_24h_vol || 0,
