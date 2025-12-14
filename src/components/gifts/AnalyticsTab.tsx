@@ -3,28 +3,30 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import { supabase } from '@/lib/supabase';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell
 } from 'recharts';
-import { 
-  TrendingUp, 
-  Gift, 
-  DollarSign, 
-  Users, 
+import {
+  TrendingUp,
+  Gift,
+  DollarSign,
+  Users,
   Calendar,
   RefreshCw,
   Crown,
   Heart,
-  Zap
+  Zap,
+  Loader2
 } from 'lucide-react';
 
 interface AnalyticsTabProps {
@@ -33,65 +35,168 @@ interface AnalyticsTabProps {
 
 const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [timeRange, setTimeRange] = useState('7d');
-
-  // Mock data for analytics
-  const spendingData = [
-    { day: 'Mon', gifts: 4, tips: 2, total: 6 },
-    { day: 'Tue', gifts: 3, tips: 1, total: 4 },
-    { day: 'Wed', gifts: 6, tips: 3, total: 9 },
-    { day: 'Thu', gifts: 2, tips: 4, total: 6 },
-    { day: 'Fri', gifts: 8, tips: 5, total: 13 },
-    { day: 'Sat', gifts: 5, tips: 7, total: 12 },
-    { day: 'Sun', gifts: 7, tips: 6, total: 13 },
-  ];
-
-  const giftDistribution = [
-    { name: 'Flowers', value: 35 },
-    { name: 'Food', value: 25 },
-    { name: 'Jewelry', value: 20 },
-    { name: 'Royal', value: 15 },
-    { name: 'Other', value: 5 },
-  ];
+  const [spendingData, setSpendingData] = useState<any[]>([]);
+  const [giftDistribution, setGiftDistribution] = useState<any[]>([]);
+  const [topRecipients, setTopRecipients] = useState<any[]>([]);
+  const [stats, setStats] = useState({
+    totalGifts: 0,
+    totalTips: 0,
+    totalSpent: 0,
+    topGift: 'N/A',
+    favoriteCreator: 'N/A',
+    avgGiftValue: 0,
+  });
 
   const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088fe'];
 
-  const topRecipients = [
-    { id: '1', username: 'CreatorOne', avatar: '/placeholder-user.jpg', gifts: 12, tips: 8, total: 20 },
-    { id: '2', username: 'ArtistPro', avatar: '/placeholder-user.jpg', gifts: 9, tips: 15, total: 24 },
-    { id: '3', username: 'StreamKing', avatar: '/placeholder-user.jpg', gifts: 15, tips: 5, total: 20 },
-    { id: '4', username: 'MusicMaster', avatar: '/placeholder-user.jpg', gifts: 7, tips: 12, total: 19 },
-  ];
+  useEffect(() => {
+    loadAnalytics();
+  }, [timeRange]);
 
-  const stats = {
-    totalGifts: 45,
-    totalTips: 38,
-    totalSpent: 127.45,
-    topGift: 'Golden Crown',
-    favoriteCreator: 'ArtistPro',
-    avgGiftValue: 2.83,
-  };
-
-  const handleRefresh = async () => {
+  const loadAnalytics = async () => {
     try {
       setIsLoading(true);
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      onRefresh();
-      toast({
-        title: 'Analytics Updated',
-        description: 'Your analytics data has been refreshed.',
+
+      // Fetch gift transactions
+      const { data: giftTxData, error: giftError } = await supabase
+        .from('gift_transactions')
+        .select('*, gift:virtual_gifts(name, category)')
+        .order('created_at', { ascending: false });
+
+      if (giftError) throw giftError;
+
+      // Fetch tip transactions
+      const { data: tipTxData, error: tipError } = await supabase
+        .from('tip_transactions')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (tipError) throw tipError;
+
+      // Process spending data by day
+      const dayMap = new Map<string, { gifts: number; tips: number }>();
+      const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+      days.forEach(day => {
+        dayMap.set(day, { gifts: 0, tips: 0 });
+      });
+
+      (giftTxData || []).forEach(tx => {
+        const date = new Date(tx.created_at);
+        const dayIndex = date.getDay();
+        const dayName = days[dayIndex];
+        const current = dayMap.get(dayName) || { gifts: 0, tips: 0 };
+        current.gifts += 1;
+        dayMap.set(dayName, current);
+      });
+
+      (tipTxData || []).forEach(tx => {
+        const date = new Date(tx.created_at);
+        const dayIndex = date.getDay();
+        const dayName = days[dayIndex];
+        const current = dayMap.get(dayName) || { gifts: 0, tips: 0 };
+        current.tips += 1;
+        dayMap.set(dayName, current);
+      });
+
+      const processedSpendingData = days.map(day => {
+        const data = dayMap.get(day) || { gifts: 0, tips: 0 };
+        return {
+          day,
+          gifts: data.gifts,
+          tips: data.tips,
+          total: data.gifts + data.tips
+        };
+      });
+      setSpendingData(processedSpendingData);
+
+      // Process gift distribution by category
+      const categoryMap = new Map<string, number>();
+      (giftTxData || []).forEach(tx => {
+        const category = tx.gift?.category || 'Other';
+        categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+      });
+
+      const processedDistribution = Array.from(categoryMap.entries()).map(([name, value]) => ({
+        name: name.charAt(0).toUpperCase() + name.slice(1),
+        value
+      }));
+      setGiftDistribution(processedDistribution);
+
+      // Get top recipients
+      const recipientMap = new Map<string, { gifts: number; tips: number; username: string; avatar_url: string }>();
+
+      (giftTxData || []).forEach(tx => {
+        const key = tx.to_user_id;
+        const current = recipientMap.get(key) || { gifts: 0, tips: 0, username: '', avatar_url: '' };
+        current.gifts += 1;
+        recipientMap.set(key, current);
+      });
+
+      (tipTxData || []).forEach(tx => {
+        const key = tx.to_user_id;
+        const current = recipientMap.get(key) || { gifts: 0, tips: 0, username: '', avatar_url: '' };
+        current.tips += 1;
+        recipientMap.set(key, current);
+      });
+
+      const topRecipientList = Array.from(recipientMap.entries())
+        .map(([id, data]) => ({
+          id,
+          username: data.username || 'Unknown',
+          avatar: data.avatar_url || '/placeholder-user.jpg',
+          gifts: data.gifts,
+          tips: data.tips,
+          total: data.gifts + data.tips
+        }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 4);
+
+      setTopRecipients(topRecipientList);
+
+      // Calculate stats
+      const totalGifts = giftTxData?.length || 0;
+      const totalTips = tipTxData?.length || 0;
+      const totalSpent =
+        ((giftTxData || []).reduce((sum, tx) => sum + tx.total_amount, 0) || 0) +
+        ((tipTxData || []).reduce((sum, tx) => sum + tx.amount, 0) || 0);
+
+      const topGiftName = giftTxData && giftTxData.length > 0
+        ? giftTxData[0].gift?.name || 'N/A'
+        : 'N/A';
+
+      const topCreator = topRecipientList[0]?.username || 'N/A';
+      const avgGiftValue = totalGifts > 0 ? totalSpent / (totalGifts + totalTips) : 0;
+
+      setStats({
+        totalGifts,
+        totalTips,
+        totalSpent,
+        topGift: topGiftName,
+        favoriteCreator: topCreator,
+        avgGiftValue: parseFloat(avgGiftValue.toFixed(2)),
       });
     } catch (error) {
+      console.error('Error loading analytics:', error);
       toast({
         title: 'Error',
-        description: 'Failed to refresh analytics. Please try again.',
+        description: 'Failed to load analytics data.',
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    await loadAnalytics();
+    onRefresh();
+    toast({
+      title: 'Analytics Updated',
+      description: 'Your analytics data has been refreshed.',
+    });
   };
 
   return (
