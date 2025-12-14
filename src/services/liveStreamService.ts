@@ -42,40 +42,55 @@ interface Profile {
 
 export const liveStreamService = {
   async getActiveLiveStreams(): Promise<LiveStream[]> {
-    const { data, error } = await supabase
-      .from('live_streams')
-      .select('*')
-      .eq('is_active', true)
-      .order('viewer_count', { ascending: false })
-      .limit(20);
+    try {
+      const { data, error } = await supabase
+        .from('live_streams')
+        .select('*')
+        .eq('is_active', true)
+        .order('viewer_count', { ascending: false })
+        .limit(20);
 
-    if (error) throw error;
-    
-    // Get user profiles separately
-    if (!data || data.length === 0) return [];
+      if (error) {
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        console.error('Error loading live streams:', errorMsg);
+        return [];
+      }
 
-    const userIds = Array.from(new Set(data.map((s: any) => s.user_id)));
-    const { data: profiles } = await supabase
-      .from('profiles')
-      .select('user_id, username, full_name, avatar_url, is_verified')
-      .in('user_id', userIds);
+      // Get user profiles separately
+      if (!data || data.length === 0) return [];
 
-    const profileMap = new Map(
-      (profiles || []).map((p: any) => [p.user_id, p])
-    );
+      const userIds = Array.from(new Set(data.map((s: any) => s.user_id)));
+      const { data: profiles, error: profilesError } = await supabase
+        .from('profiles')
+        .select('user_id, username, full_name, avatar_url, is_verified')
+        .in('user_id', userIds);
 
-    return data.map((stream: any) => {
-      const profile = profileMap.get(stream.user_id);
-      return {
-        ...stream,
-        user: profile ? {
-          username: (profile as Profile).username || 'unknown',
-          full_name: (profile as Profile).full_name || 'Unknown User',
-          avatar_url: (profile as Profile).avatar_url || '',
-          is_verified: (profile as Profile).is_verified || false
-        } : undefined
-      };
-    });
+      if (profilesError) {
+        const errorMsg = profilesError instanceof Error ? profilesError.message : JSON.stringify(profilesError);
+        console.error('Error loading profiles:', errorMsg);
+      }
+
+      const profileMap = new Map(
+        (profiles || []).map((p: any) => [p.user_id, p])
+      );
+
+      return data.map((stream: any) => {
+        const profile = profileMap.get(stream.user_id);
+        return {
+          ...stream,
+          user: profile ? {
+            username: (profile as Profile).username || 'unknown',
+            full_name: (profile as Profile).full_name || 'Unknown User',
+            avatar_url: (profile as Profile).avatar_url || '',
+            is_verified: (profile as Profile).is_verified || false
+          } : undefined
+        };
+      });
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('Failed to load active live streams:', errorMsg);
+      return [];
+    }
   },
 
   async getLiveStreamById(id: string): Promise<LiveStream | null> {
