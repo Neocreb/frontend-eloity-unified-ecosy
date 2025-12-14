@@ -64,34 +64,49 @@ Provides sample data for:
 
 ## Setup Instructions
 
-### Step 1: Apply Database Migrations
+### Quick Start (Zero Setup)
+
+The crypto page works immediately with **no configuration required**:
+- Visit `/app/crypto` to see live data
+- Gainers/Losers populate automatically from crypto prices
+- Community sections fetch from existing platform sources
+- Fallback mock data appears if sources are unavailable
+
+### Optional: Enable Admin Management (10 minutes)
+
+To allow admin users to manually manage featured content:
+
+#### Step 1: Apply Database Migrations
 
 1. Open Supabase Console for your project
-2. Go to the SQL Editor
-3. Copy and paste the contents of `migrations/featured_crypto_listings.sql`
+2. Navigate to SQL Editor
+3. Copy and paste `migrations/featured_crypto_listings.sql`
 4. Click "Run"
-5. Wait for completion - you should see the tables created
+5. Verify tables were created (should see 3 new tables)
 
-### Step 2: Insert Sample Data (Optional)
+#### Step 2: Insert Sample Data (Optional)
 
-1. In the same SQL Editor, paste the contents of `migrations/sample_featured_data.sql`
+1. In SQL Editor, paste `migrations/sample_featured_data.sql`
 2. Click "Run"
-3. Verify the data was inserted by checking the tables in the Supabase dashboard
+3. Verify data in Supabase dashboard
 
-### Step 3: Verify Setup
+#### Step 3: Access Admin Page
 
-1. Go to Supabase > SQL Editor
-2. Run this query to verify tables exist:
+1. Navigate to `/admin/featured-crypto` (admin only)
+2. View, add, edit, and delete featured content
+3. Toggle visibility and ordering
+
+#### Step 4: Verify Setup
+
 ```sql
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema = 'public' 
+-- Check tables exist
+SELECT table_name FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name IN ('featured_crypto_listings', 'community_featured_posts', 'crypto_categories');
-```
 
-3. Check RLS is enabled:
-```sql
-SELECT schemaname, tablename, rowsecurity 
-FROM pg_tables 
+-- Check RLS is enabled
+SELECT schemaname, tablename, rowsecurity
+FROM pg_tables
 WHERE tablename IN ('featured_crypto_listings', 'community_featured_posts');
 ```
 
