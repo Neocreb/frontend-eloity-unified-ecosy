@@ -1,12 +1,12 @@
 import { logger } from '../utils/logger.js';
 import { db } from '../utils/db.js';
-import { logger } from '../utils/logger.js';
 
 // =============================================================================
 // CRYPTOCURRENCY PRICE SERVICE
 // =============================================================================
 
 import axios from 'axios';
+import { getBybitTicker } from './bybitService.js';
 
 // Fallback prices for when all APIs fail
 const FALLBACK_PRICES: Record<string, any> = {
