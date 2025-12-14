@@ -36,6 +36,22 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
 
     // Check if CryptoAPIs API key is available
     const cryptoapisKey = process.env.CRYPTOAPIS_API_KEY;
+    const bybitKey = process.env.BYBIT_PUBLIC_API;
+
+    // Symbol to Bybit trading pair mapping
+    const symbolToBybitPair: Record<string, string> = {
+      bitcoin: 'BTCUSDT',
+      ethereum: 'ETHUSDT',
+      tether: 'USDTUSDT',
+      binancecoin: 'BNBUSDT',
+      solana: 'SOLUSDT',
+      cardano: 'ADAUSDT',
+      chainlink: 'LINKUSDT',
+      polygon: 'MATICUSDT',
+      avalanche: 'AVAXUSDT',
+      polkadot: 'DOTUSDT',
+      dogecoin: 'DOGEUSDT'
+    };
 
     // If CryptoAPIs is configured, use it as PRIMARY source for reliability
     if (cryptoapisKey) {
