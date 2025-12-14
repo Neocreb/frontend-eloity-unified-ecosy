@@ -158,12 +158,44 @@ try {
   console.warn('⚠️  Running in mock mode. Some features may not work.');
   useMockData = true;
 
-  // Create a mock database object for development
+  // Create a mock database object for development with proper query builder chain
+  const createMockQueryBuilder = () => ({
+    where: function() { return this; },
+    and: function() { return this; },
+    or: function() { return this; },
+    orderBy: function() { return this; },
+    limit: function() { return this; },
+    offset: function() { return this; },
+    execute: async function() { return []; },
+    all: async function() { return []; },
+  });
+
   db = {
-    select: () => ({ from: () => ({ where: () => ({ execute: async () => [] }) }) }),
-    insert: () => ({ values: () => ({ returning: () => ({ execute: async () => [] }) }) }),
-    update: () => ({ set: () => ({ where: () => ({ execute: async () => [] }) }) }),
-    delete: () => ({ where: () => ({ execute: async () => [] }) })
+    select: () => ({
+      from: () => createMockQueryBuilder()
+    }),
+    insert: () => ({
+      values: () => ({
+        returning: () => ({
+          execute: async () => [],
+          all: async () => []
+        })
+      })
+    }),
+    update: () => ({
+      set: () => ({
+        where: () => ({
+          execute: async () => [],
+          all: async () => []
+        })
+      })
+    }),
+    delete: () => ({
+      where: () => ({
+        execute: async () => [],
+        all: async () => []
+      })
+    })
   };
 }
 
