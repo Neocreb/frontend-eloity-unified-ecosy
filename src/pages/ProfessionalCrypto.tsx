@@ -551,11 +551,11 @@ const ProfessionalCrypto = () => {
                         <TabsTrigger value="trending" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
                           Trending
                         </TabsTrigger>
-                        <TabsTrigger value="gemw" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
-                          GemW
+                        <TabsTrigger value="gainers" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Gainers
                         </TabsTrigger>
-                        <TabsTrigger value="new_listings" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
-                          New Listings
+                        <TabsTrigger value="losers" className="text-xs sm:text-sm dark:data-[state=active]:bg-slate-800">
+                          Losers
                         </TabsTrigger>
                       </TabsList>
                     </div>
