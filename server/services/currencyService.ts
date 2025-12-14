@@ -95,8 +95,17 @@ function initializeDefaultRates(): void {
 
 export async function initializeCurrencyService() {
   logger.info('Initializing currency service...');
-  await refreshExchangeRates();
-  
+
+  // Initialize default fiat rates immediately
+  initializeDefaultRates();
+
+  // Then refresh with latest rates asynchronously
+  refreshExchangeRates().catch(err => {
+    logger.warn('Failed to refresh exchange rates on startup:', err);
+  });
+
+  isInitialized = true;
+
   // Schedule daily rate updates at 00:00 UTC
   scheduleRateUpdates();
 }
