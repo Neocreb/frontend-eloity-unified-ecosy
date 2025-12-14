@@ -328,6 +328,126 @@ class BybitClient {
   }
 
   /**
+   * Get recent trades for a symbol
+   */
+  async getRecentTrades(symbol: string, limit: number = 100): Promise<any[]> {
+    try {
+      const response = await axios.get(`${BASE_URL}/market/recent-trades`, {
+        params: { symbol, limit }
+      });
+      return response.data?.trades || [];
+    } catch (error) {
+      console.error(`Failed to get recent trades for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get trade history for a symbol
+   */
+  async getTradeHistory(symbol: string, limit: number = 50): Promise<any[]> {
+    try {
+      const response = await axios.get(`${BASE_URL}/market/trade-history`, {
+        params: { symbol, limit }
+      });
+      return response.data?.trades || [];
+    } catch (error) {
+      console.error(`Failed to get trade history for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get settlement history for a futures symbol
+   */
+  async getSettlementHistory(symbol: string, limit: number = 100): Promise<any[]> {
+    try {
+      const response = await axios.get(`${BASE_URL}/market/settlement-history`, {
+        params: { symbol, limit }
+      });
+      return response.data?.settlements || [];
+    } catch (error) {
+      console.error(`Failed to get settlement history for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get current funding rate for a futures symbol
+   */
+  async getFundingRate(symbol: string): Promise<any | null> {
+    try {
+      const response = await axios.get(`${BASE_URL}/market/funding-rate`, {
+        params: { symbol }
+      });
+      return response.data;
+    } catch (error) {
+      console.error(`Failed to get funding rate for ${symbol}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Get funding rate history for a symbol
+   */
+  async getFundingRateHistory(symbol: string, limit: number = 100): Promise<any[]> {
+    try {
+      const response = await axios.get(`${BASE_URL}/market/funding-rate-history`, {
+        params: { symbol, limit }
+      });
+      return response.data?.history || [];
+    } catch (error) {
+      console.error(`Failed to get funding rate history for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get open interest data for a symbol
+   */
+  async getOpenInterest(symbol: string, limit: number = 100): Promise<any[]> {
+    try {
+      const response = await axios.get(`${BASE_URL}/market/open-interest`, {
+        params: { symbol, limit }
+      });
+      return response.data?.openInterest || [];
+    } catch (error) {
+      console.error(`Failed to get open interest for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get liquidation data for a symbol
+   */
+  async getLiquidations(symbol: string, limit: number = 100): Promise<any[]> {
+    try {
+      const response = await axios.get(`${BASE_URL}/market/liquidations`, {
+        params: { symbol, limit }
+      });
+      return response.data?.liquidations || [];
+    } catch (error) {
+      console.error(`Failed to get liquidations for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  /**
+   * Get long-short ratio for a symbol
+   */
+  async getLongShortRatio(symbol: string, limit: number = 100): Promise<any[]> {
+    try {
+      const response = await axios.get(`${BASE_URL}/market/long-short-ratio`, {
+        params: { symbol, limit }
+      });
+      return response.data?.ratios || [];
+    } catch (error) {
+      console.error(`Failed to get long-short ratio for ${symbol}:`, error);
+      return [];
+    }
+  }
+
+  /**
    * Stream-like method to fetch latest ticker updates
    * Simulated polling since WebSocket would need to be server-side
    */
