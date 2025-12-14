@@ -14,6 +14,117 @@ if (supabaseUrl && supabaseKey) {
   }
 }
 
+// Mock data for fallback when database is unavailable
+const mockTestimonials = [
+  {
+    id: 'testimonial-1',
+    name: 'Sarah Johnson',
+    title: 'Freelance Developer',
+    quote: 'Eloity transformed how I manage my freelance work. The platform is intuitive and the payment processing is seamless.',
+    image_url: 'https://randomuser.me/api/portraits/women/32.jpg',
+    metrics: { earnings: 50000, projects: 120 },
+    category: 'freelancer',
+    rating: 5,
+    is_verified: true,
+    is_featured: true,
+    order: 1,
+  },
+  {
+    id: 'testimonial-2',
+    name: 'Ahmed Hassan',
+    title: 'Content Creator',
+    quote: 'The creator economy tools on Eloity helped me monetize my content effectively. I doubled my income in 6 months.',
+    image_url: 'https://randomuser.me/api/portraits/men/44.jpg',
+    metrics: { followers: 500000, monthly_earnings: 25000 },
+    category: 'creator',
+    rating: 5,
+    is_verified: true,
+    is_featured: true,
+    order: 2,
+  },
+];
+
+const mockFAQs = [
+  {
+    id: 'faq-1',
+    question: 'How do I get started on Eloity?',
+    answer: 'Create an account, complete your profile, and start exploring opportunities in your field. It takes just a few minutes to get up and running.',
+    category: 'getting-started',
+    is_active: true,
+    order: 1,
+  },
+  {
+    id: 'faq-2',
+    question: 'Is Eloity available in my country?',
+    answer: 'Eloity is available in 150+ countries. We support multiple currencies and payment methods to serve a global audience.',
+    category: 'platform',
+    is_active: true,
+    order: 2,
+  },
+  {
+    id: 'faq-3',
+    question: 'How are payments processed?',
+    answer: 'We use secure payment processors to handle transactions. Payments are typically processed within 24-48 hours to your preferred wallet or bank account.',
+    category: 'payments',
+    is_active: true,
+    order: 3,
+  },
+];
+
+const mockUseCases = [
+  {
+    id: 'usecase-1',
+    user_type: 'freelancer',
+    title: 'Build Your Freelance Career',
+    description: 'Connect with clients worldwide and grow your freelance business with Eloity\'s comprehensive tools and marketplace.',
+    avatar_url: 'https://randomuser.me/api/portraits/women/45.jpg',
+    results: { clients: '1000+', earnings: '$100K+', projects: '500+' },
+    timeline_weeks: 24,
+    image_url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&h=300&fit=crop',
+    is_featured: true,
+    order: 1,
+  },
+  {
+    id: 'usecase-2',
+    user_type: 'creator',
+    title: 'Monetize Your Content',
+    description: 'Turn your passion into income with Eloity\'s creator tools, sponsorships, and community monetization features.',
+    avatar_url: 'https://randomuser.me/api/portraits/men/46.jpg',
+    results: { monthly_earnings: '$10K+', followers: '100K+' },
+    timeline_weeks: 12,
+    image_url: 'https://images.unsplash.com/photo-1516321318423-f06f70504504?w=500&h=300&fit=crop',
+    is_featured: true,
+    order: 2,
+  },
+];
+
+const mockComparisons = [
+  {
+    id: 'comparison-1',
+    feature_name: 'Multi-currency Support',
+    category: 'payments',
+    eloity_has: true,
+    feature_description: 'Support for 150+ currencies with real-time exchange rates',
+    competitors: { 'Competitor A': false, 'Competitor B': true, 'Competitor C': false },
+  },
+  {
+    id: 'comparison-2',
+    feature_name: 'Creator Monetization',
+    category: 'features',
+    eloity_has: true,
+    feature_description: 'Multiple revenue streams including tips, sponsorships, and subscriptions',
+    competitors: { 'Competitor A': false, 'Competitor B': true, 'Competitor C': true },
+  },
+  {
+    id: 'comparison-3',
+    feature_name: 'Global Marketplace',
+    category: 'features',
+    eloity_has: true,
+    feature_description: 'Decentralized marketplace connecting buyers and sellers worldwide',
+    competitors: { 'Competitor A': false, 'Competitor B': false, 'Competitor C': true },
+  },
+];
+
 // ============================================================================
 // TESTIMONIALS SERVICE
 // ============================================================================
@@ -24,6 +135,11 @@ export const TestimonialsService = {
     featured?: boolean;
   }) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock testimonials');
+        return mockTestimonials.filter(t => !filters?.featured || t.is_featured);
+      }
+
       let query = supabase
         .from('landing_testimonials')
         .select('*');
@@ -36,11 +152,14 @@ export const TestimonialsService = {
       }
 
       const { data, error } = await query.order('order', { ascending: true });
-      if (error) throw error;
-      return data || [];
+      if (error) {
+        logger.warn('Failed to fetch testimonials from database, using mock data:', error);
+        return mockTestimonials.filter(t => !filters?.featured || t.is_featured);
+      }
+      return data || mockTestimonials;
     } catch (error) {
-      console.error('Error fetching testimonials:', error);
-      throw error;
+      logger.error('Error fetching testimonials:', error);
+      return mockTestimonials;
     }
   },
 
