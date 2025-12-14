@@ -10,42 +10,57 @@ The crypto page now includes:
 - **Admin Management**: Optional Supabase integration for manual content curation
 - **Zero Setup Required**: Works immediately with live data sources
 
-## Changes Made
+## Implementation Details
 
-### 1. New Service
+### 1. Updated Service
 - **File**: `src/services/featuredCryptoService.ts`
-- **Purpose**: Fetches featured crypto listings and community posts from Supabase with fallback to mock data
+- **Purpose**: Fetches real data from multiple sources with fallback to mock data
 - **Key Methods**:
-  - `getFeaturedListingsByCategory(category, limit)` - Get listings by category
-  - `getCommunityFeaturedPosts(category, limit)` - Get community posts
-  - `createCommunityPost()` - Create new community posts
-  - `updateCommunityPostEngagement()` - Track engagement metrics
+  - `getDiscoverPosts(limit)` - Fetches from blog posts and courses
+  - `getCommunityPosts(limit)` - Fetches crypto-related feed posts
+  - `getEventPosts(limit)` - Fetches upcoming crypto events
+  - `getAnnouncementPosts(limit)` - Fetches tagged blog posts
+- **Data Sources**:
+  - Blog service for Discover tab
+  - Course service for Discover tab
+  - Posts table for Community tab
+  - Events table for Event tab
+  - Blog service with filters for Announcement tab
 
 ### 2. Updated Component
 - **File**: `src/pages/ProfessionalCrypto.tsx`
 - **Changes**:
-  - Added 2 new market tabs: "GemW" and "New Listings"
-  - Updated community tabs: "Event" and "Announcement" (singular form)
-  - Adjusted Quick Access grid to 2 columns on mobile
-  - Integrated real data fetching from Supabase
-  - Added featured post badges and proper styling
+  - Responsive action buttons (icon + small text on mobile)
+  - Gainers tab (top 6 by positive price change)
+  - Losers tab (top 6 by negative price change)
+  - Real data fetching for all community sections
+  - Automatic calculation of gainers/losers from price data
+  - Proper fallback to mock data when sources unavailable
 
-### 3. Database Migrations
-Two migration files have been created:
+### 3. New Admin Page
+- **File**: `src/pages/admin/AdminFeaturedCrypto.tsx`
+- **Purpose**: Allows admins to manually manage featured content
+- **Features**:
+  - Add/edit/delete featured listings
+  - Add/edit/delete community posts
+  - Toggle featured/hidden status
+  - Change display order
+  - View all content in organized tabs
+
+### 4. Optional Database Setup
+Two migration files available for custom management:
 
 #### `migrations/featured_crypto_listings.sql`
-Creates the following tables:
-- `featured_crypto_listings` - Store featured crypto with categories, badges, and ordering
-- `community_featured_posts` - Store featured community posts with engagement metrics
-- `crypto_categories` - Store category definitions
-- Includes RLS (Row Level Security) policies
-- Creates necessary indexes for performance
+Creates optional tables:
+- `featured_crypto_listings` - For manually curated listings
+- `community_featured_posts` - For admin-managed posts
+- `crypto_categories` - Category definitions
+- Includes RLS policies and indexes
 
 #### `migrations/sample_featured_data.sql`
 Provides sample data for:
-- 3 GemW listings (GemW, RAI, LUNA2)
-- 3 New Listings (FUTR, PROTO, NEXUS)
-- 4 Community posts across all categories
+- Gainers and Losers listings
+- Sample community posts across all categories
 
 ## Setup Instructions
 
