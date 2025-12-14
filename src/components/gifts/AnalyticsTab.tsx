@@ -125,19 +125,64 @@ const AnalyticsTab = ({ onRefresh }: AnalyticsTabProps) => {
       }));
       setGiftDistribution(processedDistribution);
 
-      // Get top recipients
+      // Get top recipients with profile data
+      const recipientIds = new Set<string>();
+      (giftTxData || []).forEach(tx => recipientIds.add(tx.to_user_id));
+      (tipTxData || []).forEach(tx => recipientIds.add(tx.to_user_id));
+
+      let profilesMap = new Map();
+
+      if (recipientIds.size > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, username, full_name, avatar_url')
+          .in('user_id', Array.from(recipientIds));
+
+        profilesMap = new Map((profilesData || []).map(p => [p.user_id, p]));
+
+        // Fetch missing profiles individually
+        const missingIds = Array.from(recipientIds).filter(id => !profilesMap.has(id));
+        if (missingIds.length > 0) {
+          for (const userId of missingIds) {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('user_id, username, full_name, avatar_url')
+              .eq('user_id', userId)
+              .single();
+
+            if (profile) {
+              profilesMap.set(userId, profile);
+            }
+          }
+        }
+      }
+
       const recipientMap = new Map<string, { gifts: number; tips: number; username: string; avatar_url: string }>();
 
       (giftTxData || []).forEach(tx => {
+        const profile = profilesMap.get(tx.to_user_id);
         const key = tx.to_user_id;
-        const current = recipientMap.get(key) || { gifts: 0, tips: 0, username: '', avatar_url: '' };
+        const username = profile?.username || profile?.full_name || tx.to_user_id.substring(0, 8);
+        const current = recipientMap.get(key) || {
+          gifts: 0,
+          tips: 0,
+          username,
+          avatar_url: profile?.avatar_url || '/placeholder-user.jpg'
+        };
         current.gifts += 1;
         recipientMap.set(key, current);
       });
 
       (tipTxData || []).forEach(tx => {
+        const profile = profilesMap.get(tx.to_user_id);
         const key = tx.to_user_id;
-        const current = recipientMap.get(key) || { gifts: 0, tips: 0, username: '', avatar_url: '' };
+        const username = profile?.username || profile?.full_name || tx.to_user_id.substring(0, 8);
+        const current = recipientMap.get(key) || {
+          gifts: 0,
+          tips: 0,
+          username,
+          avatar_url: profile?.avatar_url || '/placeholder-user.jpg'
+        };
         current.tips += 1;
         recipientMap.set(key, current);
       });
