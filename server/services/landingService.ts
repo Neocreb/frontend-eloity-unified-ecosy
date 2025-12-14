@@ -652,17 +652,25 @@ export const ComparisonMatrixService = {
 
   async getComparisonById(id: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock comparison');
+        return mockComparisons.find(c => c.id === id);
+      }
+
       const { data, error } = await supabase
         .from('landing_comparison_matrix')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch comparison from database, using mock data:', error);
+        return mockComparisons.find(c => c.id === id);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching comparison:', error);
-      throw error;
+      logger.error('Error fetching comparison:', error);
+      return mockComparisons.find(c => c.id === id);
     }
   },
 
