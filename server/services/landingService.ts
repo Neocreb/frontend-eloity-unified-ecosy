@@ -425,17 +425,25 @@ export const UseCasesService = {
 
   async getUseCaseById(id: string) {
     try {
+      if (!supabase) {
+        logger.warn('Supabase client not initialized, returning mock use case');
+        return mockUseCases.find(u => u.id === id);
+      }
+
       const { data, error } = await supabase
         .from('landing_use_cases')
         .select('*')
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        logger.warn('Failed to fetch use case from database, using mock data:', error);
+        return mockUseCases.find(u => u.id === id);
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching use case:', error);
-      throw error;
+      logger.error('Error fetching use case:', error);
+      return mockUseCases.find(u => u.id === id);
     }
   },
 
