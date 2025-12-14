@@ -145,9 +145,9 @@ No new environment variables required. Uses existing configuration:
 - System should display mock data automatically
 - No errors should appear in browser console
 
-## Database Schema Reference
+## Database Schema Reference (Optional)
 
-### featured_crypto_listings
+### featured_crypto_listings (Optional table)
 | Field | Type | Purpose |
 |-------|------|---------|
 | id | UUID | Primary key |
@@ -157,25 +157,40 @@ No new environment variables required. Uses existing configuration:
 | image_url | TEXT | Cryptocurrency logo URL |
 | current_price | DECIMAL | Current price |
 | price_change_24h | DECIMAL | 24h change percentage |
-| category | TEXT | gemw, new_listing, trending, hot |
+| category | TEXT | gainers, losers, trending, hot, gemw, new_listing |
 | is_featured | BOOLEAN | Whether to show in UI |
 | order_index | INTEGER | Display order within category |
+| featured_at | TIMESTAMP | When marked as featured |
+| created_at | TIMESTAMP | Record creation time |
+| updated_at | TIMESTAMP | Last update time |
 
-### community_featured_posts
+### community_featured_posts (Optional table)
 | Field | Type | Purpose |
 |-------|------|---------|
 | id | UUID | Primary key |
-| user_id | UUID | Creator user ID |
+| user_id | UUID | Creator user ID (nullable) |
 | username | TEXT | Display username |
-| avatar_url | TEXT | User avatar |
+| avatar_url | TEXT | User avatar URL |
 | title | TEXT | Post title (optional) |
 | content | TEXT | Main content |
 | category | TEXT | discover, community, announcement, event |
 | sentiment | TEXT | positive, negative, neutral |
 | impact_percentage | DECIMAL | Market impact percentage |
-| is_featured | BOOLEAN | Whether featured |
+| is_featured | BOOLEAN | Whether featured/visible |
 | order_index | INTEGER | Display order |
-| engagement_count | INTEGER | Likes/interactions |
+| engagement_count | INTEGER | Likes/interactions/views |
+| featured_at | TIMESTAMP | When marked as featured |
+| created_at | TIMESTAMP | Record creation time |
+| updated_at | TIMESTAMP | Last update time |
+
+### crypto_categories (Reference table)
+| Field | Type | Purpose |
+|-------|------|---------|
+| id | UUID | Primary key |
+| name | TEXT | Category name |
+| slug | TEXT | URL-friendly name |
+| description | TEXT | Category description |
+| icon | TEXT | Icon emoji or identifier |
 
 ## Adding More Featured Content
 
