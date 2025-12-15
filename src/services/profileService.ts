@@ -73,9 +73,13 @@ export class ProfileService {
   async getFollowersCount(userId: string): Promise<number> {
     try {
       // Try API first
-      const response = await apiClient.getFollowers(userId) as any;
-      if (response?.count !== undefined) {
-        return response.count;
+      try {
+        const response = await apiClient.getFollowers(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
       }
 
       // Fallback to direct database query
@@ -85,14 +89,10 @@ export class ProfileService {
         .eq("following_id", userId);
 
       if (error) {
-        console.warn(
-          `Followers table query failed: ${error.message}. Using fallback value.`,
-        );
         return 0;
       }
       return count || 0;
     } catch (error: any) {
-      console.warn("Error fetching followers count:", error?.message || error);
       return 0;
     }
   }
@@ -100,9 +100,13 @@ export class ProfileService {
   async getFollowingCount(userId: string): Promise<number> {
     try {
       // Try API first
-      const response = await apiClient.getFollowing(userId) as any;
-      if (response?.count !== undefined) {
-        return response.count;
+      try {
+        const response = await apiClient.getFollowing(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
       }
 
       // Fallback to direct database query
@@ -112,14 +116,10 @@ export class ProfileService {
         .eq("follower_id", userId);
 
       if (error) {
-        console.warn(
-          `Following table query failed: ${error.message}. Using fallback value.`,
-        );
         return 0;
       }
       return count || 0;
     } catch (error: any) {
-      console.warn("Error fetching following count:", error?.message || error);
       return 0;
     }
   }
