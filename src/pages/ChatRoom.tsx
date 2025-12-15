@@ -395,94 +395,102 @@ const ChatRoomContent = () => {
           }
         }
 
-        // Generate contextual messages based on chat data
-        const mockMessages: EnhancedChatMessage[] = [];
+        // Load REAL messages from database
+        const realMessages: EnhancedChatMessage[] = [];
+        let loadMessagesError = false;
 
         try {
-          if (chatData.isGroup) {
-            const groupChat = chatData as GroupChatThread;
-            // Group chat messages
-            mockMessages.push({
-              id: "msg_1",
-              senderId: "user_1",
-              senderName: "Alice",
-              senderAvatar: "https://images.unsplash.com/photo-1494790108755-2616b9a5f4b0?w=100",
-              content: "Let's plan the family dinner!",
-              type: "text",
-              timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
+          // Try to load real messages from the chat_messages table
+          const { data: dbMessages, error: messagesError } = await supabase
+            .from('chat_messages')
+            .select(`
+              id,
+              content,
+              message_type,
+              sender_id,
+              created_at,
+              status,
+              reactions
+            `)
+            .eq('conversation_id', threadId)
+            .order('created_at', { ascending: true })
+            .limit(50);
 
-            mockMessages.push({
-              id: "msg_2",
-              senderId: "user_2",
-              senderName: "Bob",
-              senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
-              content: "Great idea! What date works for everyone?",
-              type: "text",
-              timestamp: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
+          if (messagesError) {
+            console.log("Could not load messages from database (this is OK for new chats):", messagesError);
+            loadMessagesError = true;
+          } else if (dbMessages && dbMessages.length > 0) {
+            // Transform database messages to UI format
+            for (const dbMsg of dbMessages) {
+              // Get sender profile info
+              const { data: senderProfile } = await supabase
+                .from('profiles')
+                .select('id, username, full_name, avatar_url')
+                .eq('user_id', dbMsg.sender_id)
+                .single();
 
-            mockMessages.push({
-              id: "msg_3",
-              senderId: user?.id || "current",
-              senderName: user?.profile?.full_name || user?.email || "You",
-              senderAvatar: user?.profile?.avatar_url,
-              content: "How about this Saturday evening?",
-              type: "text",
-              timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
-          } else {
-            // Direct chat messages
-            const contextMessage = chatData.lastMessage || getContextualMessage(chatType);
+              realMessages.push({
+                id: dbMsg.id,
+                senderId: dbMsg.sender_id,
+                senderName: senderProfile?.full_name || senderProfile?.username || 'User',
+                senderAvatar: senderProfile?.avatar_url,
+                content: dbMsg.content,
+                type: (dbMsg.message_type || 'text') as any,
+                timestamp: dbMsg.created_at,
+                status: dbMsg.status || 'sent',
+                reactions: dbMsg.reactions || [],
+              });
+            }
 
-            mockMessages.push({
-              id: "msg_1",
-              senderId: chatData.participant_profile?.id || "user_1",
-              senderName: chatData.participant_profile?.name || "User",
-              senderAvatar: chatData.participant_profile?.avatar,
-              content: contextMessage,
-              type: "text",
-              timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
-
-            mockMessages.push({
-              id: "msg_2",
-              senderId: user?.id || "current",
-              senderName: user?.profile?.full_name || user?.email || "You",
-              senderAvatar: user?.profile?.avatar_url,
-              content: "Hello! I'm interested in discussing this further.",
-              type: "text",
-              timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
+            console.log("Loaded", realMessages.length, "real messages from database");
           }
         } catch (error) {
-          console.error("Error generating messages:", error);
-          // Fallback to basic message
-          mockMessages.push({
-            id: "msg_1",
-            senderId: user?.id || "current",
-            senderName: user?.profile?.full_name || user?.email || "You",
-            senderAvatar: user?.profile?.avatar_url,
-            content: "Hello!",
-            type: "text",
-            timestamp: new Date().toISOString(),
-            status: "read",
-            reactions: [],
-          });
+          console.error("Error loading messages from database:", error);
+          loadMessagesError = true;
+        }
+
+        // If no real messages found or error loading, generate contextual messages as fallback
+        const messagesToUse = realMessages.length > 0 ? realMessages : [];
+
+        if (messagesToUse.length === 0) {
+          try {
+            if (chatData.isGroup) {
+              const groupChat = chatData as GroupChatThread;
+              // Generate group chat messages only as fallback
+              messagesToUse.push({
+                id: "msg_1",
+                senderId: "user_1",
+                senderName: "Alice",
+                senderAvatar: "https://images.unsplash.com/photo-1494790108755-2616b9a5f4b0?w=100",
+                content: "Let's plan the family dinner!",
+                type: "text",
+                timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+                status: "read",
+                reactions: [],
+              });
+
+              messagesToUse.push({
+                id: "msg_2",
+                senderId: "user_2",
+                senderName: "Bob",
+                senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
+                content: "Great idea! What date works for everyone?",
+                type: "text",
+                timestamp: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
+                status: "read",
+                reactions: [],
+              });
+            } else {
+              // For new direct chats, show empty/no messages
+              // This is correct behavior - no messages until first message is sent
+            }
+          } catch (error) {
+            console.error("Error generating fallback messages:", error);
+          }
         }
 
         setChat(chatData);
-        setMessages(mockMessages);
+        setMessages(messagesToUse);
         setLoading(false);
         clearTimeout(timeoutId);
       } catch (error) {
