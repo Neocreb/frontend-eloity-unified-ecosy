@@ -12,10 +12,15 @@ export class OrderService {
           products(*)
         `)
         .eq('buyer_id', userId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .timeout(10000); // 10 second timeout
 
       if (error) {
-        console.error("Error fetching user orders:", error);
+        console.error("Error fetching user orders:", {
+          message: error.message,
+          code: (error as any).code,
+          details: (error as any).details,
+        });
         return [];
       }
 
@@ -111,10 +116,15 @@ export class OrderService {
           products(*)
         `)
         .eq('seller_id', sellerId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .timeout(10000); // 10 second timeout
 
       if (error) {
-        console.error("Error fetching seller orders:", error);
+        console.error("Error fetching seller orders:", {
+          message: error.message,
+          code: (error as any).code,
+          details: (error as any).details,
+        });
         return [];
       }
 

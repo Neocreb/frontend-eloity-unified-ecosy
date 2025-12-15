@@ -60,63 +60,26 @@ const CategoryBrowser = ({
 }: CategoryBrowserProps) => {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [customCategoryName, setCustomCategoryName] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   // Load real categories
   useEffect(() => {
     const loadCategories = async () => {
       try {
         setLoading(true);
+        setError(null);
         const categoriesData = await MarketplaceService.getCategories();
         setCategories(categoriesData);
-      } catch (error) {
-        console.error("Error loading categories:", error);
-        // Fallback to mock data
-        setCategories([
-          {
-            id: "1",
-            name: "Electronics",
-            slug: "electronics",
-            image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=200&h=200&auto=format&fit=crop",
-            productCount: 1247,
-          },
-          {
-            id: "2",
-            name: "Fashion",
-            slug: "fashion",
-            image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=200&h=200&auto=format&fit=crop",
-            productCount: 892,
-          },
-          {
-            id: "3",
-            name: "Home & Garden",
-            slug: "home-garden",
-            image: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=200&h=200&auto=format&fit=crop",
-            productCount: 563,
-          },
-          {
-            id: "4",
-            name: "Sports",
-            slug: "sports",
-            image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=200&h=200&auto=format&fit=crop",
-            productCount: 321,
-          },
-          {
-            id: "5",
-            name: "Beauty",
-            slug: "beauty",
-            image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=200&h=200&auto=format&fit=crop",
-            productCount: 456,
-          },
-          {
-            id: "6",
-            name: "Toys",
-            slug: "toys",
-            image: "https://images.unsplash.com/photo-1547106634-56dcd53ae89c?w=200&h=200&auto=format&fit=crop",
-            productCount: 234,
-          },
-        ]);
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : "Failed to load categories";
+        console.error("Error loading categories:", errorMsg);
+        setError(errorMsg);
+        // Still use default categories even on error
+        setCategories(MarketplaceService.DEFAULT_CATEGORIES);
       } finally {
         setLoading(false);
       }
@@ -124,6 +87,22 @@ const CategoryBrowser = ({
 
     loadCategories();
   }, []);
+
+  const handleAddCustomCategory = () => {
+    if (customCategoryName.trim()) {
+      const customCategory = {
+        id: `custom-${Date.now()}`,
+        name: customCategoryName.trim(),
+        slug: customCategoryName.trim().toLowerCase().replace(/\s+/g, '-'),
+        image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&h=200&auto=format&fit=crop",
+        productCount: 0,
+        isCustom: true,
+      };
+      onCategorySelect?.(customCategory);
+      setCustomCategoryName("");
+      setShowCustomInput(false);
+    }
+  };
 
   const handleCategoryClick = (category: Category) => {
     onCategorySelect?.(category);
@@ -152,58 +131,123 @@ const CategoryBrowser = ({
 
   if (layout === "sidebar") {
     return (
-      <div className={cn("w-64 bg-white border-r border-gray-200", className)}>
+      <div className={cn("w-full", className)}>
         <div className="p-4">
           <h3 className="font-semibold text-lg mb-4">Categories</h3>
-          <div className="space-y-1">
-            {categories.map((category) => (
-              <div key={category.id}>
-                <button
-                  onClick={() => handleCategoryClick(category)}
-                  onMouseEnter={() => setHoveredCategory(category.id)}
-                  onMouseLeave={() => setHoveredCategory(null)}
-                  className={cn(
-                    "w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors",
-                    selectedCategory === category.id
-                      ? "bg-blue-50 text-blue-600"
-                      : "hover:bg-gray-50",
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    {getIcon(category.icon || 'package')}
-                    <div>
-                      <span className="font-medium">{category.name}</span>
-                      <div className="text-xs text-gray-500">
-                        {formatProductCount(category.productCount)} items
+
+          {/* Error message */}
+          {error && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+              <p className="font-medium mb-1">Using default categories</p>
+              <p className="text-xs">{error}</p>
+            </div>
+          )}
+
+          {/* Categories list */}
+          <div className="space-y-1 mb-4">
+            {categories.length === 0 ? (
+              <p className="text-sm text-gray-500 p-3">No categories available</p>
+            ) : (
+              categories.map((category) => (
+                <div key={category.id}>
+                  <button
+                    onClick={() => handleCategoryClick(category)}
+                    onMouseEnter={() => setHoveredCategory(category.id)}
+                    onMouseLeave={() => setHoveredCategory(null)}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors text-sm",
+                      selectedCategory === category.id
+                        ? "bg-blue-50 text-blue-600"
+                        : "hover:bg-gray-50",
+                    )}
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      {getIcon(category.icon || 'package')}
+                      <div className="min-w-0">
+                        <span className="font-medium block truncate">{category.name}</span>
+                        {category.isCustom && (
+                          <span className="text-xs text-blue-600">Custom category</span>
+                        )}
                       </div>
                     </div>
-                  </div>
-                  {category.subcategories && (
-                    <ChevronRight className="w-4 h-4" />
-                  )}
-                </button>
+                    {category.subcategories && (
+                      <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                    )}
+                  </button>
 
-                {/* Subcategories */}
-                {showSubcategories &&
-                  selectedCategory === category.id &&
-                  category.subcategories && (
-                    <div className="ml-4 mt-2 space-y-1">
-                      {category.subcategories.map((sub: any) => (
-                        <button
-                          key={sub.id}
-                          onClick={() => onCategorySelect?.(sub)}
-                          className="w-full flex items-center justify-between p-2 rounded text-left text-sm hover:bg-gray-50"
-                        >
-                          <span>{sub.name}</span>
-                          <span className="text-xs text-gray-500">
-                            {formatProductCount(sub.productCount)}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  {/* Subcategories */}
+                  {showSubcategories &&
+                    selectedCategory === category.id &&
+                    category.subcategories && (
+                      <div className="ml-4 mt-2 space-y-1">
+                        {category.subcategories.map((sub: any) => (
+                          <button
+                            key={sub.id}
+                            onClick={() => onCategorySelect?.(sub)}
+                            className="w-full flex items-center justify-between p-2 rounded text-left text-sm hover:bg-gray-50"
+                          >
+                            <span>{sub.name}</span>
+                            <span className="text-xs text-gray-500">
+                              {formatProductCount(sub.productCount)}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Add custom category */}
+          <div className="border-t pt-4">
+            {!showCustomInput ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCustomInput(true)}
+                className="w-full text-xs"
+              >
+                + Add Custom Category
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <input
+                  type="text"
+                  value={customCategoryName}
+                  onChange={(e) => setCustomCategoryName(e.target.value)}
+                  placeholder="Category name"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddCustomCategory();
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleAddCustomCategory}
+                    disabled={!customCategoryName.trim()}
+                    className="flex-1 text-xs"
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowCustomInput(false);
+                      setCustomCategoryName("");
+                    }}
+                    className="flex-1 text-xs"
+                  >
+                    Cancel
+                  </Button>
+                </div>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
