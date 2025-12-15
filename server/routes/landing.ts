@@ -32,15 +32,25 @@ router.get('/testimonials', async (req: Request, res: Response) => {
   try {
     const { category, featured } = req.query;
 
-    const testimonials = await TestimonialsService.getTestimonials({
-      category: category as string,
-      featured: featured === 'true',
-    });
+    const testimonials = await Promise.race([
+      TestimonialsService.getTestimonials({
+        category: category as string,
+        featured: featured === 'true',
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      ),
+    ]) as any[];
+
+    if (!testimonials) {
+      return res.json([]);
+    }
 
     res.json(testimonials);
   } catch (error) {
     console.error('Error fetching testimonials:', error);
-    res.status(500).json({ error: 'Failed to fetch testimonials' });
+    // Return empty array as fallback instead of error
+    res.json([]);
   }
 });
 
@@ -56,15 +66,25 @@ router.get('/faqs', async (req: Request, res: Response) => {
   try {
     const { category } = req.query;
 
-    const faqs = await FAQsService.getFAQs({
-      category: category as string,
-      active: true,
-    });
+    const faqs = await Promise.race([
+      FAQsService.getFAQs({
+        category: category as string,
+        active: true,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      ),
+    ]) as any[];
+
+    if (!faqs) {
+      return res.json([]);
+    }
 
     res.json(faqs);
   } catch (error) {
     console.error('Error fetching FAQs:', error);
-    res.status(500).json({ error: 'Failed to fetch FAQs' });
+    // Return empty array as fallback instead of error
+    res.json([]);
   }
 });
 
@@ -80,15 +100,25 @@ router.get('/use-cases', async (req: Request, res: Response) => {
   try {
     const { user_type, featured } = req.query;
 
-    const useCases = await UseCasesService.getUseCases({
-      user_type: user_type as string,
-      featured: featured === 'true',
-    });
+    const useCases = await Promise.race([
+      UseCasesService.getUseCases({
+        user_type: user_type as string,
+        featured: featured === 'true',
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      ),
+    ]) as any[];
+
+    if (!useCases) {
+      return res.json([]);
+    }
 
     res.json(useCases);
   } catch (error) {
     console.error('Error fetching use cases:', error);
-    res.status(500).json({ error: 'Failed to fetch use cases' });
+    // Return empty array as fallback instead of error
+    res.json([]);
   }
 });
 
@@ -147,15 +177,25 @@ router.get('/comparison-matrix', async (req: Request, res: Response) => {
   try {
     const { category } = req.query;
 
-    const comparisons = await ComparisonMatrixService.getComparisons({
-      category: category as string,
-      active: true,
-    });
+    const comparisons = await Promise.race([
+      ComparisonMatrixService.getComparisons({
+        category: category as string,
+        active: true,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      ),
+    ]) as any[];
+
+    if (!comparisons) {
+      return res.json([]);
+    }
 
     res.json(comparisons);
   } catch (error) {
     console.error('Error fetching comparisons:', error);
-    res.status(500).json({ error: 'Failed to fetch comparisons' });
+    // Return empty array as fallback instead of error
+    res.json([]);
   }
 });
 

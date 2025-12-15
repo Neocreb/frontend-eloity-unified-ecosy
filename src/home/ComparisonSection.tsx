@@ -11,10 +11,40 @@ interface Comparison {
   competitors?: Record<string, boolean>;
 }
 
+// Default mock comparisons for fallback
+const defaultComparisons: Comparison[] = [
+  {
+    id: 'comparison-1',
+    feature_name: 'Multi-currency Support',
+    category: 'payments',
+    eloity_has: true,
+    feature_description: 'Support for 150+ currencies with real-time exchange rates',
+    competitors: { 'Competitor A': false, 'Competitor B': true, 'Competitor C': false },
+  },
+  {
+    id: 'comparison-2',
+    feature_name: 'Creator Monetization',
+    category: 'features',
+    eloity_has: true,
+    feature_description: 'Multiple revenue streams including tips, sponsorships, and subscriptions',
+    competitors: { 'Competitor A': false, 'Competitor B': true, 'Competitor C': true },
+  },
+  {
+    id: 'comparison-3',
+    feature_name: 'Global Marketplace',
+    category: 'features',
+    eloity_has: true,
+    feature_description: 'Decentralized marketplace connecting buyers and sellers worldwide',
+    competitors: { 'Competitor A': false, 'Competitor B': false, 'Competitor C': true },
+  },
+];
+
 export const ComparisonSection: React.FC = () => {
-  const [comparisons, setComparisons] = useState<Comparison[]>([]);
+  const [comparisons, setComparisons] = useState<Comparison[]>(defaultComparisons);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    defaultComparisons.length > 0 ? defaultComparisons[0].category : ''
+  );
 
   useEffect(() => {
     fetchComparisons();
@@ -23,15 +53,36 @@ export const ComparisonSection: React.FC = () => {
   const fetchComparisons = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/landing/comparison-matrix');
-      if (!response.ok) throw new Error('Failed to fetch comparisons');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch('/api/landing/comparison-matrix', {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn('Failed to fetch comparisons, using defaults');
+        setComparisons(defaultComparisons);
+        if (defaultComparisons.length > 0) {
+          setSelectedCategory(defaultComparisons[0].category);
+        }
+        return;
+      }
+
       const data = await response.json();
-      setComparisons(data);
-      if (data.length > 0) {
-        setSelectedCategory(data[0].category);
+      const dataToUse = Array.isArray(data) && data.length > 0 ? data : defaultComparisons;
+      setComparisons(dataToUse);
+      if (dataToUse.length > 0) {
+        setSelectedCategory(dataToUse[0].category);
       }
     } catch (error) {
       console.error('Error fetching comparisons:', error);
+      // Use default comparisons on error
+      setComparisons(defaultComparisons);
+      if (defaultComparisons.length > 0) {
+        setSelectedCategory(defaultComparisons[0].category);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -53,10 +104,6 @@ export const ComparisonSection: React.FC = () => {
         </div>
       </section>
     );
-  }
-
-  if (comparisons.length === 0) {
-    return null;
   }
 
   return (

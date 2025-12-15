@@ -1,10 +1,10 @@
 // @ts-nocheck
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
+import {
   Form,
   FormControl,
   FormDescription,
@@ -21,11 +21,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { ImagePlus, Loader2, Sparkles } from 'lucide-react';
+import { ImagePlus, Loader2, Sparkles, Plus, X } from 'lucide-react';
 import { useMarketplace } from '@/contexts/MarketplaceContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { categoryService } from '@/services';
+import { MarketplaceService } from '@/services/marketplaceService';
 import EdithAIGenerator from "@/components/ai/EdithAIGenerator";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,22 +52,40 @@ const ListProductForm = ({ onSuccess, editProductId }: ListProductFormProps) => 
   const [previewImage, setPreviewImage] = useState<string>('');
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
-  
-  // Load categories
-  useState(() => {
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+
+  // Load categories on component mount
+  useEffect(() => {
     const loadCategories = async () => {
       try {
+        setLoadingCategories(true);
+        setCategoriesError(null);
         const categoryData = await categoryService.getCategories();
-        setCategories(categoryData.map(cat => ({ id: cat.id, name: cat.name })));
+
+        if (!categoryData || categoryData.length === 0) {
+          // Use default categories as fallback
+          const defaultCategories = MarketplaceService.DEFAULT_CATEGORIES;
+          setCategories(defaultCategories.map(cat => ({ id: cat.id, name: cat.name })));
+          console.info("Using default categories as fallback");
+        } else {
+          setCategories(categoryData.map(cat => ({ id: cat.id, name: cat.name })));
+        }
       } catch (error) {
         console.error("Error loading categories:", error);
-        // Fallback to empty array if real data fetch fails
-        setCategories([]);
+        // Fallback to default categories
+        const defaultCategories = MarketplaceService.DEFAULT_CATEGORIES;
+        setCategories(defaultCategories.map(cat => ({ id: cat.id, name: cat.name })));
+        setCategoriesError("Failed to load all categories. Using defaults.");
+      } finally {
+        setLoadingCategories(false);
       }
     };
-    
+
     loadCategories();
-  });
+  }, []);
   
   const form = useForm<FormValues>({
     defaultValues: {
@@ -78,6 +97,19 @@ const ListProductForm = ({ onSuccess, editProductId }: ListProductFormProps) => 
       inStock: true,
     }
   });
+
+  const handleAddCustomCategory = () => {
+    if (customCategory.trim()) {
+      const trimmedCategory = customCategory.trim();
+      form.setValue('category', trimmedCategory);
+      setCustomCategory('');
+      setShowCustomCategoryInput(false);
+      toast({
+        title: "Custom Category Added",
+        description: `"${trimmedCategory}" will be used for this product.`,
+      });
+    }
+  };
   
   // For image preview and upload
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -282,26 +314,90 @@ const ListProductForm = ({ onSuccess, editProductId }: ListProductFormProps) => 
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Category</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map(category => (
-                            <SelectItem 
-                              key={category.id} 
-                              value={category.id}
+                      {loadingCategories ? (
+                        <div className="flex items-center justify-center h-10 border border-gray-300 rounded-md bg-gray-50">
+                          <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                          <span className="ml-2 text-sm text-gray-500">Loading categories...</span>
+                        </div>
+                      ) : !showCustomCategoryInput ? (
+                        <div className="space-y-2">
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {categories.map(category => (
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id}
+                                >
+                                  {category.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {categories.length === 0 && (
+                            <p className="text-sm text-amber-600">No categories available. Please add a custom category.</p>
+                          )}
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setShowCustomCategoryInput(true)}
+                          >
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Custom Category
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Input
+                            placeholder="Enter custom category name"
+                            value={customCategory}
+                            onChange={(e) => setCustomCategory(e.target.value)}
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                handleAddCustomCategory();
+                              }
+                            }}
+                            autoFocus
+                          />
+                          <div className="flex gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={handleAddCustomCategory}
+                              disabled={!customCategory.trim()}
+                              className="flex-1"
                             >
-                              {category.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                              Add
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setShowCustomCategoryInput(false);
+                                setCustomCategory('');
+                              }}
+                              className="flex-1"
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+                      {field.value && (
+                        <div className="text-sm text-green-600 font-medium flex items-center gap-1 mt-2">
+                          ✓ Selected: {field.value}
+                        </div>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
