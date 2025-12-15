@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { FollowService } from "@/services/followService";
 import { profileService } from "@/services/profileService";
+import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   id: string;
