@@ -301,10 +301,7 @@ export class ProfileService {
       }
       return [];
     } catch (error: any) {
-      console.warn(
-        `Error fetching user services for ${userId}:`,
-        error?.message || error,
-      );
+      // Silent fail with fallback empty array
       return [];
     }
   }
