@@ -266,9 +266,14 @@ export class ProfileService {
   async getUserServices(userId: string) {
     try {
       // Try freelance API first
-      const response = await apiClient.getFreelanceJobs({ freelancer_id: userId }) as any;
-      if (response?.services) {
-        return response.services;
+      try {
+        const response = await apiClient.getFreelanceJobs({ freelancer_id: userId }) as any;
+        if (response?.services) {
+          return response.services;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+        // Don't log since fallback will handle it
       }
 
       // Fallback to direct database query
@@ -279,21 +284,18 @@ export class ProfileService {
         .order("updated_at", { ascending: false });
 
       if (error) {
-        console.warn(
-          `Freelance services table query failed: ${error.message}. This is expected if the freelance_services table doesn't exist yet.`,
-        );
+        // Silent fail - expected if freelance_profiles table doesn't exist
         return [];
       }
-      
+
       // Extract services from services_offered field
       if (data && data[0] && data[0].services_offered) {
         try {
-          const services = typeof data[0].services_offered === 'string' 
+          const services = typeof data[0].services_offered === 'string'
             ? JSON.parse(data[0].services_offered)
             : data[0].services_offered;
           return Array.isArray(services) ? services : [];
         } catch (parseError) {
-          console.warn('Error parsing services_offered:', parseError);
           return [];
         }
       }
