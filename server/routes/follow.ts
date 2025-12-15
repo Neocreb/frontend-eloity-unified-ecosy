@@ -193,6 +193,25 @@ router.delete('/', authenticateToken, async (req, res) => {
       ))
       .execute();
 
+    // Update follower and following counts in profiles
+    const targetFollowerCount = await db.select().from(followers)
+      .where(eq(followers.following_id, followingId))
+      .execute();
+
+    const followerFollowingCount = await db.select().from(followers)
+      .where(eq(followers.follower_id, actualFollowerId))
+      .execute();
+
+    await db.update(profiles)
+      .set({ followers_count: targetFollowerCount?.length || 0 })
+      .where(eq(profiles.user_id, followingId))
+      .execute();
+
+    await db.update(profiles)
+      .set({ following_count: followerFollowingCount?.length || 0 })
+      .where(eq(profiles.user_id, actualFollowerId))
+      .execute();
+
     logger.info('User unfollowed', { actualFollowerId, followingId });
     res.json({
       following: false,
