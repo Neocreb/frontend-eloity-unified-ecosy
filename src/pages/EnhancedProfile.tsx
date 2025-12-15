@@ -319,12 +319,35 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
       const postId = String(p.id ?? p.post_id ?? p.uuid ?? p.id);
       const arr: any[] = [];
 
+      // Common post data for all media items
+      const commonData = {
+        postId,
+        title: p.content || p.text || "Post",
+        description: (p.content || p.text || "")?.substring(0, 100) || "",
+        likes: p.likes || p.interactions?.likes || 0,
+        comments: p.comments || p.interactions?.comments || 0,
+        shares: p.shares || p.interactions?.shares || 0,
+        views: p.views || 0,
+        date: p.created_at ? new Date(p.created_at).toLocaleDateString() : "Unknown date",
+        duration: "0:00",
+      };
+
       // Get image from image_url or media_urls
       if (p.image_url) {
-        arr.push({ id: `${postId}-img`, type: "image", url: p.image_url, postId });
+        arr.push({
+          id: `${postId}-img`,
+          type: "image",
+          url: p.image_url,
+          ...commonData
+        });
       } else if (p.media_urls && Array.isArray(p.media_urls)) {
         p.media_urls.forEach((url: string, idx: number) => {
-          arr.push({ id: `${postId}-${idx}`, type: "image", url, postId });
+          arr.push({
+            id: `${postId}-${idx}`,
+            type: "image",
+            url,
+            ...commonData
+          });
         });
       }
 
@@ -332,7 +355,13 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
       const mediaArr = p.content?.media || [];
       mediaArr.forEach((m: any, idx: number) => {
         if (m?.url && (m.type === "image" || m.type === "video")) {
-          arr.push({ id: `${postId}-${idx}`, type: m.type, url: m.url, postId });
+          arr.push({
+            id: `${postId}-${idx}`,
+            type: m.type,
+            url: m.url,
+            duration: m.duration || "0:00",
+            ...commonData
+          });
         }
       });
       return arr;
