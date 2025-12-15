@@ -14,8 +14,30 @@ interface FAQ {
   category: string;
 }
 
+// Default mock FAQs for fallback
+const defaultFAQs: FAQ[] = [
+  {
+    id: 'faq-1',
+    question: 'How do I get started on Eloity?',
+    answer: 'Create an account, complete your profile, and start exploring opportunities in your field. It takes just a few minutes to get up and running.',
+    category: 'getting-started',
+  },
+  {
+    id: 'faq-2',
+    question: 'Is Eloity available in my country?',
+    answer: 'Eloity is available in 150+ countries. We support multiple currencies and payment methods to serve a global audience.',
+    category: 'platform',
+  },
+  {
+    id: 'faq-3',
+    question: 'How are payments processed?',
+    answer: 'We use secure payment processors to handle transactions. Payments are typically processed within 24-48 hours to your preferred wallet or bank account.',
+    category: 'payments',
+  },
+];
+
 export const FAQSection: React.FC = () => {
-  const [faqs, setFAQs] = useState<FAQ[]>([]);
+  const [faqs, setFAQs] = useState<FAQ[]>(defaultFAQs);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -26,12 +48,26 @@ export const FAQSection: React.FC = () => {
   const fetchFAQs = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/landing/faqs');
-      if (!response.ok) throw new Error('Failed to fetch FAQs');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch('/api/landing/faqs', {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn('Failed to fetch FAQs, using defaults');
+        setFAQs(defaultFAQs);
+        return;
+      }
+
       const data = await response.json();
-      setFAQs(data);
+      setFAQs(Array.isArray(data) && data.length > 0 ? data : defaultFAQs);
     } catch (error) {
       console.error('Error fetching FAQs:', error);
+      // Use default FAQs on error
+      setFAQs(defaultFAQs);
     } finally {
       setIsLoading(false);
     }
