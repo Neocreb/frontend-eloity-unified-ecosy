@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChatErrorBoundary } from "@/components/debug/ChatErrorBoundary";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import chat components
 import { EnhancedMessage, EnhancedChatMessage } from "@/components/chat/EnhancedMessage";
@@ -268,7 +269,87 @@ const ChatRoomContent = () => {
           console.error("Error parsing conversation data:", error);
         }
 
-        // Generate chat data based on threadId and chatType if not found
+        // Try to load REAL conversation from database
+        if (!chatData) {
+          try {
+            const { data: conversation, error } = await supabase
+              .from('chat_conversations')
+              .select('*')
+              .eq('id', threadId)
+              .single();
+
+            if (!error && conversation) {
+              // Found real conversation in database
+              console.log("Loaded real conversation from database:", conversation);
+
+              // Build chat thread from real data
+              if (conversation.type === 'group') {
+                // Handle group chat
+                chatData = {
+                  id: conversation.id,
+                  type: chatType,
+                  referenceId: conversation.settings?.referenceId || null,
+                  isGroup: true,
+                  groupName: conversation.name,
+                  groupDescription: conversation.description,
+                  participants: conversation.participants || [],
+                  adminIds: conversation.admin_ids || [conversation.created_by],
+                  createdBy: conversation.created_by,
+                  createdAt: conversation.created_at,
+                  lastMessage: conversation.last_message || '',
+                  lastMessageAt: conversation.last_activity || new Date().toISOString(),
+                  updatedAt: conversation.updated_at,
+                  unreadCount: 0,
+                  settings: conversation.settings || {},
+                } as GroupChatThread;
+              } else {
+                // Handle direct/1-on-1 chat
+                const otherUserId = conversation.participants?.find((id: string) => id !== user?.id);
+
+                // Fetch participant profile info
+                let participantProfile = null;
+                if (otherUserId) {
+                  const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('id, username, full_name, avatar_url, is_verified, is_online')
+                    .eq('user_id', otherUserId)
+                    .single();
+
+                  if (profile) {
+                    participantProfile = {
+                      id: otherUserId,
+                      name: profile.full_name || profile.username,
+                      avatar: profile.avatar_url,
+                      is_online: profile.is_online,
+                      is_verified: profile.is_verified,
+                    };
+                  }
+                }
+
+                chatData = {
+                  id: conversation.id,
+                  type: chatType,
+                  referenceId: conversation.settings?.referenceId || null,
+                  isGroup: false,
+                  participant_profile: participantProfile || {
+                    id: otherUserId,
+                    name: 'User',
+                    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+                    is_online: false,
+                  },
+                  lastMessage: conversation.last_message || '',
+                  lastMessageAt: conversation.last_activity || new Date().toISOString(),
+                  updatedAt: conversation.updated_at,
+                  unreadCount: 0,
+                };
+              }
+            }
+          } catch (dbError) {
+            console.log("Real conversation not found in database, falling back to generated data:", dbError);
+          }
+        }
+
+        // Fall back to generated fake chat data if still not found
         if (!chatData) {
           chatData = generateChatFromId(threadId, chatType);
         }
