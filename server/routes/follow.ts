@@ -1,6 +1,9 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
+import { db } from '../enhanced-index.js';
+import { followers, profiles } from '../../shared/enhanced-schema.js';
+import { eq, and } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -14,20 +17,35 @@ router.post('/users/:id/follow', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Cannot follow yourself' });
     }
 
-    // TODO: Insert follow relationship into database
-    // TODO: Check if already following
-    
-    const followRecord = {
-      id: `follow_${Date.now()}`,
-      follower_id: followerId,
-      following_id: targetUserId,
-      created_at: new Date().toISOString()
-    };
+    // Check if already following
+    const existingFollow = await db.select().from(followers)
+      .where(and(
+        eq(followers.follower_id, followerId),
+        eq(followers.following_id, targetUserId)
+      ))
+      .execute();
+
+    if (existingFollow && existingFollow.length > 0) {
+      return res.status(400).json({ error: 'Already following this user' });
+    }
+
+    // Insert follow relationship into database
+    await db.insert(followers)
+      .values({
+        follower_id: followerId,
+        following_id: targetUserId,
+      })
+      .execute();
+
+    // Get updated follower count
+    const followerCountResult = await db.select().from(followers)
+      .where(eq(followers.following_id, targetUserId))
+      .execute();
 
     logger.info('User followed', { followerId, targetUserId });
     res.status(201).json({
       following: true,
-      follower_count: Math.floor(Math.random() * 1000) + 100
+      follower_count: followerCountResult?.length || 0
     });
   } catch (error) {
     logger.error('Error following user:', error);
@@ -41,12 +59,23 @@ router.delete('/users/:id/follow', authenticateToken, async (req, res) => {
     const { id: targetUserId } = req.params;
     const followerId = req.userId;
 
-    // TODO: Remove follow relationship from database
-    
+    // Remove follow relationship from database
+    await db.delete(followers)
+      .where(and(
+        eq(followers.follower_id, followerId),
+        eq(followers.following_id, targetUserId)
+      ))
+      .execute();
+
+    // Get updated follower count
+    const followerCountResult = await db.select().from(followers)
+      .where(eq(followers.following_id, targetUserId))
+      .execute();
+
     logger.info('User unfollowed', { followerId, targetUserId });
     res.json({
       following: false,
-      follower_count: Math.floor(Math.random() * 1000) + 100
+      follower_count: followerCountResult?.length || 0
     });
   } catch (error) {
     logger.error('Error unfollowing user:', error);
