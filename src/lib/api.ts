@@ -340,38 +340,53 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
     ...options,
   };
 
-  const response = await fetch(url, config);
-
-  // Read body once to avoid "body stream already read" errors
-  let text = "";
-  let data: any;
-
   try {
-    // Clone the response to safely read the body
-    const clonedResponse = response.clone();
-    text = await clonedResponse.text();
-  } catch (e) {
-    // Handle cases where body stream has already been read or is unavailable
-    console.error("Error reading response body:", e);
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: Failed to read response`);
+    const response = await fetch(url, config);
+
+    // Read body once to avoid "body stream already read" errors
+    let text = "";
+    let data: any;
+
+    try {
+      // Clone the response to safely read the body
+      const clonedResponse = response.clone();
+      text = await clonedResponse.text();
+    } catch (e) {
+      // Handle cases where body stream has already been read or is unavailable
+      console.error("Error reading response body:", e);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to read response`);
+      }
+      return null;
     }
-    return null;
-  }
 
-  try {
-    data = text ? JSON.parse(text) : null;
-  } catch (e) {
-    console.warn(`Failed to parse JSON from ${endpoint}:`, text?.substring(0, 200));
-    data = { error: text || "Unknown error" };
-  }
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (e) {
+      // If response is HTML, it's likely an error page from the server
+      if (text && text.includes("<!doctype") || text.includes("<html")) {
+        console.error(`Server returned HTML error page for ${endpoint}. Status: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`Server error (HTTP ${response.status}): Backend may not be responding correctly`);
+        }
+      }
+      console.warn(`Failed to parse JSON from ${endpoint}:`, text?.substring(0, 200));
+      data = { error: text || "Unknown error" };
+    }
 
-  if (!response.ok) {
-    const errorMessage = (data?.error) || (data?.message) || `HTTP ${response.status}`;
-    throw new Error(errorMessage);
-  }
+    if (!response.ok) {
+      const errorMessage = (data?.error) || (data?.message) || `HTTP ${response.status}`;
+      throw new Error(errorMessage);
+    }
 
-  return data;
+    return data;
+  } catch (error) {
+    // Re-throw with more context
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`Failed to call ${endpoint}: ${String(error)}`);
+  }
 }
 
 // Wrapper for fetch with automatic auth header
