@@ -90,6 +90,15 @@ export const video_calls = pgTable('video_calls', {
   created_at: timestamp('created_at').defaultNow(),
 });
 
+// Typing indicators table
+export const typing_indicators = pgTable('typing_indicators', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  conversation_id: uuid('conversation_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  started_at: timestamp('started_at').defaultNow(),
+  expires_at: timestamp('expires_at').notNull(),
+});
+
 // Relations
 export const chatConversationsRelations = relations(chat_conversations, ({ one, many }) => ({
   creator: one(users, {
