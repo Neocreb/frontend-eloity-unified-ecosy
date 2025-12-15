@@ -89,7 +89,15 @@ router.get('/search', async (req, res) => {
 
     // Search users
     if (type === 'all' || type === 'users') {
-      const userResults = await db.select().from(profiles)
+      const userResults = await db.select({
+        user_id: profiles.user_id,
+        username: profiles.username,
+        full_name: profiles.full_name,
+        avatar_url: profiles.avatar_url,
+        bio: profiles.bio,
+        is_verified: profiles.is_verified,
+        profile_views: profiles.profile_views
+      }).from(profiles)
         .where(or(
           like(profiles.full_name, `%${query}%`),
           like(profiles.username, `%${query}%`),
