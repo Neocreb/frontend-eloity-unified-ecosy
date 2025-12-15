@@ -760,6 +760,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                     Posts
                   </TabsTrigger>
                   <TabsTrigger
+                    value="media"
+                    className="px-4 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 bg-transparent rounded-none"
+                  >
+                    <ImageIcon className="h-4 w-4 mr-2" />
+                    Media
+                  </TabsTrigger>
+                  <TabsTrigger
                     value="activity"
                     className="px-4 py-3 border-b-2 border-transparent data-[state=active]:border-blue-500 data-[state=active]:text-blue-600 bg-transparent rounded-none"
                   >
