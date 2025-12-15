@@ -167,6 +167,34 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
     if (user && refetchTrigger > 0) fetchStories();
   }, [refetchTrigger, user]);
 
+  // Subscribe to real-time updates for new stories
+  useEffect(() => {
+    if (!user) return;
+
+    // Set up real-time subscription
+    const subscription = supabase
+      .channel("public:user_stories")
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "user_stories",
+          filter: `expires_at=gt.${new Date().toISOString()}`,
+        },
+        (payload) => {
+          console.log("[EnhancedStoriesSection] New story inserted:", payload);
+          // Refetch stories when a new one is inserted
+          fetchStories();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [user]);
+
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({
