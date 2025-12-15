@@ -171,19 +171,18 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
   useEffect(() => {
     if (!user) return;
 
-    // Set up real-time subscription
+    // Set up real-time subscription to watch for new stories
     const subscription = supabase
-      .channel("public:user_stories")
+      .channel("public:user_stories:insert")
       .on(
         "postgres_changes",
         {
           event: "INSERT",
           schema: "public",
           table: "user_stories",
-          filter: `expires_at=gt.${new Date().toISOString()}`,
         },
         (payload) => {
-          console.log("[EnhancedStoriesSection] New story inserted:", payload);
+          console.log("[EnhancedStoriesSection] New story detected:", payload);
           // Refetch stories when a new one is inserted
           fetchStories();
         }
