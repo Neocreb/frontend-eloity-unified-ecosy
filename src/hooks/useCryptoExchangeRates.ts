@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import cryptoapisClient from '@/lib/cryptoapis-client';
 
 export interface ExchangeRateData {
   baseAsset: string;
@@ -29,24 +28,59 @@ export function useCryptoExchangeRates(
     setError(null);
 
     try {
+      // Map symbols to CoinGecko IDs
+      const symbolToCoinGeckoId: Record<string, string> = {
+        BTC: 'bitcoin',
+        ETH: 'ethereum',
+        USDT: 'tether',
+        USDC: 'usd-coin',
+        SOL: 'solana',
+        ADA: 'cardano',
+        XRP: 'ripple',
+        DOGE: 'dogecoin',
+        MATIC: 'matic-network',
+        LINK: 'chainlink',
+      };
+
+      const ids = baseAssets
+        .map(symbol => symbolToCoinGeckoId[symbol.toUpperCase()])
+        .filter(Boolean);
+
+      if (ids.length === 0) {
+        throw new Error('No valid assets to fetch rates for');
+      }
+
+      const vsCurrency = quoteAsset.toLowerCase();
+      const url = `https://api.coingecko.com/api/v3/simple/price?ids=${ids.join(',')}&vs_currencies=${vsCurrency}`;
+
+      const response = await fetch(url, {
+        headers: {
+          'Accept': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch rates: ${response.status}`);
+      }
+
+      const data = await response.json();
       const ratesMap: Record<string, number> = {};
 
-      const requests = baseAssets.map((base) =>
-        cryptoapisClient.getExchangeRates(base, quoteAsset)
-      );
-
-      const responses = await Promise.all(requests);
-
-      responses.forEach((response, index) => {
-        if (response.success && response.data) {
-          const rate = parseFloat(response.data.rate || response.data.rateFormatted || '0');
-          ratesMap[`${baseAssets[index]}_${quoteAsset}`] = rate;
+      baseAssets.forEach((symbol) => {
+        const id = symbolToCoinGeckoId[symbol.toUpperCase()];
+        if (id && data[id] && data[id][vsCurrency]) {
+          ratesMap[`${symbol}_${quoteAsset}`] = data[id][vsCurrency];
         }
       });
+
+      if (Object.keys(ratesMap).length === 0) {
+        throw new Error('No rates returned from API');
+      }
 
       setRates(ratesMap);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('Error fetching exchange rates:', errorMessage);
       setError(errorMessage);
       setRates({});
     } finally {
@@ -57,6 +91,7 @@ export function useCryptoExchangeRates(
   useEffect(() => {
     fetchRates();
 
+    // Refresh every 60 seconds
     const interval = setInterval(fetchRates, 60000);
 
     return () => clearInterval(interval);

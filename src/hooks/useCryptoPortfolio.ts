@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import cryptoapisClient from '@/lib/cryptoapis-client';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface PortfolioAsset {
   id: string;
@@ -50,10 +51,11 @@ export function useCryptoPortfolio(
   const [totalPnLPercent, setTotalPnLPercent] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchPortfolio = useCallback(async () => {
-    if (!walletAddress) {
-      setError('Wallet address is required');
+    if (!user?.id) {
+      setError('User not authenticated');
       return;
     }
 
@@ -61,39 +63,80 @@ export function useCryptoPortfolio(
     setError(null);
 
     try {
-      const [activityResponse, historyResponse] = await Promise.all([
-        cryptoapisClient.getAddressLatestActivity(blockchain, network, walletAddress),
-        cryptoapisClient.getAddressHistory(blockchain, network, walletAddress),
-      ]);
+      // Fetch wallet balances from database
+      const { data: wallets, error: walletError } = await supabase
+        .from('wallets')
+        .select('balance_crypto, symbol')
+        .eq('user_id', user.id);
 
-      if (!activityResponse.success || !historyResponse.success) {
-        throw new Error('Failed to fetch portfolio data');
+      if (walletError) {
+        throw new Error(walletError.message);
       }
 
-      const activityData = activityResponse.data || {};
-      const historyData = historyResponse.data || {};
+      if (!wallets || wallets.length === 0) {
+        setAssets([]);
+        setTotalValue(0);
+        setTotalPnL(0);
+        setTotalPnLPercent(0);
+        return;
+      }
 
-      const portfolioAssets = parsePortfolioData(
-        activityData,
-        historyData,
-        blockchain,
-        walletAddress
-      );
+      // Fetch current prices from backend API (uses Bybit + CoinGecko)
+      const symbolList = wallets
+        .map(w => w.symbol?.toLowerCase())
+        .filter(Boolean)
+        .join(',');
 
-      setAssets(portfolioAssets);
+      const pricesRes = await fetch(`/api/crypto/prices?symbols=${symbolList}`);
+      if (!pricesRes.ok) {
+        throw new Error('Failed to fetch current prices');
+      }
 
+      const pricesData = await pricesRes.json();
+      const prices = pricesData.prices || {};
+
+      // Build portfolio assets
+      const portfolioAssets = wallets
+        .filter(w => w.symbol && w.balance_crypto > 0)
+        .map(wallet => {
+          const symbol = wallet.symbol || 'UNKNOWN';
+          const amount = parseFloat(wallet.balance_crypto) || 0;
+          const priceData = prices[symbol.toLowerCase()];
+          const currentPrice = priceData?.usd || 0;
+          const value = amount * currentPrice;
+
+          return {
+            id: symbol.toLowerCase(),
+            symbol,
+            name: getAssetName(symbol),
+            amount,
+            value,
+            avgBuyPrice: currentPrice,
+            currentPrice,
+            pnl: 0,
+            pnlPercent: 0,
+            allocation: 0,
+            color: ASSET_COLORS[symbol] || '#888888',
+            lastUpdated: new Date().toISOString(),
+          };
+        });
+
+      // Calculate totals
       const total = portfolioAssets.reduce((sum, asset) => sum + asset.value, 0);
-      const pnl = portfolioAssets.reduce((sum, asset) => sum + asset.pnl, 0);
-      const pnlPercent = portfolioAssets.reduce(
-        (sum, asset) => sum + asset.pnlPercent * (asset.value / total),
-        0
-      );
+      const totalPnL = portfolioAssets.reduce((sum, asset) => sum + asset.pnl, 0);
 
+      const finalAssets = portfolioAssets.map(asset => ({
+        ...asset,
+        allocation: total > 0 ? (asset.value / total) * 100 : 0,
+      }));
+
+      setAssets(finalAssets);
       setTotalValue(total);
-      setTotalPnL(pnl);
-      setTotalPnLPercent(isNaN(pnlPercent) ? 0 : pnlPercent);
+      setTotalPnL(totalPnL);
+      setTotalPnLPercent(total > 0 ? (totalPnL / total) * 100 : 0);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('Error fetching portfolio:', errorMessage);
       setError(errorMessage);
       setAssets([]);
       setTotalValue(0);
@@ -102,10 +145,15 @@ export function useCryptoPortfolio(
     } finally {
       setLoading(false);
     }
-  }, [walletAddress, blockchain, network]);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchPortfolio();
+
+    // Refresh every 30 seconds
+    const interval = setInterval(fetchPortfolio, 30000);
+
+    return () => clearInterval(interval);
   }, [fetchPortfolio]);
 
   return {
@@ -117,85 +165,6 @@ export function useCryptoPortfolio(
     error,
     refetch: fetchPortfolio,
   };
-}
-
-function parsePortfolioData(
-  activityData: any,
-  historyData: any,
-  blockchain: string,
-  walletAddress: string
-): PortfolioAsset[] {
-  const assetMap = new Map<string, { amount: number; price: number }>();
-
-  // Parse transaction history to calculate balances
-  const transactions = Array.isArray(historyData) ? historyData : historyData?.data || [];
-
-  transactions.forEach((tx: any) => {
-    const isIncoming = tx.recipientAddress?.toLowerCase() === walletAddress.toLowerCase();
-    const symbol = tx.tokenSymbol || 'ETH';
-    const amount = parseFloat(tx.amount) || 0;
-
-    if (amount > 0) {
-      const existing = assetMap.get(symbol) || { amount: 0, price: 0 };
-      const newAmount = isIncoming ? existing.amount + amount : existing.amount - amount;
-
-      assetMap.set(symbol, {
-        amount: Math.max(0, newAmount),
-        price: existing.price || parseFloat(tx.gasPrice) || 1,
-      });
-    }
-  });
-
-  // Parse latest activity data
-  if (activityData && typeof activityData === 'object') {
-    const addresses = activityData.addresses || [];
-    addresses.forEach((addr: any) => {
-      const symbol = addr.tokenSymbol || 'ETH';
-      const amount = parseFloat(addr.balance) || 0;
-
-      if (amount > 0) {
-        const existing = assetMap.get(symbol) || { amount: 0, price: 0 };
-        assetMap.set(symbol, {
-          amount,
-          price: existing.price || 1,
-        });
-      }
-    });
-  }
-
-  // If no assets found from blockchain data, return empty portfolio
-  if (assetMap.size === 0) {
-    return [];
-  }
-
-  // Convert to PortfolioAsset format
-  const portfolioAssets = Array.from(assetMap.entries()).map(([symbol, { amount, price }]) => {
-    const id = symbol.toLowerCase();
-    const value = amount * price;
-
-    return {
-      id,
-      symbol,
-      name: getAssetName(symbol),
-      amount,
-      value,
-      avgBuyPrice: price,
-      currentPrice: price,
-      pnl: 0,
-      pnlPercent: 0,
-      allocation: 0,
-      color: ASSET_COLORS[symbol] || '#888888',
-      lastUpdated: new Date().toISOString(),
-    };
-  });
-
-  // Calculate total value and allocations
-  const total = portfolioAssets.reduce((sum, asset) => sum + asset.value, 0);
-
-  return portfolioAssets.map((asset) => ({
-    ...asset,
-    allocation: total > 0 ? (asset.value / total) * 100 : 0,
-  }));
 }
 
 function getAssetName(symbol: string): string {
