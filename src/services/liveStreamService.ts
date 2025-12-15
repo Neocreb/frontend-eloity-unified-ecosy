@@ -45,14 +45,20 @@ export const liveStreamService = {
     try {
       const { data, error } = await supabase
         .from('live_streams')
-        .select('*')
+        .select('id, user_id, title, description, viewer_count, is_active, started_at, ended_at, category, stream_key')
         .eq('is_active', true)
         .order('viewer_count', { ascending: false })
         .limit(20);
 
       if (error) {
-        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
-        console.error('Error loading live streams:', errorMsg);
+        // Log detailed error information
+        console.error('Error loading live streams - Details:', {
+          message: error?.message,
+          code: error?.code,
+          hint: error?.hint,
+          details: error?.details,
+          fullError: JSON.stringify(error)
+        });
         return [];
       }
 
@@ -60,18 +66,29 @@ export const liveStreamService = {
       if (!data || data.length === 0) return [];
 
       const userIds = Array.from(new Set(data.map((s: any) => s.user_id)));
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('user_id, username, full_name, avatar_url, is_verified')
-        .in('user_id', userIds);
 
-      if (profilesError) {
-        const errorMsg = profilesError instanceof Error ? profilesError.message : JSON.stringify(profilesError);
-        console.error('Error loading profiles:', errorMsg);
+      // Fetch profiles with error handling
+      let profiles = [];
+      try {
+        const { data: profilesData, error: profilesError } = await supabase
+          .from('profiles')
+          .select('user_id, username, full_name, avatar_url, is_verified')
+          .in('user_id', userIds);
+
+        if (profilesError) {
+          console.warn('Warning: Could not load profiles, continuing without them:', {
+            message: profilesError?.message,
+            code: profilesError?.code
+          });
+        } else {
+          profiles = profilesData || [];
+        }
+      } catch (profileError) {
+        console.warn('Exception while loading profiles:', profileError instanceof Error ? profileError.message : 'Unknown');
       }
 
       const profileMap = new Map(
-        (profiles || []).map((p: any) => [p.user_id, p])
+        profiles.map((p: any) => [p.user_id, p])
       );
 
       return data.map((stream: any) => {
@@ -87,8 +104,10 @@ export const liveStreamService = {
         };
       });
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.error('Failed to load active live streams:', errorMsg);
+      console.error('Exception in getActiveLiveStreams:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : undefined
+      });
       return [];
     }
   },
