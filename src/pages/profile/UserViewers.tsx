@@ -16,6 +16,8 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   id: string;
