@@ -638,10 +638,8 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
             console.log("Unified threads after adding public groups:", unifiedThreads);
           }
         } catch (error) {
-          console.error("Error loading public groups:", {
-            message: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : ''
-          });
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.debug("Error loading public groups:", errorMessage);
         }
       }
 
