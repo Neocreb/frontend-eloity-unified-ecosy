@@ -239,7 +239,13 @@ class StoriesService {
         .single();
 
       if (error) {
-        console.error('Error inserting story view:', error);
+        console.error('Error inserting story view:', {
+          message: error?.message,
+          code: error?.code,
+          details: error?.details,
+          hint: error?.hint,
+          fullError: JSON.stringify(error)
+        });
         return {
           id: '',
           story_id: storyId,
