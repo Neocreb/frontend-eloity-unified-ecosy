@@ -1,8 +1,6 @@
 import { ChatThread, ChatMessage, ChatFilter, StartChatRequest } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
-
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
@@ -10,13 +8,11 @@ export interface ApiResponse<T> {
 }
 
 class ChatPersistenceService {
-  private apiBase = API_BASE;
-
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.apiBase}/chat${endpoint}`;
+    const url = `/api/chat${endpoint}`;
     
     // Get auth token from localStorage
     const token = localStorage.getItem('accessToken');
