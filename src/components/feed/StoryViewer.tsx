@@ -84,16 +84,7 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
     timerRef.current = setInterval(() => {
       setProgress(prev => {
         if (prev >= 100) {
-          // Move to next user's story
-          if (currentIndex < stories.length - 1) {
-            setCurrentIndex(prevIndex => prevIndex + 1);
-            onStoryChange?.(currentIndex + 1);
-            return 0;
-          } else {
-            // End of stories
-            onClose();
-            return 100;
-          }
+          return 0;
         }
         return prev + 2;
       });
@@ -102,7 +93,7 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [currentStory, currentIndex, stories.length, onStoryChange, onClose, isPaused]);
+  }, [currentStory, isPaused, viewStory]);
 
   // Reset progress when story changes
   useEffect(() => {
