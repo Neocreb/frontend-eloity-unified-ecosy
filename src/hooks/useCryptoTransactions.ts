@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import cryptoapisClient from '@/lib/cryptoapis-client';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface CryptoTransaction {
   id: string;
@@ -36,10 +37,11 @@ export function useCryptoTransactions(
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasMore, setHasMore] = useState(false);
+  const { user } = useAuth();
 
   const fetchTransactions = useCallback(async () => {
-    if (!walletAddress) {
-      setError('Wallet address is required');
+    if (!user?.id) {
+      setError('User not authenticated');
       return;
     }
 
@@ -47,60 +49,93 @@ export function useCryptoTransactions(
     setError(null);
 
     try {
-      const response = await cryptoapisClient.getAddressHistory(
-        blockchain,
-        network,
-        walletAddress
-      );
+      // Fetch from local database instead of blockchain API
+      const { data, error: dbError } = await supabase
+        .from('crypto_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to fetch transactions');
+      if (dbError) {
+        throw new Error(dbError.message);
       }
 
-      const parsedTransactions = parseTransactions(response.data || [], walletAddress);
-      setTransactions(parsedTransactions.slice(0, limit));
-      setHasMore(parsedTransactions.length > limit);
+      // Convert database records to CryptoTransaction format
+      const parsedTransactions = (data || []).map((tx: any) => ({
+        id: tx.id,
+        type: tx.transaction_type as any,
+        asset: tx.symbol || 'ETH',
+        amount: parseFloat(tx.amount) || 0,
+        price: parseFloat(tx.price_usd) || 0,
+        value: parseFloat(tx.total_value) || 0,
+        fee: parseFloat(tx.fee_amount) || 0,
+        timestamp: tx.created_at,
+        status: tx.status as any,
+        transactionHash: tx.transaction_hash,
+        fromAddress: tx.from_address,
+        toAddress: tx.to_address,
+        blockNumber: tx.block_number || 0,
+      }));
+
+      setTransactions(parsedTransactions);
+      setHasMore(false); // Database query is complete
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('Error fetching transactions:', errorMessage);
       setError(errorMessage);
       setTransactions([]);
     } finally {
       setLoading(false);
     }
-  }, [walletAddress, blockchain, network, limit]);
+  }, [user?.id, limit]);
 
   useEffect(() => {
     fetchTransactions();
   }, [fetchTransactions]);
 
   const loadMore = useCallback(async () => {
-    if (!walletAddress) return;
+    if (!user?.id || hasMore === false) return;
 
     setLoading(true);
     try {
-      const response = await cryptoapisClient.getAddressHistory(
-        blockchain,
-        network,
-        walletAddress
-      );
+      const { data, error: dbError } = await supabase
+        .from('crypto_transactions')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .range(transactions.length, transactions.length + limit);
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to fetch more transactions');
+      if (dbError) {
+        throw new Error(dbError.message);
       }
 
-      const parsedTransactions = parseTransactions(response.data || [], walletAddress);
-      const offset = transactions.length;
-      const nextBatch = parsedTransactions.slice(offset, offset + limit);
+      const parsedTransactions = (data || []).map((tx: any) => ({
+        id: tx.id,
+        type: tx.transaction_type as any,
+        asset: tx.symbol || 'ETH',
+        amount: parseFloat(tx.amount) || 0,
+        price: parseFloat(tx.price_usd) || 0,
+        value: parseFloat(tx.total_value) || 0,
+        fee: parseFloat(tx.fee_amount) || 0,
+        timestamp: tx.created_at,
+        status: tx.status as any,
+        transactionHash: tx.transaction_hash,
+        fromAddress: tx.from_address,
+        toAddress: tx.to_address,
+        blockNumber: tx.block_number || 0,
+      }));
 
-      setTransactions([...transactions, ...nextBatch]);
-      setHasMore(parsedTransactions.length > offset + limit);
+      setTransactions([...transactions, ...parsedTransactions]);
+      setHasMore(parsedTransactions.length === limit);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('Error loading more transactions:', errorMessage);
       setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [walletAddress, blockchain, network, limit, transactions.length]);
+  }, [user?.id, transactions.length, limit, hasMore]);
 
   return {
     transactions,
@@ -110,31 +145,4 @@ export function useCryptoTransactions(
     hasMore,
     loadMore,
   };
-}
-
-function parseTransactions(data: any, walletAddress: string): CryptoTransaction[] {
-  if (!Array.isArray(data)) {
-    return [];
-  }
-
-  return data.map((tx: any, index: number) => {
-    const isIncoming = tx.recipientAddress?.toLowerCase() === walletAddress.toLowerCase();
-    const txType = isIncoming ? 'RECEIVE' : 'SEND';
-
-    return {
-      id: tx.transactionId || `tx_${index}`,
-      type: txType as any,
-      asset: tx.tokenSymbol || 'ETH',
-      amount: parseFloat(tx.amount) || 0,
-      price: parseFloat(tx.gasPrice) || 0,
-      value: parseFloat(tx.value) || 0,
-      fee: parseFloat(tx.gasUsed) || 0,
-      timestamp: tx.transactionTimestamp || new Date().toISOString(),
-      status: tx.status === 'confirmed' ? 'COMPLETED' : 'PENDING',
-      transactionHash: tx.transactionId,
-      fromAddress: tx.senderAddress,
-      toAddress: tx.recipientAddress,
-      blockNumber: parseInt(tx.blockNumber) || 0,
-    };
-  });
 }

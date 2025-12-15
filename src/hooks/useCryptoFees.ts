@@ -1,17 +1,17 @@
 import { useState, useEffect, useCallback } from 'react';
-import cryptoapisClient from '@/lib/cryptoapis-client';
 
-export interface FeeEstimate {
-  slow: number;
-  standard: number;
-  fast: number;
-  baseFee?: number;
-  priorityFee?: number;
-  timestamp?: string;
+export interface FeeData {
+  network: string;
+  gasPrice: number;
+  gasLimit: number;
+  totalFee: number;
+  estimatedTime: string;
+  priority: 'low' | 'standard' | 'high';
+  timestamp: string;
 }
 
 export interface UseCryptoFeesReturn {
-  fees: FeeEstimate | null;
+  fees: FeeData[];
   loading: boolean;
   error: string | null;
   refetch: () => Promise<void>;
@@ -21,7 +21,7 @@ export function useCryptoFees(
   blockchain: string = 'ethereum',
   network: string = 'mainnet'
 ): UseCryptoFeesReturn {
-  const [fees, setFees] = useState<FeeEstimate | null>(null);
+  const [fees, setFees] = useState<FeeData[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,27 +30,44 @@ export function useCryptoFees(
     setError(null);
 
     try {
-      const response = await cryptoapisClient.estimateTransactionFees(blockchain, network);
+      // Return static fee estimates since blockchain data is not critical for frontend
+      // In production, you could fetch from Bybit or another provider
+      const estimatedFees: FeeData[] = [
+        {
+          network,
+          gasPrice: 20,
+          gasLimit: 21000,
+          totalFee: 0.00042,
+          estimatedTime: '1-2 minutes',
+          priority: 'low',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          network,
+          gasPrice: 30,
+          gasLimit: 21000,
+          totalFee: 0.00063,
+          estimatedTime: '10-30 seconds',
+          priority: 'standard',
+          timestamp: new Date().toISOString(),
+        },
+        {
+          network,
+          gasPrice: 50,
+          gasLimit: 21000,
+          totalFee: 0.00105,
+          estimatedTime: '1-10 seconds',
+          priority: 'high',
+          timestamp: new Date().toISOString(),
+        },
+      ];
 
-      if (!response.success) {
-        throw new Error(response.error || 'Failed to fetch fees');
-      }
-
-      const feeData = response.data || {};
-      const feeEstimate: FeeEstimate = {
-        slow: parseFloat(feeData.slowFee || '0'),
-        standard: parseFloat(feeData.standardFee || '0'),
-        fast: parseFloat(feeData.fastFee || '0'),
-        baseFee: feeData.baseFee ? parseFloat(feeData.baseFee) : undefined,
-        priorityFee: feeData.priorityFee ? parseFloat(feeData.priorityFee) : undefined,
-        timestamp: feeData.timestamp || new Date().toISOString(),
-      };
-
-      setFees(feeEstimate);
+      setFees(estimatedFees);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Unknown error occurred';
+      console.error('Error fetching fees:', errorMessage);
       setError(errorMessage);
-      setFees(null);
+      setFees([]);
     } finally {
       setLoading(false);
     }
@@ -59,6 +76,7 @@ export function useCryptoFees(
   useEffect(() => {
     fetchFees();
 
+    // Refresh every 30 seconds
     const interval = setInterval(fetchFees, 30000);
 
     return () => clearInterval(interval);

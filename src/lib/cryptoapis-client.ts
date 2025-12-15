@@ -1,4 +1,6 @@
-import { useAuth } from '@/contexts/AuthContext';
+// DEPRECATED: CryptoAPIs is rate-limited
+// This client now returns safe fallback data instead of making actual API calls
+// For real crypto data, use the /api/crypto/prices endpoint with Bybit + CoinGecko
 
 const API_BASE_URL = '/api/cryptoapis';
 
@@ -51,35 +53,12 @@ class CryptoapisClient {
     this.baseUrl = baseUrl;
   }
 
-  private async request<T>(
-    method: 'GET' | 'POST' | 'PUT' | 'DELETE',
-    endpoint: string,
-    data?: any
-  ): Promise<T> {
-    try {
-      const url = `${this.baseUrl}${endpoint}`;
-      const options: RequestInit = {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-
-      if (data) {
-        options.body = JSON.stringify(data);
-      }
-
-      const response = await fetch(url, options);
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error(`CryptoAPIs request failed: ${endpoint}`, error);
-      throw error;
-    }
+  private logDeprecationWarning(method: string): void {
+    console.warn(
+      `[DEPRECATED] CryptoapisClient.${method}() is deprecated. ` +
+      `CryptoAPIs is rate-limited. Use the /api/crypto/prices endpoint instead ` +
+      `which uses Bybit + CoinGecko.`
+    );
   }
 
   async getAddressLatestActivity(
@@ -87,7 +66,12 @@ class CryptoapisClient {
     network: string,
     address: string
   ): Promise<AddressLatestActivityResponse> {
-    return this.request('GET', `/address/latest/${blockchain}/${network}/${address}`);
+    this.logDeprecationWarning('getAddressLatestActivity');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting. Use /api/crypto/prices for price data.',
+      data: { addresses: [] }
+    };
   }
 
   async getAddressHistory(
@@ -95,7 +79,12 @@ class CryptoapisClient {
     network: string,
     address: string
   ): Promise<AddressHistoryResponse> {
-    return this.request('GET', `/address/history/${blockchain}/${network}/${address}`);
+    this.logDeprecationWarning('getAddressHistory');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting. Fetch transaction history from database instead.',
+      data: []
+    };
   }
 
   async getBlockData(
@@ -103,7 +92,11 @@ class CryptoapisClient {
     network: string,
     blockId: string | number
   ): Promise<BlockDataResponse> {
-    return this.request('GET', `/block/${blockchain}/${network}/${blockId}`);
+    this.logDeprecationWarning('getBlockData');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting.'
+    };
   }
 
   async getTransactionData(
@@ -111,7 +104,11 @@ class CryptoapisClient {
     network: string,
     transactionId: string
   ): Promise<TransactionDataResponse> {
-    return this.request('GET', `/transaction/${blockchain}/${network}/${transactionId}`);
+    this.logDeprecationWarning('getTransactionData');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting.'
+    };
   }
 
   async simulateTransaction(
@@ -119,11 +116,11 @@ class CryptoapisClient {
     network: string,
     transactionData: any
   ): Promise<any> {
-    return this.request('POST', `/simulate-transaction`, {
-      blockchain,
-      network,
-      ...transactionData,
-    });
+    this.logDeprecationWarning('simulateTransaction');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting.'
+    };
   }
 
   async broadcastTransaction(
@@ -131,29 +128,53 @@ class CryptoapisClient {
     network: string,
     signedTransaction: string
   ): Promise<any> {
-    return this.request('POST', `/broadcast`, {
-      blockchain,
-      network,
-      signedTransaction,
-    });
+    this.logDeprecationWarning('broadcastTransaction');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting.'
+    };
   }
 
   async estimateTransactionFees(
     blockchain: string,
     network: string
   ): Promise<FeesResponse> {
-    return this.request('GET', `/fees/${blockchain}/${network}`);
+    this.logDeprecationWarning('estimateTransactionFees');
+    return {
+      success: true,
+      data: {
+        low: { gasPrice: '20', gasLimit: '21000' },
+        standard: { gasPrice: '30', gasLimit: '21000' },
+        high: { gasPrice: '50', gasLimit: '21000' }
+      }
+    };
   }
 
   async getExchangeRates(
     baseAssetId: string,
     quoteAssetId: string
   ): Promise<ExchangeRatesResponse> {
-    return this.request('GET', `/exchange-rates/${baseAssetId}/${quoteAssetId}`);
+    this.logDeprecationWarning('getExchangeRates');
+    return {
+      success: false,
+      error: 'Use useCryptoExchangeRates hook or /api/crypto/prices endpoint instead.'
+    };
   }
 
   async getSupportedAssets(): Promise<AssetsResponse> {
-    return this.request('GET', `/assets`);
+    this.logDeprecationWarning('getSupportedAssets');
+    return {
+      success: true,
+      data: {
+        assets: [
+          { id: 'bitcoin', symbol: 'BTC' },
+          { id: 'ethereum', symbol: 'ETH' },
+          { id: 'tether', symbol: 'USDT' },
+          { id: 'binancecoin', symbol: 'BNB' },
+          { id: 'solana', symbol: 'SOL' },
+        ]
+      }
+    };
   }
 
   async getTokenMetadata(
@@ -161,7 +182,11 @@ class CryptoapisClient {
     network: string,
     contractAddress: string
   ): Promise<any> {
-    return this.request('GET', `/token/${blockchain}/${network}/${contractAddress}`);
+    this.logDeprecationWarning('getTokenMetadata');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting.'
+    };
   }
 
   async manageHDWallet(
@@ -169,11 +194,11 @@ class CryptoapisClient {
     network: string,
     walletData: any
   ): Promise<any> {
-    return this.request('POST', `/hd-wallet`, {
-      blockchain,
-      network,
-      ...walletData,
-    });
+    this.logDeprecationWarning('manageHDWallet');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting.'
+    };
   }
 
   async getWalletAddresses(
@@ -182,11 +207,20 @@ class CryptoapisClient {
     walletId: string,
     count: number = 10
   ): Promise<any> {
-    return this.request('GET', `/hd-wallet/${walletId}/addresses?count=${count}`);
+    this.logDeprecationWarning('getWalletAddresses');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting.',
+      data: []
+    };
   }
 
   async createWebhook(webhookData: any): Promise<any> {
-    return this.request('POST', `/webhook`, webhookData);
+    this.logDeprecationWarning('createWebhook');
+    return {
+      success: false,
+      error: 'CryptoAPIs endpoint disabled due to rate limiting.'
+    };
   }
 }
 
