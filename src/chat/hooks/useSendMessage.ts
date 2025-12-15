@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { ChatMessage } from "@/types/chat";
-import { chatService } from "@/services/chatService";
+import { chatPersistenceService } from "@/services/chatPersistenceService";
 import { useToast } from "@/hooks/use-toast";
 
 export const useSendMessage = (threadId: string) => {
@@ -15,12 +15,18 @@ export const useSendMessage = (threadId: string) => {
       try {
         setSending(true);
 
-        const message = await chatService.sendMessage({
+        const message = await chatPersistenceService.sendMessage(
           threadId,
-          content: content.trim(),
-          messageType: "text",
-          replyTo,
-        });
+          content.trim(),
+          {
+            messageType: "text",
+            replyToId: replyTo,
+          }
+        );
+
+        if (!message) {
+          throw new Error("Failed to send message");
+        }
 
         return message;
       } catch (error) {
@@ -35,7 +41,7 @@ export const useSendMessage = (threadId: string) => {
         setSending(false);
       }
     },
-    [threadId, toast],
+    [threadId, toast]
   );
 
   const sendImageMessage = useCallback(
@@ -44,15 +50,21 @@ export const useSendMessage = (threadId: string) => {
         setUploading(true);
 
         // Upload the image first
-        const imageUrl = await chatService.uploadAttachment(file);
+        const imageUrl = await chatPersistenceService.uploadFile(file);
 
         // Send message with image
-        const message = await chatService.sendMessage({
+        const message = await chatPersistenceService.sendMessage(
           threadId,
-          content: caption || `📷 ${file.name}`,
-          attachments: [imageUrl],
-          messageType: "image",
-        });
+          caption || `📷 ${file.name}`,
+          {
+            attachments: [imageUrl],
+            messageType: "image",
+          }
+        );
+
+        if (!message) {
+          throw new Error("Failed to send image message");
+        }
 
         toast({
           title: "Image sent",
@@ -72,7 +84,7 @@ export const useSendMessage = (threadId: string) => {
         setUploading(false);
       }
     },
-    [threadId, toast],
+    [threadId, toast]
   );
 
   const sendFileMessage = useCallback(
@@ -81,15 +93,21 @@ export const useSendMessage = (threadId: string) => {
         setUploading(true);
 
         // Upload the file first
-        const fileUrl = await chatService.uploadAttachment(file);
+        const fileUrl = await chatPersistenceService.uploadFile(file);
 
         // Send message with file
-        const message = await chatService.sendMessage({
+        const message = await chatPersistenceService.sendMessage(
           threadId,
-          content: description || `📎 ${file.name}`,
-          attachments: [fileUrl],
-          messageType: "file",
-        });
+          description || `📎 ${file.name}`,
+          {
+            attachments: [fileUrl],
+            messageType: "file",
+          }
+        );
+
+        if (!message) {
+          throw new Error("Failed to send file message");
+        }
 
         toast({
           title: "File sent",
@@ -109,7 +127,7 @@ export const useSendMessage = (threadId: string) => {
         setUploading(false);
       }
     },
-    [threadId, toast],
+    [threadId, toast]
   );
 
   const sendMultipleFiles = useCallback(
@@ -132,7 +150,7 @@ export const useSendMessage = (threadId: string) => {
 
       return messages;
     },
-    [sendImageMessage, sendFileMessage],
+    [sendImageMessage, sendFileMessage]
   );
 
   const sendVoiceMessage = useCallback(
@@ -146,15 +164,21 @@ export const useSendMessage = (threadId: string) => {
         });
 
         // Upload the audio file
-        const audioUrl = await chatService.uploadAttachment(audioFile);
+        const audioUrl = await chatPersistenceService.uploadFile(audioFile);
 
         // Send message with voice note
-        const message = await chatService.sendMessage({
+        const message = await chatPersistenceService.sendMessage(
           threadId,
-          content: `🎤 Voice message (${Math.round(duration)}s)`,
-          attachments: [audioUrl],
-          messageType: "voice",
-        });
+          `🎤 Voice message (${Math.round(duration)}s)`,
+          {
+            attachments: [audioUrl],
+            messageType: "voice",
+          }
+        );
+
+        if (!message) {
+          throw new Error("Failed to send voice message");
+        }
 
         toast({
           title: "Voice message sent",
@@ -174,17 +198,19 @@ export const useSendMessage = (threadId: string) => {
         setUploading(false);
       }
     },
-    [threadId, toast],
+    [threadId, toast]
   );
 
   const sendSystemMessage = useCallback(
     async (content: string): Promise<ChatMessage | null> => {
       try {
-        const message = await chatService.sendMessage({
+        const message = await chatPersistenceService.sendMessage(
           threadId,
-          content: `[SYSTEM] ${content}`,
-          messageType: "text",
-        });
+          `[SYSTEM] ${content}`,
+          {
+            messageType: "text",
+          }
+        );
 
         return message;
       } catch (error) {
@@ -192,26 +218,28 @@ export const useSendMessage = (threadId: string) => {
         return null;
       }
     },
-    [threadId],
+    [threadId]
   );
 
   const sendReplyMessage = useCallback(
     async (
       content: string,
       replyToMessageId: string,
-      replyToContent: string,
+      replyToContent: string
     ): Promise<ChatMessage | null> => {
-      const replyText = `Replying to: "${replyToContent.substring(0, 50)}${replyToContent.length > 50 ? "..." : ""}"\n\n${content}`;
+      const replyText = `Replying to: "${replyToContent.substring(0, 50)}${
+        replyToContent.length > 50 ? "..." : ""
+      }"\n\n${content}`;
 
       return sendTextMessage(replyText, replyToMessageId);
     },
-    [sendTextMessage],
+    [sendTextMessage]
   );
 
   const sendQuickReaction = useCallback(
     async (messageId: string, emoji: string): Promise<void> => {
       try {
-        await chatService.addReaction(messageId, emoji, "user_1");
+        await chatPersistenceService.addReaction(messageId, emoji);
       } catch (error) {
         console.error("Error sending reaction:", error);
         toast({
@@ -221,7 +249,7 @@ export const useSendMessage = (threadId: string) => {
         });
       }
     },
-    [toast],
+    [toast]
   );
 
   // Validate file before sending
@@ -252,7 +280,7 @@ export const useSendMessage = (threadId: string) => {
 
       return { valid: true };
     },
-    [],
+    []
   );
 
   const sendFiles = useCallback(
@@ -275,7 +303,7 @@ export const useSendMessage = (threadId: string) => {
       // Send all valid files
       await sendMultipleFiles(fileArray);
     },
-    [validateFile, sendMultipleFiles, toast],
+    [validateFile, sendMultipleFiles, toast]
   );
 
   return {
