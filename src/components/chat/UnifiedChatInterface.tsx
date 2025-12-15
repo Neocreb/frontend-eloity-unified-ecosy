@@ -601,11 +601,8 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
           console.log("Public groups query result:", { publicGroups, publicGroupsError });
 
           if (publicGroupsError) {
-            console.error("Error loading public groups:", {
-              message: publicGroupsError.message || 'Unknown error',
-              code: publicGroupsError.code,
-              details: publicGroupsError.details
-            });
+            const errorMsg = publicGroupsError.message || String(publicGroupsError);
+            console.debug("Error loading public groups:", errorMsg);
           } else if (publicGroups) {
             console.log("Found public groups:", publicGroups);
 
@@ -638,10 +635,8 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
             console.log("Unified threads after adding public groups:", unifiedThreads);
           }
         } catch (error) {
-          console.error("Error loading public groups:", {
-            message: error instanceof Error ? error.message : 'Unknown error',
-            stack: error instanceof Error ? error.stack : ''
-          });
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.debug("Error loading public groups:", errorMessage);
         }
       }
 

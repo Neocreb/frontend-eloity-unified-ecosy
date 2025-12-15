@@ -1,6 +1,9 @@
 import express from 'express';
 import { authenticateToken } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
+import { db } from '../enhanced-index.js';
+import { followers, profiles } from '../../shared/enhanced-schema.js';
+import { eq, and, inArray } from 'drizzle-orm';
 
 const router = express.Router();
 
@@ -14,20 +17,35 @@ router.post('/users/:id/follow', authenticateToken, async (req, res) => {
       return res.status(400).json({ error: 'Cannot follow yourself' });
     }
 
-    // TODO: Insert follow relationship into database
-    // TODO: Check if already following
-    
-    const followRecord = {
-      id: `follow_${Date.now()}`,
-      follower_id: followerId,
-      following_id: targetUserId,
-      created_at: new Date().toISOString()
-    };
+    // Check if already following
+    const existingFollow = await db.select().from(followers)
+      .where(and(
+        eq(followers.follower_id, followerId),
+        eq(followers.following_id, targetUserId)
+      ))
+      .execute();
+
+    if (existingFollow && existingFollow.length > 0) {
+      return res.status(400).json({ error: 'Already following this user' });
+    }
+
+    // Insert follow relationship into database
+    await db.insert(followers)
+      .values({
+        follower_id: followerId,
+        following_id: targetUserId,
+      })
+      .execute();
+
+    // Get updated follower count
+    const followerCountResult = await db.select().from(followers)
+      .where(eq(followers.following_id, targetUserId))
+      .execute();
 
     logger.info('User followed', { followerId, targetUserId });
     res.status(201).json({
       following: true,
-      follower_count: Math.floor(Math.random() * 1000) + 100
+      follower_count: followerCountResult?.length || 0
     });
   } catch (error) {
     logger.error('Error following user:', error);
@@ -41,12 +59,23 @@ router.delete('/users/:id/follow', authenticateToken, async (req, res) => {
     const { id: targetUserId } = req.params;
     const followerId = req.userId;
 
-    // TODO: Remove follow relationship from database
-    
+    // Remove follow relationship from database
+    await db.delete(followers)
+      .where(and(
+        eq(followers.follower_id, followerId),
+        eq(followers.following_id, targetUserId)
+      ))
+      .execute();
+
+    // Get updated follower count
+    const followerCountResult = await db.select().from(followers)
+      .where(eq(followers.following_id, targetUserId))
+      .execute();
+
     logger.info('User unfollowed', { followerId, targetUserId });
     res.json({
       following: false,
-      follower_count: Math.floor(Math.random() * 1000) + 100
+      follower_count: followerCountResult?.length || 0
     });
   } catch (error) {
     logger.error('Error unfollowing user:', error);
@@ -60,87 +89,276 @@ router.get('/users/:id/following-status', authenticateToken, async (req, res) =>
     const { id: targetUserId } = req.params;
     const followerId = req.userId;
 
-    // TODO: Check follow relationship in database
-    const isFollowing = Math.random() > 0.5; // Mock status
+    const followRecord = await db.select().from(followers)
+      .where(and(
+        eq(followers.follower_id, followerId),
+        eq(followers.following_id, targetUserId)
+      ))
+      .execute();
+
+    const isFollowing = followRecord && followRecord.length > 0;
 
     logger.info('Follow status checked', { followerId, targetUserId, isFollowing });
-    res.json({ following: isFollowing });
+    res.json({ isFollowing });
   } catch (error) {
     logger.error('Error checking follow status:', error);
     res.status(500).json({ error: 'Failed to check follow status' });
   }
 });
 
-// Get user's followers
-router.get('/users/:id/followers', async (req, res) => {
+// Simple follow/unfollow endpoints (POST/DELETE /follow)
+router.post('/', authenticateToken, async (req, res) => {
+  try {
+    const { followerId, followingId } = req.body;
+    const userId = req.userId;
+
+    // Use userId from auth if not provided
+    const actualFollowerId = followerId || userId;
+
+    if (!actualFollowerId || !followingId) {
+      return res.status(400).json({ error: 'followerId and followingId are required' });
+    }
+
+    if (actualFollowerId === followingId) {
+      return res.status(400).json({ error: 'Cannot follow yourself' });
+    }
+
+    // Check if already following
+    const existingFollow = await db.select().from(followers)
+      .where(and(
+        eq(followers.follower_id, actualFollowerId),
+        eq(followers.following_id, followingId)
+      ))
+      .execute();
+
+    if (existingFollow && existingFollow.length > 0) {
+      return res.status(400).json({ error: 'Already following this user' });
+    }
+
+    // Insert follow relationship
+    await db.insert(followers)
+      .values({
+        follower_id: actualFollowerId,
+        following_id: followingId,
+      })
+      .execute();
+
+    logger.info('User followed', { actualFollowerId, followingId });
+    res.status(201).json({
+      following: true,
+      message: 'Successfully followed user'
+    });
+  } catch (error) {
+    logger.error('Error following user:', error);
+    res.status(500).json({ error: 'Failed to follow user' });
+  }
+});
+
+router.delete('/', authenticateToken, async (req, res) => {
+  try {
+    const { followerId, followingId } = req.body;
+    const userId = req.userId;
+
+    // Use userId from auth if not provided
+    const actualFollowerId = followerId || userId;
+
+    if (!actualFollowerId || !followingId) {
+      return res.status(400).json({ error: 'followerId and followingId are required' });
+    }
+
+    // Remove follow relationship
+    await db.delete(followers)
+      .where(and(
+        eq(followers.follower_id, actualFollowerId),
+        eq(followers.following_id, followingId)
+      ))
+      .execute();
+
+    logger.info('User unfollowed', { actualFollowerId, followingId });
+    res.json({
+      following: false,
+      message: 'Successfully unfollowed user'
+    });
+  } catch (error) {
+    logger.error('Error unfollowing user:', error);
+    res.status(500).json({ error: 'Failed to unfollow user' });
+  }
+});
+
+// Check follow status (GET /follow/check/:followerId/:followingId)
+router.get('/check/:followerId/:followingId', authenticateToken, async (req, res) => {
+  try {
+    const { followerId, followingId } = req.params;
+
+    const followRecord = await db.select().from(followers)
+      .where(and(
+        eq(followers.follower_id, followerId),
+        eq(followers.following_id, followingId)
+      ))
+      .execute();
+
+    const isFollowing = followRecord && followRecord.length > 0;
+
+    res.json({ isFollowing });
+  } catch (error) {
+    logger.error('Error checking follow status:', error);
+    res.status(500).json({ error: 'Failed to check follow status' });
+  }
+});
+
+// Get user's followers (people following this user)
+router.get('/followers/:id', async (req, res) => {
   try {
     const { id: userId } = req.params;
-    const { page = 1, limit = 20 } = req.query;
+    const { page = '1', limit = '20' } = req.query;
 
-    // TODO: Replace with real database query
-    const followers = {
-      data: [
-        {
-          id: 'follower_1',
-          username: 'follower_user',
-          displayName: 'Follower User',
-          avatar: '/placeholder.svg',
-          bio: 'Active user on the platform',
-          verified: false,
-          mutual_followers: 5,
-          followed_at: new Date().toISOString()
-        }
-      ],
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = parseInt(limit as string) || 20;
+    const offset = (pageNum - 1) * limitNum;
+
+    // Get followers from database
+    const followerRecords = await db.select({
+      follower_id: followers.follower_id,
+      created_at: followers.created_at
+    }).from(followers)
+      .where(eq(followers.following_id, userId))
+      .limit(limitNum)
+      .offset(offset)
+      .execute();
+
+    // Get total count
+    const countResult = await db.select().from(followers)
+      .where(eq(followers.following_id, userId))
+      .execute();
+
+    // Fetch follower profiles
+    const followerIds = followerRecords.map(f => f.follower_id);
+    let followerProfiles: any[] = [];
+
+    if (followerIds.length > 0) {
+      followerProfiles = await db.select({
+        user_id: profiles.user_id,
+        username: profiles.username,
+        full_name: profiles.full_name,
+        avatar_url: profiles.avatar_url,
+        bio: profiles.bio,
+        is_verified: profiles.is_verified
+      }).from(profiles)
+        .where(inArray(profiles.user_id, followerIds))
+        .execute();
+    }
+
+    const data = followerRecords.map(record => {
+      const profile = followerProfiles.find(p => p.user_id === record.follower_id) || {};
+      return {
+        id: record.follower_id,
+        username: profile.username || 'unknown',
+        displayName: profile.full_name || profile.username || 'User',
+        avatar: profile.avatar_url || '/placeholder.svg',
+        bio: profile.bio || '',
+        verified: profile.is_verified || false,
+        followed_at: record.created_at
+      };
+    });
+
+    const response = {
+      data,
       pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total: 1,
-        totalPages: 1
+        page: pageNum,
+        limit: limitNum,
+        total: countResult?.length || 0,
+        totalPages: Math.ceil((countResult?.length || 0) / limitNum)
       }
     };
 
-    logger.info('Followers fetched', { userId, count: followers.data.length });
-    res.json(followers);
+    logger.info('Followers fetched', { userId, count: data.length });
+    res.json(response);
   } catch (error) {
     logger.error('Error fetching followers:', error);
     res.status(500).json({ error: 'Failed to fetch followers' });
   }
 });
 
-// Get user's following
-router.get('/users/:id/following', async (req, res) => {
+// Get user's following (people this user is following)
+router.get('/following/:id', async (req, res) => {
   try {
     const { id: userId } = req.params;
-    const { page = 1, limit = 20 } = req.query;
+    const { page = '1', limit = '20' } = req.query;
 
-    // TODO: Replace with real database query
-    const following = {
-      data: [
-        {
-          id: 'following_1',
-          username: 'followed_user',
-          displayName: 'Followed User',
-          avatar: '/placeholder.svg',
-          bio: 'Content creator and influencer',
-          verified: true,
-          mutual_followers: 12,
-          followed_at: new Date().toISOString()
-        }
-      ],
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = parseInt(limit as string) || 20;
+    const offset = (pageNum - 1) * limitNum;
+
+    // Get following records from database
+    const followingRecords = await db.select({
+      following_id: followers.following_id,
+      created_at: followers.created_at
+    }).from(followers)
+      .where(eq(followers.follower_id, userId))
+      .limit(limitNum)
+      .offset(offset)
+      .execute();
+
+    // Get total count
+    const countResult = await db.select().from(followers)
+      .where(eq(followers.follower_id, userId))
+      .execute();
+
+    // Fetch following user profiles
+    const followingIds = followingRecords.map(f => f.following_id);
+    let followingProfiles: any[] = [];
+
+    if (followingIds.length > 0) {
+      followingProfiles = await db.select({
+        user_id: profiles.user_id,
+        username: profiles.username,
+        full_name: profiles.full_name,
+        avatar_url: profiles.avatar_url,
+        bio: profiles.bio,
+        is_verified: profiles.is_verified
+      }).from(profiles)
+        .where(inArray(profiles.user_id, followingIds))
+        .execute();
+    }
+
+    const data = followingRecords.map(record => {
+      const profile = followingProfiles.find(p => p.user_id === record.following_id) || {};
+      return {
+        id: record.following_id,
+        username: profile.username || 'unknown',
+        displayName: profile.full_name || profile.username || 'User',
+        avatar: profile.avatar_url || '/placeholder.svg',
+        bio: profile.bio || '',
+        verified: profile.is_verified || false,
+        followed_at: record.created_at
+      };
+    });
+
+    const response = {
+      data,
       pagination: {
-        page: parseInt(page as string),
-        limit: parseInt(limit as string),
-        total: 1,
-        totalPages: 1
+        page: pageNum,
+        limit: limitNum,
+        total: countResult?.length || 0,
+        totalPages: Math.ceil((countResult?.length || 0) / limitNum)
       }
     };
 
-    logger.info('Following fetched', { userId, count: following.data.length });
-    res.json(following);
+    logger.info('Following fetched', { userId, count: data.length });
+    res.json(response);
   } catch (error) {
     logger.error('Error fetching following:', error);
     res.status(500).json({ error: 'Failed to fetch following' });
   }
+});
+
+// Legacy endpoints for backward compatibility
+router.get('/users/:id/followers', async (req, res) => {
+  res.redirect(301, `/api/follow/followers/${req.params.id}`);
+});
+
+router.get('/users/:id/following', async (req, res) => {
+  res.redirect(301, `/api/follow/following/${req.params.id}`);
 });
 
 // Get mutual followers

@@ -519,7 +519,17 @@ router.get('/', async (req, res) => {
     const offset = (parseInt(page as string) - 1) * parseInt(limit as string);
 
     // Search profiles in database
-    const searchResult = await db.select().from(profiles)
+    const searchResult = await db.select({
+      user_id: profiles.user_id,
+      username: profiles.username,
+      full_name: profiles.full_name,
+      bio: profiles.bio,
+      avatar_url: profiles.avatar_url,
+      is_verified: profiles.is_verified,
+      followers_count: profiles.followers_count,
+      following_count: profiles.following_count,
+      posts_count: profiles.posts_count
+    }).from(profiles)
       .where(or(
         like(profiles.username, `%${q}%`),
         like(profiles.full_name, `%${q}%`),

@@ -61,7 +61,7 @@ async function testGroupLoading() {
       .eq('privacy', 'public');
       
     if (publicGroupsError) {
-      console.error('Error loading public groups:', publicGroupsError);
+      console.error('Error loading public groups:', publicGroupsError.message || String(publicGroupsError));
     } else {
       console.log(`Found ${publicGroups.length} public groups:`);
       publicGroups.forEach(group => {

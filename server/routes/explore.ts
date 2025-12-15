@@ -31,7 +31,21 @@ router.get('/users', async (req, res) => {
 
     // Fetch a larger set and filter client-side to avoid complex query construction here
     const fetchLimit = Math.max(limit * 3, 20);
-    const profilesResult = await db.select().from(profiles).orderBy(desc(profiles.user_id)).limit(fetchLimit).execute();
+
+    // Select only the safe columns that are guaranteed to exist
+    const profilesResult = await db.select({
+      user_id: profiles.user_id,
+      username: profiles.username,
+      full_name: profiles.full_name,
+      avatar_url: profiles.avatar_url,
+      bio: profiles.bio,
+      is_verified: profiles.is_verified,
+      reputation: profiles.reputation,
+      followers_count: profiles.followers_count
+    }).from(profiles)
+      .orderBy(desc(profiles.reputation))
+      .limit(fetchLimit)
+      .execute();
 
     let followingIds: string[] = [];
     if (userId) {
@@ -49,7 +63,8 @@ router.get('/users', async (req, res) => {
       avatar_url: profile.avatar_url || '',
       bio: profile.bio || '',
       is_verified: !!profile.is_verified,
-      followers_count: 0
+      reputation: profile.reputation || 0,
+      followers_count: profile.followers_count || 0
     }));
 
     res.json({ users });
@@ -74,7 +89,15 @@ router.get('/search', async (req, res) => {
 
     // Search users
     if (type === 'all' || type === 'users') {
-      const userResults = await db.select().from(profiles)
+      const userResults = await db.select({
+        user_id: profiles.user_id,
+        username: profiles.username,
+        full_name: profiles.full_name,
+        avatar_url: profiles.avatar_url,
+        bio: profiles.bio,
+        is_verified: profiles.is_verified,
+        profile_views: profiles.profile_views
+      }).from(profiles)
         .where(or(
           like(profiles.full_name, `%${query}%`),
           like(profiles.username, `%${query}%`),
