@@ -122,6 +122,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
   // New state for enhanced features
   const [mediaFilter, setMediaFilter] = useState("all");
   const [mediaViewMode, setMediaViewMode] = useState("grid");
+  const [mediaLikes, setMediaLikes] = useState<Record<string, boolean>>({});
 
   // User list modal states
   const [showFollowersModal, setShowFollowersModal] = useState(false);
