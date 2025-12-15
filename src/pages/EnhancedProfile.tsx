@@ -1508,7 +1508,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                             p.content?.media?.some((m: any) => m.url === item.url)
                           );
                           const isLiked = mediaLikes[item.id] || false;
-                          const [showComments, setShowComments] = useState(false);
+                          const showComments = expandedMediaComments[item.id] || false;
 
                           const handleLike = (e: React.MouseEvent) => {
                             e.stopPropagation();
@@ -1524,7 +1524,10 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
 
                           const handleComment = (e: React.MouseEvent) => {
                             e.stopPropagation();
-                            setShowComments(!showComments);
+                            setExpandedMediaComments((prev) => ({
+                              ...prev,
+                              [item.id]: !prev[item.id],
+                            }));
                           };
 
                           return (
