@@ -10,6 +10,39 @@ import { PlusCircle, ImageIcon, DollarSign, Package, Truck } from 'lucide-react'
 import { MarketplaceService } from '@/services/marketplaceService';
 
 const MarketplaceSell: React.FC = () => {
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState("");
+  const [customCategory, setCustomCategory] = useState("");
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
+
+  // Load categories on mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+        const data = await MarketplaceService.getCategories();
+        setCategories(data);
+      } catch (error) {
+        console.error("Error loading categories:", error);
+        // Categories will still be available as defaults
+        setCategories(MarketplaceService.DEFAULT_CATEGORIES);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    loadCategories();
+  }, []);
+
+  const handleAddCustomCategory = () => {
+    if (customCategory.trim()) {
+      setSelectedCategory(customCategory.trim());
+      setCustomCategory("");
+      setShowCustomCategoryInput(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <div className="space-y-6">
@@ -35,25 +68,81 @@ const MarketplaceSell: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="title">Product Title</Label>
-                <Input 
-                  id="title" 
-                  placeholder="Enter a descriptive title for your product" 
+                <Input
+                  id="title"
+                  placeholder="Enter a descriptive title for your product"
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="category">Category</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="electronics">Electronics</SelectItem>
-                    <SelectItem value="fashion">Fashion</SelectItem>
-                    <SelectItem value="home">Home & Garden</SelectItem>
-                    <SelectItem value="sports">Sports & Outdoors</SelectItem>
-                    <SelectItem value="books">Books & Media</SelectItem>
-                  </SelectContent>
-                </Select>
+                {loadingCategories ? (
+                  <div className="px-3 py-2 border border-gray-300 rounded text-gray-500">
+                    Loading categories...
+                  </div>
+                ) : !showCustomCategoryInput ? (
+                  <div className="space-y-2">
+                    <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((cat) => (
+                          <SelectItem key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCustomCategoryInput(true)}
+                      className="w-full text-xs"
+                    >
+                      + Add Custom Category
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Enter custom category name"
+                      value={customCategory}
+                      onChange={(e) => setCustomCategory(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddCustomCategory();
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={handleAddCustomCategory}
+                        disabled={!customCategory.trim()}
+                        className="flex-1"
+                      >
+                        Add
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setShowCustomCategoryInput(false);
+                          setCustomCategory("");
+                        }}
+                        className="flex-1"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                {selectedCategory && (
+                  <div className="text-sm text-green-600 font-medium">
+                    ✓ Selected: {selectedCategory}
+                  </div>
+                )}
               </div>
             </div>
 
