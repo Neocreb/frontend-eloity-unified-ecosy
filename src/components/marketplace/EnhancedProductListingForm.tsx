@@ -144,6 +144,18 @@ const EnhancedProductListingForm = ({ onSuccess, editProduct }: EnhancedProductL
     loadCategories();
   }, []);
 
+  const handleAddCustomCategory = () => {
+    if (customCategory.trim()) {
+      form.setValue('category', customCategory.trim());
+      setCustomCategory('');
+      setShowCustomCategoryInput(false);
+      toast({
+        title: "Custom Category Added",
+        description: `"${customCategory.trim()}" will be used for this product.`,
+      });
+    }
+  };
+
   const form = useForm<FormValues>({
     defaultValues: {
       // Basic info
