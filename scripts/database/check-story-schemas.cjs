@@ -41,7 +41,7 @@ async function checkSchemas() {
 
     // Check profiles columns
     console.log('\n📋 profiles table columns:');
-    const profilesResult = await pg.query(
+    const profilesResult = await pgClient.query(
       `SELECT column_name, data_type, is_nullable
        FROM information_schema.columns
        WHERE table_name = 'profiles'
