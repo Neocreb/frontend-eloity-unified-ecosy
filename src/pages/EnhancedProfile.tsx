@@ -1418,6 +1418,20 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                             p.media_urls?.includes(item.url) ||
                             p.content?.media?.some((m: any) => m.url === item.url)
                           );
+                          const isLiked = mediaLikes[item.id] || false;
+
+                          const handleLikeClick = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setMediaLikes((prev) => ({
+                              ...prev,
+                              [item.id]: !prev[item.id],
+                            }));
+                            toast({
+                              title: !isLiked ? "Liked" : "Unliked",
+                              description: !isLiked ? "Added to your likes" : "Removed from likes",
+                            });
+                          };
+
                           return (
                             <div
                               key={item.id}
@@ -1430,14 +1444,27 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                                 className="w-full h-full object-cover transition-transform group-hover:scale-105"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-end justify-between p-2">
-                                <Badge
-                                  variant={
-                                    item.type === "video" ? "default" : "secondary"
-                                  }
-                                  className="text-xs h-5 px-1.5"
-                                >
-                                  {item.type === "video" ? "Video" : "Image"}
-                                </Badge>
+                                <div className="flex gap-2">
+                                  <Badge
+                                    variant={
+                                      item.type === "video" ? "default" : "secondary"
+                                    }
+                                    className="text-xs h-5 px-1.5"
+                                  >
+                                    {item.type === "video" ? "Video" : "Image"}
+                                  </Badge>
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    className={cn(
+                                      "h-5 px-1.5 text-white hover:text-red-400 transition-colors",
+                                      isLiked && "text-red-400"
+                                    )}
+                                    onClick={handleLikeClick}
+                                  >
+                                    <Heart className={cn("h-3 w-3", isLiked && "fill-current")} />
+                                  </Button>
+                                </div>
                                 <div className="text-white text-center w-full">
                                   <div className="flex items-center justify-center gap-2 mb-1">
                                     {item.type === "video" ? (
