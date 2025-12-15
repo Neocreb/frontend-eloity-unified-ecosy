@@ -60,63 +60,26 @@ const CategoryBrowser = ({
 }: CategoryBrowserProps) => {
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [customCategoryName, setCustomCategoryName] = useState("");
+  const [showCustomInput, setShowCustomInput] = useState(false);
 
   // Load real categories
   useEffect(() => {
     const loadCategories = async () => {
       try {
         setLoading(true);
+        setError(null);
         const categoriesData = await MarketplaceService.getCategories();
         setCategories(categoriesData);
-      } catch (error) {
-        console.error("Error loading categories:", error);
-        // Fallback to mock data
-        setCategories([
-          {
-            id: "1",
-            name: "Electronics",
-            slug: "electronics",
-            image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=200&h=200&auto=format&fit=crop",
-            productCount: 1247,
-          },
-          {
-            id: "2",
-            name: "Fashion",
-            slug: "fashion",
-            image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=200&h=200&auto=format&fit=crop",
-            productCount: 892,
-          },
-          {
-            id: "3",
-            name: "Home & Garden",
-            slug: "home-garden",
-            image: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=200&h=200&auto=format&fit=crop",
-            productCount: 563,
-          },
-          {
-            id: "4",
-            name: "Sports",
-            slug: "sports",
-            image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=200&h=200&auto=format&fit=crop",
-            productCount: 321,
-          },
-          {
-            id: "5",
-            name: "Beauty",
-            slug: "beauty",
-            image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=200&h=200&auto=format&fit=crop",
-            productCount: 456,
-          },
-          {
-            id: "6",
-            name: "Toys",
-            slug: "toys",
-            image: "https://images.unsplash.com/photo-1547106634-56dcd53ae89c?w=200&h=200&auto=format&fit=crop",
-            productCount: 234,
-          },
-        ]);
+      } catch (err) {
+        const errorMsg = err instanceof Error ? err.message : "Failed to load categories";
+        console.error("Error loading categories:", errorMsg);
+        setError(errorMsg);
+        // Still use default categories even on error
+        setCategories(MarketplaceService.DEFAULT_CATEGORIES);
       } finally {
         setLoading(false);
       }
@@ -124,6 +87,22 @@ const CategoryBrowser = ({
 
     loadCategories();
   }, []);
+
+  const handleAddCustomCategory = () => {
+    if (customCategoryName.trim()) {
+      const customCategory = {
+        id: `custom-${Date.now()}`,
+        name: customCategoryName.trim(),
+        slug: customCategoryName.trim().toLowerCase().replace(/\s+/g, '-'),
+        image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=200&h=200&auto=format&fit=crop",
+        productCount: 0,
+        isCustom: true,
+      };
+      onCategorySelect?.(customCategory);
+      setCustomCategoryName("");
+      setShowCustomInput(false);
+    }
+  };
 
   const handleCategoryClick = (category: Category) => {
     onCategorySelect?.(category);
