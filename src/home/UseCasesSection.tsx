@@ -19,8 +19,32 @@ const userTypeEmojis: Record<string, string> = {
   merchant: '🛍️',
 };
 
+// Default mock use cases for fallback
+const defaultUseCases: UseCase[] = [
+  {
+    id: 'usecase-1',
+    user_type: 'freelancer',
+    title: 'Build Your Freelance Career',
+    description: 'Connect with clients worldwide and grow your freelance business with Eloity\'s comprehensive tools and marketplace.',
+    avatar_url: 'https://randomuser.me/api/portraits/women/45.jpg',
+    results: { clients: '1000+', earnings: '$100K+', projects: '500+' },
+    timeline_weeks: 24,
+    image_url: 'https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&h=300&fit=crop',
+  },
+  {
+    id: 'usecase-2',
+    user_type: 'creator',
+    title: 'Monetize Your Content',
+    description: 'Turn your passion into income with Eloity\'s creator tools, sponsorships, and community monetization features.',
+    avatar_url: 'https://randomuser.me/api/portraits/men/46.jpg',
+    results: { monthly_earnings: '$10K+', followers: '100K+' },
+    timeline_weeks: 12,
+    image_url: 'https://images.unsplash.com/photo-1516321318423-f06f70504504?w=500&h=300&fit=crop',
+  },
+];
+
 export const UseCasesSection: React.FC = () => {
-  const [useCases, setUseCases] = useState<UseCase[]>([]);
+  const [useCases, setUseCases] = useState<UseCase[]>(defaultUseCases);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -30,12 +54,26 @@ export const UseCasesSection: React.FC = () => {
   const fetchUseCases = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/landing/use-cases?featured=true');
-      if (!response.ok) throw new Error('Failed to fetch use cases');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch('/api/landing/use-cases?featured=true', {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn('Failed to fetch use cases, using defaults');
+        setUseCases(defaultUseCases);
+        return;
+      }
+
       const data = await response.json();
-      setUseCases(data);
+      setUseCases(Array.isArray(data) && data.length > 0 ? data : defaultUseCases);
     } catch (error) {
       console.error('Error fetching use cases:', error);
+      // Use default use cases on error
+      setUseCases(defaultUseCases);
     } finally {
       setIsLoading(false);
     }
