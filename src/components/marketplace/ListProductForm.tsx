@@ -97,6 +97,19 @@ const ListProductForm = ({ onSuccess, editProductId }: ListProductFormProps) => 
       inStock: true,
     }
   });
+
+  const handleAddCustomCategory = () => {
+    if (customCategory.trim()) {
+      const trimmedCategory = customCategory.trim();
+      form.setValue('category', trimmedCategory);
+      setCustomCategory('');
+      setShowCustomCategoryInput(false);
+      toast({
+        title: "Custom Category Added",
+        description: `"${trimmedCategory}" will be used for this product.`,
+      });
+    }
+  };
   
   // For image preview and upload
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
