@@ -278,10 +278,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
           }
         }
 
-        // Fetch posts for the user
+        // Fetch posts and follow status for the user
         if (profileData?.id) {
           try {
-            const userPosts = await profileService.getUserPosts(profileData.id).catch(() => []);
+            const [userPosts, isFollowingUser] = await Promise.all([
+              profileService.getUserPosts(profileData.id).catch(() => []),
+              !isOwnProfile && user?.id ? profileService.isFollowing(user.id, profileData.id).catch(() => false) : Promise.resolve(false),
+            ]);
 
             // Transform raw post data to match UI Post type
             const transformedPosts = (userPosts || []).map((post: any) => {
@@ -306,6 +309,9 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
             });
 
             setPosts(transformedPosts);
+            setIsFollowing(!!isFollowingUser);
+            setFollowerCount(profileData.followers_count || 0);
+            setFollowingCount(profileData.following_count || 0);
           } catch (postError) {
             console.error("Error loading posts:", postError);
             setPosts([]);
