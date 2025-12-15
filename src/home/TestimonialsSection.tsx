@@ -13,8 +13,32 @@ interface Testimonial {
   category: string;
 }
 
+// Default mock testimonials for fallback
+const defaultTestimonials: Testimonial[] = [
+  {
+    id: 'testimonial-1',
+    name: 'Sarah Johnson',
+    title: 'Freelance Developer',
+    quote: 'Eloity transformed how I manage my freelance work. The platform is intuitive and the payment processing is seamless.',
+    image_url: 'https://randomuser.me/api/portraits/women/32.jpg',
+    rating: 5,
+    metrics: { earnings: '$50K+', projects: '120+' },
+    category: 'freelancer',
+  },
+  {
+    id: 'testimonial-2',
+    name: 'Ahmed Hassan',
+    title: 'Content Creator',
+    quote: 'The creator economy tools on Eloity helped me monetize my content effectively. I doubled my income in 6 months.',
+    image_url: 'https://randomuser.me/api/portraits/men/44.jpg',
+    rating: 5,
+    metrics: { followers: '500K+', monthly_earnings: '$25K+' },
+    category: 'creator',
+  },
+];
+
 export const TestimonialsSection: React.FC = () => {
-  const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
+  const [testimonials, setTestimonials] = useState<Testimonial[]>(defaultTestimonials);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,14 +50,29 @@ export const TestimonialsSection: React.FC = () => {
   const fetchTestimonials = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/landing/testimonials?featured=true');
-      if (!response.ok) throw new Error('Failed to fetch testimonials');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+      const response = await fetch('/api/landing/testimonials?featured=true', {
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        console.warn('Failed to fetch testimonials, using defaults');
+        setTestimonials(defaultTestimonials);
+        setError(null);
+        return;
+      }
+
       const data = await response.json();
-      setTestimonials(data);
+      setTestimonials(Array.isArray(data) && data.length > 0 ? data : defaultTestimonials);
       setError(null);
     } catch (err) {
       console.error('Error fetching testimonials:', err);
-      setError('Failed to load testimonials');
+      // Use default testimonials on error
+      setTestimonials(defaultTestimonials);
+      setError(null);
     } finally {
       setIsLoading(false);
     }
