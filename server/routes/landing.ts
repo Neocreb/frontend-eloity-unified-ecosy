@@ -32,15 +32,25 @@ router.get('/testimonials', async (req: Request, res: Response) => {
   try {
     const { category, featured } = req.query;
 
-    const testimonials = await TestimonialsService.getTestimonials({
-      category: category as string,
-      featured: featured === 'true',
-    });
+    const testimonials = await Promise.race([
+      TestimonialsService.getTestimonials({
+        category: category as string,
+        featured: featured === 'true',
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      ),
+    ]) as any[];
+
+    if (!testimonials) {
+      return res.json([]);
+    }
 
     res.json(testimonials);
   } catch (error) {
     console.error('Error fetching testimonials:', error);
-    res.status(500).json({ error: 'Failed to fetch testimonials' });
+    // Return empty array as fallback instead of error
+    res.json([]);
   }
 });
 
