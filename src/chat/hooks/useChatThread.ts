@@ -259,6 +259,34 @@ export const useChatThread = (threadId?: string) => {
     }
   }, [threadId, messages]);
 
+  // Subscribe to read receipt updates
+  useEffect(() => {
+    if (!threadId) return;
+
+    const subscription = realtimeService.subscribeToReadReceipts(
+      threadId,
+      (messageId: string, readBy: string[]) => {
+        // Update the read receipts cache
+        readReceiptsRef.current.set(messageId, readBy);
+
+        // Update messages with new read receipts
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === messageId
+              ? { ...msg, readBy }
+              : msg
+          )
+        );
+      }
+    );
+
+    return () => {
+      if (subscription) {
+        realtimeService.unsubscribe(`reads:${threadId}`);
+      }
+    };
+  }, [threadId]);
+
   // Initialize
   useEffect(() => {
     if (threadId) {
