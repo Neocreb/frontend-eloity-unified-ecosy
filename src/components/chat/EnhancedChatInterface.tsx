@@ -50,8 +50,16 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   // Chat hooks
-  const { thread, messages, loading, error } = useChatThread(conversationId);
-  const { sending, sendTextMessage } = useSendMessage(conversationId || "");
+  const {
+    thread,
+    messages,
+    loading,
+    error,
+    sendMessage,
+    sendFile,
+    addReaction,
+    deleteMessage,
+  } = useChatThread(conversationId);
 
   // Auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
@@ -69,7 +77,7 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
     try {
       const content = messageInput.trim();
       setMessageInput("");
-      await sendTextMessage(content);
+      await sendMessage(content);
       scrollToBottom();
     } catch (error) {
       toast({
@@ -80,12 +88,86 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
     }
   };
 
-  // Simulate typing indicator
-  const handleTyping = () => {
-    if (conversationId) {
-      chatService.sendTypingIndicator?.(conversationId);
+  // Handle file upload
+  const handleFileSelect = async (file: File) => {
+    try {
+      toast({
+        title: "Uploading...",
+        description: `Uploading ${file.name}...`,
+      });
+      await sendFile(file);
+      scrollToBottom();
+      toast({
+        title: "Success",
+        description: "File uploaded successfully",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to upload file",
+        variant: "destructive",
+      });
     }
   };
+
+  // Handle message deletion
+  const handleDeleteMessage = async (messageId: string) => {
+    try {
+      await deleteMessage(messageId);
+      toast({
+        title: "Success",
+        description: "Message deleted",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete message",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Handle reaction
+  const handleReaction = async (messageId: string, emoji: string) => {
+    try {
+      await addReaction(messageId, emoji);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add reaction",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Debounced typing indicator
+  const typingTimeoutRef = useRef<NodeJS.Timeout>();
+  const handleTyping = useCallback(() => {
+    if (conversationId) {
+      chatPersistenceService.sendTypingIndicator(conversationId);
+
+      // Clear existing timeout
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+
+      // Set new timeout for periodic updates
+      typingTimeoutRef.current = setTimeout(() => {
+        if (conversationId && messageInput.trim()) {
+          chatPersistenceService.sendTypingIndicator(conversationId);
+        }
+      }, 2000);
+    }
+  }, [conversationId, messageInput]);
+
+  // Cleanup typing timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Filter messages by search
   const filteredMessages = searchQuery
