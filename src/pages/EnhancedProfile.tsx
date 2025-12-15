@@ -857,7 +857,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           size="sm"
                           className="px-3 sm:px-6 text-xs sm:text-sm"
                         >
-                          {isFollowing ? (
+                          {viewerFollowsOwner ? (
                             <>
                               <Check className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                               <span className="hidden sm:inline">
