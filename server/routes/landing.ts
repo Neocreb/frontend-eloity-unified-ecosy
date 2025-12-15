@@ -100,15 +100,25 @@ router.get('/use-cases', async (req: Request, res: Response) => {
   try {
     const { user_type, featured } = req.query;
 
-    const useCases = await UseCasesService.getUseCases({
-      user_type: user_type as string,
-      featured: featured === 'true',
-    });
+    const useCases = await Promise.race([
+      UseCasesService.getUseCases({
+        user_type: user_type as string,
+        featured: featured === 'true',
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      ),
+    ]) as any[];
+
+    if (!useCases) {
+      return res.json([]);
+    }
 
     res.json(useCases);
   } catch (error) {
     console.error('Error fetching use cases:', error);
-    res.status(500).json({ error: 'Failed to fetch use cases' });
+    // Return empty array as fallback instead of error
+    res.json([]);
   }
 });
 
