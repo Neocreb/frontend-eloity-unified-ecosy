@@ -278,10 +278,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
           }
         }
 
-        // Fetch posts for the user
+        // Fetch posts and follow status for the user
         if (profileData?.id) {
           try {
-            const userPosts = await profileService.getUserPosts(profileData.id).catch(() => []);
+            const [userPosts, isFollowingUser] = await Promise.all([
+              profileService.getUserPosts(profileData.id).catch(() => []),
+              !isOwnProfile && user?.id ? profileService.isFollowing(user.id, profileData.id).catch(() => false) : Promise.resolve(false),
+            ]);
 
             // Transform raw post data to match UI Post type
             const transformedPosts = (userPosts || []).map((post: any) => {
@@ -306,6 +309,9 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
             });
 
             setPosts(transformedPosts);
+            setIsFollowing(!!isFollowingUser);
+            setFollowerCount(profileData.followers_count || 0);
+            setFollowingCount(profileData.following_count || 0);
           } catch (postError) {
             console.error("Error loading posts:", postError);
             setPosts([]);
@@ -327,12 +333,38 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   }, [targetUsername, isOwnProfile, user, toast]);
 
   const handleFollow = async () => {
-    setIsFollowing(!isFollowing);
-    setFollowerCount((prev) => (isFollowing ? prev - 1 : prev + 1));
-    toast({
-      title: isFollowing ? "Unfollowed" : "Following",
-      description: `You are ${isFollowing ? "no longer" : "now"} following ${mockProfile.displayName}`,
-    });
+    if (!user?.id || !profileUser?.id) {
+      toast({
+        title: "Error",
+        description: "Unable to perform follow action",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const wasFollowing = isFollowing;
+
+    try {
+      setIsFollowing(!wasFollowing);
+      setFollowerCount((prev) => (wasFollowing ? prev - 1 : prev + 1));
+
+      await profileService.toggleFollow(user.id, profileUser.id, wasFollowing);
+
+      toast({
+        title: wasFollowing ? "Unfollowed" : "Following",
+        description: `You are ${wasFollowing ? "no longer" : "now"} following ${mockProfile.displayName}`,
+      });
+    } catch (error) {
+      setIsFollowing(wasFollowing);
+      setFollowerCount((prev) => (wasFollowing ? prev + 1 : prev - 1));
+
+      toast({
+        title: "Error",
+        description: `Failed to ${wasFollowing ? "unfollow" : "follow"} user`,
+        variant: "destructive",
+      });
+      console.error("Error toggling follow:", error);
+    }
   };
 
   const handleQuickAction = (action: () => void) => {

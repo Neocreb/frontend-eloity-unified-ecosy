@@ -42,6 +42,22 @@ router.post('/users/:id/follow', authenticateToken, async (req, res) => {
       .where(eq(followers.following_id, targetUserId))
       .execute();
 
+    // Get updated following count for the follower
+    const followingCountResult = await db.select().from(followers)
+      .where(eq(followers.follower_id, followerId))
+      .execute();
+
+    // Update profile counts
+    await db.update(profiles)
+      .set({ followers_count: followerCountResult?.length || 0 })
+      .where(eq(profiles.user_id, targetUserId))
+      .execute();
+
+    await db.update(profiles)
+      .set({ following_count: followingCountResult?.length || 0 })
+      .where(eq(profiles.user_id, followerId))
+      .execute();
+
     logger.info('User followed', { followerId, targetUserId });
     res.status(201).json({
       following: true,
@@ -70,6 +86,22 @@ router.delete('/users/:id/follow', authenticateToken, async (req, res) => {
     // Get updated follower count
     const followerCountResult = await db.select().from(followers)
       .where(eq(followers.following_id, targetUserId))
+      .execute();
+
+    // Get updated following count for the follower
+    const followingCountResult = await db.select().from(followers)
+      .where(eq(followers.follower_id, followerId))
+      .execute();
+
+    // Update profile counts
+    await db.update(profiles)
+      .set({ followers_count: followerCountResult?.length || 0 })
+      .where(eq(profiles.user_id, targetUserId))
+      .execute();
+
+    await db.update(profiles)
+      .set({ following_count: followingCountResult?.length || 0 })
+      .where(eq(profiles.user_id, followerId))
       .execute();
 
     logger.info('User unfollowed', { followerId, targetUserId });
@@ -143,6 +175,25 @@ router.post('/', authenticateToken, async (req, res) => {
       })
       .execute();
 
+    // Update follower and following counts in profiles
+    const targetFollowerCount = await db.select().from(followers)
+      .where(eq(followers.following_id, followingId))
+      .execute();
+
+    const followerFollowingCount = await db.select().from(followers)
+      .where(eq(followers.follower_id, actualFollowerId))
+      .execute();
+
+    await db.update(profiles)
+      .set({ followers_count: targetFollowerCount?.length || 0 })
+      .where(eq(profiles.user_id, followingId))
+      .execute();
+
+    await db.update(profiles)
+      .set({ following_count: followerFollowingCount?.length || 0 })
+      .where(eq(profiles.user_id, actualFollowerId))
+      .execute();
+
     logger.info('User followed', { actualFollowerId, followingId });
     res.status(201).json({
       following: true,
@@ -172,6 +223,25 @@ router.delete('/', authenticateToken, async (req, res) => {
         eq(followers.follower_id, actualFollowerId),
         eq(followers.following_id, followingId)
       ))
+      .execute();
+
+    // Update follower and following counts in profiles
+    const targetFollowerCount = await db.select().from(followers)
+      .where(eq(followers.following_id, followingId))
+      .execute();
+
+    const followerFollowingCount = await db.select().from(followers)
+      .where(eq(followers.follower_id, actualFollowerId))
+      .execute();
+
+    await db.update(profiles)
+      .set({ followers_count: targetFollowerCount?.length || 0 })
+      .where(eq(profiles.user_id, followingId))
+      .execute();
+
+    await db.update(profiles)
+      .set({ following_count: followerFollowingCount?.length || 0 })
+      .where(eq(profiles.user_id, actualFollowerId))
       .execute();
 
     logger.info('User unfollowed', { actualFollowerId, followingId });
