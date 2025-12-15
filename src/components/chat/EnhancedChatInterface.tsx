@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useChatThread } from "@/chat/hooks/useChatThread";
 import { useSendMessage } from "@/chat/hooks/useSendMessage";
+import { useRealtimeChat } from "@/chat/hooks/useRealtimeChat";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 import { ChatMessage } from "@/components/chat/ChatMessage";
