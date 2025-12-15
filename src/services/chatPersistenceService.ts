@@ -289,7 +289,7 @@ class ChatPersistenceService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${this.apiBase}/upload`, {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         headers,
         body: formData,
