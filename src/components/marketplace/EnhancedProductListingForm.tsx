@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
+import {
   Form,
   FormControl,
   FormDescription,
@@ -24,7 +24,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { ImagePlus, Video, FileText, BookOpen, Play, Music, Palette, Code, File, Download, Package, Sparkles } from 'lucide-react';
+import { ImagePlus, Video, FileText, BookOpen, Play, Music, Palette, Code, File, Download, Package, Sparkles, Plus, Loader2 } from 'lucide-react';
 import { useMarketplace } from '@/contexts/MarketplaceContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
