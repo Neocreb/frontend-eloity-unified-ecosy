@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ChatErrorBoundary } from "@/components/debug/ChatErrorBoundary";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import chat components
 import { EnhancedMessage, EnhancedChatMessage } from "@/components/chat/EnhancedMessage";
@@ -268,7 +269,87 @@ const ChatRoomContent = () => {
           console.error("Error parsing conversation data:", error);
         }
 
-        // Generate chat data based on threadId and chatType if not found
+        // Try to load REAL conversation from database
+        if (!chatData) {
+          try {
+            const { data: conversation, error } = await supabase
+              .from('chat_conversations')
+              .select('*')
+              .eq('id', threadId)
+              .single();
+
+            if (!error && conversation) {
+              // Found real conversation in database
+              console.log("Loaded real conversation from database:", conversation);
+
+              // Build chat thread from real data
+              if (conversation.type === 'group') {
+                // Handle group chat
+                chatData = {
+                  id: conversation.id,
+                  type: chatType,
+                  referenceId: conversation.settings?.referenceId || null,
+                  isGroup: true,
+                  groupName: conversation.name,
+                  groupDescription: conversation.description,
+                  participants: conversation.participants || [],
+                  adminIds: conversation.admin_ids || [conversation.created_by],
+                  createdBy: conversation.created_by,
+                  createdAt: conversation.created_at,
+                  lastMessage: conversation.last_message || '',
+                  lastMessageAt: conversation.last_activity || new Date().toISOString(),
+                  updatedAt: conversation.updated_at,
+                  unreadCount: 0,
+                  settings: conversation.settings || {},
+                } as GroupChatThread;
+              } else {
+                // Handle direct/1-on-1 chat
+                const otherUserId = conversation.participants?.find((id: string) => id !== user?.id);
+
+                // Fetch participant profile info
+                let participantProfile = null;
+                if (otherUserId) {
+                  const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('id, username, full_name, avatar_url, is_verified, is_online')
+                    .eq('user_id', otherUserId)
+                    .single();
+
+                  if (profile) {
+                    participantProfile = {
+                      id: otherUserId,
+                      name: profile.full_name || profile.username,
+                      avatar: profile.avatar_url,
+                      is_online: profile.is_online,
+                      is_verified: profile.is_verified,
+                    };
+                  }
+                }
+
+                chatData = {
+                  id: conversation.id,
+                  type: chatType,
+                  referenceId: conversation.settings?.referenceId || null,
+                  isGroup: false,
+                  participant_profile: participantProfile || {
+                    id: otherUserId,
+                    name: 'User',
+                    avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100',
+                    is_online: false,
+                  },
+                  lastMessage: conversation.last_message || '',
+                  lastMessageAt: conversation.last_activity || new Date().toISOString(),
+                  updatedAt: conversation.updated_at,
+                  unreadCount: 0,
+                };
+              }
+            }
+          } catch (dbError) {
+            console.log("Real conversation not found in database, falling back to generated data:", dbError);
+          }
+        }
+
+        // Fall back to generated fake chat data if still not found
         if (!chatData) {
           chatData = generateChatFromId(threadId, chatType);
         }
@@ -314,94 +395,102 @@ const ChatRoomContent = () => {
           }
         }
 
-        // Generate contextual messages based on chat data
-        const mockMessages: EnhancedChatMessage[] = [];
+        // Load REAL messages from database
+        const realMessages: EnhancedChatMessage[] = [];
+        let loadMessagesError = false;
 
         try {
-          if (chatData.isGroup) {
-            const groupChat = chatData as GroupChatThread;
-            // Group chat messages
-            mockMessages.push({
-              id: "msg_1",
-              senderId: "user_1",
-              senderName: "Alice",
-              senderAvatar: "https://images.unsplash.com/photo-1494790108755-2616b9a5f4b0?w=100",
-              content: "Let's plan the family dinner!",
-              type: "text",
-              timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
+          // Try to load real messages from the chat_messages table
+          const { data: dbMessages, error: messagesError } = await supabase
+            .from('chat_messages')
+            .select(`
+              id,
+              content,
+              message_type,
+              sender_id,
+              created_at,
+              status,
+              reactions
+            `)
+            .eq('conversation_id', threadId)
+            .order('created_at', { ascending: true })
+            .limit(50);
 
-            mockMessages.push({
-              id: "msg_2",
-              senderId: "user_2",
-              senderName: "Bob",
-              senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
-              content: "Great idea! What date works for everyone?",
-              type: "text",
-              timestamp: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
+          if (messagesError) {
+            console.log("Could not load messages from database (this is OK for new chats):", messagesError);
+            loadMessagesError = true;
+          } else if (dbMessages && dbMessages.length > 0) {
+            // Transform database messages to UI format
+            for (const dbMsg of dbMessages) {
+              // Get sender profile info
+              const { data: senderProfile } = await supabase
+                .from('profiles')
+                .select('id, username, full_name, avatar_url')
+                .eq('user_id', dbMsg.sender_id)
+                .single();
 
-            mockMessages.push({
-              id: "msg_3",
-              senderId: user?.id || "current",
-              senderName: user?.profile?.full_name || user?.email || "You",
-              senderAvatar: user?.profile?.avatar_url,
-              content: "How about this Saturday evening?",
-              type: "text",
-              timestamp: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
-          } else {
-            // Direct chat messages
-            const contextMessage = chatData.lastMessage || getContextualMessage(chatType);
+              realMessages.push({
+                id: dbMsg.id,
+                senderId: dbMsg.sender_id,
+                senderName: senderProfile?.full_name || senderProfile?.username || 'User',
+                senderAvatar: senderProfile?.avatar_url,
+                content: dbMsg.content,
+                type: (dbMsg.message_type || 'text') as any,
+                timestamp: dbMsg.created_at,
+                status: dbMsg.status || 'sent',
+                reactions: dbMsg.reactions || [],
+              });
+            }
 
-            mockMessages.push({
-              id: "msg_1",
-              senderId: chatData.participant_profile?.id || "user_1",
-              senderName: chatData.participant_profile?.name || "User",
-              senderAvatar: chatData.participant_profile?.avatar,
-              content: contextMessage,
-              type: "text",
-              timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
-
-            mockMessages.push({
-              id: "msg_2",
-              senderId: user?.id || "current",
-              senderName: user?.profile?.full_name || user?.email || "You",
-              senderAvatar: user?.profile?.avatar_url,
-              content: "Hello! I'm interested in discussing this further.",
-              type: "text",
-              timestamp: new Date(Date.now() - 25 * 60 * 1000).toISOString(),
-              status: "read",
-              reactions: [],
-            });
+            console.log("Loaded", realMessages.length, "real messages from database");
           }
         } catch (error) {
-          console.error("Error generating messages:", error);
-          // Fallback to basic message
-          mockMessages.push({
-            id: "msg_1",
-            senderId: user?.id || "current",
-            senderName: user?.profile?.full_name || user?.email || "You",
-            senderAvatar: user?.profile?.avatar_url,
-            content: "Hello!",
-            type: "text",
-            timestamp: new Date().toISOString(),
-            status: "read",
-            reactions: [],
-          });
+          console.error("Error loading messages from database:", error);
+          loadMessagesError = true;
+        }
+
+        // If no real messages found or error loading, generate contextual messages as fallback
+        const messagesToUse = realMessages.length > 0 ? realMessages : [];
+
+        if (messagesToUse.length === 0) {
+          try {
+            if (chatData.isGroup) {
+              const groupChat = chatData as GroupChatThread;
+              // Generate group chat messages only as fallback
+              messagesToUse.push({
+                id: "msg_1",
+                senderId: "user_1",
+                senderName: "Alice",
+                senderAvatar: "https://images.unsplash.com/photo-1494790108755-2616b9a5f4b0?w=100",
+                content: "Let's plan the family dinner!",
+                type: "text",
+                timestamp: new Date(Date.now() - 60 * 60 * 1000).toISOString(),
+                status: "read",
+                reactions: [],
+              });
+
+              messagesToUse.push({
+                id: "msg_2",
+                senderId: "user_2",
+                senderName: "Bob",
+                senderAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100",
+                content: "Great idea! What date works for everyone?",
+                type: "text",
+                timestamp: new Date(Date.now() - 55 * 60 * 1000).toISOString(),
+                status: "read",
+                reactions: [],
+              });
+            } else {
+              // For new direct chats, show empty/no messages
+              // This is correct behavior - no messages until first message is sent
+            }
+          } catch (error) {
+            console.error("Error generating fallback messages:", error);
+          }
         }
 
         setChat(chatData);
-        setMessages(mockMessages);
+        setMessages(messagesToUse);
         setLoading(false);
         clearTimeout(timeoutId);
       } catch (error) {

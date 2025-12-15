@@ -52,14 +52,20 @@ export function useLiveContent() {
       try {
         streams = await liveStreamService.getActiveLiveStreams();
       } catch (streamError) {
-        console.error('Failed to load live streams:', streamError instanceof Error ? streamError.message : 'Unknown error');
+        console.error('Failed to load live streams:', {
+          message: streamError instanceof Error ? streamError.message : 'Unknown error',
+          error: streamError
+        });
         streams = [];
       }
 
       try {
         battles = await liveStreamService.getActiveBattles();
       } catch (battleError) {
-        console.error('Failed to load battles:', battleError instanceof Error ? battleError.message : 'Unknown error');
+        console.error('Failed to load battles:', {
+          message: battleError instanceof Error ? battleError.message : 'Unknown error',
+          error: battleError
+        });
         battles = [];
       }
 
