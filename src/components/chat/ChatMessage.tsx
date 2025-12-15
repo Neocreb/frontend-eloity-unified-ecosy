@@ -75,9 +75,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
+  const handleReaction = (emoji: string) => {
+    if (onReaction) {
+      onReaction(message.id, emoji);
+      setShowEmojiPicker(false);
+    }
+  };
+
   // Sender info (for group chats)
   const senderName = message.senderName || "Unknown";
   const senderAvatar = message.senderAvatar;
+
+  // Common emoji reactions
+  const commonEmojis = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
   return (
     <div
