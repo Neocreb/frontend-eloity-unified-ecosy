@@ -615,12 +615,38 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
   }, [user?.id, profileUser?.id]);
 
   const handleFollow = async () => {
-    setIsFollowing(!isFollowing);
-    setFollowerCount((prev) => (isFollowing ? prev - 1 : prev + 1));
-    toast({
-      title: isFollowing ? "Unfollowed" : "Following",
-      description: `You are ${isFollowing ? "no longer" : "now"} following ${profileUser?.full_name || "this user"}`,
-    });
+    if (!user?.id || !profileUser?.id) {
+      toast({
+        title: "Error",
+        description: "Unable to perform follow action",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const wasFollowing = viewerFollowsOwner;
+
+    try {
+      setViewerFollowsOwner(!wasFollowing);
+      setFollowerCount((prev) => (wasFollowing ? prev - 1 : prev + 1));
+
+      await profileService.toggleFollow(user.id, profileUser.id, wasFollowing);
+
+      toast({
+        title: wasFollowing ? "Unfollowed" : "Following",
+        description: `You are ${wasFollowing ? "no longer" : "now"} following ${profileUser?.full_name || "this user"}`,
+      });
+    } catch (error) {
+      setViewerFollowsOwner(wasFollowing);
+      setFollowerCount((prev) => (wasFollowing ? prev + 1 : prev - 1));
+
+      toast({
+        title: "Error",
+        description: `Failed to ${wasFollowing ? "unfollow" : "follow"} user`,
+        variant: "destructive",
+      });
+      console.error("Error toggling follow:", error);
+    }
   };
 
   if (isLoading) {
