@@ -109,20 +109,43 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             continue;
           }
 
-          // Get unread count for this conversation
-          const { count: unreadCount, error: countError } = await supabase
-            .from("chat_messages")
-            .select("*", { count: "exact", head: true })
+          // Get unread count for this conversation using chat_participants
+          const { data: participantData, error: participantError } = await supabase
+            .from("chat_participants")
+            .select("last_read_message_id")
             .eq("conversation_id", conv.id)
-            .eq("read", false)
-            .neq("sender_id", user.id);
+            .eq("user_id", user.id)
+            .maybeSingle();
 
-          if (countError) {
-            const errorMsg = countError instanceof Error
-              ? countError.message
-              : typeof countError === 'string'
-                ? countError
-                : JSON.stringify(countError) || 'Unknown error';
+          let unreadCount = 0;
+          if (!participantError && participantData?.last_read_message_id) {
+            // Count messages after the last read message
+            const { count, error: countError } = await supabase
+              .from("chat_messages")
+              .select("*", { count: "exact", head: true })
+              .eq("conversation_id", conv.id)
+              .gt("created_at", (await supabase
+                .from("chat_messages")
+                .select("created_at")
+                .eq("id", participantData.last_read_message_id)
+                .maybeSingle()).data?.created_at || new Date(0).toISOString());
+
+            unreadCount = count || 0;
+          } else if (!participantError) {
+            // If no last_read_message_id, all messages are unread
+            const { count } = await supabase
+              .from("chat_messages")
+              .select("*", { count: "exact", head: true })
+              .eq("conversation_id", conv.id)
+              .neq("sender_id", user.id);
+
+            unreadCount = count || 0;
+          } else if (participantError) {
+            const errorMsg = participantError instanceof Error
+              ? participantError.message
+              : typeof participantError === 'string'
+                ? participantError
+                : JSON.stringify(participantError) || 'Unknown error';
             console.error("Error getting unread count:", errorMsg);
           }
 
