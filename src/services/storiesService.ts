@@ -65,25 +65,50 @@ class StoriesService {
         console.error('Background cleanup failed:', err)
       );
 
-      // Get active stories from followed users and own stories
-      const { data, error } = await this.supabase
+      // Get active stories
+      const { data: stories, error: storiesError } = await this.supabase
         .from('user_stories')
-        .select(`
-          id,
-          user_id,
-          created_at,
-          expires_at,
-          media_url,
-          media_type,
-          caption,
-          views_count,
-          profiles:user_id(id, username, full_name, avatar_url)
-        `)
+        .select('id, user_id, created_at, expires_at, media_url, media_type, caption, views_count')
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (storiesError) throw storiesError;
+
+      if (!stories || stories.length === 0) {
+        return [];
+      }
+
+      // Get unique user IDs
+      const userIds = [...new Set(stories.map(s => s.user_id))];
+
+      // Fetch profiles for these users
+      const { data: profiles, error: profilesError } = await this.supabase
+        .from('profiles')
+        .select('user_id, username, full_name, avatar_url')
+        .in('user_id', userIds);
+
+      if (profilesError) {
+        console.warn('Error fetching profiles:', profilesError);
+        // Return stories without profile data if profiles fetch fails
+        return stories.map(story => ({
+          ...story,
+          profiles: undefined
+        })) as UserStory[];
+      }
+
+      // Create a map of profiles by user_id
+      const profileMap: Record<string, any> = {};
+      (profiles || []).forEach(profile => {
+        profileMap[profile.user_id] = profile;
+      });
+
+      // Merge stories with profiles
+      const enrichedStories = stories.map(story => ({
+        ...story,
+        profiles: profileMap[story.user_id]
+      })) as UserStory[];
+
+      return enrichedStories;
     } catch (error) {
       console.error('Error fetching active stories:', error);
       throw error;
