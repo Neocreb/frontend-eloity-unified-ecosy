@@ -199,9 +199,14 @@ export class ProfileService {
   async getUserPosts(userId: string) {
     try {
       // Try API first
-      const response = await apiClient.getUserPosts(userId) as any;
-      if (response?.posts) {
-        return response.posts;
+      try {
+        const response = await apiClient.getUserPosts(userId) as any;
+        if (response?.posts) {
+          return response.posts;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+        // Don't log since fallback will handle it
       }
 
       // Fallback to direct database query
@@ -212,17 +217,12 @@ export class ProfileService {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.warn(
-          `Posts table query failed: ${error.message}. This is expected if the posts table doesn't exist yet.`,
-        );
+        // Silent fail - expected if posts table doesn't exist
         return [];
       }
       return data || [];
     } catch (error: any) {
-      console.warn(
-        `Error fetching user posts for ${userId}:`,
-        error?.message || error,
-      );
+      // Silent fail with fallback empty array
       return [];
     }
   }
