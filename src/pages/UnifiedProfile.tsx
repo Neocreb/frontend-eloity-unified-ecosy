@@ -340,11 +340,11 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   };
 
   const handleStartChat = () => {
-    navigate(`/app/chat?user=${targetUsername}`);
+    navigateToDirectChat(targetUsername, navigate, user?.id);
   };
 
   const handleSendMoney = () => {
-    navigate(`/app/wallet?action=send&recipient=${targetUsername}`);
+    navigateToSendMoney(targetUsername, navigate);
   };
 
   if (isLoading) {
