@@ -610,6 +610,9 @@ app.use('/api/admin/landing', adminLandingRouter);
 // Mount Bybit routes
 app.use('/api/bybit', bybitRouter);
 
+// Mount Delivery routes
+app.use('/api/delivery', deliveryRouter);
+
 // =============================================================================
 // CORE AUTHENTICATION ENDPOINTS
 // =============================================================================
