@@ -168,3 +168,14 @@ export const videoCallsRelations = relations(video_calls, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+export const typingIndicatorsRelations = relations(typing_indicators, ({ one }) => ({
+  conversation: one(chat_conversations, {
+    fields: [typing_indicators.conversation_id],
+    references: [chat_conversations.id],
+  }),
+  user: one(users, {
+    fields: [typing_indicators.user_id],
+    references: [users.id],
+  }),
+}));
