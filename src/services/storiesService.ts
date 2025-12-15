@@ -118,25 +118,42 @@ class StoriesService {
   // Get stories for a specific user
   async getUserStories(userId: string): Promise<UserStory[]> {
     try {
-      const { data, error } = await this.supabase
+      const { data: stories, error: storiesError } = await this.supabase
         .from('user_stories')
-        .select(`
-          id,
-          user_id,
-          created_at,
-          expires_at,
-          media_url,
-          media_type,
-          caption,
-          views_count,
-          profiles:user_id(id, username, full_name, avatar_url)
-        `)
+        .select('id, user_id, created_at, expires_at, media_url, media_type, caption, views_count')
         .eq('user_id', userId)
         .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
-      return data || [];
+      if (storiesError) throw storiesError;
+
+      if (!stories || stories.length === 0) {
+        return [];
+      }
+
+      // Fetch profile for this user
+      const { data: profile, error: profileError } = await this.supabase
+        .from('profiles')
+        .select('user_id, username, full_name, avatar_url')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError) {
+        console.warn('Error fetching user profile:', profileError);
+        // Return stories without profile data if profile fetch fails
+        return stories.map(story => ({
+          ...story,
+          profiles: undefined
+        })) as UserStory[];
+      }
+
+      // Merge stories with profile
+      const enrichedStories = stories.map(story => ({
+        ...story,
+        profiles: profile
+      })) as UserStory[];
+
+      return enrichedStories;
     } catch (error) {
       console.error('Error fetching user stories:', error);
       throw error;
