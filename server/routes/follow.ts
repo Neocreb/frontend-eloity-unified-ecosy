@@ -236,12 +236,6 @@ router.get('/followers/:id', async (req, res) => {
     let followerProfiles: any[] = [];
 
     if (followerIds.length > 0) {
-      // Use IN clause to fetch all follower profiles
-      const inArray = (column: any, values: string[]) => {
-        if (values.length === 0) return undefined;
-        return db.sql`${column} = ANY(${values})`;
-      };
-
       followerProfiles = await db.select({
         user_id: profiles.user_id,
         username: profiles.username,
@@ -250,7 +244,7 @@ router.get('/followers/:id', async (req, res) => {
         bio: profiles.bio,
         is_verified: profiles.is_verified
       }).from(profiles)
-        .where(inArray(profiles.user_id, followerIds) || undefined)
+        .where(inArray(profiles.user_id, followerIds))
         .execute();
     }
 
