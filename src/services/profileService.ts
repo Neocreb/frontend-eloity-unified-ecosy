@@ -230,9 +230,14 @@ export class ProfileService {
   async getUserProducts(userId: string) {
     try {
       // Try API first
-      const response = await apiClient.getSellerProducts(userId) as any;
-      if (response?.products) {
-        return response.products;
+      try {
+        const response = await apiClient.getSellerProducts(userId) as any;
+        if (response?.products) {
+          return response.products;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+        // Don't log since fallback will handle it
       }
 
       // Fallback to direct database query
@@ -248,17 +253,12 @@ export class ProfileService {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.warn(
-          `Products table query failed: ${error.message}. This is expected if the products table doesn't exist yet.`,
-        );
+        // Silent fail - expected if products table doesn't exist
         return [];
       }
       return data || [];
     } catch (error: any) {
-      console.warn(
-        `Error fetching user products for ${userId}:`,
-        error?.message || error,
-      );
+      // Silent fail with fallback empty array
       return [];
     }
   }
