@@ -52,31 +52,55 @@ interface FormData {
   assemblyTime?: string;
 }
 
-export const ProductDetailsStep = ({ 
-  formData, 
+export const ProductDetailsStep = ({
+  formData,
   updateFormData,
   productType
-}: { 
-  formData: FormData; 
+}: {
+  formData: FormData;
   updateFormData: (data: Partial<FormData>) => void;
   productType: "physical" | "digital" | "service";
 }) => {
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
-  
-  // Load categories
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+
+  // Load categories on component mount
   useEffect(() => {
     const loadCategories = async () => {
       try {
+        setLoadingCategories(true);
         const categoryData = await categoryService.getCategories();
-        setCategories(categoryData.map(cat => ({ id: cat.id, name: cat.name })));
+
+        if (!categoryData || categoryData.length === 0) {
+          // Use default categories as fallback
+          const defaultCategories = MarketplaceService.DEFAULT_CATEGORIES;
+          setCategories(defaultCategories.map(cat => ({ id: cat.id, name: cat.name })));
+          console.info("Using default categories as fallback");
+        } else {
+          setCategories(categoryData.map(cat => ({ id: cat.id, name: cat.name })));
+        }
       } catch (error) {
         console.error("Error loading categories:", error);
-        setCategories([]);
+        // Fallback to default categories
+        const defaultCategories = MarketplaceService.DEFAULT_CATEGORIES;
+        setCategories(defaultCategories.map(cat => ({ id: cat.id, name: cat.name })));
+      } finally {
+        setLoadingCategories(false);
       }
     };
-    
+
     loadCategories();
   }, []);
+
+  const handleAddCustomCategory = () => {
+    if (customCategory.trim()) {
+      updateFormData({ category: customCategory.trim() });
+      setCustomCategory('');
+      setShowCustomCategoryInput(false);
+    }
+  };
   
   const digitalProductTypes = [
     { id: "ebook", name: "E-book / Guide", icon: BookOpen },
