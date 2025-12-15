@@ -2,7 +2,8 @@
 import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
+import { Button } from '@/components/ui/button';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -11,14 +12,17 @@ import {
 } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { categoryService } from '@/services';
-import { 
-  BookOpen, 
-  Play, 
-  File, 
-  Palette, 
-  Code, 
-  Music, 
-  Video as VideoIcon 
+import { MarketplaceService } from '@/services/marketplaceService';
+import {
+  BookOpen,
+  Play,
+  File,
+  Palette,
+  Code,
+  Music,
+  Video as VideoIcon,
+  Plus,
+  Loader2
 } from 'lucide-react';
 
 interface FormData {
