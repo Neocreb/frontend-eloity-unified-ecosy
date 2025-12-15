@@ -88,10 +88,6 @@ export const FAQSection: React.FC = () => {
     );
   }
 
-  if (faqs.length === 0) {
-    return null;
-  }
-
   return (
     <section className="py-16 px-4 bg-background">
       <div className="max-w-4xl mx-auto">
