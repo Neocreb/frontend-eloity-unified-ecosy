@@ -209,6 +209,55 @@ class StoriesService {
         };
       }
 
+      // Validate userId
+      if (!userId || typeof userId !== 'string') {
+        console.warn(`Invalid user ID for story view: ${userId}`);
+        return {
+          id: '',
+          story_id: storyId,
+          user_id: userId,
+          viewed_at: new Date().toISOString()
+        };
+      }
+
+      // First, verify the story exists and is not expired
+      const { data: storyData, error: storyCheckError } = await this.supabase
+        .from('user_stories')
+        .select('id, expires_at')
+        .eq('id', storyId)
+        .maybeSingle();
+
+      if (storyCheckError) {
+        console.error('Error checking if story exists:', storyCheckError);
+        return {
+          id: '',
+          story_id: storyId,
+          user_id: userId,
+          viewed_at: new Date().toISOString()
+        };
+      }
+
+      if (!storyData) {
+        console.warn(`Story not found: ${storyId}`);
+        return {
+          id: '',
+          story_id: storyId,
+          user_id: userId,
+          viewed_at: new Date().toISOString()
+        };
+      }
+
+      // Check if story has expired
+      if (new Date(storyData.expires_at) < new Date()) {
+        console.warn(`Story has expired: ${storyId}`);
+        return {
+          id: '',
+          story_id: storyId,
+          user_id: userId,
+          viewed_at: new Date().toISOString()
+        };
+      }
+
       // Check if already viewed using user_id column (not viewer_id)
       const { data: existingView, error: viewError } = await this.supabase
         .from('story_views')
@@ -216,6 +265,10 @@ class StoriesService {
         .eq('story_id', storyId)
         .eq('user_id', userId)
         .maybeSingle();
+
+      if (viewError) {
+        console.error('Error checking existing view:', viewError);
+      }
 
       if (existingView) {
         // Already viewed, return existing view
@@ -246,6 +299,7 @@ class StoriesService {
           hint: error?.hint,
           fullError: JSON.stringify(error)
         });
+        // Return a fallback object on insert failure
         return {
           id: '',
           story_id: storyId,
@@ -254,23 +308,32 @@ class StoriesService {
         };
       }
 
-      // Update view count using read-modify-write
-      const { data: story } = await this.supabase
+      // Update view count - use increment-style update if possible
+      const { error: updateError } = await this.supabase
         .from('user_stories')
-        .select('views_count')
-        .eq('id', storyId)
-        .single();
+        .update({ views_count: storyData?.views_count ? (storyData.views_count + 1) : 1 })
+        .eq('id', storyId);
 
-      if (story) {
-        await this.supabase
-          .from('user_stories')
-          .update({ views_count: (story.views_count || 0) + 1 })
-          .eq('id', storyId);
+      if (updateError) {
+        console.warn('Warning: Failed to update view count for story:', {
+          storyId,
+          error: updateError.message
+        });
+        // Don't fail the whole operation if view count update fails
       }
 
-      return data;
+      return data || {
+        id: '',
+        story_id: storyId,
+        user_id: userId,
+        viewed_at: new Date().toISOString()
+      };
     } catch (error) {
-      console.error('Error viewing story:', error);
+      console.error('Error viewing story:', {
+        storyId,
+        userId,
+        error: error instanceof Error ? error.message : String(error)
+      });
       return {
         id: '',
         story_id: storyId,
