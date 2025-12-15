@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
 import { useWalletContext } from "@/contexts/WalletContext";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -339,11 +340,11 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   };
 
   const handleStartChat = () => {
-    navigate(`/app/chat?user=${targetUsername}`);
+    navigateToDirectChat(targetUsername, navigate, user?.id);
   };
 
   const handleSendMoney = () => {
-    navigate(`/app/wallet?action=send&recipient=${targetUsername}`);
+    navigateToSendMoney(targetUsername, navigate);
   };
 
   if (isLoading) {

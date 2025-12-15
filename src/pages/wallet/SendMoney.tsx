@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWalletContext } from "@/contexts/WalletContext";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -41,6 +41,7 @@ interface Recipient {
 
 const SendMoney = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { formatCurrency } = useCurrency();
   const { walletBalance } = useWalletContext();
@@ -64,6 +65,20 @@ const SendMoney = () => {
     const country = (user?.user_metadata?.country_code as string) || "NG";
     setUserCountry(country);
   }, [user]);
+
+  // Auto-fill recipient from query params
+  useEffect(() => {
+    const recipientFromParams = searchParams.get("recipient");
+    if (recipientFromParams) {
+      setSearchQuery(recipientFromParams);
+      setRecipientType("username");
+      setRecipient({
+        type: "username",
+        username: recipientFromParams,
+      });
+      setStep("recipient");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     loadRecentRecipients();

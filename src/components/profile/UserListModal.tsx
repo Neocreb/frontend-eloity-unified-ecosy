@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
+import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   id: string;
@@ -55,6 +57,7 @@ const UserListModal: React.FC<UserListModalProps> = ({
   currentUser,
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>(users);
   const [followingStates, setFollowingStates] = useState<Record<string, boolean>>({});
@@ -90,12 +93,12 @@ const UserListModal: React.FC<UserListModalProps> = ({
   };
 
   const handleMessage = (username: string) => {
-    navigate(`/app/chat?user=${username}`);
+    navigateToDirectChat(username, navigate, user?.id);
     onClose();
   };
 
   const handleSendMoney = (username: string) => {
-    navigate(`/app/wallet?action=send&recipient=${username}`);
+    navigateToSendMoney(username, navigate);
     onClose();
   };
 

@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -849,7 +850,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           variant="outline"
                           size="sm"
                           className="text-xs sm:text-sm"
-                          onClick={() => navigate(`/app/chat?user=${targetUsername}`)}
+                          onClick={() => navigateToDirectChat(targetUsername, navigate, user?.id)}
                         >
                           <MessageCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                           <span className="hidden sm:inline">Message</span>
@@ -859,7 +860,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           variant="outline"
                           size="sm"
                           className="text-xs sm:text-sm"
-                          onClick={() => navigate(`/app/wallet?action=send&recipient=${targetUsername}`)}
+                          onClick={() => navigateToSendMoney(targetUsername, navigate)}
                         >
                           <Send className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
                           <span className="hidden sm:inline">Send Money</span>

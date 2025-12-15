@@ -854,7 +854,8 @@ class VirtualGiftsService {
 
       return Array.from(recipientMap.values()).slice(0, limit);
     } catch (error) {
-      console.error("Error getting recent recipients:", error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("Error getting recent recipients:", errorMessage);
       return [];
     }
   }

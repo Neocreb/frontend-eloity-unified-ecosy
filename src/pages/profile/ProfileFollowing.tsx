@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { FollowService } from "@/services/followService";
 import { profileService } from "@/services/profileService";
+import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   id: string;
@@ -33,6 +35,7 @@ interface User {
 
 const ProfileFollowing: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { username } = useParams<{ username: string }>();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -126,11 +129,11 @@ const ProfileFollowing: React.FC = () => {
   };
 
   const handleMessage = (userUsername: string) => {
-    navigate(`/app/chat?user=${userUsername}`);
+    navigateToDirectChat(userUsername, navigate, user?.id);
   };
 
   const handleSendMoney = (userUsername: string) => {
-    navigate(`/app/wallet?action=send&recipient=${userUsername}`);
+    navigateToSendMoney(userUsername, navigate);
   };
 
   return (
