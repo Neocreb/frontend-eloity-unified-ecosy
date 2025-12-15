@@ -45,42 +45,46 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
     try {
       setIsLoading(true);
 
-      // Get active stories with profile data and filter by expiration date
+      // Get active stories and filter by expiration date
       const now = new Date().toISOString();
-      const { data, error } = await supabase
+      const { data: stories, error: storiesError } = await supabase
         .from("user_stories")
-        .select(
-          `
-          id,
-          user_id,
-          created_at,
-          expires_at,
-          media_url,
-          media_type,
-          caption,
-          views_count,
-          profiles:user_id(id, full_name, username, avatar_url)
-        `
-        )
+        .select("id, user_id, created_at, expires_at, media_url, media_type, caption, views_count")
         .gt("expires_at", now)
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (storiesError) throw storiesError;
 
-      // Group stories by user_id to avoid duplicates
+      // Group stories by user_id to keep only the most recent story per user
       const groupedByUser: Record<string, any> = {};
-
-      (data || []).forEach((story: any) => {
-        const userId = story.user_id;
-
-        // Only keep the first (most recent) story for each user
-        if (!groupedByUser[userId]) {
-          groupedByUser[userId] = story;
+      (stories || []).forEach((story: any) => {
+        if (!groupedByUser[story.user_id]) {
+          groupedByUser[story.user_id] = story;
         }
       });
 
+      const uniqueUserIds = Object.keys(groupedByUser).map(id => id);
+
+      // Fetch profiles for all users with stories
+      let profileMap: Record<string, any> = {};
+      if (uniqueUserIds.length > 0) {
+        const { data: profiles, error: profilesError } = await supabase
+          .from("profiles")
+          .select("user_id, username, full_name, avatar_url")
+          .in("user_id", uniqueUserIds);
+
+        if (profilesError) {
+          console.warn("Error fetching profiles:", profilesError);
+        } else if (profiles) {
+          profiles.forEach((profile: any) => {
+            profileMap[profile.user_id] = profile;
+          });
+        }
+      }
+
+      // Build the stories array with profile data
       const fetchedStories: Story[] = Object.values(groupedByUser).map((story: any) => {
-        const profile = Array.isArray(story.profiles) ? story.profiles[0] : story.profiles;
+        const profile = profileMap[story.user_id];
         return {
           id: story.id,
           user: {
@@ -130,7 +134,8 @@ const EnhancedStoriesSection: React.FC<EnhancedStoriesSectionProps> = ({
       const allStories = [createStoryOption, ...fetchedStories];
       setStories(allStories);
       onStoriesFetched?.(allStories);
-    } catch {
+    } catch (error) {
+      console.error("Error fetching stories:", error);
       const createStoryOption: Story = {
         id: "create",
         user: {

@@ -116,6 +116,7 @@ import creatorCoursesRouter from './routes/creatorCourses.js';
 import landingRouter from './routes/landing.js';
 import adminLandingRouter from './routes/adminLanding.js';
 import bybitRouter from './routes/bybit.js';
+import deliveryRouter from './routes/delivery.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -608,6 +609,9 @@ app.use('/api/admin/landing', adminLandingRouter);
 
 // Mount Bybit routes
 app.use('/api/bybit', bybitRouter);
+
+// Mount Delivery routes
+app.use('/api/delivery', deliveryRouter);
 
 // =============================================================================
 // CORE AUTHENTICATION ENDPOINTS

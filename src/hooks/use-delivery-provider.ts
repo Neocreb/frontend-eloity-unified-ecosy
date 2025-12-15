@@ -29,7 +29,7 @@ export function useDeliveryProvider(): DeliveryProviderStatus {
     // Check if user is a delivery provider
     const checkProviderStatus = async () => {
       try {
-        const token = localStorage.getItem("token");
+        const token = localStorage.getItem("accessToken");
         if (!token) {
           console.warn("No auth token found for delivery provider check");
           setProviderStatus({
