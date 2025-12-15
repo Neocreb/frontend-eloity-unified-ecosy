@@ -57,6 +57,7 @@ const UserListModal: React.FC<UserListModalProps> = ({
   currentUser,
 }) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>(users);
   const [followingStates, setFollowingStates] = useState<Record<string, boolean>>({});
