@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { ChatThread, ChatMessage, ChatFilter } from "@/types/chat";
-import { chatService } from "@/services/chatService";
+import { chatPersistenceService } from "@/services/chatPersistenceService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -21,12 +21,18 @@ export const useChatThread = (threadId?: string) => {
       setLoading(true);
       setError(null);
 
-      const threadData = await chatService.getChatThread(threadId);
+      const threadData = await chatPersistenceService.getConversation(threadId);
       if (threadData) {
         setThread(threadData);
 
         // Mark thread as read
-        await chatService.markAsRead(threadId, user?.id || "user_1"); // Current user ID
+        if (messages.length > 0) {
+          const lastMessage = messages[messages.length - 1];
+          await chatPersistenceService.markConversationAsRead(
+            threadId,
+            lastMessage.id
+          );
+        }
       } else {
         setError("Chat thread not found");
       }
@@ -36,7 +42,7 @@ export const useChatThread = (threadId?: string) => {
     } finally {
       setLoading(false);
     }
-  }, [threadId, user?.id]);
+  }, [threadId, messages]);
 
   // Load messages
   const loadMessages = useCallback(
@@ -45,7 +51,11 @@ export const useChatThread = (threadId?: string) => {
 
       try {
         setLoading(offset === 0);
-        const newMessages = await chatService.getMessages(threadId, 50, offset, user?.id);
+        const newMessages = await chatPersistenceService.getMessages(
+          threadId,
+          50,
+          offset
+        );
 
         if (offset === 0) {
           setMessages(newMessages);
@@ -61,7 +71,7 @@ export const useChatThread = (threadId?: string) => {
         setLoading(false);
       }
     },
-    [threadId, user?.id],
+    [threadId]
   );
 
   // Send message
@@ -71,39 +81,40 @@ export const useChatThread = (threadId?: string) => {
       attachments?: string[],
       replyTo?: string,
       messageType?: "text" | "image" | "file" | "voice",
-      metadata?: any,
+      metadata?: any
     ): Promise<ChatMessage | null> => {
       if (!threadId || !content.trim()) return null;
 
       try {
-        const newMessage = await chatService.sendMessage({
-          threadId,
-          content: content.trim(),
-          attachments,
-          replyTo,
+        const newMessage = await chatPersistenceService.sendMessage(threadId, content.trim(), {
           messageType: messageType || "text",
+          attachments,
+          replyToId: replyTo,
           metadata,
-          currentUserId: user?.id,
         });
 
-        // Add message to local state
-        setMessages((prev) => [...prev, newMessage]);
+        if (newMessage) {
+          // Add message to local state
+          setMessages((prev) => [...prev, newMessage]);
 
-        // Update thread last message
-        if (thread) {
-          setThread((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  lastMessage: content,
-                  lastMessageAt: newMessage.timestamp,
-                  updatedAt: newMessage.timestamp,
-                }
-              : null,
-          );
+          // Update thread last message
+          if (thread) {
+            setThread((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    lastMessage: content,
+                    lastMessageAt: newMessage.timestamp,
+                    updatedAt: newMessage.timestamp,
+                  }
+                : null
+            );
+          }
+
+          return newMessage;
         }
 
-        return newMessage;
+        return null;
       } catch (err) {
         toast({
           title: "Error",
@@ -114,7 +125,7 @@ export const useChatThread = (threadId?: string) => {
         return null;
       }
     },
-    [threadId, thread, toast],
+    [threadId, thread, toast]
   );
 
   // Upload and send file
@@ -128,23 +139,29 @@ export const useChatThread = (threadId?: string) => {
           description: `Uploading ${file.name}`,
         });
 
-        const fileUrl = await chatService.uploadAttachment(file);
+        const fileUrl = await chatPersistenceService.uploadFile(file);
 
-        const newMessage = await chatService.sendMessage({
+        const newMessage = await chatPersistenceService.sendMessage(
           threadId,
-          content: `📎 ${file.name}`,
-          attachments: [fileUrl],
-          messageType: file.type.startsWith("image/") ? "image" : "file",
-        });
+          `📎 ${file.name}`,
+          {
+            messageType: file.type.startsWith("image/") ? "image" : "file",
+            attachments: [fileUrl],
+          }
+        );
 
-        setMessages((prev) => [...prev, newMessage]);
+        if (newMessage) {
+          setMessages((prev) => [...prev, newMessage]);
 
-        toast({
-          title: "Success",
-          description: "File uploaded successfully",
-        });
+          toast({
+            title: "Success",
+            description: "File uploaded successfully",
+          });
 
-        return newMessage;
+          return newMessage;
+        }
+
+        return null;
       } catch (err) {
         toast({
           title: "Error",
@@ -155,49 +172,40 @@ export const useChatThread = (threadId?: string) => {
         return null;
       }
     },
-    [threadId, toast],
+    [threadId, toast]
   );
 
   // Add reaction to message
   const addReaction = useCallback(async (messageId: string, emoji: string) => {
     try {
-      await chatService.addReaction(messageId, emoji, "user_1");
+      await chatPersistenceService.addReaction(messageId, emoji);
 
       // Update local message state
       setMessages((prev) =>
         prev.map((msg) => {
           if (msg.id === messageId) {
-            const reactions = msg.reactions || [];
-            const existingReaction = reactions.find((r) => r.emoji === emoji);
-
-            if (existingReaction) {
-              if (!existingReaction.userIds.includes("user_1")) {
-                existingReaction.userIds.push("user_1");
-                existingReaction.count++;
-              }
-            } else {
-              reactions.push({
-                emoji,
-                userIds: ["user_1"],
-                count: 1,
-              });
+            const reactions = msg.reactions || {};
+            if (!reactions[emoji]) {
+              reactions[emoji] = [];
             }
-
+            if (!reactions[emoji].includes(user?.id || "")) {
+              reactions[emoji].push(user?.id || "");
+            }
             return { ...msg, reactions };
           }
           return msg;
-        }),
+        })
       );
     } catch (err) {
       console.error("Error adding reaction:", err);
     }
-  }, []);
+  }, [user?.id]);
 
   // Delete message
   const deleteMessage = useCallback(
     async (messageId: string) => {
       try {
-        const success = await chatService.deleteMessage(messageId, "user_1");
+        const success = await chatPersistenceService.deleteMessage(messageId);
 
         if (success) {
           setMessages((prev) => prev.filter((msg) => msg.id !== messageId));
@@ -221,7 +229,7 @@ export const useChatThread = (threadId?: string) => {
         console.error("Error deleting message:", err);
       }
     },
-    [toast],
+    [toast]
   );
 
   // Load more messages (pagination)
@@ -234,9 +242,21 @@ export const useChatThread = (threadId?: string) => {
   // Send typing indicator
   const sendTypingIndicator = useCallback(() => {
     if (threadId) {
-      chatService.sendTypingIndicator(threadId, "user_1");
+      chatPersistenceService.sendTypingIndicator(threadId);
     }
   }, [threadId]);
+
+  // Mark as read
+  const markAsRead = useCallback(async () => {
+    if (!threadId || messages.length === 0) return;
+
+    try {
+      const lastMessage = messages[messages.length - 1];
+      await chatPersistenceService.markConversationAsRead(threadId, lastMessage.id);
+    } catch (err) {
+      console.error("Error marking as read:", err);
+    }
+  }, [threadId, messages]);
 
   // Initialize
   useEffect(() => {
@@ -248,6 +268,16 @@ export const useChatThread = (threadId?: string) => {
       setMessages([]);
     }
   }, [threadId, loadThread, loadMessages]);
+
+  // Mark as read when messages load or user focuses window
+  useEffect(() => {
+    const handleFocus = () => {
+      markAsRead();
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [markAsRead]);
 
   return {
     thread,
@@ -261,6 +291,7 @@ export const useChatThread = (threadId?: string) => {
     deleteMessage,
     loadMoreMessages,
     sendTypingIndicator,
+    markAsRead,
     refresh: () => {
       loadThread();
       loadMessages();
@@ -277,7 +308,7 @@ export const useChatThreads = (filter?: ChatFilter) => {
     try {
       setLoading(true);
       setError(null);
-      const threadsData = await chatService.getChatThreads(filter);
+      const threadsData = await chatPersistenceService.getConversations(filter);
       setThreads(threadsData);
     } catch (err) {
       setError("Failed to load chat threads");
