@@ -366,12 +366,41 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     }
   }, [user?.id, session]);
 
+  // Default exchange rates for common currency pairs (fallback)
+  const defaultRates: { [key: string]: number } = {
+    'USD_EUR': 0.92,
+    'USD_GBP': 0.79,
+    'USD_JPY': 149.50,
+    'USD_INR': 83.12,
+    'USD_AUD': 1.53,
+    'USD_CAD': 1.36,
+    'USD_CHF': 0.89,
+    'USD_CNY': 7.24,
+    'USD_SGD': 1.35,
+    'USD_HKD': 7.85,
+    'USD_NGN': 1550,
+    'USD_ZAR': 18.50,
+    'USD_KES': 147.5,
+    'USD_GHS': 12.50,
+    'EUR_USD': 1.09,
+    'GBP_USD': 1.27,
+    'JPY_USD': 0.0067,
+    'INR_USD': 0.012,
+  };
+
   const convertAmount = useCallback((amount: number, fromCode: string, toCode: string): number => {
     if (fromCode === toCode) return amount;
 
-    const rate = exchangeRates.get(`${fromCode}_${toCode}`);
+    // Try to get rate from exchange rates map
+    let rate = exchangeRates.get(`${fromCode}_${toCode}`);
+
+    // Fallback to default rates if not found
     if (!rate) {
-      console.warn(`No exchange rate found for ${fromCode} to ${toCode}`);
+      rate = defaultRates[`${fromCode}_${toCode}`];
+    }
+
+    if (!rate) {
+      console.warn(`No exchange rate found for ${fromCode} to ${toCode}, using 1:1 conversion`);
       return amount;
     }
 
