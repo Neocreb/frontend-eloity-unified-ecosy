@@ -21,18 +21,82 @@ import {
 } from "@/types/marketplace";
 
 export class MarketplaceService {
+  // Default categories fallback
+  static readonly DEFAULT_CATEGORIES: Category[] = [
+    {
+      id: "electronics",
+      name: "Electronics",
+      slug: "electronics",
+      image: "https://images.unsplash.com/photo-1546868871-7041f2a55e12?w=200&h=200&auto=format&fit=crop",
+      productCount: 0,
+      featured: true,
+      subcategories: []
+    },
+    {
+      id: "fashion",
+      name: "Fashion",
+      slug: "fashion",
+      image: "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=200&h=200&auto=format&fit=crop",
+      productCount: 0,
+      featured: true,
+      subcategories: []
+    },
+    {
+      id: "home-garden",
+      name: "Home & Garden",
+      slug: "home-garden",
+      image: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=200&h=200&auto=format&fit=crop",
+      productCount: 0,
+      featured: true,
+      subcategories: []
+    },
+    {
+      id: "sports",
+      name: "Sports & Outdoors",
+      slug: "sports",
+      image: "https://images.unsplash.com/photo-1517649763962-0c623066013b?w=200&h=200&auto=format&fit=crop",
+      productCount: 0,
+      featured: false,
+      subcategories: []
+    },
+    {
+      id: "books",
+      name: "Books & Media",
+      slug: "books",
+      image: "https://images.unsplash.com/photo-1507842217343-583f7270bfba?w=200&h=200&auto=format&fit=crop",
+      productCount: 0,
+      featured: false,
+      subcategories: []
+    },
+    {
+      id: "beauty",
+      name: "Beauty & Personal Care",
+      slug: "beauty",
+      image: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=200&h=200&auto=format&fit=crop",
+      productCount: 0,
+      featured: false,
+      subcategories: []
+    },
+  ];
+
   // Categories
   static async getCategories(): Promise<Category[]> {
     try {
       const { data, error } = await supabase
         .from('categories')
         .select('*')
-        .order('name');
+        .order('name')
+        .timeout(5000); // 5 second timeout
 
       if (error) {
         const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
-        console.error("Error fetching categories:", errorMsg);
-        return [];
+        console.warn("Supabase categories fetch failed, using defaults:", errorMsg);
+        return this.DEFAULT_CATEGORIES;
+      }
+
+      if (!data || data.length === 0) {
+        console.info("No categories found in database, using defaults");
+        return this.DEFAULT_CATEGORIES;
       }
 
       return data.map(category => ({
@@ -45,8 +109,9 @@ export class MarketplaceService {
         subcategories: [] // Would need to fetch subcategories separately
       }));
     } catch (error) {
-      console.error("Error in getCategories:", error);
-      return [];
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.warn("Error in getCategories (using defaults):", errorMsg);
+      return this.DEFAULT_CATEGORIES;
     }
   }
 
