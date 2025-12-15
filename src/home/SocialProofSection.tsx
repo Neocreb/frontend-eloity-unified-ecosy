@@ -45,12 +45,17 @@ export const SocialProofSection: React.FC = () => {
   const fetchStats = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('/api/landing/social-proof-stats');
-      if (!response.ok) throw new Error('Failed to fetch stats');
+      const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
+      const response = await fetch(`${apiBase}/landing/social-proof-stats`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: Failed to fetch stats`);
+      }
       const data = await response.json();
       setStats(data);
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Error fetching stats:', error instanceof Error ? error.message : String(error));
+      // Fallback to empty stats on error
+      setStats([]);
     } finally {
       setIsLoading(false);
     }

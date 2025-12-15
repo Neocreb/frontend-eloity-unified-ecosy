@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Check,
@@ -16,7 +17,13 @@ import {
   Trash2,
   MoreVertical,
   Download,
+  Smile,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -27,6 +34,8 @@ interface ChatMessageProps {
   currentUserId?: string;
   onReply?: (message: any) => void;
   onDelete?: (messageId: string) => void;
+  onReaction?: (messageId: string, emoji: string) => void;
+  recipientName?: string;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -36,12 +45,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   currentUserId,
   onReply,
   onDelete,
+  onReaction,
+  recipientName = "User",
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  // Determine read status
-  const isRead = message.readBy && message.readBy.length > 1;
+  // Determine read status based on read_by and delivered_to arrays
+  const readByCount = message.readBy?.length || 0;
+  const deliveredToCount = message.deliveredTo?.length || 0;
+  let readStatus: "sent" | "delivered" | "read" = "sent";
+
+  if (readByCount > 1) {
+    readStatus = "read";
+  } else if (deliveredToCount > 1) {
+    readStatus = "delivered";
+  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
@@ -55,9 +75,19 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
     }
   };
 
+  const handleReaction = (emoji: string) => {
+    if (onReaction) {
+      onReaction(message.id, emoji);
+      setShowEmojiPicker(false);
+    }
+  };
+
   // Sender info (for group chats)
   const senderName = message.senderName || "Unknown";
   const senderAvatar = message.senderAvatar;
+
+  // Common emoji reactions
+  const commonEmojis = ["👍", "❤️", "😂", "😮", "😢", "🔥"];
 
   return (
     <div
@@ -92,61 +122,109 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
         )}
 
         {/* Message bubble */}
-        <div
-          className={cn(
-            "max-w-xs rounded-lg px-4 py-2 text-sm sm:max-w-md md:max-w-lg lg:max-w-xl break-words",
-            isOwn
-              ? "rounded-br-none bg-blue-600 text-white"
-              : "rounded-bl-none bg-gray-100 text-gray-900"
-          )}
-        >
-          {/* Reply quote (if replying to another message) */}
-          {message.replyTo && (
-            <div
-              className={cn(
-                "mb-2 border-l-4 pl-2 py-1 text-xs opacity-75",
-                isOwn ? "border-blue-400" : "border-gray-400"
-              )}
-            >
-              <p className="font-semibold">{message.replyToSender}</p>
-              <p className="truncate">{message.replyToContent}</p>
-            </div>
-          )}
+        <div className="relative group">
+          <div
+            className={cn(
+              "max-w-xs rounded-lg px-4 py-2 text-sm sm:max-w-md md:max-w-lg lg:max-w-xl break-words",
+              isOwn
+                ? "rounded-br-none bg-blue-600 text-white"
+                : "rounded-bl-none bg-gray-100 text-gray-900"
+            )}
+          >
+            {/* Reply quote (if replying to another message) */}
+            {message.replyTo && (
+              <div
+                className={cn(
+                  "mb-2 border-l-4 pl-2 py-1 text-xs opacity-75",
+                  isOwn ? "border-blue-400" : "border-gray-400"
+                )}
+              >
+                <p className="font-semibold">{message.replyToSender}</p>
+                <p className="truncate">{message.replyToContent}</p>
+              </div>
+            )}
 
-          {/* Message text */}
-          <p className="whitespace-pre-wrap">{message.content}</p>
+            {/* Message text */}
+            <p className="whitespace-pre-wrap">{message.content}</p>
 
-          {/* Attachments */}
-          {message.attachments && message.attachments.length > 0 && (
-            <div className="mt-2 space-y-2">
-              {message.attachments.map((attachment: any, idx: number) => (
-                <div
-                  key={idx}
-                  className={cn(
-                    "rounded p-2",
-                    isOwn ? "bg-blue-700" : "bg-gray-200"
-                  )}
-                >
-                  {attachment.type === "image" ? (
-                    <img
-                      src={attachment.url}
-                      alt="attachment"
-                      className="max-h-64 max-w-xs rounded"
-                    />
-                  ) : (
-                    <a
-                      href={attachment.url}
-                      download
-                      className="flex items-center gap-2 hover:underline"
-                    >
-                      <Download className="h-4 w-4" />
-                      <span className="truncate text-xs">{attachment.name}</span>
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
+            {/* Attachments */}
+            {message.attachments && message.attachments.length > 0 && (
+              <div className="mt-2 space-y-2">
+                {message.attachments.map((attachment: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "rounded p-2",
+                      isOwn ? "bg-blue-700" : "bg-gray-200"
+                    )}
+                  >
+                    {attachment.type === "image" ? (
+                      <img
+                        src={attachment.url}
+                        alt="attachment"
+                        className="max-h-64 max-w-xs rounded"
+                      />
+                    ) : (
+                      <a
+                        href={attachment.url}
+                        download
+                        className="flex items-center gap-2 hover:underline"
+                      >
+                        <Download className="h-4 w-4" />
+                        <span className="truncate text-xs">{attachment.name}</span>
+                      </a>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Reactions display and emoji picker */}
+          <div className="flex items-center gap-1 mt-1 flex-wrap">
+            {message.reactions && Object.entries(message.reactions).map(([emoji, users]: [string, any]) => (
+              <button
+                key={emoji}
+                className={cn(
+                  "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs border transition-colors",
+                  users?.includes(currentUserId)
+                    ? "bg-blue-100 border-blue-300 text-blue-900"
+                    : "bg-gray-100 border-gray-300 text-gray-600 hover:bg-gray-200"
+                )}
+                title={users?.join(", ") || ""}
+              >
+                <span>{emoji}</span>
+                {users?.length > 0 && <span>{users.length}</span>}
+              </button>
+            ))}
+
+            {/* Emoji picker button */}
+            {showActions && onReaction && (
+              <Popover open={showEmojiPicker} onOpenChange={setShowEmojiPicker}>
+                <PopoverTrigger asChild>
+                  <button
+                    className="inline-flex items-center justify-center p-1 rounded hover:bg-gray-200"
+                    title="Add reaction"
+                  >
+                    <Smile className="h-4 w-4 text-gray-500" />
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-2" side="top">
+                  <div className="flex flex-wrap gap-1">
+                    {commonEmojis.map((emoji) => (
+                      <button
+                        key={emoji}
+                        onClick={() => handleReaction(emoji)}
+                        className="text-lg hover:scale-125 transition-transform"
+                      >
+                        {emoji}
+                      </button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+          </div>
         </div>
 
         {/* Timestamp + Read receipt */}
@@ -156,14 +234,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
             isOwn ? "flex-row-reverse" : "flex-row"
           )}
         >
-          <span>
+          <span title={format(new Date(message.timestamp), "PPpp")}>
             {format(new Date(message.timestamp), "HH:mm")}
           </span>
           {isOwn && (
             <>
-              {isRead ? (
-                <CheckCheck className="h-4 w-4 text-blue-600" title="Read" />
-              ) : (
+              {readStatus === "read" && (
+                <CheckCheck className="h-4 w-4 text-blue-600" title={`Read by ${recipientName}`} />
+              )}
+              {readStatus === "delivered" && (
+                <CheckCheck className="h-4 w-4 text-gray-400" title="Delivered" />
+              )}
+              {readStatus === "sent" && (
                 <Check className="h-4 w-4" title="Sent" />
               )}
             </>
@@ -188,6 +270,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               align={isOwn ? "end" : "start"}
               className="w-48"
             >
+              {onReaction && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {commonEmojis.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => handleReaction(emoji)}
+                          className="text-lg hover:scale-125 transition-transform"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               {onReply && (
                 <DropdownMenuItem onClick={() => onReply(message)}>
                   <Reply className="mr-2 h-4 w-4" />
@@ -199,10 +299,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 {copied ? "Copied!" : "Copy"}
               </DropdownMenuItem>
               {isOwn && onDelete && (
-                <DropdownMenuItem onClick={handleDelete} className="text-red-600">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

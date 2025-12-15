@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChatThread, ChatMessage, ChatFilter } from "@/types/chat";
-import { chatPersistenceService } from "@/services/chatPersistenceService";
+import { chatPersistenceService, realtimeService } from "@/services/chatPersistenceService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,6 +12,7 @@ export const useChatThread = (threadId?: string) => {
   const [hasMore, setHasMore] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const readReceiptsRef = useRef<Map<string, string[]>>(new Map());
 
   // Load thread data
   const loadThread = useCallback(async () => {
@@ -257,6 +258,34 @@ export const useChatThread = (threadId?: string) => {
       console.error("Error marking as read:", err);
     }
   }, [threadId, messages]);
+
+  // Subscribe to read receipt updates
+  useEffect(() => {
+    if (!threadId) return;
+
+    const subscription = realtimeService.subscribeToReadReceipts(
+      threadId,
+      (messageId: string, readBy: string[]) => {
+        // Update the read receipts cache
+        readReceiptsRef.current.set(messageId, readBy);
+
+        // Update messages with new read receipts
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === messageId
+              ? { ...msg, readBy }
+              : msg
+          )
+        );
+      }
+    );
+
+    return () => {
+      if (subscription) {
+        realtimeService.unsubscribe(`reads:${threadId}`);
+      }
+    };
+  }, [threadId]);
 
   // Initialize
   useEffect(() => {
