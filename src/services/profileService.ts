@@ -73,9 +73,13 @@ export class ProfileService {
   async getFollowersCount(userId: string): Promise<number> {
     try {
       // Try API first
-      const response = await apiClient.getFollowers(userId) as any;
-      if (response?.count !== undefined) {
-        return response.count;
+      try {
+        const response = await apiClient.getFollowers(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
       }
 
       // Fallback to direct database query
@@ -85,14 +89,10 @@ export class ProfileService {
         .eq("following_id", userId);
 
       if (error) {
-        console.warn(
-          `Followers table query failed: ${error.message}. Using fallback value.`,
-        );
         return 0;
       }
       return count || 0;
     } catch (error: any) {
-      console.warn("Error fetching followers count:", error?.message || error);
       return 0;
     }
   }
@@ -100,9 +100,13 @@ export class ProfileService {
   async getFollowingCount(userId: string): Promise<number> {
     try {
       // Try API first
-      const response = await apiClient.getFollowing(userId) as any;
-      if (response?.count !== undefined) {
-        return response.count;
+      try {
+        const response = await apiClient.getFollowing(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
       }
 
       // Fallback to direct database query
@@ -112,14 +116,10 @@ export class ProfileService {
         .eq("follower_id", userId);
 
       if (error) {
-        console.warn(
-          `Following table query failed: ${error.message}. Using fallback value.`,
-        );
         return 0;
       }
       return count || 0;
     } catch (error: any) {
-      console.warn("Error fetching following count:", error?.message || error);
       return 0;
     }
   }
@@ -127,9 +127,14 @@ export class ProfileService {
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {
     try {
       // Try API first
-      const response = await apiClient.checkFollowStatus(followerId, followingId) as any;
-      if (response?.isFollowing !== undefined) {
-        return response.isFollowing;
+      try {
+        const response = await apiClient.checkFollowStatus(followerId, followingId) as any;
+        if (response?.isFollowing !== undefined) {
+          return response.isFollowing;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+        // Don't log since fallback will handle it
       }
 
       // Fallback to direct database query
@@ -141,14 +146,12 @@ export class ProfileService {
         .maybeSingle();
 
       if (error) {
-        console.warn(
-          `Follow status query failed: ${error.message}. Defaulting to not following.`,
-        );
+        // Silent fail - default to not following
         return false;
       }
       return !!data;
     } catch (error: any) {
-      console.warn("Error checking follow status:", error?.message || error);
+      // Silent fail - default to not following
       return false;
     }
   }
@@ -199,9 +202,14 @@ export class ProfileService {
   async getUserPosts(userId: string) {
     try {
       // Try API first
-      const response = await apiClient.getUserPosts(userId) as any;
-      if (response?.posts) {
-        return response.posts;
+      try {
+        const response = await apiClient.getUserPosts(userId) as any;
+        if (response?.posts) {
+          return response.posts;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+        // Don't log since fallback will handle it
       }
 
       // Fallback to direct database query
@@ -212,17 +220,12 @@ export class ProfileService {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.warn(
-          `Posts table query failed: ${error.message}. This is expected if the posts table doesn't exist yet.`,
-        );
+        // Silent fail - expected if posts table doesn't exist
         return [];
       }
       return data || [];
     } catch (error: any) {
-      console.warn(
-        `Error fetching user posts for ${userId}:`,
-        error?.message || error,
-      );
+      // Silent fail with fallback empty array
       return [];
     }
   }
@@ -230,9 +233,14 @@ export class ProfileService {
   async getUserProducts(userId: string) {
     try {
       // Try API first
-      const response = await apiClient.getSellerProducts(userId) as any;
-      if (response?.products) {
-        return response.products;
+      try {
+        const response = await apiClient.getSellerProducts(userId) as any;
+        if (response?.products) {
+          return response.products;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+        // Don't log since fallback will handle it
       }
 
       // Fallback to direct database query
@@ -248,17 +256,12 @@ export class ProfileService {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.warn(
-          `Products table query failed: ${error.message}. This is expected if the products table doesn't exist yet.`,
-        );
+        // Silent fail - expected if products table doesn't exist
         return [];
       }
       return data || [];
     } catch (error: any) {
-      console.warn(
-        `Error fetching user products for ${userId}:`,
-        error?.message || error,
-      );
+      // Silent fail with fallback empty array
       return [];
     }
   }
@@ -266,9 +269,14 @@ export class ProfileService {
   async getUserServices(userId: string) {
     try {
       // Try freelance API first
-      const response = await apiClient.getFreelanceJobs({ freelancer_id: userId }) as any;
-      if (response?.services) {
-        return response.services;
+      try {
+        const response = await apiClient.getFreelanceJobs({ freelancer_id: userId }) as any;
+        if (response?.services) {
+          return response.services;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+        // Don't log since fallback will handle it
       }
 
       // Fallback to direct database query
@@ -279,30 +287,24 @@ export class ProfileService {
         .order("updated_at", { ascending: false });
 
       if (error) {
-        console.warn(
-          `Freelance services table query failed: ${error.message}. This is expected if the freelance_services table doesn't exist yet.`,
-        );
+        // Silent fail - expected if freelance_profiles table doesn't exist
         return [];
       }
-      
+
       // Extract services from services_offered field
       if (data && data[0] && data[0].services_offered) {
         try {
-          const services = typeof data[0].services_offered === 'string' 
+          const services = typeof data[0].services_offered === 'string'
             ? JSON.parse(data[0].services_offered)
             : data[0].services_offered;
           return Array.isArray(services) ? services : [];
         } catch (parseError) {
-          console.warn('Error parsing services_offered:', parseError);
           return [];
         }
       }
       return [];
     } catch (error: any) {
-      console.warn(
-        `Error fetching user services for ${userId}:`,
-        error?.message || error,
-      );
+      // Silent fail with fallback empty array
       return [];
     }
   }

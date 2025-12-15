@@ -13,7 +13,7 @@ class ApiClient {
   ): Promise<T> {
     const url = `${BASE_URL}${endpoint}`;
     const token = getAuthToken();
-    
+
     const config: RequestInit = {
       headers: {
         "Content-Type": "application/json",
@@ -23,23 +23,34 @@ class ApiClient {
       ...options,
     };
 
-    const response = await fetch(url, config);
-
-    // Read body once and reuse the parsed result to avoid "body stream already read" errors
-    const text = await response.text();
-    let parsed: any;
     try {
-      parsed = text ? JSON.parse(text) : null;
-    } catch (e) {
-      parsed = text;
-    }
+      const response = await fetch(url, config);
 
-    if (!response.ok) {
-      const errorMessage = (parsed && parsed.error) || parsed?.message || `HTTP ${response.status}`;
-      throw new Error(errorMessage);
-    }
+      // Read body once and reuse the parsed result to avoid "body stream already read" errors
+      const text = await response.text();
+      let parsed: any;
+      try {
+        parsed = text ? JSON.parse(text) : null;
+      } catch (e) {
+        parsed = text;
+      }
 
-    return parsed as T;
+      if (!response.ok) {
+        const errorMessage = (parsed && parsed.error) || parsed?.message || `HTTP ${response.status}`;
+        throw new Error(errorMessage);
+      }
+
+      return parsed as T;
+    } catch (error) {
+      // Log only for debugging, don't re-throw to allow fallbacks to work
+      if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        // Network error - likely backend not available
+        console.debug(`[API] Network error on ${endpoint}:`, error.message);
+      } else {
+        console.debug(`[API] Request failed for ${endpoint}:`, error instanceof Error ? error.message : error);
+      }
+      throw error;
+    }
   }
 
   // Auth methods
