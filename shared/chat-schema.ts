@@ -90,6 +90,15 @@ export const video_calls = pgTable('video_calls', {
   created_at: timestamp('created_at').defaultNow(),
 });
 
+// Typing indicators table
+export const typing_indicators = pgTable('typing_indicators', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  conversation_id: uuid('conversation_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  started_at: timestamp('started_at').defaultNow(),
+  expires_at: timestamp('expires_at').notNull(),
+});
+
 // Relations
 export const chatConversationsRelations = relations(chat_conversations, ({ one, many }) => ({
   creator: one(users, {
@@ -156,6 +165,17 @@ export const videoCallsRelations = relations(video_calls, ({ one }) => ({
   }),
   initiator: one(users, {
     fields: [video_calls.initiator_id],
+    references: [users.id],
+  }),
+}));
+
+export const typingIndicatorsRelations = relations(typing_indicators, ({ one }) => ({
+  conversation: one(chat_conversations, {
+    fields: [typing_indicators.conversation_id],
+    references: [chat_conversations.id],
+  }),
+  user: one(users, {
+    fields: [typing_indicators.user_id],
     references: [users.id],
   }),
 }));

@@ -1,601 +1,618 @@
-// @ts-nocheck
-/**
- * Chat Persistence Service
- * Handles all database operations for chat system
- * Ensures messages are saved to Supabase and not lost
- */
+import { ChatThread, ChatMessage, ChatFilter, StartChatRequest } from '@/types/chat';
+import { supabase } from '@/integrations/supabase/client';
 
-import { supabase } from "@/integrations/supabase/client";
-import { ChatMessage, ChatThread } from "@/types/chat";
+const API_BASE = process.env.VITE_API_BASE || 'http://localhost:5000/api';
 
-export const chatPersistenceService = {
+export interface ApiResponse<T> {
+  data?: T;
+  error?: string;
+  message?: string;
+}
+
+class ChatPersistenceService {
+  private apiBase = API_BASE;
+
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    const url = `${this.apiBase}/chat${endpoint}`;
+    
+    // Get auth token from localStorage
+    const token = localStorage.getItem('accessToken');
+    
+    const headers: HeadersInit = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
+
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || `API error: ${response.statusText}`);
+    }
+
+    return response.json();
+  }
+
   // ============================================================================
-  // CONVERSATION OPERATIONS
+  // CONVERSATION MANAGEMENT
   // ============================================================================
 
-  /**
-   * Create a new conversation
-   * @param participantIds - Array of user IDs in the conversation
-   * @param type - 'direct' or 'group'
-   * @param name - (Optional) Name for group conversations
-   * @returns Conversation ID
-   */
-  async createConversation(
-    participantIds: string[],
-    type: "direct" | "group" = "direct",
-    name?: string
-  ): Promise<string> {
+  async getConversations(filter?: ChatFilter): Promise<ChatThread[]> {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user?.id) throw new Error("Not authenticated");
+      const params = new URLSearchParams();
+      if (filter?.unreadOnly) params.append('unreadOnly', 'true');
+      if (filter?.type && filter.type !== 'all') params.append('type', filter.type);
+      if (filter?.searchQuery) params.append('search', filter.searchQuery);
 
-      const { data, error } = await supabase
-        .from("chat_conversations")
-        .insert({
-          created_by: user.user.id,
-          participants: participantIds,
-          type,
-          name,
-          is_group: type === "group",
-        })
-        .select("id")
-        .single();
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      const conversations = await this.request<any[]>(`/conversations${queryString}`);
 
-      if (error) throw error;
-
-      // Add participants
-      for (const participantId of participantIds) {
-        await supabase.from("chat_participants").insert({
-          conversation_id: data.id,
-          user_id: participantId,
-        });
-      }
-
-      return data.id;
+      return conversations.map((conv) => this.transformConversationToThread(conv));
     } catch (error) {
-      console.error("Error creating conversation:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get or create conversation between two users
-   */
-  async getOrCreateDirectConversation(otherUserId: string): Promise<string> {
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user?.id) throw new Error("Not authenticated");
-
-      const currentUserId = user.user.id;
-
-      // Check if conversation already exists
-      const { data: existing } = await supabase
-        .from("chat_conversations")
-        .select("id")
-        .contains("participants", [currentUserId, otherUserId])
-        .eq("type", "direct")
-        .single();
-
-      if (existing) {
-        return existing.id;
-      }
-
-      // Create new conversation
-      return await this.createConversation(
-        [currentUserId, otherUserId],
-        "direct"
-      );
-    } catch (error) {
-      console.error("Error getting/creating conversation:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get conversation details
-   */
-  async getConversation(conversationId: string): Promise<any> {
-    try {
-      const { data, error } = await supabase
-        .from("chat_conversations")
-        .select(
-          `
-          *,
-          chat_participants(user_id, custom_name, muted, notifications_enabled)
-        `
-        )
-        .eq("id", conversationId)
-        .single();
-
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      console.error("Error fetching conversation:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Get user's conversations list
-   */
-  async getUserConversations(userId: string, limit = 50): Promise<any[]> {
-    try {
-      const { data, error } = await supabase
-        .from("conversation_with_last_message")
-        .select("*")
-        .contains("participants", [userId])
-        .eq("is_archived", false)
-        .order("last_activity", { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error("Error fetching conversations:", error);
+      console.error('Error fetching conversations:', error);
       return [];
     }
-  },
+  }
 
-  // ============================================================================
-  // MESSAGE OPERATIONS
-  // ============================================================================
-
-  /**
-   * Send a message (PRIMARY PERSISTENCE METHOD)
-   * This is called when user sends a message
-   */
-  async sendMessage(
-    conversationId: string,
-    content: string,
-    messageType: string = "text",
-    attachments?: any[],
-    replyToId?: string
-  ): Promise<ChatMessage> {
+  async getConversation(conversationId: string): Promise<ChatThread | null> {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user?.id) throw new Error("Not authenticated");
-
-      // INSERT message into database
-      const { data: message, error } = await supabase
-        .from("chat_messages")
-        .insert({
-          conversation_id: conversationId,
-          sender_id: user.user.id,
-          content,
-          message_type: messageType,
-          attachments: attachments || [],
-          reply_to_id: replyToId,
-          read_by: [user.user.id], // Mark as read by sender
-        })
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // UPDATE conversation's last activity
-      await supabase
-        .from("chat_conversations")
-        .update({
-          last_message_id: message.id,
-          last_activity: new Date().toISOString(),
-        })
-        .eq("id", conversationId);
-
-      return {
-        id: message.id,
-        threadId: message.conversation_id,
-        senderId: message.sender_id,
-        content: message.content,
-        timestamp: message.created_at,
-        readBy: message.read_by || [user.user.id],
-        messageType: message.message_type,
-        attachments: message.attachments,
-        replyTo: message.reply_to_id,
-      };
+      const conversation = await this.request<any>(
+        `/conversations/${conversationId}`
+      );
+      return this.transformConversationToThread(conversation);
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error('Error fetching conversation:', error);
+      return null;
+    }
+  }
+
+  async createConversation(request: StartChatRequest): Promise<ChatThread | null> {
+    try {
+      const payload = {
+        participants: request.participants,
+        name: request.groupName,
+        type: request.groupName ? 'group' : 'direct',
+        settings: request.contextData,
+      };
+
+      const conversation = await this.request<any>('/conversations', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
+
+      return this.transformConversationToThread(conversation);
+    } catch (error) {
+      console.error('Error creating conversation:', error);
       throw error;
     }
-  },
+  }
 
-  /**
-   * Get messages for a conversation
-   */
+  // ============================================================================
+  // MESSAGE MANAGEMENT
+  // ============================================================================
+
   async getMessages(
     conversationId: string,
-    limit = 50,
-    offset = 0
+    limit: number = 50,
+    offset: number = 0
   ): Promise<ChatMessage[]> {
     try {
-      const { data: messages, error } = await supabase
-        .from("chat_messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
+      const params = new URLSearchParams({
+        limit: String(limit),
+        offset: String(offset),
+      });
 
-      if (error) throw error;
+      const response = await this.request<{
+        messages: any[];
+        total: number;
+        hasMore: boolean;
+      }>(`/conversations/${conversationId}/messages?${params.toString()}`);
 
-      // Reverse to show chronological order
-      return (messages || [])
-        .reverse()
-        .map((msg) => ({
-          id: msg.id,
-          threadId: msg.conversation_id,
-          senderId: msg.sender_id,
-          content: msg.content,
-          timestamp: msg.created_at,
-          readBy: msg.read_by || [],
-          messageType: msg.message_type,
-          attachments: msg.attachments,
-          replyTo: msg.reply_to_id,
-        }));
+      return (response.messages || []).map((msg) =>
+        this.transformMessageToChat(msg)
+      );
     } catch (error) {
-      console.error("Error fetching messages:", error);
+      console.error('Error fetching messages:', error);
       return [];
     }
-  },
+  }
 
-  /**
-   * Mark message as read by user
-   */
-  async markMessageAsRead(messageId: string, userId: string): Promise<void> {
+  async sendMessage(conversationId: string, content: string, options?: {
+    messageType?: 'text' | 'image' | 'file' | 'voice' | 'video';
+    attachments?: string[];
+    replyToId?: string;
+    metadata?: Record<string, unknown>;
+  }): Promise<ChatMessage | null> {
     try {
-      // Get current read_by array
-      const { data: message, error: fetchError } = await supabase
-        .from("chat_messages")
-        .select("read_by")
-        .eq("id", messageId)
-        .single();
+      const payload = {
+        conversationId,
+        content,
+        messageType: options?.messageType || 'text',
+        attachments: options?.attachments,
+        replyToId: options?.replyToId,
+        metadata: options?.metadata,
+      };
 
-      if (fetchError) throw fetchError;
+      const message = await this.request<any>('/messages', {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      });
 
-      const readBy = message.read_by || [];
-      if (!readBy.includes(userId)) {
-        readBy.push(userId);
-
-        // Update with new array
-        await supabase
-          .from("chat_messages")
-          .update({ read_by: readBy })
-          .eq("id", messageId);
-      }
+      return this.transformMessageToChat(message);
     } catch (error) {
-      console.error("Error marking message as read:", error);
+      console.error('Error sending message:', error);
+      throw error;
     }
-  },
+  }
 
-  /**
-   * Mark all messages in conversation as read
-   */
+  async updateMessage(
+    messageId: string,
+    content: string
+  ): Promise<ChatMessage | null> {
+    try {
+      const payload = { content };
+      const message = await this.request<any>(`/messages/${messageId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+
+      return this.transformMessageToChat(message);
+    } catch (error) {
+      console.error('Error updating message:', error);
+      return null;
+    }
+  }
+
+  async deleteMessage(messageId: string): Promise<boolean> {
+    try {
+      await this.request(`/messages/${messageId}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch (error) {
+      console.error('Error deleting message:', error);
+      return false;
+    }
+  }
+
+  // ============================================================================
+  // READ RECEIPTS & STATUS
+  // ============================================================================
+
+  async markMessageAsRead(messageId: string): Promise<boolean> {
+    try {
+      await this.request(`/messages/${messageId}/read`, {
+        method: 'POST',
+      });
+      return true;
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      return false;
+    }
+  }
+
   async markConversationAsRead(
     conversationId: string,
-    userId: string
-  ): Promise<void> {
+    lastReadMessageId: string
+  ): Promise<boolean> {
     try {
-      const { data: messages, error } = await supabase
-        .from("chat_messages")
-        .select("id, read_by")
-        .eq("conversation_id", conversationId)
-        .eq("is_deleted", false);
-
-      if (error) throw error;
-
-      // Update each message
-      for (const message of messages) {
-        const readBy = message.read_by || [];
-        if (!readBy.includes(userId)) {
-          readBy.push(userId);
-          await supabase
-            .from("chat_messages")
-            .update({ read_by: readBy })
-            .eq("id", message.id);
-        }
-      }
-
-      // Update participant's last_read_message_id
-      const lastMessage = messages[messages.length - 1];
-      if (lastMessage) {
-        await supabase
-          .from("chat_participants")
-          .update({
-            last_read_message_id: lastMessage.id,
-            last_read_at: new Date().toISOString(),
-          })
-          .eq("conversation_id", conversationId)
-          .eq("user_id", userId);
-      }
+      await this.request(`/conversations/${conversationId}/read`, {
+        method: 'POST',
+        body: JSON.stringify({ lastReadMessageId }),
+      });
+      return true;
     } catch (error) {
-      console.error("Error marking conversation as read:", error);
+      console.error('Error marking conversation as read:', error);
+      return false;
     }
-  },
-
-  /**
-   * Delete a message (soft delete)
-   */
-  async deleteMessage(messageId: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from("chat_messages")
-        .update({
-          is_deleted: true,
-          deleted_at: new Date().toISOString(),
-        })
-        .eq("id", messageId);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error deleting message:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Edit a message
-   */
-  async editMessage(messageId: string, newContent: string): Promise<void> {
-    try {
-      const { error } = await supabase
-        .from("chat_messages")
-        .update({
-          content: newContent,
-          is_edited: true,
-          edited_at: new Date().toISOString(),
-        })
-        .eq("id", messageId);
-
-      if (error) throw error;
-    } catch (error) {
-      console.error("Error editing message:", error);
-      throw error;
-    }
-  },
-
-  /**
-   * Search messages in a conversation
-   */
-  async searchMessages(
-    conversationId: string,
-    query: string,
-    limit = 20
-  ): Promise<ChatMessage[]> {
-    try {
-      const { data: messages, error } = await supabase
-        .from("chat_messages")
-        .select("*")
-        .eq("conversation_id", conversationId)
-        .ilike("content", `%${query}%`)
-        .eq("is_deleted", false)
-        .order("created_at", { ascending: false })
-        .limit(limit);
-
-      if (error) throw error;
-
-      return (messages || []).map((msg) => ({
-        id: msg.id,
-        threadId: msg.conversation_id,
-        senderId: msg.sender_id,
-        content: msg.content,
-        timestamp: msg.created_at,
-        readBy: msg.read_by || [],
-        messageType: msg.message_type,
-        attachments: msg.attachments,
-        replyTo: msg.reply_to_id,
-      }));
-    } catch (error) {
-      console.error("Error searching messages:", error);
-      return [];
-    }
-  },
+  }
 
   // ============================================================================
-  // FILE OPERATIONS
+  // REACTIONS & INTERACTIONS
   // ============================================================================
 
-  /**
-   * Upload attachment and save metadata
-   */
-  async uploadAttachment(
-    file: File,
-    conversationId: string
-  ): Promise<{ url: string; name: string; type: string; size: number }> {
+  async addReaction(messageId: string, emoji: string): Promise<boolean> {
     try {
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${fileExt}`;
-      const filePath = `chat/${conversationId}/${fileName}`;
-
-      // Upload to Supabase Storage
-      const { data, error } = await supabase.storage
-        .from("chat-attachments")
-        .upload(filePath, file);
-
-      if (error) throw error;
-
-      // Get public URL
-      const { data: urlData } = supabase.storage
-        .from("chat-attachments")
-        .getPublicUrl(filePath);
-
-      return {
-        url: urlData.publicUrl,
-        name: file.name,
-        type: file.type,
-        size: file.size,
-      };
+      await this.request(`/messages/${messageId}/reactions`, {
+        method: 'POST',
+        body: JSON.stringify({ emoji }),
+      });
+      return true;
     } catch (error) {
-      console.error("Error uploading attachment:", error);
-      throw error;
+      console.error('Error adding reaction:', error);
+      return false;
     }
-  },
+  }
+
+  async removeReaction(messageId: string, emoji: string): Promise<boolean> {
+    try {
+      await this.request(`/messages/${messageId}/reactions/${emoji}`, {
+        method: 'DELETE',
+      });
+      return true;
+    } catch (error) {
+      console.error('Error removing reaction:', error);
+      return false;
+    }
+  }
 
   // ============================================================================
   // TYPING INDICATORS
   // ============================================================================
 
-  /**
-   * Send typing indicator
-   */
-  async sendTypingIndicator(conversationId: string): Promise<void> {
+  async sendTypingIndicator(conversationId: string): Promise<boolean> {
     try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user?.id) return;
+      await this.request(`/conversations/${conversationId}/typing`, {
+        method: 'POST',
+      });
+      return true;
+    } catch (error) {
+      console.error('Error sending typing indicator:', error);
+      return false;
+    }
+  }
 
-      // Upsert typing indicator (replace if exists)
-      await supabase.from("typing_indicators").upsert(
-        {
-          conversation_id: conversationId,
-          user_id: user.user.id,
-          started_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 10000).toISOString(),
-        },
-        { onConflict: "conversation_id,user_id" }
+  async getTypingIndicators(conversationId: string): Promise<Array<{
+    userId: string;
+    username?: string;
+    avatar?: string;
+  }>> {
+    try {
+      const indicators = await this.request<any[]>(
+        `/conversations/${conversationId}/typing`
       );
+      return indicators || [];
     } catch (error) {
-      console.error("Error sending typing indicator:", error);
-    }
-  },
-
-  /**
-   * Clear typing indicator
-   */
-  async clearTypingIndicator(conversationId: string): Promise<void> {
-    try {
-      const { data: user } = await supabase.auth.getUser();
-      if (!user?.user?.id) return;
-
-      await supabase
-        .from("typing_indicators")
-        .delete()
-        .eq("conversation_id", conversationId)
-        .eq("user_id", user.user.id);
-    } catch (error) {
-      console.error("Error clearing typing indicator:", error);
-    }
-  },
-
-  /**
-   * Get typing users in conversation
-   */
-  async getTypingUsers(conversationId: string): Promise<any[]> {
-    try {
-      const { data: typingIndicators, error } = await supabase
-        .from("typing_indicators")
-        .select("user_id, expires_at")
-        .eq("conversation_id", conversationId)
-        .gt("expires_at", new Date().toISOString());
-
-      if (error) throw error;
-
-      // Get user profiles
-      const userIds = (typingIndicators || []).map((t) => t.user_id);
-      if (userIds.length === 0) return [];
-
-      const { data: profiles } = await supabase
-        .from("profiles")
-        .select("user_id, full_name")
-        .in("user_id", userIds);
-
-      return (typingIndicators || []).map((t) => ({
-        id: t.user_id,
-        name:
-          profiles?.find((p) => p.user_id === t.user_id)?.full_name ||
-          "User",
-      }));
-    } catch (error) {
-      console.error("Error fetching typing users:", error);
+      console.error('Error fetching typing indicators:', error);
       return [];
     }
-  },
+  }
 
   // ============================================================================
-  // REAL-TIME SUBSCRIPTIONS
+  // FILE UPLOADS
   // ============================================================================
 
-  /**
-   * Subscribe to new messages in conversation
-   */
+  async uploadFile(file: File): Promise<string> {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const token = localStorage.getItem('accessToken');
+      const headers: HeadersInit = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch(`${this.apiBase}/upload`, {
+        method: 'POST',
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      const data = await response.json();
+      return data.fileUrl || '';
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw error;
+    }
+  }
+
+  // ============================================================================
+  // CONVERSATION SETTINGS
+  // ============================================================================
+
+  async updateConversation(
+    conversationId: string,
+    updates: {
+      name?: string;
+      description?: string;
+      avatar?: string;
+      isArchived?: boolean;
+      isMuted?: boolean;
+      settings?: Record<string, unknown>;
+    }
+  ): Promise<boolean> {
+    try {
+      const payload = {
+        name: updates.name,
+        description: updates.description,
+        avatar: updates.avatar,
+        is_archived: updates.isArchived,
+        is_muted: updates.isMuted,
+        settings: updates.settings,
+      };
+
+      await this.request(`/conversations/${conversationId}`, {
+        method: 'PUT',
+        body: JSON.stringify(payload),
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating conversation:', error);
+      return false;
+    }
+  }
+
+  async archiveConversation(conversationId: string): Promise<boolean> {
+    return this.updateConversation(conversationId, { isArchived: true });
+  }
+
+  async muteConversation(conversationId: string): Promise<boolean> {
+    return this.updateConversation(conversationId, { isMuted: true });
+  }
+
+  async unmuteConversation(conversationId: string): Promise<boolean> {
+    return this.updateConversation(conversationId, { isMuted: false });
+  }
+
+  // ============================================================================
+  // SEARCH
+  // ============================================================================
+
+  async searchMessages(query: string, conversationId?: string): Promise<ChatMessage[]> {
+    try {
+      const params = new URLSearchParams({ q: query });
+      if (conversationId) {
+        params.append('conversation', conversationId);
+      }
+
+      const messages = await this.request<any[]>(`/search?${params.toString()}`);
+      return (messages || []).map((msg) => this.transformMessageToChat(msg));
+    } catch (error) {
+      console.error('Error searching messages:', error);
+      return [];
+    }
+  }
+
+  // ============================================================================
+  // HELPERS
+  // ============================================================================
+
+  transformConversationToThread(conversation: any): ChatThread {
+    const lastMessage = conversation.chat_messages?.[0];
+    return {
+      id: conversation.id,
+      type: conversation.type === 'group' ? 'social' : 'freelance',
+      participants: conversation.participants || [],
+      lastMessage: lastMessage?.content || '',
+      lastMessageAt: conversation.last_activity || new Date().toISOString(),
+      updatedAt: conversation.updated_at || new Date().toISOString(),
+      isGroup: conversation.type === 'group',
+      groupName: conversation.name,
+      groupAvatar: conversation.avatar,
+      createdAt: conversation.created_at || new Date().toISOString(),
+      unreadCount: 0,
+      contextData: conversation.settings || {},
+      referenceId: conversation.settings?.referenceId,
+    };
+  }
+
+  transformMessageToChat(message: any): ChatMessage {
+    return {
+      id: message.id,
+      threadId: message.conversation_id,
+      senderId: message.sender_id,
+      content: message.content,
+      timestamp: message.created_at,
+      readBy: message.read_by || [],
+      deliveredTo: message.delivered_to || [],
+      messageType: message.message_type || 'text',
+      attachments: message.attachments,
+      replyTo: message.reply_to_id,
+      reactions: message.reactions,
+      metadata: message.metadata,
+      isEdited: message.is_edited,
+      isDeleted: message.is_deleted,
+    };
+  }
+}
+
+// ============================================================================
+// REAL-TIME SUBSCRIPTIONS
+// ============================================================================
+
+// Subscription management
+const subscriptions = new Map<string, any>();
+
+export const realtimeService = {
+  // Subscribe to new messages in a conversation
   subscribeToMessages(
     conversationId: string,
-    callback: (message: ChatMessage) => void
+    callback: (message: ChatMessage) => void,
+    onError?: (error: Error) => void
   ) {
-    return supabase
-      .channel(`messages:${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "chat_messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload: any) => {
-          const message = payload.new;
-          callback({
-            id: message.id,
-            threadId: message.conversation_id,
-            senderId: message.sender_id,
-            content: message.content,
-            timestamp: message.created_at,
-            readBy: message.read_by || [],
-            messageType: message.message_type,
-            attachments: message.attachments,
-            replyTo: message.reply_to_id,
-          });
-        }
-      )
-      .subscribe();
+    try {
+      const channel = supabase
+        .channel(`chat:${conversationId}:messages`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload: any) => {
+            const message = chatPersistenceService.transformMessageToChat(
+              payload.new
+            );
+            callback(message);
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload: any) => {
+            const message = chatPersistenceService.transformMessageToChat(
+              payload.new
+            );
+            callback(message);
+          }
+        )
+        .subscribe((status: any) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`✓ Subscribed to messages in ${conversationId}`);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Channel error:', status);
+            if (onError) onError(new Error('Channel subscription error'));
+          }
+        });
+
+      subscriptions.set(`messages:${conversationId}`, channel);
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to messages:', error);
+      if (onError) onError(error as Error);
+      return null;
+    }
   },
 
-  /**
-   * Subscribe to read receipts
-   */
+  // Subscribe to typing indicators
+  subscribeToTyping(
+    conversationId: string,
+    callback: (typingUsers: any[]) => void,
+    onError?: (error: Error) => void
+  ) {
+    try {
+      const channel = supabase
+        .channel(`chat:${conversationId}:typing`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'typing_indicators',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          async (payload: any) => {
+            // Fetch fresh typing indicators
+            const indicators = await chatPersistenceService.getTypingIndicators(
+              conversationId
+            );
+            callback(indicators);
+          }
+        )
+        .subscribe((status: any) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`✓ Subscribed to typing in ${conversationId}`);
+          }
+        });
+
+      subscriptions.set(`typing:${conversationId}`, channel);
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to typing:', error);
+      if (onError) onError(error as Error);
+      return null;
+    }
+  },
+
+  // Subscribe to read receipts
   subscribeToReadReceipts(
     conversationId: string,
-    callback: (messageId: string, readBy: string[]) => void
+    callback: (messageId: string, readBy: string[]) => void,
+    onError?: (error: Error) => void
   ) {
-    return supabase
-      .channel(`read_receipts:${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "chat_messages",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        (payload: any) => {
-          const { id, read_by } = payload.new;
-          callback(id, read_by || []);
-        }
-      )
-      .subscribe();
+    try {
+      const channel = supabase
+        .channel(`chat:${conversationId}:reads`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload: any) => {
+            if (payload.new.read_by) {
+              callback(payload.new.id, payload.new.read_by);
+            }
+          }
+        )
+        .subscribe();
+
+      subscriptions.set(`reads:${conversationId}`, channel);
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to read receipts:', error);
+      if (onError) onError(error as Error);
+      return null;
+    }
   },
 
-  /**
-   * Subscribe to typing indicators
-   */
-  subscribeToTypingIndicators(
+  // Subscribe to online presence
+  subscribeToPresence(
     conversationId: string,
-    callback: (typingUsers: any[]) => void
+    callback: (presenceUsers: any[]) => void
   ) {
-    return supabase
-      .channel(`typing:${conversationId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "typing_indicators",
-          filter: `conversation_id=eq.${conversationId}`,
-        },
-        async () => {
-          const typingUsers = await this.getTypingUsers(conversationId);
-          callback(typingUsers);
-        }
-      )
-      .subscribe();
+    try {
+      const channel = supabase
+        .channel(`chat:${conversationId}:presence`, {
+          config: { broadcast: { self: true } },
+        })
+        .on('presence', { event: 'sync' }, () => {
+          const presence = channel.presenceState();
+          const presenceUsers = Object.values(presence).flat();
+          callback(presenceUsers);
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          console.log(`User joined: ${key}`);
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+          console.log(`User left: ${key}`);
+        })
+        .subscribe(async (status: any) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({ user_id: crypto.randomUUID() });
+          }
+        });
+
+      subscriptions.set(`presence:${conversationId}`, channel);
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to presence:', error);
+      return null;
+    }
+  },
+
+  // Unsubscribe from a channel
+  unsubscribe(key: string) {
+    const channel = subscriptions.get(key);
+    if (channel) {
+      supabase.removeChannel(channel);
+      subscriptions.delete(key);
+      console.log(`✓ Unsubscribed from ${key}`);
+    }
+  },
+
+  // Unsubscribe from all channels
+  unsubscribeAll() {
+    subscriptions.forEach((channel, key) => {
+      supabase.removeChannel(channel);
+    });
+    subscriptions.clear();
+    console.log('✓ Unsubscribed from all channels');
   },
 };
 
-export default chatPersistenceService;
+export const chatPersistenceService = new ChatPersistenceService();
