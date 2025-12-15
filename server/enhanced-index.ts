@@ -227,17 +227,8 @@ try {
   console.error('Failed to start reconciliation job:', e);
 }
 
-// Start CryptoAPIs data sync if API key is configured
-try {
-  if (process.env.CRYPTOAPIS_API_KEY) {
-    startCryptoDataSync(5 * 60 * 1000); // Sync every 5 minutes
-    console.log('✅ CryptoAPIs data sync started');
-  } else {
-    console.warn('⚠️  CRYPTOAPIS_API_KEY not set, crypto data sync disabled');
-  }
-} catch (e) {
-  console.error('Failed to start crypto data sync:', e);
-}
+// DISABLED: CryptoAPIs is rate-limited, using Bybit + CoinGecko instead
+console.log('✅ Crypto data sync disabled (using Bybit + CoinGecko instead)');
 
 // Start Bybit data sync if API key is configured
 try {
