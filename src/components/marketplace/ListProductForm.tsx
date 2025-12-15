@@ -1,10 +1,10 @@
 // @ts-nocheck
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { 
+import {
   Form,
   FormControl,
   FormDescription,
@@ -21,11 +21,12 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { ImagePlus, Loader2, Sparkles } from 'lucide-react';
+import { ImagePlus, Loader2, Sparkles, Plus, X } from 'lucide-react';
 import { useMarketplace } from '@/contexts/MarketplaceContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { categoryService } from '@/services';
+import { MarketplaceService } from '@/services/marketplaceService';
 import EdithAIGenerator from "@/components/ai/EdithAIGenerator";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,22 +52,40 @@ const ListProductForm = ({ onSuccess, editProductId }: ListProductFormProps) => 
   const [previewImage, setPreviewImage] = useState<string>('');
   const [categories, setCategories] = useState<Array<{id: string, name: string}>>([]);
   const [showAIGenerator, setShowAIGenerator] = useState(false);
-  
-  // Load categories
-  useState(() => {
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
+  const [showCustomCategoryInput, setShowCustomCategoryInput] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
+
+  // Load categories on component mount
+  useEffect(() => {
     const loadCategories = async () => {
       try {
+        setLoadingCategories(true);
+        setCategoriesError(null);
         const categoryData = await categoryService.getCategories();
-        setCategories(categoryData.map(cat => ({ id: cat.id, name: cat.name })));
+
+        if (!categoryData || categoryData.length === 0) {
+          // Use default categories as fallback
+          const defaultCategories = MarketplaceService.DEFAULT_CATEGORIES;
+          setCategories(defaultCategories.map(cat => ({ id: cat.id, name: cat.name })));
+          console.info("Using default categories as fallback");
+        } else {
+          setCategories(categoryData.map(cat => ({ id: cat.id, name: cat.name })));
+        }
       } catch (error) {
         console.error("Error loading categories:", error);
-        // Fallback to empty array if real data fetch fails
-        setCategories([]);
+        // Fallback to default categories
+        const defaultCategories = MarketplaceService.DEFAULT_CATEGORIES;
+        setCategories(defaultCategories.map(cat => ({ id: cat.id, name: cat.name })));
+        setCategoriesError("Failed to load all categories. Using defaults.");
+      } finally {
+        setLoadingCategories(false);
       }
     };
-    
+
     loadCategories();
-  });
+  }, []);
   
   const form = useForm<FormValues>({
     defaultValues: {
