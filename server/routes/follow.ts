@@ -317,7 +317,7 @@ router.get('/following/:id', async (req, res) => {
         bio: profiles.bio,
         is_verified: profiles.is_verified
       }).from(profiles)
-        .where(eq(profiles.user_id, followingIds[0]))
+        .where(inArray(profiles.user_id, followingIds))
         .execute();
     }
 
