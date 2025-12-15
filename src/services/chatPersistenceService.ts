@@ -1,4 +1,5 @@
 import { ChatThread, ChatMessage, ChatFilter, StartChatRequest } from '@/types/chat';
+import { supabase } from '@/integrations/supabase/client';
 
 const API_BASE = process.env.VITE_API_BASE || 'http://localhost:5000/api';
 
