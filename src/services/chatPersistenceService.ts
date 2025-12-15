@@ -420,4 +420,198 @@ class ChatPersistenceService {
   }
 }
 
+// ============================================================================
+// REAL-TIME SUBSCRIPTIONS
+// ============================================================================
+
+// Subscription management
+const subscriptions = new Map<string, any>();
+
+export const realtimeService = {
+  // Subscribe to new messages in a conversation
+  subscribeToMessages(
+    conversationId: string,
+    callback: (message: ChatMessage) => void,
+    onError?: (error: Error) => void
+  ) {
+    try {
+      const channel = supabase
+        .channel(`chat:${conversationId}:messages`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload: any) => {
+            const message = chatPersistenceService.transformMessageToChat(
+              payload.new
+            );
+            callback(message);
+          }
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload: any) => {
+            const message = chatPersistenceService.transformMessageToChat(
+              payload.new
+            );
+            callback(message);
+          }
+        )
+        .subscribe((status: any) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`✓ Subscribed to messages in ${conversationId}`);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('Channel error:', status);
+            if (onError) onError(new Error('Channel subscription error'));
+          }
+        });
+
+      subscriptions.set(`messages:${conversationId}`, channel);
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to messages:', error);
+      if (onError) onError(error as Error);
+      return null;
+    }
+  },
+
+  // Subscribe to typing indicators
+  subscribeToTyping(
+    conversationId: string,
+    callback: (typingUsers: any[]) => void,
+    onError?: (error: Error) => void
+  ) {
+    try {
+      const channel = supabase
+        .channel(`chat:${conversationId}:typing`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'typing_indicators',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          async (payload: any) => {
+            // Fetch fresh typing indicators
+            const indicators = await chatPersistenceService.getTypingIndicators(
+              conversationId
+            );
+            callback(indicators);
+          }
+        )
+        .subscribe((status: any) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`✓ Subscribed to typing in ${conversationId}`);
+          }
+        });
+
+      subscriptions.set(`typing:${conversationId}`, channel);
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to typing:', error);
+      if (onError) onError(error as Error);
+      return null;
+    }
+  },
+
+  // Subscribe to read receipts
+  subscribeToReadReceipts(
+    conversationId: string,
+    callback: (messageId: string, readBy: string[]) => void,
+    onError?: (error: Error) => void
+  ) {
+    try {
+      const channel = supabase
+        .channel(`chat:${conversationId}:reads`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `conversation_id=eq.${conversationId}`,
+          },
+          (payload: any) => {
+            if (payload.new.read_by) {
+              callback(payload.new.id, payload.new.read_by);
+            }
+          }
+        )
+        .subscribe();
+
+      subscriptions.set(`reads:${conversationId}`, channel);
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to read receipts:', error);
+      if (onError) onError(error as Error);
+      return null;
+    }
+  },
+
+  // Subscribe to online presence
+  subscribeToPresence(
+    conversationId: string,
+    callback: (presenceUsers: any[]) => void
+  ) {
+    try {
+      const channel = supabase
+        .channel(`chat:${conversationId}:presence`, {
+          config: { broadcast: { self: true } },
+        })
+        .on('presence', { event: 'sync' }, () => {
+          const presence = channel.presenceState();
+          const presenceUsers = Object.values(presence).flat();
+          callback(presenceUsers);
+        })
+        .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+          console.log(`User joined: ${key}`);
+        })
+        .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+          console.log(`User left: ${key}`);
+        })
+        .subscribe(async (status: any) => {
+          if (status === 'SUBSCRIBED') {
+            await channel.track({ user_id: crypto.randomUUID() });
+          }
+        });
+
+      subscriptions.set(`presence:${conversationId}`, channel);
+      return channel;
+    } catch (error) {
+      console.error('Error subscribing to presence:', error);
+      return null;
+    }
+  },
+
+  // Unsubscribe from a channel
+  unsubscribe(key: string) {
+    const channel = subscriptions.get(key);
+    if (channel) {
+      supabase.removeChannel(channel);
+      subscriptions.delete(key);
+      console.log(`✓ Unsubscribed from ${key}`);
+    }
+  },
+
+  // Unsubscribe from all channels
+  unsubscribeAll() {
+    subscriptions.forEach((channel, key) => {
+      supabase.removeChannel(channel);
+    });
+    subscriptions.clear();
+    console.log('✓ Unsubscribed from all channels');
+  },
+};
+
 export const chatPersistenceService = new ChatPersistenceService();
