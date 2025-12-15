@@ -345,7 +345,8 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
             handleTyping();
           }}
           onSend={handleSendMessage}
-          isLoading={sending}
+          onFileSelect={handleFileSelect}
+          isLoading={loading}
           placeholder="Type a message..."
         />
       </div>
