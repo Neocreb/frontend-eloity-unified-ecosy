@@ -134,21 +134,85 @@ export const ProductDetailsStep = ({
           
           <div className="space-y-2">
             <Label htmlFor="category">Category *</Label>
-            <Select 
-              value={formData.category} 
-              onValueChange={(value) => updateFormData({ category: value })}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category.id} value={category.id}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {loadingCategories ? (
+              <div className="flex items-center justify-center h-10 border border-gray-300 rounded-md bg-gray-50">
+                <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                <span className="ml-2 text-sm text-gray-500">Loading categories...</span>
+              </div>
+            ) : !showCustomCategoryInput ? (
+              <div className="space-y-2">
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => updateFormData({ category: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map(category => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {categories.length === 0 && (
+                  <p className="text-sm text-amber-600">No categories available. Please add a custom category.</p>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
+                  onClick={() => setShowCustomCategoryInput(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Custom Category
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Input
+                  placeholder="Enter custom category name"
+                  value={customCategory}
+                  onChange={(e) => setCustomCategory(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      handleAddCustomCategory();
+                    }
+                  }}
+                  autoFocus
+                />
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={handleAddCustomCategory}
+                    disabled={!customCategory.trim()}
+                    className="flex-1"
+                  >
+                    Add
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowCustomCategoryInput(false);
+                      setCustomCategory('');
+                    }}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+            {formData.category && (
+              <div className="text-sm text-green-600 font-medium flex items-center gap-1">
+                ✓ Selected: {formData.category}
+              </div>
+            )}
           </div>
         </div>
         
