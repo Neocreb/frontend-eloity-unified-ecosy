@@ -270,6 +270,24 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
               align={isOwn ? "end" : "start"}
               className="w-48"
             >
+              {onReaction && (
+                <>
+                  <DropdownMenuItem asChild>
+                    <div className="flex flex-wrap gap-2 p-2">
+                      {commonEmojis.map((emoji) => (
+                        <button
+                          key={emoji}
+                          onClick={() => handleReaction(emoji)}
+                          className="text-lg hover:scale-125 transition-transform"
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                </>
+              )}
               {onReply && (
                 <DropdownMenuItem onClick={() => onReply(message)}>
                   <Reply className="mr-2 h-4 w-4" />
@@ -281,10 +299,13 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 {copied ? "Copied!" : "Copy"}
               </DropdownMenuItem>
               {isOwn && onDelete && (
-                <DropdownMenuItem onClick={handleDelete} className="text-red-600">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleDelete} className="text-red-600">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </>
               )}
             </DropdownMenuContent>
           </DropdownMenu>
