@@ -62,6 +62,27 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
     deleteMessage,
   } = useChatThread(conversationId);
 
+  // Real-time subscriptions
+  useRealtimeChat(
+    { conversationId, enabled: !!conversationId },
+    {
+      onNewMessage: (message) => {
+        // Message will be added via the useChatThread hook
+        console.log("New message received:", message);
+      },
+      onTypingUsers: (typingUsers) => {
+        setTypingUsers(typingUsers.filter((u) => u.userId !== user?.id));
+      },
+      onReadReceipt: (messageId, readBy) => {
+        // Update messages with new read receipts
+        console.log("Read receipt update:", messageId, readBy);
+      },
+      onError: (error) => {
+        console.error("Real-time error:", error);
+      },
+    }
+  );
+
   // Auto-scroll to bottom
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
