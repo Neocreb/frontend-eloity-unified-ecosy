@@ -93,12 +93,12 @@ const UserListModal: React.FC<UserListModalProps> = ({
   };
 
   const handleMessage = (username: string) => {
-    navigate(`/app/chat?user=${username}`);
+    navigateToDirectChat(username, navigate, user?.id);
     onClose();
   };
 
   const handleSendMoney = (username: string) => {
-    navigate(`/app/wallet?action=send&recipient=${username}`);
+    navigateToSendMoney(username, navigate);
     onClose();
   };
 
