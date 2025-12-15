@@ -815,6 +815,126 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                   )}
                 </TabsContent>
 
+                <TabsContent value="media" className="mt-0">
+                  {posts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <ImageIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                      <h3 className="text-lg font-medium mb-2">No media yet</h3>
+                      <p className="text-muted-foreground">Photos and videos you share will appear here</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between mb-4">
+                        <h3 className="text-lg font-semibold">Media</h3>
+                        <div className="flex gap-2">
+                          <Select value={mediaFilter} onValueChange={setMediaFilter}>
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All</SelectItem>
+                              <SelectItem value="images">Images</SelectItem>
+                              <SelectItem value="videos">Videos</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <div className="flex border rounded-lg p-1">
+                            <Button
+                              variant={mediaViewMode === "grid" ? "default" : "ghost"}
+                              size="sm"
+                              onClick={() => setMediaViewMode("grid")}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Grid3X3 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant={mediaViewMode === "list" ? "default" : "ghost"}
+                              size="sm"
+                              onClick={() => setMediaViewMode("list")}
+                              className="h-8 w-8 p-0"
+                            >
+                              <List className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+
+                      {mediaViewMode === "grid" ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
+                          {posts.map((post) => (
+                            post.image && (
+                              <div key={post.id} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer">
+                                <img
+                                  src={post.image}
+                                  alt="media"
+                                  className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-2">
+                                  <div className="text-white text-sm">
+                                    <div className="flex gap-2">
+                                      <span className="flex items-center gap-1">
+                                        <Heart className="h-3 w-3" />
+                                        {post.likes}
+                                      </span>
+                                      <span className="flex items-center gap-1">
+                                        <MessageSquare className="h-3 w-3" />
+                                        {post.comments}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {posts.map((post) => (
+                            post.image && (
+                              <Card key={post.id} className="hover:shadow-md transition-shadow">
+                                <CardContent className="p-4">
+                                  <div className="flex gap-4">
+                                    <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                                      <img
+                                        src={post.image}
+                                        alt="media"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="flex-1">
+                                      <h4 className="font-medium line-clamp-1">{post.content}</h4>
+                                      <p className="text-sm text-muted-foreground line-clamp-2 mt-1">{post.content?.substring(0, 100)}</p>
+                                      <div className="flex gap-4 mt-2 text-sm">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 px-2 gap-1"
+                                          onClick={() => {}}
+                                        >
+                                          <Heart className="h-3 w-3" />
+                                          {post.likes}
+                                        </Button>
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-6 px-2 gap-1"
+                                          onClick={() => {}}
+                                        >
+                                          <MessageSquare className="h-3 w-3" />
+                                          {post.comments}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            )
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </TabsContent>
+
                 <TabsContent value="activity" className="mt-0">
                   <div className="text-center py-12">
                     <Activity className="h-12 w-12 mx-auto text-gray-400 mb-4" />
