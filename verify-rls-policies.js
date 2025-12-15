@@ -1,6 +1,13 @@
 #!/usr/bin/env node
-const postgres = require('postgres');
-require('dotenv').config({ path: '.env.local' });
+import postgres from 'postgres';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '.env.local') });
 
 const sql = postgres(process.env.DATABASE_URL, { ssl: { rejectUnauthorized: false } });
 
@@ -17,7 +24,7 @@ async function main() {
     console.log('=============================================');
     
     if (rows.length === 0) {
-      console.log('No RLS policies found!');
+      console.log('❌ No RLS policies found!');
       process.exit(1);
     }
     
@@ -40,6 +47,7 @@ async function main() {
       console.log('✅ PUBLIC VISIBILITY POLICY IS CORRECTLY APPLIED!');
     } else {
       console.log('❌ Public visibility policy not found or incorrect');
+      console.log('Please run: npm run migrate:apply');
     }
     
     await sql.end();
