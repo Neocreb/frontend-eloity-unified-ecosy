@@ -47,6 +47,22 @@ const EnhancedFeedWithTabs = () => {
     navigate({ pathname: "/app/feed", search: params.toString() }, { replace: true });
   }, [activeTab]);
 
+  // Check for refetch flag when component comes into focus or mounts
+  useEffect(() => {
+    const checkRefetchFlag = () => {
+      if (sessionStorage.getItem("refetchStoriesOnReturn") === "true") {
+        sessionStorage.removeItem("refetchStoriesOnReturn");
+        setRefetchTrigger(prev => prev + 1);
+      }
+    };
+
+    checkRefetchFlag();
+
+    // Also check when window regains focus in case tab was backgrounded
+    window.addEventListener("focus", checkRefetchFlag);
+    return () => window.removeEventListener("focus", checkRefetchFlag);
+  }, []);
+
   const baseTabs = [
     {
       value: "for-you",
