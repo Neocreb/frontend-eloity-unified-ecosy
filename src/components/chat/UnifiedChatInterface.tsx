@@ -601,11 +601,8 @@ export const UnifiedChatInterface: React.FC<UnifiedChatInterfaceProps> = ({
           console.log("Public groups query result:", { publicGroups, publicGroupsError });
 
           if (publicGroupsError) {
-            console.error("Error loading public groups:", {
-              message: publicGroupsError.message || 'Unknown error',
-              code: publicGroupsError.code,
-              details: publicGroupsError.details
-            });
+            const errorMsg = publicGroupsError.message || String(publicGroupsError);
+            console.debug("Error loading public groups:", errorMsg);
           } else if (publicGroups) {
             console.log("Found public groups:", publicGroups);
 
