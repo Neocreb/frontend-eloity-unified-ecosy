@@ -96,7 +96,7 @@ export const TestimonialsSection: React.FC = () => {
     );
   }
 
-  if (error || testimonials.length === 0) {
+  if (testimonials.length === 0) {
     return null;
   }
 
