@@ -35,6 +35,7 @@ interface User {
 const UserFollowing: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [followingStates, setFollowingStates] = useState<Record<string, boolean>>({});
