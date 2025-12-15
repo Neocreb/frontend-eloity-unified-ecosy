@@ -382,7 +382,7 @@ class ChatPersistenceService {
   // HELPERS
   // ============================================================================
 
-  private transformConversationToThread(conversation: any): ChatThread {
+  transformConversationToThread(conversation: any): ChatThread {
     const lastMessage = conversation.chat_messages?.[0];
     return {
       id: conversation.id,
@@ -401,7 +401,7 @@ class ChatPersistenceService {
     };
   }
 
-  private transformMessageToChat(message: any): ChatMessage {
+  transformMessageToChat(message: any): ChatMessage {
     return {
       id: message.id,
       threadId: message.conversation_id,
