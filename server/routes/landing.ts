@@ -177,15 +177,25 @@ router.get('/comparison-matrix', async (req: Request, res: Response) => {
   try {
     const { category } = req.query;
 
-    const comparisons = await ComparisonMatrixService.getComparisons({
-      category: category as string,
-      active: true,
-    });
+    const comparisons = await Promise.race([
+      ComparisonMatrixService.getComparisons({
+        category: category as string,
+        active: true,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      ),
+    ]) as any[];
+
+    if (!comparisons) {
+      return res.json([]);
+    }
 
     res.json(comparisons);
   } catch (error) {
     console.error('Error fetching comparisons:', error);
-    res.status(500).json({ error: 'Failed to fetch comparisons' });
+    // Return empty array as fallback instead of error
+    res.json([]);
   }
 });
 
