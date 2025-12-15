@@ -127,9 +127,14 @@ export class ProfileService {
   async isFollowing(followerId: string, followingId: string): Promise<boolean> {
     try {
       // Try API first
-      const response = await apiClient.checkFollowStatus(followerId, followingId) as any;
-      if (response?.isFollowing !== undefined) {
-        return response.isFollowing;
+      try {
+        const response = await apiClient.checkFollowStatus(followerId, followingId) as any;
+        if (response?.isFollowing !== undefined) {
+          return response.isFollowing;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+        // Don't log since fallback will handle it
       }
 
       // Fallback to direct database query
@@ -141,14 +146,12 @@ export class ProfileService {
         .maybeSingle();
 
       if (error) {
-        console.warn(
-          `Follow status query failed: ${error.message}. Defaulting to not following.`,
-        );
+        // Silent fail - default to not following
         return false;
       }
       return !!data;
     } catch (error: any) {
-      console.warn("Error checking follow status:", error?.message || error);
+      // Silent fail - default to not following
       return false;
     }
   }
