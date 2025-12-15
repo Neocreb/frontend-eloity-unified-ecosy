@@ -118,7 +118,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
             .neq("sender_id", user.id);
 
           if (countError) {
-            const errorMsg = countError instanceof Error ? countError.message : JSON.stringify(countError);
+            const errorMsg = countError instanceof Error
+              ? countError.message
+              : typeof countError === 'string'
+                ? countError
+                : JSON.stringify(countError) || 'Unknown error';
             console.error("Error getting unread count:", errorMsg);
           }
 
