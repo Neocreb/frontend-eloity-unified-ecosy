@@ -108,6 +108,7 @@ import { initializeCurrencyService } from './services/currencyService.js';
 import startMetricsSync from './tasks/metricsSync.js';
 import startCryptoDataSync from './tasks/syncCryptoData.js';
 import startBybitDataSync from './tasks/syncBybitData.js';
+import { startStoryCleanupTask } from './tasks/storyCleanup.js';
 import adminCoursesRouter from './routes/adminCourses.js';
 import adminArticlesRouter from './routes/adminArticles.js';
 import coursesRouter from './routes/courses.js';
@@ -241,6 +242,14 @@ try {
   }
 } catch (e) {
   console.error('Failed to start Bybit data sync:', e);
+}
+
+// Start story cleanup task (removes stories older than 24 hours)
+try {
+  startStoryCleanupTask(60 * 60 * 1000); // Run cleanup every hour
+  console.log('✅ Story cleanup task started');
+} catch (e) {
+  console.error('Failed to start story cleanup task:', e);
 }
 
 // Optional: start BullMQ-based queue if REDIS_URL is provided for more robust scheduling
