@@ -41,31 +41,11 @@ class StoriesService {
     this.supabase = supabase;
   }
 
-  // Clean up expired stories from the database
-  private async cleanupExpiredStories(): Promise<void> {
-    try {
-      const { error } = await this.supabase
-        .from('user_stories')
-        .delete()
-        .lt('expires_at', new Date().toISOString());
-
-      if (error) {
-        console.error('Error during cleanup of expired stories:', error);
-      }
-    } catch (error) {
-      console.error('Error cleaning up expired stories:', error);
-    }
-  }
-
   // Get all active stories for users that the current user follows
   async getActiveStories(currentUserId: string): Promise<UserStory[]> {
     try {
-      // Run cleanup in the background (don't wait for it)
-      this.cleanupExpiredStories().catch(err =>
-        console.error('Background cleanup failed:', err)
-      );
-
-      // Get active stories
+      // Get active stories - only filter by expires_at on the database side
+      // Do NOT run cleanup on client, it should run on server via scheduled task
       const { data: stories, error: storiesError } = await this.supabase
         .from('user_stories')
         .select('id, user_id, created_at, expires_at, media_url, media_type, caption, views_count')
@@ -229,12 +209,12 @@ class StoriesService {
         };
       }
 
-      // Check if already viewed using viewer_id column
+      // Check if already viewed using user_id column (not viewer_id)
       const { data: existingView, error: viewError } = await this.supabase
         .from('story_views')
         .select('id')
         .eq('story_id', storyId)
-        .eq('viewer_id', userId)
+        .eq('user_id', userId)
         .maybeSingle();
 
       if (existingView) {
@@ -247,12 +227,12 @@ class StoriesService {
         };
       }
 
-      // Insert new view using correct column name viewer_id
+      // Insert new view using correct column name user_id (not viewer_id)
       const { data, error } = await this.supabase
         .from('story_views')
         .insert({
           story_id: storyId,
-          viewer_id: userId,
+          user_id: userId,
           viewed_at: new Date().toISOString()
         })
         .select()
