@@ -100,6 +100,21 @@ const StoryViewer = ({ stories, initialIndex = 0, onClose, onStoryChange }: Stor
     setProgress(0);
   }, [currentIndex]);
 
+  // Handle auto-advance to next story when progress completes
+  useEffect(() => {
+    if (progress >= 100) {
+      if (currentIndex < stories.length - 1) {
+        // Move to next story
+        const nextIndex = currentIndex + 1;
+        setCurrentIndex(nextIndex);
+        onStoryChange?.(nextIndex);
+      } else {
+        // End of stories
+        onClose();
+      }
+    }
+  }, [progress, currentIndex, stories.length, onStoryChange, onClose]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
