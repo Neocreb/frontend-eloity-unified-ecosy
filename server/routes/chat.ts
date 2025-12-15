@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { supabase } from '../supabaseServer.js';
+import { supabaseServer as supabase } from '../supabaseServer.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { z } from 'zod';
 
