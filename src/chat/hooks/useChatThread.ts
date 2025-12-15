@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { ChatThread, ChatMessage, ChatFilter } from "@/types/chat";
-import { chatPersistenceService } from "@/services/chatPersistenceService";
+import { chatPersistenceService, realtimeService } from "@/services/chatPersistenceService";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -12,6 +12,7 @@ export const useChatThread = (threadId?: string) => {
   const [hasMore, setHasMore] = useState(true);
   const { toast } = useToast();
   const { user } = useAuth();
+  const readReceiptsRef = useRef<Map<string, string[]>>(new Map());
 
   // Load thread data
   const loadThread = useCallback(async () => {
