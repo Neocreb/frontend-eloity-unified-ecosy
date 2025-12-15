@@ -21,7 +21,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ChatMessage } from "@/components/chat/ChatMessage";
 import { EnhancedChatInput } from "@/components/chat/EnhancedChatInput";
 import { TypingIndicator } from "@/components/chat/TypingIndicator";
-import { chatService } from "@/services/chatService";
+import { chatPersistenceService } from "@/services/chatPersistenceService";
 import { cn } from "@/lib/utils";
 
 interface EnhancedChatInterfaceProps {
