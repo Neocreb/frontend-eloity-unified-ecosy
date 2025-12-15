@@ -1479,6 +1479,26 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                             p.media_urls?.includes(item.url) ||
                             p.content?.media?.some((m: any) => m.url === item.url)
                           );
+                          const isLiked = mediaLikes[item.id] || false;
+                          const [showComments, setShowComments] = useState(false);
+
+                          const handleLike = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setMediaLikes((prev) => ({
+                              ...prev,
+                              [item.id]: !prev[item.id],
+                            }));
+                            toast({
+                              title: !isLiked ? "Liked" : "Unliked",
+                              description: !isLiked ? "Added to your likes" : "Removed from likes",
+                            });
+                          };
+
+                          const handleComment = (e: React.MouseEvent) => {
+                            e.stopPropagation();
+                            setShowComments(!showComments);
+                          };
+
                           return (
                             <Card
                               key={item.id}
@@ -1513,21 +1533,23 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                                           <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-6 px-2 gap-1 text-muted-foreground hover:text-red-500"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                            }}
+                                            className={cn(
+                                              "h-6 px-2 gap-1 text-muted-foreground hover:text-red-500 transition-colors",
+                                              isLiked && "text-red-500"
+                                            )}
+                                            onClick={handleLike}
                                           >
-                                            <Heart className="h-3 w-3" />
+                                            <Heart className={cn("h-3 w-3", isLiked && "fill-current")} />
                                             {item.likes}
                                           </Button>
                                           <Button
                                             variant="ghost"
                                             size="sm"
-                                            className="h-6 px-2 gap-1 text-muted-foreground hover:text-blue-500"
-                                            onClick={(e) => {
-                                              e.stopPropagation();
-                                            }}
+                                            className={cn(
+                                              "h-6 px-2 gap-1 text-muted-foreground hover:text-blue-500 transition-colors",
+                                              showComments && "text-blue-500"
+                                            )}
+                                            onClick={handleComment}
                                           >
                                             <MessageSquare className="h-3 w-3" />
                                             {item.comments || 0}
