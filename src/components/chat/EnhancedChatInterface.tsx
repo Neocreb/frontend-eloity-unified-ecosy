@@ -314,6 +314,9 @@ export const EnhancedChatInterface: React.FC<EnhancedChatInterfaceProps> = ({
                   isOwn={isUserMessage}
                   showAvatar={showAvatar}
                   currentUserId={user?.id}
+                  recipientName={propRecipientName || thread?.groupName || "User"}
+                  onReaction={handleReaction}
+                  onDelete={handleDeleteMessage}
                 />
               );
             })}
