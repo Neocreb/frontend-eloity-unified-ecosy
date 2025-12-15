@@ -3,7 +3,7 @@ import { authenticateToken } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { db } from '../enhanced-index.js';
 import { followers, profiles } from '../../shared/enhanced-schema.js';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 
 const router = express.Router();
 
