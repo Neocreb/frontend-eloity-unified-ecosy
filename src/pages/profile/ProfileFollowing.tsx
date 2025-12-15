@@ -35,6 +35,7 @@ interface User {
 
 const ProfileFollowing: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { username } = useParams<{ username: string }>();
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
