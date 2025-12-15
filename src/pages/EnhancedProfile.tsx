@@ -1382,113 +1382,157 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                   {filteredMedia.length > 0 ? (
                     mediaViewMode === "grid" ? (
                       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
-                        {filteredMedia.map((item) => (
-                          <div
-                            key={item.id}
-                            className="relative aspect-square rounded-md sm:rounded-lg overflow-hidden group cursor-pointer"
-                          >
-                            <img
-                              src={item.url}
-                              alt={item.title}
-                              className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                              <div className="text-white text-center px-2">
-                                <div className="flex items-center justify-center gap-1 sm:gap-2 mb-1">
-                                  {item.type === "video" ? (
-                                    <>
-                                      <Play className="h-3 w-3 sm:h-4 sm:w-4" />
-                                      <span className="text-xs sm:text-sm">
-                                        {item.duration}
-                                      </span>
-                                    </>
-                                  ) : (
-                                    <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2 sm:gap-3 text-xs">
-                                  <span className="flex items-center gap-0.5 sm:gap-1">
-                                    <Heart className="h-2 w-2 sm:h-3 sm:w-3" />
-                                    {item.likes}
-                                  </span>
-                                  <span className="flex items-center gap-0.5 sm:gap-1">
-                                    <Eye className="h-2 w-2 sm:h-3 sm:w-3" />
-                                    {item.views}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <Badge
-                              variant={
-                                item.type === "video" ? "default" : "secondary"
-                              }
-                              className="absolute top-1 left-1 sm:top-2 sm:left-2 text-xs h-5 px-1.5"
+                        {filteredMedia.map((item) => {
+                          const sourcePost = (posts || []).find((p: any) =>
+                            p.image_url === item.url ||
+                            p.media_urls?.includes(item.url) ||
+                            p.content?.media?.some((m: any) => m.url === item.url)
+                          );
+                          return (
+                            <div
+                              key={item.id}
+                              className="relative aspect-square rounded-md sm:rounded-lg overflow-hidden group cursor-pointer"
+                              onClick={() => sourcePost && navigate(`/app/post/${sourcePost.id}`)}
                             >
-                              {item.type === "video" ? "Video" : "Image"}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {filteredMedia.map((item) => (
-                          <Card
-                            key={item.id}
-                            className="hover:shadow-md transition-shadow"
-                          >
-                            <CardContent className="p-4">
-                              <div className="flex items-start gap-4">
-                                <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                                  <img
-                                    src={item.url}
-                                    alt={item.title}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className="font-medium truncate">
-                                        {item.title}
-                                      </h4>
-                                      <p className="text-sm text-muted-foreground mt-1">
-                                        {item.description}
-                                      </p>
-                                      <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
-                                        <span>{item.date}</span>
-                                        <span className="flex items-center gap-1">
-                                          <Heart className="h-3 w-3" />
-                                          {item.likes}
+                              <img
+                                src={item.url}
+                                alt={item.title}
+                                className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-end justify-between p-2">
+                                <Badge
+                                  variant={
+                                    item.type === "video" ? "default" : "secondary"
+                                  }
+                                  className="text-xs h-5 px-1.5"
+                                >
+                                  {item.type === "video" ? "Video" : "Image"}
+                                </Badge>
+                                <div className="text-white text-center w-full">
+                                  <div className="flex items-center justify-center gap-2 mb-1">
+                                    {item.type === "video" ? (
+                                      <>
+                                        <Play className="h-3 w-3 sm:h-4 sm:w-4" />
+                                        <span className="text-xs sm:text-sm">
+                                          {item.duration}
                                         </span>
-                                        <span className="flex items-center gap-1">
-                                          <Eye className="h-3 w-3" />
-                                          {item.views}
-                                        </span>
-                                        {item.type === "video" && (
-                                          <span className="flex items-center gap-1">
-                                            <Clock className="h-3 w-3" />
-                                            {item.duration}
-                                          </span>
-                                        )}
-                                      </div>
-                                    </div>
-                                    <Badge
-                                      variant={
-                                        item.type === "video"
-                                          ? "default"
-                                          : "secondary"
-                                      }
-                                    >
-                                      {item.type === "video"
-                                        ? "Video"
-                                        : "Image"}
-                                    </Badge>
+                                      </>
+                                    ) : (
+                                      <ImageIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                                    )}
+                                  </div>
+                                  <div className="flex items-center justify-center gap-3 text-xs">
+                                    <span className="flex items-center gap-1">
+                                      <Heart className="h-3 w-3" />
+                                      {item.likes}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <MessageSquare className="h-3 w-3" />
+                                      {item.comments || 0}
+                                    </span>
+                                    <span className="flex items-center gap-1">
+                                      <Eye className="h-3 w-3" />
+                                      {item.views}
+                                    </span>
                                   </div>
                                 </div>
                               </div>
-                            </CardContent>
-                          </Card>
-                        ))}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {filteredMedia.map((item) => {
+                          const sourcePost = (posts || []).find((p: any) =>
+                            p.image_url === item.url ||
+                            p.media_urls?.includes(item.url) ||
+                            p.content?.media?.some((m: any) => m.url === item.url)
+                          );
+                          return (
+                            <Card
+                              key={item.id}
+                              className="hover:shadow-md transition-shadow cursor-pointer"
+                              onClick={() => sourcePost && navigate(`/app/post/${sourcePost.id}`)}
+                            >
+                              <CardContent className="p-4">
+                                <div className="flex items-start gap-4">
+                                  <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 relative group/media">
+                                    <img
+                                      src={item.url}
+                                      alt={item.title}
+                                      className="w-full h-full object-cover group-hover/media:scale-110 transition-transform"
+                                    />
+                                    {item.type === "video" && (
+                                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/media:opacity-100 transition-opacity">
+                                        <Play className="h-4 w-4 text-white" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between">
+                                      <div className="flex-1 min-w-0">
+                                        <h4 className="font-medium truncate">
+                                          {item.title}
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                          {item.description}
+                                        </p>
+                                        <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
+                                          <span>{item.date}</span>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 px-2 gap-1 text-muted-foreground hover:text-red-500"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                            }}
+                                          >
+                                            <Heart className="h-3 w-3" />
+                                            {item.likes}
+                                          </Button>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-6 px-2 gap-1 text-muted-foreground hover:text-blue-500"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                            }}
+                                          >
+                                            <MessageSquare className="h-3 w-3" />
+                                            {item.comments || 0}
+                                          </Button>
+                                          <span className="flex items-center gap-1">
+                                            <Eye className="h-3 w-3" />
+                                            {item.views}
+                                          </span>
+                                          {item.type === "video" && (
+                                            <span className="flex items-center gap-1">
+                                              <Clock className="h-3 w-3" />
+                                              {item.duration}
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                      <Badge
+                                        variant={
+                                          item.type === "video"
+                                            ? "default"
+                                            : "secondary"
+                                        }
+                                        className="flex-shrink-0"
+                                      >
+                                        {item.type === "video"
+                                          ? "Video"
+                                          : "Image"}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
                       </div>
                     )
                   ) : (
