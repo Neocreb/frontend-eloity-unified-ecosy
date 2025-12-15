@@ -29,6 +29,7 @@ import { useMarketplace } from '@/contexts/MarketplaceContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { categoryService } from '@/services';
+import { MarketplaceService } from '@/services/marketplaceService';
 import EdithAIGenerator from "@/components/ai/EdithAIGenerator";
 import { Product } from '@/types/marketplace';
 import { supabase } from "@/integrations/supabase/client";
