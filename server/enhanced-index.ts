@@ -594,7 +594,8 @@ app.use('/api/ledger', ledgerRouter);
 app.use('/api/enhanced-rewards', enhancedRewardsRouter); // Add this line
 app.use('/api/reloadly', reloadlyRouter);
 app.use('/api/commission', commissionRouter);
-app.use('/api/cryptoapis', cryptoapisRouter);
+// DISABLED: CryptoAPIs is rate-limited - using Bybit + CoinGecko through /api/crypto/prices instead
+// app.use('/api/cryptoapis', cryptoapisRouter);
 app.use('/api/tier', tierAccessRouter);
 app.use('/api/subscriptions', subscriptionsRouter);
 app.use('/api/referral', referralBonusRouter);
