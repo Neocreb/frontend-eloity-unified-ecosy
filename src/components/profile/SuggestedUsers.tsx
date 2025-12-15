@@ -65,14 +65,14 @@ export const SuggestedUsers: React.FC<SuggestedUsersProps> = ({
         try {
           setLoading(true);
           const response = await apiClient.getSuggestedUsers(maxUsers);
-          
+
           // Validate response
           if (!response) {
             console.debug('Received null response from getSuggestedUsers API - this may be expected during initial load');
             setUsers([]);
             return;
           }
-          
+
           if (response?.users) {
             // Validate that users is an array
             if (Array.isArray(response.users)) {
@@ -88,7 +88,8 @@ export const SuggestedUsers: React.FC<SuggestedUsersProps> = ({
           }
         } catch (error) {
           // Following project specification: log warnings and return empty results
-          console.error('Failed to fetch suggested users:', error);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.debug('Failed to fetch suggested users:', errorMessage);
           // Show user-friendly message in a toast or notification
           setUsers([]);
         } finally {
