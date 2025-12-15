@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import {
   Check,
@@ -16,7 +17,13 @@ import {
   Trash2,
   MoreVertical,
   Download,
+  Smile,
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -27,6 +34,8 @@ interface ChatMessageProps {
   currentUserId?: string;
   onReply?: (message: any) => void;
   onDelete?: (messageId: string) => void;
+  onReaction?: (messageId: string, emoji: string) => void;
+  recipientName?: string;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
@@ -36,12 +45,23 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   currentUserId,
   onReply,
   onDelete,
+  onReaction,
+  recipientName = "User",
 }) => {
   const [showActions, setShowActions] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
-  // Determine read status
-  const isRead = message.readBy && message.readBy.length > 1;
+  // Determine read status based on read_by and delivered_to arrays
+  const readByCount = message.readBy?.length || 0;
+  const deliveredToCount = message.deliveredTo?.length || 0;
+  let readStatus: "sent" | "delivered" | "read" = "sent";
+
+  if (readByCount > 1) {
+    readStatus = "read";
+  } else if (deliveredToCount > 1) {
+    readStatus = "delivered";
+  }
 
   const handleCopy = () => {
     navigator.clipboard.writeText(message.content);
