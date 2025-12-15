@@ -66,15 +66,25 @@ router.get('/faqs', async (req: Request, res: Response) => {
   try {
     const { category } = req.query;
 
-    const faqs = await FAQsService.getFAQs({
-      category: category as string,
-      active: true,
-    });
+    const faqs = await Promise.race([
+      FAQsService.getFAQs({
+        category: category as string,
+        active: true,
+      }),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Request timeout')), 5000)
+      ),
+    ]) as any[];
+
+    if (!faqs) {
+      return res.json([]);
+    }
 
     res.json(faqs);
   } catch (error) {
     console.error('Error fetching FAQs:', error);
-    res.status(500).json({ error: 'Failed to fetch FAQs' });
+    // Return empty array as fallback instead of error
+    res.json([]);
   }
 });
 
