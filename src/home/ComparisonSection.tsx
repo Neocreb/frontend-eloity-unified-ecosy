@@ -106,10 +106,6 @@ export const ComparisonSection: React.FC = () => {
     );
   }
 
-  if (comparisons.length === 0) {
-    return null;
-  }
-
   return (
     <section className="py-16 px-4 bg-gradient-to-b from-background to-secondary/10">
       <div className="max-w-6xl mx-auto">
