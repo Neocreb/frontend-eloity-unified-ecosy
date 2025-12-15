@@ -126,6 +126,7 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const [activeTab, setActiveTab] = useState("posts");
   const [mediaFilter, setMediaFilter] = useState("all");
   const [mediaViewMode, setMediaViewMode] = useState("grid");
+  const [mediaLikes, setMediaLikes] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<any[]>([]);
 
   const isOwnProfile =
