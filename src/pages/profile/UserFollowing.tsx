@@ -90,11 +90,11 @@ const UserFollowing: React.FC = () => {
   };
 
   const handleMessage = (userUsername: string) => {
-    navigate(`/app/chat?user=${userUsername}`);
+    navigateToDirectChat(userUsername, navigate, user?.id);
   };
 
   const handleSendMoney = (userUsername: string) => {
-    navigate(`/app/wallet?action=send&recipient=${userUsername}`);
+    navigateToSendMoney(userUsername, navigate);
   };
 
   return (
