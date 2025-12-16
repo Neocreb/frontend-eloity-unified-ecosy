@@ -160,13 +160,46 @@ Should return complete results
 
 ## Migration Checklist
 
-- [ ] Apply migration `20251220_fix_profiles_schema_completeness.sql` to Supabase
+**STEP 1: Fix Orphaned Users (REQUIRED)**
+- [ ] Run `scripts/database/fix-orphaned-auth-users.sql` first
+  - This creates missing `public.users` entries for any `auth.users` without them
+  - This prevents foreign key constraint violations
+
+**STEP 2: Apply Schema Migration**
+- [ ] Apply migration `supabase/migrations/20251220_fix_profiles_schema_completeness.sql` to Supabase
 - [ ] Verify all columns were added successfully
+
+**STEP 3: Verify Fixes**
 - [ ] Test new user registration creates complete profiles
 - [ ] Test explore endpoint returns users
 - [ ] Test feed shows public posts
 - [ ] Test search works for users
 - [ ] Verify performance with indexes
+
+## Applying the Fixes
+
+### Method 1: Supabase Dashboard (Recommended)
+1. Go to **SQL Editor** in your Supabase dashboard
+2. Copy and paste the contents of `scripts/database/fix-orphaned-auth-users.sql`
+3. Run the query
+4. Then go to **Migrations** and manually run the migration file:
+   - `supabase/migrations/20251220_fix_profiles_schema_completeness.sql`
+
+### Method 2: Supabase CLI
+```bash
+# Apply pending migrations
+supabase db push
+
+# OR if you need to reset and reapply
+supabase db reset --linked
+```
+
+### Method 3: Direct SQL Execution
+If running via your own database client:
+```bash
+psql $DATABASE_URL < scripts/database/fix-orphaned-auth-users.sql
+psql $DATABASE_URL < supabase/migrations/20251220_fix_profiles_schema_completeness.sql
+```
 
 ## Expected Outcomes
 
