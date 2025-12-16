@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, authenticateAdmin } from '../middleware/auth.js';
 import { tierAccessControl } from '../middleware/tierAccessControl.js';
 import commissionService from '../services/commissionService.js';
 import { logger } from '../utils/logger.js';
@@ -14,7 +14,7 @@ const router = express.Router();
  * GET /api/commission/settings
  * Get all commission settings
  */
-router.get('/settings', authenticateToken, tierAccessControl(['admin']), async (req, res) => {
+router.get('/settings', authenticateAdmin, async (req, res) => {
   try {
     const { serviceType, isActive } = req.query;
 
@@ -42,8 +42,7 @@ router.get('/settings', authenticateToken, tierAccessControl(['admin']), async (
  */
 router.get(
   '/settings/:serviceType',
-  authenticateToken,
-  tierAccessControl(['admin']),
+  authenticateAdmin,
   async (req, res) => {
     try {
       const { serviceType } = req.params;
@@ -68,7 +67,7 @@ router.get(
  * POST /api/commission/settings
  * Create a new commission setting
  */
-router.post('/settings', authenticateToken, tierAccessControl(['admin']), async (req, res) => {
+router.post('/settings', authenticateAdmin, async (req, res) => {
   try {
     const { service_type, operator_id, commission_type, commission_value, min_amount, max_amount, is_active } = req.body;
 
