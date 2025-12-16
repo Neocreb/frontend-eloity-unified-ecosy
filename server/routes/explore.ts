@@ -41,7 +41,8 @@ router.get('/users', async (req, res) => {
       bio: profiles.bio,
       is_verified: profiles.is_verified,
       reputation: profiles.reputation,
-      followers_count: profiles.followers_count
+      followers_count: profiles.followers_count,
+      profile_visibility: profiles.profile_visibility
     }).from(profiles)
       .orderBy(desc(profiles.reputation))
       .limit(fetchLimit)
@@ -53,7 +54,14 @@ router.get('/users', async (req, res) => {
       followingIds = followingRows.map((r: any) => r.following_id);
     }
 
-    const candidates = (profilesResult || []).filter((p: any) => p.user_id && p.user_id !== userId && !followingIds.includes(p.user_id));
+    // Filter: exclude self, already following, and private profiles (unless it's the user's own profile)
+    const candidates = (profilesResult || []).filter((p: any) => {
+      return p.user_id &&
+             p.user_id !== userId &&
+             !followingIds.includes(p.user_id) &&
+             p.profile_visibility === 'public';
+    });
+
     const selected = candidates.slice(0, limit);
 
     const users = selected.map((profile: any) => ({
