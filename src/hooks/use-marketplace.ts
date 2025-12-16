@@ -145,7 +145,7 @@ export function useMarketplace() {
         }));
         return searchResults;
       } catch (error) {
-        console.error("Search failed:", error);
+        console.error("Search failed:", error instanceof Error ? error.message : JSON.stringify(error));
         setState((prev) => ({
           ...prev,
           error: "Search failed",
