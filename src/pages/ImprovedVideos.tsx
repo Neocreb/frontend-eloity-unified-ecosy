@@ -358,7 +358,7 @@ const ImprovedVideos: React.FC = () => {
         const fetchedVideos = await videoService.getLatestVideos(50);
         setVideos(fetchedVideos || []);
       } catch (error) {
-        console.error("Error loading videos:", error);
+        console.error("Error loading videos:", error instanceof Error ? error.message : JSON.stringify(error));
         setVideos([]);
       } finally {
         setIsLoading(false);

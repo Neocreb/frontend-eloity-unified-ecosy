@@ -160,7 +160,7 @@ const CourseDetail = () => {
         setEnrollment(enrollmentData || null);
       }
     } catch (error) {
-      console.error("Error loading course:", error);
+      console.error("Error loading course:", error instanceof Error ? error.message : JSON.stringify(error));
       toast({
         title: "Error",
         description: "Failed to load course details.",
@@ -206,7 +206,7 @@ const CourseDetail = () => {
         description: `You've enrolled and earned ${course.reward_enrollment} reward points!`,
       });
     } catch (error) {
-      console.error("Enrollment error:", error);
+      console.error("Enrollment error:", error instanceof Error ? error.message : JSON.stringify(error));
       toast({
         title: "Error",
         description: "Failed to enroll in course.",
