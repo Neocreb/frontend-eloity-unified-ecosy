@@ -67,7 +67,7 @@ export const useChatThread = (threadId?: string) => {
         setHasMore(newMessages.length === 50);
       } catch (err) {
         setError("Failed to load messages");
-        console.error("Error loading messages:", err);
+        console.error("Error loading messages:", err instanceof Error ? err.message : JSON.stringify(err));
       } finally {
         setLoading(false);
       }

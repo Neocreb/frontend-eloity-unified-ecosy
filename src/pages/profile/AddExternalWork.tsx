@@ -136,7 +136,7 @@ export default function AddExternalWork() {
         navigate(-1);
       }, 1500);
     } catch (error) {
-      console.error("Error adding work:", error);
+      console.error("Error adding work:", error instanceof Error ? error.message : JSON.stringify(error));
       toast({
         title: "Error",
         description: "Failed to add work. Please try again.",

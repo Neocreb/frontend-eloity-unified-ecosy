@@ -445,7 +445,7 @@ const ChatRoomContent = () => {
             console.log("Loaded", realMessages.length, "real messages from database");
           }
         } catch (error) {
-          console.error("Error loading messages from database:", error);
+          console.error("Error loading messages from database:", error instanceof Error ? error.message : JSON.stringify(error));
           loadMessagesError = true;
         }
 

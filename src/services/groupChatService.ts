@@ -77,7 +77,13 @@ export class GroupChatService {
 
           return this.formatGroupThread(result.group, request.settings);
         } catch (functionError: any) {
-          console.warn('Edge Function failed, trying direct Supabase approach:', functionError.message);
+          const functionErrorMsg = functionError instanceof Error
+            ? functionError.message
+            : typeof functionError === 'object' && functionError !== null
+            ? (functionError as any).message || JSON.stringify(functionError)
+            : String(functionError);
+
+          console.warn('Edge Function failed, trying direct Supabase approach:', functionErrorMsg);
           // Fall back to direct Supabase approach
           return await this.createGroupDirect(request);
         }
@@ -85,8 +91,14 @@ export class GroupChatService {
         throw new Error('Supabase URL not configured');
       }
     } catch (error) {
-      console.error('Error creating group:', error);
-      throw new Error(`Failed to create group due to database configuration issue. Please contact support. Details: ${error.message}`);
+      const errorMsg = error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null
+        ? (error as any).message || JSON.stringify(error)
+        : String(error);
+
+      console.error('Error creating group:', errorMsg);
+      throw new Error(`Failed to create group due to database configuration issue. Please contact support. Details: ${errorMsg}`);
     }
   }
 
@@ -606,6 +618,105 @@ export class GroupChatService {
       console.error('Error fetching group analytics:', error)
       throw new Error('Failed to fetch group analytics')
     }
+  }
+
+  // Direct group creation (fallback when Edge Function fails)
+  private async createGroupDirect(request: CreateGroupRequest): Promise<GroupChatThread> {
+    try {
+      // Create the group thread
+      const { data: groupData, error: groupError } = await supabase
+        .from('group_chat_threads')
+        .insert({
+          name: request.name,
+          description: request.description || '',
+          avatar: request.avatar,
+          created_by: request.createdBy,
+          privacy: request.settings?.isPrivate ? 'private' : 'public',
+          created_at: new Date().toISOString(),
+          last_activity: new Date().toISOString()
+        })
+        .select('*')
+        .single();
+
+      if (groupError) {
+        const errorMsg = groupError instanceof Error
+          ? groupError.message
+          : typeof groupError === 'object' && groupError !== null
+          ? (groupError as any).message || JSON.stringify(groupError)
+          : String(groupError);
+        throw new Error(`Failed to create group thread: ${errorMsg}`);
+      }
+      if (!groupData) throw new Error('Failed to create group');
+
+      // Add participants
+      const participantData = request.participants
+        .concat(request.createdBy)
+        .filter((id, index, array) => array.indexOf(id) === index) // Remove duplicates
+        .map((participantId) => ({
+          group_id: groupData.id,
+          user_id: participantId,
+          role: participantId === request.createdBy ? 'admin' : 'member',
+          status: 'active',
+          joined_at: new Date().toISOString(),
+          permissions: participantId === request.createdBy
+            ? this.getAdminPermissions()
+            : this.getMemberPermissions()
+        }));
+
+      const { error: participantError } = await supabase
+        .from('group_participants')
+        .insert(participantData);
+
+      if (participantError) {
+        // If participant insertion fails, clean up the group
+        const cleanupError = await supabase
+          .from('group_chat_threads')
+          .delete()
+          .eq('id', groupData.id);
+
+        const errorMsg = participantError instanceof Error
+          ? participantError.message
+          : typeof participantError === 'object' && participantError !== null
+          ? (participantError as any).message || JSON.stringify(participantError)
+          : String(participantError);
+
+        throw new Error(`Failed to add participants to group: ${errorMsg}`);
+      }
+
+      return this.formatGroupThread(groupData, request.settings, participantData.length);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Error creating group directly:', errorMsg);
+      throw error;
+    }
+  }
+
+  // Format raw group data into GroupChatThread
+  private formatGroupThread(groupData: any, settings?: GroupSettings, memberCount?: number): GroupChatThread {
+    return {
+      id: groupData.id,
+      type: 'group',
+      groupName: groupData.name,
+      groupDescription: groupData.description,
+      groupAvatar: groupData.avatar,
+      participants: [],
+      settings: settings || {
+        isPrivate: groupData.privacy === 'private',
+        allowInvites: true,
+        allowMessaging: true
+      },
+      createdBy: groupData.created_by,
+      createdAt: groupData.created_at,
+      lastActivity: groupData.last_activity,
+      totalMembers: memberCount || 0,
+      onlineMembers: 0,
+      pinnedMessages: [],
+      inviteLinks: [],
+      adminIds: [],
+      maxParticipants: 256,
+      groupType: groupData.privacy === 'private' ? 'private' : 'public',
+      isGroup: true
+    };
   }
 
   // Helper Methods

@@ -188,19 +188,37 @@ const CreateGroup = () => {
       // Navigate to the new group chat
       navigate(`/app/chat/${newGroup.id}`);
     } catch (error: any) {
-      console.error('Failed to create group:', error);
-      
-      // Handle the specific infinite recursion error
-      if (error.message && error.message.includes('database configuration issue')) {
+      const errorMsg = error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null
+        ? error.message || JSON.stringify(error)
+        : String(error);
+
+      console.error('Failed to create group:', errorMsg);
+
+      // Handle specific error types
+      if (errorMsg.includes('infinite recursion')) {
+        toast({
+          title: "Database Policy Error",
+          description: "There's an issue with the group creation policies. Please contact support.",
+          variant: "destructive",
+        });
+      } else if (errorMsg.includes('database configuration issue')) {
         toast({
           title: "Database Configuration Error",
-          description: error.message,
+          description: errorMsg,
+          variant: "destructive",
+        });
+      } else if (errorMsg.includes('authentication') || errorMsg.includes('not authenticated')) {
+        toast({
+          title: "Authentication Error",
+          description: "You must be logged in to create a group.",
           variant: "destructive",
         });
       } else {
         toast({
-          title: "Error",
-          description: "Failed to create group. Please try again.",
+          title: "Error Creating Group",
+          description: errorMsg || "Failed to create group. Please try again.",
           variant: "destructive",
         });
       }

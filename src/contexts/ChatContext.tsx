@@ -205,19 +205,39 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from("chat_messages")
-        .select("*, sender:sender_id!chat_messages_sender_id_fkey(full_name, username, avatar_url)")
+        .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
 
       if (error) {
-        console.error("Error loading messages:", error);
+        console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
         return;
       }
 
+      // Get unique sender IDs to fetch their profiles
+      const senderIds = [...new Set(data.map((msg) => msg.sender_id))];
+
+      // Fetch sender profiles
+      const { data: senderProfiles } = await supabase
+        .from("profiles")
+        .select("user_id, full_name, username, avatar_url")
+        .in("user_id", senderIds);
+
+      const senderMap = new Map(
+        (senderProfiles || []).map((profile) => [
+          profile.user_id,
+          {
+            name: profile.full_name || profile.username || "Unknown",
+            avatar: profile.avatar_url || "/placeholder.svg",
+          },
+        ])
+      );
+
       const formattedMessages: ChatMessage[] = data.map((msg) => {
-        // Extract sender information from the view
-        const senderName = msg.full_name || msg.username || "Unknown";
-        const senderAvatar = msg.avatar_url || "/placeholder.svg";
+        const senderInfo = senderMap.get(msg.sender_id) || {
+          name: "Unknown",
+          avatar: "/placeholder.svg",
+        };
 
         return {
           id: msg.id,
@@ -226,16 +246,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           conversation_id: msg.conversation_id,
           created_at: msg.created_at,
           read: msg.read,
-          sender: {
-            name: senderName,
-            avatar: senderAvatar,
-          },
+          sender: senderInfo,
         };
       });
 
       setMessages(formattedMessages);
     } catch (error) {
-      console.error("Error loading messages:", error);
+      console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
     }
   };
 

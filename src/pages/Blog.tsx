@@ -67,7 +67,7 @@ export default function Blog() {
       setCategories(categoriesData);
       setStats(statsData);
     } catch (error) {
-      console.error("Error loading blog data:", error);
+      console.error("Error loading blog data:", error instanceof Error ? error.message : JSON.stringify(error));
       setError(
         error instanceof Error ? error.message : "Failed to load blog data",
       );
@@ -102,7 +102,7 @@ export default function Blog() {
 
       setFilteredPosts(filtered);
     } catch (error) {
-      console.error("Error filtering posts:", error);
+      console.error("Error filtering posts:", error instanceof Error ? error.message : JSON.stringify(error));
       // Fallback to show all posts if filtering fails
       setFilteredPosts(posts);
     }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { messagingService, ChatMessage, ChatConversation } from '@/services/messagingService';
@@ -38,7 +37,7 @@ export const useRealtimeMessaging = () => {
         await messagingService.markMessagesAsRead(conversationId, user.id);
       }
     } catch (error) {
-      console.error('Error loading messages:', error);
+      console.error('Error loading messages:', error instanceof Error ? error.message : JSON.stringify(error));
     }
   }, [user?.id]);
 

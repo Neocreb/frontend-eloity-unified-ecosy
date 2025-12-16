@@ -219,7 +219,7 @@ class LiveStreamingService {
 
       return true;
     } catch (error) {
-      console.error("Error ending stream:", error);
+      console.error("Error ending stream:", error instanceof Error ? error.message : JSON.stringify(error));
       return false;
     }
   }
@@ -233,7 +233,7 @@ class LiveStreamingService {
 
       return !error;
     } catch (error) {
-      console.error("Error pausing stream:", error);
+      console.error("Error pausing stream:", error instanceof Error ? error.message : JSON.stringify(error));
       return false;
     }
   }
@@ -264,7 +264,7 @@ class LiveStreamingService {
       if (error) throw error;
       return this.mapDbStreamToStream(data);
     } catch (error) {
-      console.error("Error getting stream:", error);
+      console.error("Error getting stream:", error instanceof Error ? error.message : JSON.stringify(error));
       return null;
     }
   }
@@ -380,7 +380,7 @@ class LiveStreamingService {
 
       return true;
     } catch (error) {
-      console.error("Error joining stream:", error);
+      console.error("Error joining stream:", error instanceof Error ? error.message : JSON.stringify(error));
       console.log(`User ${userId} joined stream ${streamId}`);
       return true;
     }

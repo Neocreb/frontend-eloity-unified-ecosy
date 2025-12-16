@@ -119,7 +119,7 @@ export const useExplore = () => {
           setFilteredGroups(groups);
           setFilteredPages(pages);
         } catch (error) {
-          console.error("Search failed:", error);
+          console.error("Search failed:", error instanceof Error ? error.message : JSON.stringify(error));
           // Fallback to empty arrays
           setFilteredTopics([]);
           setFilteredUsers([]);

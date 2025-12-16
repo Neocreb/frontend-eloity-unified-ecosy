@@ -1344,7 +1344,7 @@ export class MarketplaceService {
 
       return data || [];
     } catch (error) {
-      console.error("Error fetching ads:", error);
+      console.error("Error fetching ads:", error instanceof Error ? error.message : JSON.stringify(error));
       return [];
     }
   }
@@ -1370,7 +1370,7 @@ export class MarketplaceService {
         .single();
 
       if (error) {
-        console.error("Error creating ad:", error);
+        console.error("Error creating ad:", error instanceof Error ? error.message : JSON.stringify(error));
         return null;
       }
 
@@ -1397,7 +1397,7 @@ export class MarketplaceService {
         .single();
 
       if (error) {
-        console.error("Error updating ad:", error);
+        console.error("Error updating ad:", error instanceof Error ? error.message : JSON.stringify(error));
         return null;
       }
 
@@ -1416,7 +1416,7 @@ export class MarketplaceService {
         .eq('id', id);
 
       if (error) {
-        console.error("Error deleting ad:", error);
+        console.error("Error deleting ad:", error instanceof Error ? error.message : JSON.stringify(error));
         return false;
       }
 
