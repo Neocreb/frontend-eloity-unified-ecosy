@@ -20,14 +20,14 @@ export const authenticateToken = async (req: any, res: any, next: any) => {
     // Handle Supabase JWT tokens (no verification of signature needed for now)
     // Supabase tokens have a 'sub' field which contains the user ID
     if (decoded.sub) {
-      req.userId = decoded.sub;
+      req.user = { id: decoded.sub };
       next();
       return;
     }
 
     // Handle custom JWT tokens with userId
     if (decoded.userId) {
-      req.userId = decoded.userId;
+      req.user = { id: decoded.userId };
       next();
       return;
     }
