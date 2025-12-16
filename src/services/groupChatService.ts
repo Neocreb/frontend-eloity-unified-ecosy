@@ -626,7 +626,14 @@ export class GroupChatService {
         .select('*')
         .single();
 
-      if (groupError) throw groupError;
+      if (groupError) {
+        const errorMsg = groupError instanceof Error
+          ? groupError.message
+          : typeof groupError === 'object' && groupError !== null
+          ? (groupError as any).message || JSON.stringify(groupError)
+          : String(groupError);
+        throw new Error(`Failed to create group thread: ${errorMsg}`);
+      }
       if (!groupData) throw new Error('Failed to create group');
 
       // Add participants
@@ -650,16 +657,24 @@ export class GroupChatService {
 
       if (participantError) {
         // If participant insertion fails, clean up the group
-        await supabase
+        const cleanupError = await supabase
           .from('group_chat_threads')
           .delete()
           .eq('id', groupData.id);
-        throw participantError;
+
+        const errorMsg = participantError instanceof Error
+          ? participantError.message
+          : typeof participantError === 'object' && participantError !== null
+          ? (participantError as any).message || JSON.stringify(participantError)
+          : String(participantError);
+
+        throw new Error(`Failed to add participants to group: ${errorMsg}`);
       }
 
       return this.formatGroupThread(groupData, request.settings, participantData.length);
     } catch (error) {
-      console.error('Error creating group directly:', error);
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error('Error creating group directly:', errorMsg);
       throw error;
     }
   }
