@@ -77,7 +77,26 @@ router.get('/conversations', async (req: Request, res: Response) => {
 
     if (error) throw error;
 
-    return res.json(conversations || []);
+    // Fetch last message for each conversation
+    const conversationsWithMessages = await Promise.all(
+      (conversations || []).map(async (conv) => {
+        if (conv.last_message_id) {
+          const { data: lastMessage } = await supabase
+            .from('chat_messages')
+            .select('id, content, sender_id, created_at')
+            .eq('id', conv.last_message_id)
+            .single();
+
+          return {
+            ...conv,
+            chat_messages: lastMessage ? [lastMessage] : []
+          };
+        }
+        return { ...conv, chat_messages: [] };
+      })
+    );
+
+    return res.json(conversationsWithMessages || []);
   } catch (error: any) {
     console.error('Error fetching conversations:', error);
     return res.status(500).json({ error: error.message });
