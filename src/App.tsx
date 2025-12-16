@@ -867,6 +867,9 @@ const AppRoutes = () => {
         <Route path="landing-stats" element={<AdminLandingStats />} />
         <Route path="landing-comparison" element={<AdminLandingComparison />} />
         <Route path="landing-waitlist" element={<AdminLandingWaitlist />} />
+        <Route path="reloadly/commission" element={<AdminReloadlyCommission />} />
+        <Route path="reloadly/transactions" element={<AdminReloadlyTransactions />} />
+        <Route path="reloadly/reports" element={<AdminReloadlyReports />} />
       </Route>
 
       {/* Legacy route redirects */}
