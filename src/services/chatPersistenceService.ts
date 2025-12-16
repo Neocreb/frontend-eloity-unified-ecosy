@@ -13,10 +13,16 @@ class ChatPersistenceService {
     options: RequestInit = {}
   ): Promise<T> {
     const url = `/api/chat${endpoint}`;
-    
-    // Get auth token from localStorage
-    const token = localStorage.getItem('accessToken');
-    
+
+    // Get auth token from Supabase session
+    let token = '';
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      token = session?.access_token || '';
+    } catch (error) {
+      console.error('Failed to get Supabase session:', error);
+    }
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options.headers,
