@@ -24,6 +24,7 @@ import {
   Database,
   Activity,
   UserCheck,
+  DollarSign,
 } from "lucide-react";
 
 const adminNavItems = [
