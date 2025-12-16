@@ -13,7 +13,7 @@ export default function startReconciliation() {
       logger.info('Reconciliation job started - comparing database totals');
 
       // Query aggregated DB totals for all currencies
-      const rows = await db.select({ total: sum(crypto_wallets.balance), currency: crypto_wallets.currency }).from(crypto_wallets).execute();
+      const rows = await db.select({ total: sum(crypto_wallets.balance), currency: crypto_wallets.currency }).from(crypto_wallets).groupBy(crypto_wallets.currency).execute();
       const dbTotals = {};
       for (const rrow of rows) {
         dbTotals[rrow.currency] = parseFloat(rrow.total?.toString() || '0');
