@@ -169,10 +169,14 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   );
 
   // Ensure a profile row exists for the authenticated user
+  // This is a safety mechanism - the database trigger should handle profile creation automatically
   const ensureProfileExists = useCallback(async (rawUser: User | null | undefined) => {
     try {
-      if (!rawUser) return;
+      if (!rawUser || !rawUser.email) return;
+
       const userId = rawUser.id;
+
+      // Check if profile exists
       const { data: existing, error: fetchError } = await supabase
         .from("profiles")
         .select("user_id")
@@ -182,25 +186,49 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (fetchError && fetchError.code !== "PGRST116") {
         console.warn("Profile fetch error:", fetchError.message);
       }
-      if (!existing) {
-        const username = (rawUser.user_metadata?.username || (rawUser.email || "").split("@")[0] || `user_${userId.slice(0,6)}`).toString();
-        const full_name = rawUser.user_metadata?.name || rawUser.user_metadata?.full_name || username;
-        const avatar_url = rawUser.user_metadata?.avatar || rawUser.user_metadata?.avatar_url || null;
-        const { error: insertError } = await supabase.from("profiles").insert({
+
+      // Profile already exists, nothing to do
+      if (existing) {
+        return;
+      }
+
+      // Profile doesn't exist, create it as a fallback
+      const username = (
+        rawUser.user_metadata?.username ||
+        (rawUser.email || "").split("@")[0] ||
+        `user_${userId.slice(0, 6)}`
+      ).toString()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_+|_+$/g, "") || `user_${userId.slice(0, 6)}`;
+
+      const full_name = rawUser.user_metadata?.name ||
+                        rawUser.user_metadata?.full_name ||
+                        username;
+
+      const avatar_url = rawUser.user_metadata?.avatar ||
+                         rawUser.user_metadata?.avatar_url ||
+                         `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`;
+
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert({
           user_id: userId,
-          username,
-          full_name,
-          avatar_url,
+          email: rawUser.email,
+          username: username,
+          full_name: full_name,
+          avatar_url: avatar_url,
           is_verified: false,
           role: "user",
           points: 0,
           level: "bronze",
         });
-        if (insertError) {
-          console.warn("Profile insert error:", insertError.message);
-        } else {
-          console.log("Profile created for user", userId);
-        }
+
+      if (insertError) {
+        console.warn("Profile insert error (this should have been created by trigger):", insertError.message);
+      } else {
+        console.log("Profile created for user (fallback mechanism):", userId);
       }
     } catch (e) {
       console.warn("ensureProfileExists error:", (e as any)?.message || e);
