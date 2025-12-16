@@ -223,20 +223,39 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
   const detectCurrencyByLocation = async (): Promise<Currency | null> => {
     try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      
-      setDetectedCountry(data.country_name || null);
-      
-      const currencyCode = data.currency || null;
-      if (currencyCode) {
-        const currency = getCurrencyByCode(currencyCode);
-        setDetectedCurrency(currency || null);
-        return currency || null;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      try {
+        const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.warn(`Geolocation API returned status ${response.status}`);
+          return null;
+        }
+
+        const data = await response.json();
+        setDetectedCountry(data.country_name || null);
+
+        const currencyCode = data.currency || null;
+        if (currencyCode) {
+          const currency = getCurrencyByCode(currencyCode);
+          setDetectedCurrency(currency || null);
+          return currency || null;
+        }
+        return null;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.debug('Geolocation detection timeout (5s)');
+        } else {
+          console.debug('Geolocation detection failed (network/CORS):', err instanceof Error ? err.message : 'Unknown error');
+        }
+        return null;
       }
-      return null;
     } catch (err) {
-      console.error('Geolocation detection failed:', err);
+      console.debug('Unexpected error in geolocation detection:', err);
       return null;
     }
   };
