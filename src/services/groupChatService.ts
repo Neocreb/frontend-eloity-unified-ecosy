@@ -77,7 +77,13 @@ export class GroupChatService {
 
           return this.formatGroupThread(result.group, request.settings);
         } catch (functionError: any) {
-          console.warn('Edge Function failed, trying direct Supabase approach:', functionError.message);
+          const functionErrorMsg = functionError instanceof Error
+            ? functionError.message
+            : typeof functionError === 'object' && functionError !== null
+            ? (functionError as any).message || JSON.stringify(functionError)
+            : String(functionError);
+
+          console.warn('Edge Function failed, trying direct Supabase approach:', functionErrorMsg);
           // Fall back to direct Supabase approach
           return await this.createGroupDirect(request);
         }
@@ -85,8 +91,14 @@ export class GroupChatService {
         throw new Error('Supabase URL not configured');
       }
     } catch (error) {
-      console.error('Error creating group:', error);
-      throw new Error(`Failed to create group due to database configuration issue. Please contact support. Details: ${error.message}`);
+      const errorMsg = error instanceof Error
+        ? error.message
+        : typeof error === 'object' && error !== null
+        ? (error as any).message || JSON.stringify(error)
+        : String(error);
+
+      console.error('Error creating group:', errorMsg);
+      throw new Error(`Failed to create group due to database configuration issue. Please contact support. Details: ${errorMsg}`);
     }
   }
 
