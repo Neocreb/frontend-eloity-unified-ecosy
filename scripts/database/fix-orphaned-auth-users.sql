@@ -5,6 +5,7 @@
 -- These are users in auth.users that don't have corresponding entries in public.users
 -- NOTE: public.users only has these columns: id, email, password, email_confirmed, created_at, updated_at
 -- All profile details go into public.profiles table instead
+-- For password, we use a placeholder since auth.users has encrypted_password in a different format
 INSERT INTO public.users (
   id,
   email,
@@ -16,7 +17,7 @@ INSERT INTO public.users (
 SELECT
   au.id,
   au.email,
-  au.encrypted_password,  -- From auth.users
+  '',  -- Password is managed by auth.users, not public.users
   COALESCE(au.email_confirmed_at IS NOT NULL, false),
   au.created_at,
   NOW()
