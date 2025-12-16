@@ -52,27 +52,27 @@ INSERT INTO public.profiles (
   created_at,
   updated_at
 )
-SELECT 
+SELECT
   u.id,
   u.email,
-  u.username,
-  u.full_name,
-  u.avatar_url,
-  u.is_verified,
-  u.points,
-  u.level,
-  u.role,
-  u.reputation,
-  u.followers_count,
-  u.following_count,
-  u.posts_count,
-  u.profile_views,
-  u.is_online,
-  u.profile_visibility,
-  u.allow_direct_messages,
-  u.allow_notifications,
-  u.preferred_currency,
-  u.tier_level,
+  NULL,  -- username will be set when user completes profile
+  NULL,  -- full_name will be set when user completes profile
+  'https://api.dicebear.com/7.x/avataaars/svg?seed=' || u.id,  -- Default avatar
+  false,
+  0,
+  'bronze',
+  'user',
+  0,
+  0,
+  0,
+  0,
+  0,
+  false,
+  'public',
+  true,
+  true,
+  'USDT',
+  'tier_1',
   u.created_at,
   NOW()
 FROM public.users u
