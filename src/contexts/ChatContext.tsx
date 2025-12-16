@@ -205,7 +205,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       const { data, error } = await supabase
         .from("chat_messages")
-        .select("*, sender:sender_id!chat_messages_sender_id_fkey(full_name, username, avatar_url)")
+        .select("*")
         .eq("conversation_id", conversationId)
         .order("created_at", { ascending: true });
 
