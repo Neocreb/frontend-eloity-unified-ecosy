@@ -108,8 +108,7 @@ router.post('/settings', authenticateAdmin, async (req, res) => {
  */
 router.put(
   '/settings/:settingId',
-  authenticateToken,
-  tierAccessControl(['admin']),
+  authenticateAdmin,
   async (req, res) => {
     try {
       const { settingId } = req.params;
@@ -147,8 +146,7 @@ router.put(
  */
 router.delete(
   '/settings/:settingId',
-  authenticateToken,
-  tierAccessControl(['admin']),
+  authenticateAdmin,
   async (req, res) => {
     try {
       const { settingId } = req.params;
