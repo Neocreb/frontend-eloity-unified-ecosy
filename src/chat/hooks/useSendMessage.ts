@@ -35,7 +35,7 @@ export const useSendMessage = (threadId: string) => {
           description: "Failed to send message",
           variant: "destructive",
         });
-        console.error("Error sending message:", error);
+        console.error("Error sending message:", error instanceof Error ? error.message : JSON.stringify(error));
         return null;
       } finally {
         setSending(false);
@@ -78,7 +78,7 @@ export const useSendMessage = (threadId: string) => {
           description: "Failed to send image",
           variant: "destructive",
         });
-        console.error("Error sending image:", error);
+        console.error("Error sending image:", error instanceof Error ? error.message : JSON.stringify(error));
         return null;
       } finally {
         setUploading(false);
@@ -121,7 +121,7 @@ export const useSendMessage = (threadId: string) => {
           description: "Failed to send file",
           variant: "destructive",
         });
-        console.error("Error sending file:", error);
+        console.error("Error sending file:", error instanceof Error ? error.message : JSON.stringify(error));
         return null;
       } finally {
         setUploading(false);
