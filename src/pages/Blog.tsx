@@ -67,7 +67,7 @@ export default function Blog() {
       setCategories(categoriesData);
       setStats(statsData);
     } catch (error) {
-      console.error("Error loading blog data:", error);
+      console.error("Error loading blog data:", error instanceof Error ? error.message : JSON.stringify(error));
       setError(
         error instanceof Error ? error.message : "Failed to load blog data",
       );
