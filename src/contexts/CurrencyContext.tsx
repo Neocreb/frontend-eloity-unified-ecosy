@@ -223,53 +223,84 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
   const detectCurrencyByLocation = async (): Promise<Currency | null> => {
     try {
-      const response = await fetch('https://ipapi.co/json/');
-      const data = await response.json();
-      
-      setDetectedCountry(data.country_name || null);
-      
-      const currencyCode = data.currency || null;
-      if (currencyCode) {
-        const currency = getCurrencyByCode(currencyCode);
-        setDetectedCurrency(currency || null);
-        return currency || null;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
+      try {
+        const response = await fetch('https://ipapi.co/json/', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.warn(`Geolocation API returned status ${response.status}`);
+          return null;
+        }
+
+        const data = await response.json();
+        setDetectedCountry(data.country_name || null);
+
+        const currencyCode = data.currency || null;
+        if (currencyCode) {
+          const currency = getCurrencyByCode(currencyCode);
+          setDetectedCurrency(currency || null);
+          return currency || null;
+        }
+        return null;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.debug('Geolocation detection timeout (5s)');
+        } else {
+          console.debug('Geolocation detection failed (network/CORS):', err instanceof Error ? err.message : 'Unknown error');
+        }
+        return null;
       }
-      return null;
     } catch (err) {
-      console.error('Geolocation detection failed:', err);
+      console.debug('Unexpected error in geolocation detection:', err);
       return null;
     }
   };
 
   const fetchExchangeRates = async () => {
     try {
-      const response = await fetch('/api/currency/rates');
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: Failed to fetch exchange rates`);
-      }
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-      const data = await response.json();
-      if (data.success && data.rates && Array.isArray(data.rates)) {
-        const ratesMap = new Map<string, number>();
-        data.rates.forEach((rate: { from: string; to: string; rate: number }) => {
-          if (rate.from && rate.to && typeof rate.rate === 'number') {
-            ratesMap.set(`${rate.from}_${rate.to}`, rate.rate);
-          }
-        });
-        if (ratesMap.size > 0) {
-          setExchangeRates(ratesMap);
-          setLastUpdated(new Date());
-        } else {
-          console.warn('No valid exchange rates received from API');
+      try {
+        const response = await fetch('/api/currency/rates', { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          console.debug(`Exchange rates API returned status ${response.status} - using defaults`);
+          return;
         }
-      } else {
-        console.warn('Exchange rates API response has unexpected format:', data);
+
+        const data = await response.json();
+        if (data.success && data.rates && Array.isArray(data.rates)) {
+          const ratesMap = new Map<string, number>();
+          data.rates.forEach((rate: { from: string; to: string; rate: number }) => {
+            if (rate.from && rate.to && typeof rate.rate === 'number') {
+              ratesMap.set(`${rate.from}_${rate.to}`, rate.rate);
+            }
+          });
+          if (ratesMap.size > 0) {
+            setExchangeRates(ratesMap);
+            setLastUpdated(new Date());
+          } else {
+            console.debug('No valid exchange rates in API response - using defaults');
+          }
+        } else {
+          console.debug('Exchange rates API response format unexpected - using defaults');
+        }
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err instanceof Error && err.name === 'AbortError') {
+          console.debug('Exchange rates fetch timeout (10s) - using defaults');
+        } else {
+          console.debug('Exchange rates fetch failed - using defaults:', err instanceof Error ? err.message : 'Unknown error');
+        }
       }
     } catch (err) {
-      console.error('Failed to fetch exchange rates:', err);
-      // Don't set error state - use defaults instead of showing an error to the user
-      // Exchange rates will fall back to 1:1 conversion if not available
-      console.warn('Using default exchange rates as fallback');
+      console.debug('Unexpected error fetching exchange rates:', err);
     }
   };
 

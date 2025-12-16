@@ -55,7 +55,7 @@ export const UseCasesSection: React.FC = () => {
     try {
       setIsLoading(true);
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
       const response = await fetch('/api/landing/use-cases?featured=true', {
         signal: controller.signal,

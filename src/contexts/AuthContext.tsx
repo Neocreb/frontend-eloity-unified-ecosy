@@ -250,7 +250,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
         if (!mounted) return;
 
         if (sessionError) {
-          console.warn("Error getting session:", sessionError);
+          console.debug("Session not available:", sessionError instanceof Error ? sessionError.message : "Unknown error");
           // Don't treat auth errors as fatal for public pages
           setError(null);
         }
@@ -259,7 +259,7 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setUser(enhanceUserData(session?.user || null));
         ensureProfileExists(session?.user || null).catch(() => {});
       } catch (error) {
-        console.warn("Auth initialization warning:", error);
+        console.debug("Auth initialization handled gracefully:", error instanceof Error ? error.message : "Unknown error");
         if (mounted) {
           // Don't treat auth initialization errors as fatal
           setError(null);
