@@ -169,10 +169,14 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
   );
 
   // Ensure a profile row exists for the authenticated user
+  // This is a safety mechanism - the database trigger should handle profile creation automatically
   const ensureProfileExists = useCallback(async (rawUser: User | null | undefined) => {
     try {
-      if (!rawUser) return;
+      if (!rawUser || !rawUser.email) return;
+
       const userId = rawUser.id;
+
+      // Check if profile exists
       const { data: existing, error: fetchError } = await supabase
         .from("profiles")
         .select("user_id")
@@ -182,25 +186,49 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
       if (fetchError && fetchError.code !== "PGRST116") {
         console.warn("Profile fetch error:", fetchError.message);
       }
-      if (!existing) {
-        const username = (rawUser.user_metadata?.username || (rawUser.email || "").split("@")[0] || `user_${userId.slice(0,6)}`).toString();
-        const full_name = rawUser.user_metadata?.name || rawUser.user_metadata?.full_name || username;
-        const avatar_url = rawUser.user_metadata?.avatar || rawUser.user_metadata?.avatar_url || null;
-        const { error: insertError } = await supabase.from("profiles").insert({
+
+      // Profile already exists, nothing to do
+      if (existing) {
+        return;
+      }
+
+      // Profile doesn't exist, create it as a fallback
+      const username = (
+        rawUser.user_metadata?.username ||
+        (rawUser.email || "").split("@")[0] ||
+        `user_${userId.slice(0, 6)}`
+      ).toString()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_+|_+$/g, "") || `user_${userId.slice(0, 6)}`;
+
+      const full_name = rawUser.user_metadata?.name ||
+                        rawUser.user_metadata?.full_name ||
+                        username;
+
+      const avatar_url = rawUser.user_metadata?.avatar ||
+                         rawUser.user_metadata?.avatar_url ||
+                         `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`;
+
+      const { error: insertError } = await supabase
+        .from("profiles")
+        .insert({
           user_id: userId,
-          username,
-          full_name,
-          avatar_url,
+          email: rawUser.email,
+          username: username,
+          full_name: full_name,
+          avatar_url: avatar_url,
           is_verified: false,
           role: "user",
           points: 0,
           level: "bronze",
         });
-        if (insertError) {
-          console.warn("Profile insert error:", insertError.message);
-        } else {
-          console.log("Profile created for user", userId);
-        }
+
+      if (insertError) {
+        console.warn("Profile insert error (this should have been created by trigger):", insertError.message);
+      } else {
+        console.log("Profile created for user (fallback mechanism):", userId);
       }
     } catch (e) {
       console.warn("ensureProfileExists error:", (e as any)?.message || e);
@@ -499,6 +527,13 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
         setIsLoading(true);
         setError(null);
 
+        // Derive username from email or name
+        const username = (name || email.split("@")[0])
+          .toLowerCase()
+          .replace(/[^a-z0-9_]/g, "_")
+          .replace(/_+/g, "_")
+          .replace(/^_+|_+$/g, "");
+
         const { data, error } = await supabase.auth.signUp({
           email,
           password,
@@ -506,33 +541,71 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
             data: {
               name,
               full_name: name,
-              username: email.split("@")[0],
+              username: username || email.split("@")[0],
             },
           },
         });
 
         if (error) {
+          console.error("Supabase signup error:", error);
           setError(error);
           return { error };
         }
 
         console.log("Signup successful:", data.user?.id);
 
-        // Handle referral if present
+        // Wait a moment for the database trigger to create the profile
+        // The trigger on auth.users will automatically create a profile entry
         if (data.user?.id) {
+          // Give the trigger time to execute
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          // Verify profile was created (this is a check, not the creation)
+          const { data: profileData, error: profileError } = await supabase
+            .from("profiles")
+            .select("user_id")
+            .eq("user_id", data.user.id)
+            .maybeSingle();
+
+          if (profileError && profileError.code !== "PGRST116") {
+            console.warn("Profile verification error:", profileError);
+          } else if (!profileData) {
+            console.warn("Profile not found after signup, attempting manual creation");
+            // Fallback: manually create the profile if trigger didn't work
+            const { error: insertError } = await supabase
+              .from("profiles")
+              .insert({
+                user_id: data.user.id,
+                email: email,
+                username: username || email.split("@")[0],
+                full_name: name,
+                avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${data.user.id}`,
+                is_verified: false,
+                role: "user",
+                points: 0,
+                level: "bronze",
+              });
+
+            if (insertError) {
+              console.warn("Manual profile creation failed:", insertError);
+            }
+          }
+
+          // Handle referral if present
           await processReferralSignup(data.user.id, referralCode);
         }
 
         return {};
       } catch (error) {
         const authError = error as Error;
+        console.error("Signup catch error:", authError);
         setError(authError);
         return { error: authError };
       } finally {
         setIsLoading(false);
       }
     },
-    [],
+    [processReferralSignup],
   );
 
   // Check if user is admin
