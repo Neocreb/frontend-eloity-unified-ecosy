@@ -102,7 +102,7 @@ export default function Blog() {
 
       setFilteredPosts(filtered);
     } catch (error) {
-      console.error("Error filtering posts:", error);
+      console.error("Error filtering posts:", error instanceof Error ? error.message : JSON.stringify(error));
       // Fallback to show all posts if filtering fails
       setFilteredPosts(posts);
     }

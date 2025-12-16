@@ -84,7 +84,7 @@ export function useMarketplace() {
         isLoading: false,
       }));
     } catch (error) {
-      console.error("Failed to load initial data:", error);
+      console.error("Failed to load initial data:", error instanceof Error ? error.message : JSON.stringify(error));
       setState((prev) => ({
         ...prev,
         error: "Failed to load marketplace data",
@@ -123,7 +123,7 @@ export function useMarketplace() {
       const orders = await marketplaceService.getOrders(user.id);
       setState((prev) => ({ ...prev, orders }));
     } catch (error) {
-      console.error("Failed to load user data:", error);
+      console.error("Failed to load user data:", error instanceof Error ? error.message : JSON.stringify(error));
     }
   };
 
