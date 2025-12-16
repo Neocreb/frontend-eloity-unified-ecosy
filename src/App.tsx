@@ -205,6 +205,9 @@ import AdminLandingUseCases from "./pages/admin/AdminLandingUseCases";
 import AdminLandingStats from "./pages/admin/AdminLandingStats";
 import AdminLandingComparison from "./pages/admin/AdminLandingComparison";
 import AdminLandingWaitlist from "./pages/admin/AdminLandingWaitlist";
+import AdminReloadlyCommission from "./pages/admin/AdminReloadlyCommission";
+import AdminReloadlyTransactions from "./pages/admin/AdminReloadlyTransactions";
+import AdminReloadlyReports from "./pages/admin/AdminReloadlyReports";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
@@ -864,6 +867,9 @@ const AppRoutes = () => {
         <Route path="landing-stats" element={<AdminLandingStats />} />
         <Route path="landing-comparison" element={<AdminLandingComparison />} />
         <Route path="landing-waitlist" element={<AdminLandingWaitlist />} />
+        <Route path="reloadly/commission" element={<AdminReloadlyCommission />} />
+        <Route path="reloadly/transactions" element={<AdminReloadlyTransactions />} />
+        <Route path="reloadly/reports" element={<AdminReloadlyReports />} />
       </Route>
 
       {/* Legacy route redirects */}

@@ -24,6 +24,7 @@ import {
   Database,
   Activity,
   UserCheck,
+  DollarSign,
 } from "lucide-react";
 
 const adminNavItems = [
@@ -74,6 +75,24 @@ const adminNavItems = [
     href: "/admin/financial",
     icon: CreditCard,
     description: "Platform earnings and wallet management",
+  },
+  {
+    title: "RELOADLY Commission",
+    href: "/admin/reloadly/commission",
+    icon: DollarSign,
+    description: "Manage commission settings for RELOADLY services",
+  },
+  {
+    title: "RELOADLY Transactions",
+    href: "/admin/reloadly/transactions",
+    icon: FileText,
+    description: "Audit and view RELOADLY transaction history",
+  },
+  {
+    title: "RELOADLY Reports",
+    href: "/admin/reloadly/reports",
+    icon: BarChart3,
+    description: "Commission and revenue analytics",
   },
   {
     title: "Boost System",
