@@ -243,8 +243,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
 
   const fetchExchangeRates = async () => {
     try {
-      const apiBase = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
-      const response = await fetch(`${apiBase}/currency/rates`);
+      const response = await fetch('/api/currency/rates');
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: Failed to fetch exchange rates`);
       }

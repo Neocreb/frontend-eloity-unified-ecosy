@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
-import { supabase } from '@/server/supabaseServer';
-import { authenticateToken } from '@/server/middleware/auth';
+import { supabaseServer as supabase } from '../supabaseServer.js';
+import { authenticateToken } from '../middleware/auth.js';
 import { z } from 'zod';
 
 const router = Router();
@@ -39,8 +39,13 @@ router.use(authenticateToken);
 // Get all conversations for current user
 router.get('/conversations', async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.id;
+    const userId = (req as any).user?.id || (req as any).userId;
     if (!userId) {
+      console.error('[Chat] No user ID found in request', {
+        hasUser: !!(req as any).user,
+        hasUserId: !!(req as any).userId,
+        headers: Object.keys(req.headers)
+      });
       return res.status(401).json({ error: 'Unauthorized' });
     }
 

@@ -1,8 +1,6 @@
 import { ChatThread, ChatMessage, ChatFilter, StartChatRequest } from '@/types/chat';
 import { supabase } from '@/integrations/supabase/client';
 
-const API_BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000/api';
-
 export interface ApiResponse<T> {
   data?: T;
   error?: string;
@@ -10,17 +8,25 @@ export interface ApiResponse<T> {
 }
 
 class ChatPersistenceService {
-  private apiBase = API_BASE;
-
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<T> {
-    const url = `${this.apiBase}/chat${endpoint}`;
-    
-    // Get auth token from localStorage
-    const token = localStorage.getItem('accessToken');
-    
+    const url = `/api/chat${endpoint}`;
+
+    // Get auth token from Supabase session
+    let token = '';
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      token = session?.access_token || '';
+
+      if (!token) {
+        console.warn('No Supabase session found - user may not be logged in');
+      }
+    } catch (error) {
+      console.error('Failed to get Supabase session:', error);
+    }
+
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -28,6 +34,8 @@ class ChatPersistenceService {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn(`[ChatPersistenceService] No auth token available for ${endpoint}`);
     }
 
     const response = await fetch(url, {
@@ -36,7 +44,18 @@ class ChatPersistenceService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const errorText = await response.text();
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { error: errorText || response.statusText };
+      }
+
+      if (response.status === 401) {
+        console.error(`[ChatPersistenceService] Unauthorized for ${endpoint}. Token sent: ${!!token}`);
+      }
+
       throw new Error(error.error || `API error: ${response.statusText}`);
     }
 
@@ -59,7 +78,11 @@ class ChatPersistenceService {
 
       return conversations.map((conv) => this.transformConversationToThread(conv));
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      if (error instanceof Error && error.message.includes('Unauthorized')) {
+        console.error('Chat API: Unauthorized - User may not be logged in or session may have expired');
+      } else {
+        console.error('Error fetching conversations:', error);
+      }
       return [];
     }
   }
@@ -293,7 +316,7 @@ class ChatPersistenceService {
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const response = await fetch(`${this.apiBase}/upload`, {
+      const response = await fetch('/api/upload', {
         method: 'POST',
         headers,
         body: formData,

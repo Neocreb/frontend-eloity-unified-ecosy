@@ -110,11 +110,11 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           // Get unread count for this conversation
+          // Count messages from other participants (excluding messages sent by current user)
           const { count: unreadCount, error: countError } = await supabase
             .from("chat_messages")
             .select("*", { count: "exact", head: true })
             .eq("conversation_id", conv.id)
-            .eq("read", false)
             .neq("sender_id", user.id);
 
           if (countError) {

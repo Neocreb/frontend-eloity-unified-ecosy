@@ -262,13 +262,12 @@ export const messagingService = {
 
           const lastMessage = messages?.[0] || null;
 
-          // Get unread count
+          // Get unread count - count all messages not sent by current user
           const { count: unreadCount } = await supabase
             .from("chat_messages")
             .select("*", { count: "exact", head: true })
             .eq("conversation_id", conv.id)
-            .neq("sender_id", userId)
-            .eq("read", false);
+            .neq("sender_id", userId);
 
           // Get other user info
           const otherUserId = conv.participants.find((id) => id !== userId);
@@ -377,12 +376,26 @@ export const messagingService = {
     userId: string,
   ): Promise<void> {
     try {
-      await supabase
+      // Get the latest message in the conversation
+      const { data: latestMessage } = await supabase
         .from("chat_messages")
-        .update({ read: true })
+        .select("id")
         .eq("conversation_id", conversationId)
-        .neq("sender_id", userId)
-        .eq("read", false);
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      if (latestMessage) {
+        // Update the chat_participants record to mark the conversation as read
+        await supabase
+          .from("chat_participants")
+          .update({
+            last_read_message_id: latestMessage.id,
+            last_read_at: new Date().toISOString()
+          })
+          .eq("conversation_id", conversationId)
+          .eq("user_id", userId);
+      }
     } catch (error) {
       console.error("Error marking messages as read:", error);
     }
