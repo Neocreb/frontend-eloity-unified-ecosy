@@ -164,6 +164,27 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ className = "" }) => {
       description: "Gift card purchases & sells",
     },
     {
+      path: "/admin/reloadly/commission",
+      label: "RELOADLY Commission",
+      icon: <DollarSign className="w-5 h-5" />,
+      requiredPermission: "financial.view",
+      description: "Manage commission settings for RELOADLY services",
+    },
+    {
+      path: "/admin/reloadly/transactions",
+      label: "RELOADLY Transactions",
+      icon: <FileText className="w-5 h-5" />,
+      requiredPermission: "financial.view",
+      description: "Audit and view RELOADLY transaction history",
+    },
+    {
+      path: "/admin/reloadly/reports",
+      label: "RELOADLY Reports",
+      icon: <BarChart3 className="w-5 h-5" />,
+      requiredPermission: "financial.view",
+      description: "Commission and revenue analytics",
+    },
+    {
       path: "/admin/blog",
       label: "Blog",
       icon: <FileText className="w-5 h-5" />,
