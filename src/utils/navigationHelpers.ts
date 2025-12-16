@@ -60,7 +60,7 @@ export const navigateToDirectChat = async (
     // Navigate to the specific chat thread
     navigate(`/app/chat/${conversationId}?type=social`);
   } catch (error) {
-    console.error("Error navigating to chat:", error);
+    console.error("Error navigating to chat:", error instanceof Error ? error.message : JSON.stringify(error));
   }
 };
 

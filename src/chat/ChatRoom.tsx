@@ -228,7 +228,7 @@ export const ChatRoom: React.FC = () => {
           await sendMessage(content);
       }
     } catch (error) {
-      console.error("Error sending message:", error);
+      console.error("Error sending message:", error instanceof Error ? error.message : JSON.stringify(error));
       toast({
         title: "Error",
         description: "Failed to send message. Please try again.",
