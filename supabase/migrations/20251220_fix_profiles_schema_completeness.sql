@@ -383,6 +383,8 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- 4. Backfill existing users who don't have profiles
+-- IMPORTANT: Only backfill for users that exist in BOTH auth.users AND public.users
+-- This prevents foreign key constraint violations
 INSERT INTO public.profiles (
   user_id,
   email,
@@ -407,24 +409,22 @@ INSERT INTO public.profiles (
   created_at,
   updated_at
 )
-SELECT 
-  au.id,
-  au.email,
+SELECT
+  u.id,
+  u.email,
   COALESCE(
     p.username,
-    au.raw_user_meta_data->>'username',
-    SPLIT_PART(au.email, '@', 1)
+    SPLIT_PART(u.email, '@', 1)
   ),
   COALESCE(
     p.full_name,
-    au.raw_user_meta_data->>'full_name',
-    au.raw_user_meta_data->>'name',
-    SPLIT_PART(au.email, '@', 1)
+    u.full_name,
+    SPLIT_PART(u.email, '@', 1)
   ),
   COALESCE(
     p.avatar_url,
-    au.raw_user_meta_data->>'avatar_url',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=' || au.id
+    u.avatar_url,
+    'https://api.dicebear.com/7.x/avataaars/svg?seed=' || u.id
   ),
   COALESCE(p.is_verified, false),
   COALESCE(p.points, 0),
@@ -441,12 +441,12 @@ SELECT
   true,
   'USDT',
   'tier_1',
-  COALESCE(p.created_at, au.created_at),
+  COALESCE(p.created_at, u.created_at),
   NOW()
-FROM auth.users au
-LEFT JOIN public.profiles p ON p.user_id = au.id
+FROM public.users u
+LEFT JOIN public.profiles p ON p.user_id = u.id
 WHERE p.user_id IS NULL
-ON CONFLICT (user_id) 
+ON CONFLICT (user_id)
 DO NOTHING;
 
 -- 5. Create indexes for better query performance
