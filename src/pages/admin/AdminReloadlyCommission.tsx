@@ -77,7 +77,10 @@ const AdminReloadlyCommission = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`API Error: ${response.statusText}`);
+        const errorText = await response.text();
+        const errorMsg = `HTTP ${response.status}: ${response.statusText || 'Unknown error'}`;
+        console.error('Commission API Error Details:', { status: response.status, statusText: response.statusText, body: errorText });
+        throw new Error(errorMsg);
       }
 
       const data = await response.json();
