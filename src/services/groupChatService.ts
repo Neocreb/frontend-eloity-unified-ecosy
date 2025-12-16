@@ -608,6 +608,90 @@ export class GroupChatService {
     }
   }
 
+  // Direct group creation (fallback when Edge Function fails)
+  private async createGroupDirect(request: CreateGroupRequest): Promise<GroupChatThread> {
+    try {
+      // Create the group thread
+      const { data: groupData, error: groupError } = await supabase
+        .from('group_chat_threads')
+        .insert({
+          name: request.name,
+          description: request.description || '',
+          avatar: request.avatar,
+          created_by: request.createdBy,
+          privacy: request.settings?.isPrivate ? 'private' : 'public',
+          created_at: new Date().toISOString(),
+          last_activity: new Date().toISOString()
+        })
+        .select('*')
+        .single();
+
+      if (groupError) throw groupError;
+      if (!groupData) throw new Error('Failed to create group');
+
+      // Add participants
+      const participantData = request.participants
+        .concat(request.createdBy)
+        .filter((id, index, array) => array.indexOf(id) === index) // Remove duplicates
+        .map((participantId) => ({
+          group_id: groupData.id,
+          user_id: participantId,
+          role: participantId === request.createdBy ? 'admin' : 'member',
+          status: 'active',
+          joined_at: new Date().toISOString(),
+          permissions: participantId === request.createdBy
+            ? this.getAdminPermissions()
+            : this.getMemberPermissions()
+        }));
+
+      const { error: participantError } = await supabase
+        .from('group_participants')
+        .insert(participantData);
+
+      if (participantError) {
+        // If participant insertion fails, clean up the group
+        await supabase
+          .from('group_chat_threads')
+          .delete()
+          .eq('id', groupData.id);
+        throw participantError;
+      }
+
+      return this.formatGroupThread(groupData, request.settings, participantData.length);
+    } catch (error) {
+      console.error('Error creating group directly:', error);
+      throw error;
+    }
+  }
+
+  // Format raw group data into GroupChatThread
+  private formatGroupThread(groupData: any, settings?: GroupSettings, memberCount?: number): GroupChatThread {
+    return {
+      id: groupData.id,
+      type: 'group',
+      groupName: groupData.name,
+      groupDescription: groupData.description,
+      groupAvatar: groupData.avatar,
+      participants: [],
+      settings: settings || {
+        isPrivate: groupData.privacy === 'private',
+        allowInvites: true,
+        allowMessaging: true
+      },
+      createdBy: groupData.created_by,
+      createdAt: groupData.created_at,
+      lastActivity: groupData.last_activity,
+      totalMembers: memberCount || 0,
+      onlineMembers: 0,
+      pinnedMessages: [],
+      inviteLinks: [],
+      adminIds: [],
+      maxParticipants: 256,
+      groupType: groupData.privacy === 'private' ? 'private' : 'public',
+      isGroup: true
+    };
+  }
+
   // Helper Methods
   private async checkPermission(groupId: string, userId: string, permission: keyof GroupPermissions): Promise<boolean> {
     try {
