@@ -201,6 +201,28 @@ psql $DATABASE_URL < scripts/database/fix-orphaned-auth-users.sql
 psql $DATABASE_URL < supabase/migrations/20251220_fix_profiles_schema_completeness.sql
 ```
 
+## Understanding the Foreign Key Constraint Error
+
+**Error:** `insert or update on table "profiles" violates foreign key constraint "profiles_user_id_users_id_fk"`
+
+**Why it happened:**
+- The `profiles` table has a foreign key constraint: `profiles.user_id` → `users.user_id`
+- This means every profile must reference a user that exists in the `public.users` table
+- During migration, the backfill query tried to create profiles for users in `auth.users` that don't have entries in `public.users`
+- In Supabase, `auth.users` (authentication table) and `public.users` (data table) are separate tables
+- Not all `auth.users` automatically get entries in `public.users`
+
+**The Solution:**
+1. **First:** Create missing `public.users` entries for all `auth.users` that need them
+   - This is done by `scripts/database/fix-orphaned-auth-users.sql`
+2. **Second:** Add the missing profile columns and backfill from `public.users`
+   - This is done by `supabase/migrations/20251220_fix_profiles_schema_completeness.sql`
+
+This two-step process ensures:
+- No foreign key violations
+- All users have complete data in both tables
+- The user provisioning trigger works correctly for new registrations
+
 ## Expected Outcomes
 
 ✅ New users will see other users in explore/search
@@ -209,6 +231,7 @@ psql $DATABASE_URL < supabase/migrations/20251220_fix_profiles_schema_completene
 ✅ All profile data will be properly available to the frontend
 ✅ Backend queries will not fail due to missing columns
 ✅ Performance will be improved with proper indexing
+✅ No foreign key constraint violations
 
 ## Files Modified
 
