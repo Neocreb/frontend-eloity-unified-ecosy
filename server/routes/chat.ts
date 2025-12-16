@@ -65,12 +65,6 @@ router.get('/conversations', async (req: Request, res: Response) => {
         settings,
         created_at,
         updated_at,
-        chat_messages!chat_conversations_last_message_id_fkey(
-          id,
-          content,
-          sender_id,
-          created_at
-        ),
         chat_participants!inner(
           user_id,
           last_read_message_id,
