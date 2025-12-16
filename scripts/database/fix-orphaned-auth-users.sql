@@ -3,61 +3,21 @@
 
 -- 1. Create public.users entries for orphaned auth.users
 -- These are users in auth.users that don't have corresponding entries in public.users
+-- NOTE: public.users only has these columns: id, email, password, email_confirmed, created_at, updated_at
+-- All profile details go into public.profiles table instead
 INSERT INTO public.users (
   id,
   email,
-  username,
-  full_name,
-  avatar_url,
-  is_verified,
-  points,
-  level,
-  role,
-  reputation,
-  followers_count,
-  following_count,
-  posts_count,
-  profile_views,
-  is_online,
-  profile_visibility,
-  allow_direct_messages,
-  allow_notifications,
-  preferred_currency,
-  tier_level,
+  password,
+  email_confirmed,
   created_at,
   updated_at
 )
-SELECT 
+SELECT
   au.id,
   au.email,
-  COALESCE(
-    au.raw_user_meta_data->>'username',
-    SPLIT_PART(au.email, '@', 1)
-  ),
-  COALESCE(
-    au.raw_user_meta_data->>'full_name',
-    au.raw_user_meta_data->>'name',
-    SPLIT_PART(au.email, '@', 1)
-  ),
-  COALESCE(
-    au.raw_user_meta_data->>'avatar_url',
-    'https://api.dicebear.com/7.x/avataaars/svg?seed=' || au.id
-  ),
-  false,
-  0,
-  'bronze',
-  'user',
-  0,
-  0,
-  0,
-  0,
-  0,
-  false,
-  'public',
-  true,
-  true,
-  'USDT',
-  'tier_1',
+  au.encrypted_password,  -- From auth.users
+  COALESCE(au.email_confirmed_at IS NOT NULL, false),
   au.created_at,
   NOW()
 FROM auth.users au
