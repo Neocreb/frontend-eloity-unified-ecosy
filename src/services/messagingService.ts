@@ -262,13 +262,12 @@ export const messagingService = {
 
           const lastMessage = messages?.[0] || null;
 
-          // Get unread count
+          // Get unread count - count all messages not sent by current user
           const { count: unreadCount } = await supabase
             .from("chat_messages")
             .select("*", { count: "exact", head: true })
             .eq("conversation_id", conv.id)
-            .neq("sender_id", userId)
-            .eq("read", false);
+            .neq("sender_id", userId);
 
           // Get other user info
           const otherUserId = conv.participants.find((id) => id !== userId);
