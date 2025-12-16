@@ -840,7 +840,8 @@ export class AdminService {
         .single();
 
       if (error) {
-        console.error("Error creating admin session:", error);
+        const errorMsg = error instanceof Error ? error.message : typeof error === 'object' ? JSON.stringify(error) : String(error);
+        console.error("Error creating admin session:", errorMsg, error);
         // Fallback to mock session
         return {
           id: sessionToken,
@@ -867,7 +868,8 @@ export class AdminService {
         createdAt: data.created_at,
       };
     } catch (error) {
-      console.error("Error creating admin session:", error);
+      const errorMsg = error instanceof Error ? error.message : typeof error === 'object' ? JSON.stringify(error) : String(error);
+      console.error("Error creating admin session:", errorMsg, error);
       // Fallback to mock session
       const sessionToken = crypto.randomUUID();
       const expiresAt = new Date(Date.now() + 8 * 60 * 60 * 1000);
