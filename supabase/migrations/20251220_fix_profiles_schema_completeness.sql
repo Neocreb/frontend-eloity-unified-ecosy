@@ -418,12 +418,10 @@ SELECT
   ),
   COALESCE(
     p.full_name,
-    u.full_name,
     SPLIT_PART(u.email, '@', 1)
   ),
   COALESCE(
     p.avatar_url,
-    u.avatar_url,
     'https://api.dicebear.com/7.x/avataaars/svg?seed=' || u.id
   ),
   COALESCE(p.is_verified, false),
