@@ -205,6 +205,9 @@ import AdminLandingUseCases from "./pages/admin/AdminLandingUseCases";
 import AdminLandingStats from "./pages/admin/AdminLandingStats";
 import AdminLandingComparison from "./pages/admin/AdminLandingComparison";
 import AdminLandingWaitlist from "./pages/admin/AdminLandingWaitlist";
+import AdminReloadlyCommission from "./pages/admin/AdminReloadlyCommission";
+import AdminReloadlyTransactions from "./pages/admin/AdminReloadlyTransactions";
+import AdminReloadlyReports from "./pages/admin/AdminReloadlyReports";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
