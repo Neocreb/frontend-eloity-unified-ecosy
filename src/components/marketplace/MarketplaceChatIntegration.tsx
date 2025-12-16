@@ -136,7 +136,7 @@ const MarketplaceChatIntegration: React.FC<MarketplaceChatIntegrationProps> = ({
       const threadMessages = await chatService.getMessages(threadId);
       setMessages(threadMessages);
     } catch (error) {
-      console.error("Error loading messages:", error);
+      console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
       toast({
         title: "Error",
         description: "Failed to load messages",

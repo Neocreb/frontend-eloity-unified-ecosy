@@ -210,7 +210,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         .order("created_at", { ascending: true });
 
       if (error) {
-        console.error("Error loading messages:", error);
+        console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
         return;
       }
 
@@ -235,7 +235,7 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
       setMessages(formattedMessages);
     } catch (error) {
-      console.error("Error loading messages:", error);
+      console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
     }
   };
 
