@@ -19,6 +19,10 @@ class ChatPersistenceService {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       token = session?.access_token || '';
+
+      if (!token) {
+        console.warn('No Supabase session found - user may not be logged in');
+      }
     } catch (error) {
       console.error('Failed to get Supabase session:', error);
     }
@@ -30,6 +34,8 @@ class ChatPersistenceService {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
+    } else {
+      console.warn(`[ChatPersistenceService] No auth token available for ${endpoint}`);
     }
 
     const response = await fetch(url, {
@@ -38,7 +44,18 @@ class ChatPersistenceService {
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const errorText = await response.text();
+      let error;
+      try {
+        error = JSON.parse(errorText);
+      } catch {
+        error = { error: errorText || response.statusText };
+      }
+
+      if (response.status === 401) {
+        console.error(`[ChatPersistenceService] Unauthorized for ${endpoint}. Token sent: ${!!token}`);
+      }
+
       throw new Error(error.error || `API error: ${response.statusText}`);
     }
 
