@@ -21,6 +21,7 @@ export const authenticateToken = async (req: any, res: any, next: any) => {
     // Supabase tokens have a 'sub' field which contains the user ID
     if (decoded.sub) {
       req.user = { id: decoded.sub };
+      req.userId = decoded.sub; // Also set userId for backward compatibility
       next();
       return;
     }
@@ -28,6 +29,7 @@ export const authenticateToken = async (req: any, res: any, next: any) => {
     // Handle custom JWT tokens with userId
     if (decoded.userId) {
       req.user = { id: decoded.userId };
+      req.userId = decoded.userId; // Also set userId for backward compatibility
       next();
       return;
     }
