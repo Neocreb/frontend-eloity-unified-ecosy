@@ -38,7 +38,7 @@ router.get('/testimonials', async (req: Request, res: Response) => {
         featured: featured === 'true',
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 5000)
+        setTimeout(() => reject(new Error('Request timeout')), 8000)
       ),
     ]) as any[];
 
@@ -72,7 +72,7 @@ router.get('/faqs', async (req: Request, res: Response) => {
         active: true,
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 5000)
+        setTimeout(() => reject(new Error('Request timeout')), 8000)
       ),
     ]) as any[];
 
@@ -106,7 +106,7 @@ router.get('/use-cases', async (req: Request, res: Response) => {
         featured: featured === 'true',
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 5000)
+        setTimeout(() => reject(new Error('Request timeout')), 8000)
       ),
     ]) as any[];
 
