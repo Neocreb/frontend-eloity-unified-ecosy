@@ -78,7 +78,11 @@ class ChatPersistenceService {
 
       return conversations.map((conv) => this.transformConversationToThread(conv));
     } catch (error) {
-      console.error('Error fetching conversations:', error);
+      if (error instanceof Error && error.message.includes('Unauthorized')) {
+        console.error('Chat API: Unauthorized - User may not be logged in or session may have expired');
+      } else {
+        console.error('Error fetching conversations:', error);
+      }
       return [];
     }
   }
