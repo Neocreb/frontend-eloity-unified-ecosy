@@ -140,7 +140,7 @@ const GlobalSearch = () => {
 
       setResults(searchResults.results);
     } catch (error) {
-      console.error("Search failed:", error);
+      console.error("Search failed:", error instanceof Error ? error.message : JSON.stringify(error));
       toast({
         title: "Search Error",
         description: "Failed to perform search. Please try again.",
