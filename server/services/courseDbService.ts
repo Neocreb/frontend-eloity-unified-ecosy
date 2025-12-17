@@ -312,6 +312,7 @@ export class CourseDbService {
    */
   static async getCourseLessons(courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_lessons')
         .select('*')
@@ -331,6 +332,7 @@ export class CourseDbService {
    */
   static async enrollInCourse(userId: string, courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .insert({
@@ -361,6 +363,7 @@ export class CourseDbService {
    */
   static async getUserEnrollment(userId: string, courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .select('*')
@@ -381,6 +384,7 @@ export class CourseDbService {
    */
   static async getUserEnrollments(userId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .select(`
@@ -407,6 +411,7 @@ export class CourseDbService {
     completedLessons: string[]
   ) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .update({
@@ -435,6 +440,7 @@ export class CourseDbService {
     quizScore?: number
   ) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('lesson_progress')
         .upsert(
