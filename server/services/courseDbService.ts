@@ -470,6 +470,7 @@ export class CourseDbService {
    */
   static async getCourseEnrollments(courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .select(`
@@ -497,6 +498,7 @@ export class CourseDbService {
     amount: number
   ) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_reward_claims')
         .insert({
@@ -525,6 +527,7 @@ export class CourseDbService {
     rewardType: string
   ): Promise<boolean> {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_reward_claims')
         .select('id')
