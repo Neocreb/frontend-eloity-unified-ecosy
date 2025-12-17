@@ -268,6 +268,9 @@ const DashboardInner = () => {
                 <DropdownMenuItem onClick={()=>navigate('/app/wallet/transactions')} className="flex items-center gap-2">
                   <List className="h-4 w-4"/> Transactions
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={()=>navigate('/app/wallet/reviews')} className="flex items-center gap-2">
+                  <Star className="h-4 w-4"/> My Reviews
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={()=>navigate('/app/wallet/cards')} className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4"/> My Cards
                 </DropdownMenuItem>
