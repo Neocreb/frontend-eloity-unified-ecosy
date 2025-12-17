@@ -288,6 +288,15 @@ class PaymentLinkService {
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       shareUrl: data.share_url,
+      paymentType: data.payment_type,
+      linkCategory: data.link_category,
+      recurringInterval: data.recurring_interval,
+      recurringActive: data.recurring_active,
+      minAmount: data.min_amount,
+      maxAmount: data.max_amount,
+      successRedirectUrl: data.success_redirect_url,
+      webhookUrl: data.webhook_url,
+      metadata: data.metadata,
     };
   }
 }
