@@ -7,6 +7,8 @@ import {
   Loader,
   ArrowLeft,
   Download,
+  Lock,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { paymentLinkService, PaymentLink } from '@/services/paymentLinkService';
 import { formatCurrency } from '@/utils/formatters';
 import EloityLogo from '@/components/ui/logo';
+import { invoiceTemplateService } from '@/services/invoiceTemplateService';
 
 const PaymentLinkView: React.FC = () => {
   const { code } = useParams<{ code: string }>();
@@ -22,11 +25,12 @@ const PaymentLinkView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [customization, setCustomization] = useState<any>(null);
 
   useEffect(() => {
     const loadPaymentLink = async () => {
       if (!code) {
-        setError('Invalid payment link');
+        setError('Invalid payment link: No code provided');
         setLoading(false);
         return;
       }
@@ -36,19 +40,29 @@ const PaymentLinkView: React.FC = () => {
         const link = await paymentLinkService.getPaymentLinkByCode(code);
 
         if (!link) {
-          setError('Payment link not found');
+          setError(`Payment link with code "${code}" not found. Please check the link and try again.`);
           return;
+        }
+
+        // Load customization for the payment creator
+        try {
+          const customData = await invoiceTemplateService.getPaymentLinkCustomization(link.userId);
+          if (customData) {
+            setCustomization(customData);
+          }
+        } catch (customErr) {
+          console.warn('Could not load payment link customization:', customErr);
         }
 
         // Check if valid
         const isValid = await paymentLinkService.isPaymentLinkValid(code);
         if (!isValid) {
           if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
-            setError('This payment link has expired');
+            setError('This payment link has expired. Please contact the sender for a new link.');
           } else if (link.maxUses && link.currentUses >= link.maxUses) {
-            setError('This payment link has reached its usage limit');
+            setError('This payment link has reached its maximum usage limit. Please contact the sender.');
           } else {
-            setError('This payment link is no longer active');
+            setError('This payment link is no longer active. Please contact the sender for a new link.');
           }
           setPaymentLink(link);
           return;
@@ -58,7 +72,7 @@ const PaymentLinkView: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error('Error loading payment link:', err);
-        setError('Failed to load payment link. Please try again later.');
+        setError('Failed to load payment link. Please try again later or contact support.');
       } finally {
         setLoading(false);
       }
@@ -109,41 +123,88 @@ const PaymentLinkView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100">
-      {/* Header with platform branding */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+    <div
+      className="min-h-screen bg-gradient-to-br via-white"
+      style={{
+        backgroundImage: customization?.bannerImage
+          ? `url(${customization.bannerImage}), linear-gradient(135deg, #667eea 0%, #764ba2 100%)`
+          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        backgroundSize: 'cover, cover',
+        backgroundPosition: 'center, center',
+      }}
+    >
+      {/* Header with platform and creator branding */}
+      <div
+        className="border-b shadow-md sticky top-0 z-40"
+        style={{
+          backgroundColor: customization?.primaryColor || '#ffffff',
+          borderBottomColor: customization?.secondaryColor || '#e5e7eb',
+        }}
+      >
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <EloityLogo className="h-8 w-8" />
-              <span className="font-bold text-lg text-gray-900">Eloity</span>
+            <div className="flex items-center gap-3">
+              {customization?.companyLogo ? (
+                <img
+                  src={customization.companyLogo}
+                  alt="Company Logo"
+                  className="h-8 w-8 rounded-lg object-cover"
+                />
+              ) : (
+                <EloityLogo className="h-8 w-8" />
+              )}
+              <div>
+                <span className="font-bold text-lg text-white">
+                  {customization?.companyName || 'Eloity'}
+                </span>
+                {customization?.companyName && (
+                  <p className="text-xs text-gray-200">Powered by Eloity</p>
+                )}
+              </div>
             </div>
-            <p className="text-sm text-gray-500">Secure Payment Link</p>
+            <div className="flex items-center gap-2 text-white">
+              <Lock className="h-4 w-4" />
+              <p className="text-sm font-medium">Secure Payment</p>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Main content */}
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8 relative">
         {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant="destructive" className="mb-6 backdrop-blur-sm bg-red-50/95">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <AlertDescription className="text-red-900 font-medium ml-2">
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
         {paymentLink && (
           <div className="space-y-6">
             {/* Payment Card */}
-            <Card className="border-0 shadow-lg overflow-hidden">
+            <Card className="border-0 shadow-2xl overflow-hidden">
               {/* Card Header with accent */}
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
-                <h1 className="text-2xl font-bold text-white mb-2">
-                  {paymentLink.description || 'Payment Required'}
-                </h1>
-                <p className="text-blue-100 text-sm">
-                  Secure payment via Eloity Platform
-                </p>
+              <div
+                className="px-8 py-8 text-white relative overflow-hidden"
+                style={{
+                  background: customization?.primaryColor
+                    ? `linear-gradient(135deg, ${customization.primaryColor} 0%, ${customization.secondaryColor || '#0f766e'} 100%)`
+                    : 'linear-gradient(135deg, #2563eb 0%, #0f766e 100%)',
+                }}
+              >
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full transform translate-x-20 -translate-y-20"></div>
+                </div>
+                <div className="relative z-10">
+                  <h1 className="text-3xl font-bold text-white mb-2">
+                    {paymentLink.description || 'Payment Required'}
+                  </h1>
+                  <p className="text-white/80 text-sm">
+                    {customization?.companyName ? `Requested by ${customization.companyName}` : 'Secure payment via Eloity Platform'}
+                  </p>
+                </div>
               </div>
 
               <CardContent className="p-8">
@@ -258,22 +319,29 @@ const PaymentLinkView: React.FC = () => {
             </Card>
 
             {/* Security Information */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50">
               <CardContent className="p-6">
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">Security Information</h3>
-                  <ul className="space-y-2 text-sm text-gray-600">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-5 w-5 text-green-600" />
+                    <h3 className="font-semibold text-gray-900">Payment Security</h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-gray-700">
                     <li className="flex gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span>SSL encrypted connection</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0" />
+                      <span><strong>256-bit SSL Encryption</strong> - Your data is encrypted in transit</span>
                     </li>
                     <li className="flex gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span>PCI-DSS compliant payment processing</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0" />
+                      <span><strong>PCI-DSS Compliant</strong> - Industry-standard security compliance</span>
                     </li>
                     <li className="flex gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span>Your payment information is secure</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0" />
+                      <span><strong>Secure Processing</strong> - Your payment information is never stored on insecure servers</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0" />
+                      <span><strong>Fraud Protection</strong> - Advanced fraud detection systems active</span>
                     </li>
                   </ul>
                 </div>
@@ -281,9 +349,15 @@ const PaymentLinkView: React.FC = () => {
             </Card>
 
             {/* Footer */}
-            <div className="text-center text-xs text-gray-500">
-              <p>Powered by Eloity Platform</p>
-              <p className="mt-1">For questions or issues, contact the payment creator</p>
+            <div className="text-center space-y-2 text-xs text-gray-500 py-4">
+              <p className="font-medium text-gray-600">Secure Payment Link powered by <span className="text-purple-600 font-bold">Eloity</span></p>
+              {customization?.companyEmail && (
+                <p>For questions, contact: <a href={`mailto:${customization.companyEmail}`} className="text-purple-600 hover:underline">{customization.companyEmail}</a></p>
+              )}
+              {customization?.companyWebsite && (
+                <p>Visit: <a href={customization.companyWebsite} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">{customization.companyWebsite}</a></p>
+              )}
+              <p className="text-gray-400 mt-2">© {new Date().getFullYear()} Eloity Platform. All rights reserved.</p>
             </div>
           </div>
         )}

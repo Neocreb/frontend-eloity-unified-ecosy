@@ -1,21 +1,36 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Download, Printer, Mail, AlertCircle, Loader } from 'lucide-react';
+import { ChevronLeft, Download, Printer, Mail, AlertCircle, Loader, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WalletProvider, useWalletContext } from '@/contexts/WalletContext';
 import { useReceipts } from '@/hooks/useReceipts';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { invoiceTemplateService } from '@/services/invoiceTemplateService';
+import ProfessionalReceiptTemplate from '@/components/receipt/ProfessionalReceiptTemplate';
 
 const ReceiptsInner: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { transactions } = useWalletContext();
   const { receipts, isLoading, generateReceipt, downloadReceiptPDF, emailReceipt } = useReceipts();
   const { formatCurrency } = useCurrency();
   const { toast } = useToast();
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [emailingId, setEmailingId] = useState<string | null>(null);
+  const [customization, setCustomization] = useState<any>(null);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
+
+  // Load customization on mount
+  useEffect(() => {
+    if (user?.id) {
+      invoiceTemplateService.getReceiptCustomization(user.id).then(setCustomization);
+    }
+  }, [user?.id]);
 
   const handleGenerateReceipt = async (transactionId: string) => {
     const transaction = transactions.find(tx => tx.id === transactionId);
@@ -92,28 +107,256 @@ const ReceiptsInner: React.FC = () => {
     }
   };
 
+  const handleSaveCustomization = async (customizationData: any) => {
+    if (!user?.id) return;
+    try {
+      const updated = await invoiceTemplateService.updateReceiptCustomization(
+        user.id,
+        customizationData
+      );
+      setCustomization(updated);
+      setShowCustomization(false);
+      toast({
+        title: 'Success',
+        description: 'Receipt template customization saved',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save customization',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePreviewReceipt = (receiptData: any) => {
+    setPreviewReceipt({
+      id: receiptData.id,
+      receiptNumber: receiptData.receipt_number || receiptData.receiptNumber || 'RCP-001',
+      timestamp: receiptData.created_at || receiptData.timestamp || new Date().toISOString(),
+      amount: receiptData.amount || 0,
+      currency: customization?.currency || 'USD',
+      description: receiptData.description || 'Transaction Receipt',
+      status: 'completed',
+    });
+    setShowPreview(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Header */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="h-10 w-10"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Transaction Receipts</h1>
-            <p className="text-sm text-gray-600">Generate and manage transaction receipts</p>
+        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="h-10 w-10"
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900">Transaction Receipts</h1>
+              <p className="text-sm text-gray-600">Generate and manage transaction receipts</p>
+            </div>
           </div>
+          <Button
+            onClick={() => setShowCustomization(!showCustomization)}
+            variant="outline"
+            className="gap-2"
+          >
+            <Settings className="h-4 w-4" />
+            Template
+          </Button>
         </div>
       </div>
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-6 pb-20">
+        {/* Preview Modal */}
+        {showPreview && previewReceipt && customization && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 max-h-screen overflow-y-auto">
+            <div className="bg-white rounded-lg max-w-2xl w-full my-8">
+              <div className="flex justify-between items-center p-4 border-b">
+                <h2 className="text-lg font-bold">Receipt Preview</h2>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowPreview(false)}
+                >
+                  ✕
+                </Button>
+              </div>
+              <div className="p-4 overflow-y-auto max-h-[70vh]">
+                <ProfessionalReceiptTemplate
+                  receipt={previewReceipt}
+                  customization={customization}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Customization Form */}
+        {showCustomization && (
+          <Card className="mb-6 border-purple-200 bg-purple-50">
+            <CardHeader>
+              <CardTitle>Customize Receipt Template</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveCustomization(customization);
+                }}
+                className="space-y-6"
+              >
+                {/* Company Information */}
+                <div className="space-y-4">
+                  <h4 className="font-semibold text-gray-900">Company Information</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Company Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={customization?.companyName || ''}
+                        onChange={(e) => setCustomization({ ...customization, companyName: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={customization?.companyEmail || ''}
+                        onChange={(e) => setCustomization({ ...customization, companyEmail: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Phone
+                      </label>
+                      <input
+                        type="tel"
+                        value={customization?.companyPhone || ''}
+                        onChange={(e) => setCustomization({ ...customization, companyPhone: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Receipt Prefix
+                      </label>
+                      <input
+                        type="text"
+                        value={customization?.receiptPrefix || 'RCP'}
+                        onChange={(e) => setCustomization({ ...customization, receiptPrefix: e.target.value })}
+                        placeholder="e.g., RCP"
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Address
+                      </label>
+                      <textarea
+                        value={customization?.companyAddress || ''}
+                        onChange={(e) => setCustomization({ ...customization, companyAddress: e.target.value })}
+                        rows={2}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Design Settings */}
+                <div className="space-y-4 pt-4 border-t">
+                  <h4 className="font-semibold text-gray-900">Design Settings</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Primary Color
+                      </label>
+                      <div className="flex gap-2">
+                        <input
+                          type="color"
+                          value={customization?.primaryColor || '#10b981'}
+                          onChange={(e) => setCustomization({ ...customization, primaryColor: e.target.value })}
+                          className="w-12 h-10 rounded border border-gray-300 cursor-pointer"
+                        />
+                        <input
+                          type="text"
+                          value={customization?.primaryColor || '#10b981'}
+                          onChange={(e) => setCustomization({ ...customization, primaryColor: e.target.value })}
+                          className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Currency
+                      </label>
+                      <input
+                        type="text"
+                        value={customization?.currency || 'USD'}
+                        onChange={(e) => setCustomization({ ...customization, currency: e.target.value })}
+                        placeholder="USD"
+                        maxLength={3}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Receipt Options */}
+                <div className="space-y-3 pt-4 border-t">
+                  <h4 className="font-semibold text-gray-900">Receipt Options</h4>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={customization?.includeQRCode || false}
+                      onChange={(e) => setCustomization({ ...customization, includeQRCode: e.target.checked })}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700">Include QR Code</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={customization?.includeSignature || false}
+                      onChange={(e) => setCustomization({ ...customization, includeSignature: e.target.checked })}
+                      className="rounded border-gray-300"
+                    />
+                    <span className="text-sm text-gray-700">Include Signature Line</span>
+                  </label>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-purple-600 hover:bg-purple-700"
+                  >
+                    Save Customization
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowCustomization(false)}
+                    className="flex-1"
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        )}
         {isLoading ? (
           <div className="flex flex-col items-center justify-center py-12">
             <Loader className="h-8 w-8 text-purple-600 animate-spin mb-4" />
@@ -223,11 +466,21 @@ const ReceiptsInner: React.FC = () => {
                               <>
                                 <Button
                                   size="sm"
-                                  onClick={() => handleDownloadReceipt(receipt.id)}
+                                  onClick={() => {
+                                    if (customization) {
+                                      handlePreviewReceipt(receipt);
+                                    } else {
+                                      toast({
+                                        title: 'Setup Required',
+                                        description: 'Please configure your receipt template first',
+                                        variant: 'destructive',
+                                      });
+                                    }
+                                  }}
                                   className="bg-green-600 hover:bg-green-700 text-white"
                                 >
                                   <Download className="h-3 w-3 mr-1" />
-                                  Download
+                                  Preview & Download
                                 </Button>
                                 <Button
                                   size="sm"
