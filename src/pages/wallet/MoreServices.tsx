@@ -36,6 +36,9 @@ import {
   FileText,
   Link2,
   Receipt,
+  BarChart3,
+  ListChecks,
+  MessageSquare,
 } from "lucide-react";
 
 interface Service {
@@ -220,6 +223,36 @@ const MoreServices = () => {
 
     // Finance & Investment
     {
+      id: "analytics",
+      label: "My Analytics",
+      icon: <BarChart3 className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/analytics"),
+      gradient: "bg-gradient-to-br from-indigo-400 to-blue-600",
+      category: "Finance & Investment",
+      description: "View wallet analytics & insights",
+      isNew: true,
+    },
+    {
+      id: "transactions",
+      label: "My Transactions",
+      icon: <ListChecks className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/transactions"),
+      gradient: "bg-gradient-to-br from-cyan-400 to-teal-600",
+      category: "Finance & Investment",
+      description: "Track all transactions",
+      isNew: true,
+    },
+    {
+      id: "reviews",
+      label: "My Reviews",
+      icon: <MessageSquare className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/reviews"),
+      gradient: "bg-gradient-to-br from-rose-400 to-pink-600",
+      category: "Finance & Investment",
+      description: "Manage service reviews",
+      isNew: true,
+    },
+    {
       id: "savings",
       label: "Savings Goals",
       icon: <Wallet className="h-6 w-6" />,
@@ -303,14 +336,14 @@ const MoreServices = () => {
       isNew: true,
     },
 
-    // Financial Tools & Management
+    // Finance & Investment - Management Tools
     {
       id: "transaction-export",
       label: "Export Transactions",
       icon: <Download className="h-6 w-6" />,
       action: () => navigate("/app/wallet/export"),
       gradient: "bg-gradient-to-br from-green-400 to-emerald-600",
-      category: "Financial Tools",
+      category: "Finance & Investment",
       description: "Download CSV, JSON, PDF",
       isNew: true,
     },
@@ -320,7 +353,7 @@ const MoreServices = () => {
       icon: <FileText className="h-6 w-6" />,
       action: () => navigate("/app/wallet/receipts"),
       gradient: "bg-gradient-to-br from-purple-400 to-violet-600",
-      category: "Financial Tools",
+      category: "Finance & Investment",
       description: "Generate & manage receipts",
       isNew: true,
     },
@@ -330,7 +363,7 @@ const MoreServices = () => {
       icon: <Link2 className="h-6 w-6" />,
       action: () => navigate("/app/wallet/payment-links"),
       gradient: "bg-gradient-to-br from-orange-400 to-red-600",
-      category: "Financial Tools",
+      category: "Finance & Investment",
       description: "Shareable payment requests",
       isNew: true,
     },
@@ -340,7 +373,7 @@ const MoreServices = () => {
       icon: <Receipt className="h-6 w-6" />,
       action: () => navigate("/app/wallet/invoices"),
       gradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
-      category: "Financial Tools",
+      category: "Finance & Investment",
       description: "Create & send invoices",
       isNew: true,
     },

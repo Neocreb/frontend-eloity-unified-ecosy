@@ -23,7 +23,7 @@ class ReceiptService {
   async generateReceipt(transaction: Transaction, userId: string): Promise<Receipt> {
     try {
       const receiptNumber = this.generateReceiptNumber();
-      
+
       // Store receipt record in database
       const { data, error } = await supabase
         .from('receipts')
@@ -38,7 +38,10 @@ class ReceiptService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        throw new Error(`Failed to generate receipt: ${errorMsg}`);
+      }
 
       return {
         id: data.id,
@@ -49,8 +52,9 @@ class ReceiptService {
         filePath: data.file_path,
       };
     } catch (error) {
-      console.error('Error generating receipt:', error);
-      throw new Error('Failed to generate receipt');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error generating receipt:', errorMsg);
+      throw new Error(errorMsg);
     }
   }
 
@@ -95,7 +99,10 @@ class ReceiptService {
         .order('generated_at', { ascending: false })
         .range(offset, offset + limit - 1);
 
-      if (error) throw error;
+      if (error) {
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        throw new Error(`Failed to fetch receipts: ${errorMsg}`);
+      }
 
       return (data || []).map(r => ({
         id: r.id,
@@ -106,8 +113,9 @@ class ReceiptService {
         filePath: r.file_path,
       }));
     } catch (error) {
-      console.error('Error fetching user receipts:', error);
-      return [];
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error fetching user receipts:', errorMsg);
+      throw new Error(`Failed to load receipts: ${errorMsg}`);
     }
   }
 

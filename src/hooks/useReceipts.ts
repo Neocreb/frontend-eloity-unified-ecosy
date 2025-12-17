@@ -23,7 +23,10 @@ export const useReceipts = (): UseReceiptsReturn => {
   const [error, setError] = useState<string | null>(null);
 
   const loadUserReceipts = useCallback(async () => {
-    if (!user?.id) return;
+    if (!user?.id) {
+      setError('User not authenticated');
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -31,9 +34,9 @@ export const useReceipts = (): UseReceiptsReturn => {
       const userReceipts = await receiptService.getUserReceipts(user.id);
       setReceipts(userReceipts);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to load receipts';
+      const message = err instanceof Error ? err.message : 'Failed to load receipts. Please check that the receipts table has been created in Supabase.';
       setError(message);
-      console.error('Error loading receipts:', err);
+      console.error('Error loading receipts:', message);
     } finally {
       setIsLoading(false);
     }

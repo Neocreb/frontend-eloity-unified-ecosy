@@ -98,6 +98,10 @@ import SavingsGoals from "./pages/wallet/SavingsGoals";
 import Electricity from "./pages/wallet/Electricity";
 import MoneyRequest from "./pages/wallet/MoneyRequest";
 import MoreServices from "./pages/wallet/MoreServices";
+import TransactionExport from "./pages/wallet/TransactionExport";
+import Receipts from "./pages/wallet/Receipts";
+import PaymentLinks from "./pages/wallet/PaymentLinks";
+import Invoices from "./pages/wallet/Invoices";
 // Crypto pages
 import CryptoKYC from "./pages/CryptoKYC";
 import UniversalCryptoPayment from "./pages/UniversalCryptoPayment";
@@ -612,6 +616,10 @@ const AppRoutes = () => {
           <Route path="wallet/electricity" element={<Electricity />} />
           <Route path="wallet/money-request" element={<MoneyRequest />} />
           <Route path="wallet/more-services" element={<MoreServices />} />
+          <Route path="wallet/export" element={<TransactionExport />} />
+          <Route path="wallet/receipts" element={<Receipts />} />
+          <Route path="wallet/payment-links" element={<PaymentLinks />} />
+          <Route path="wallet/invoices" element={<Invoices />} />
 
           {/* Crypto Trading Routes - Full Page Flows */}
           <Route path="crypto/kyc" element={<CryptoKYC />} />

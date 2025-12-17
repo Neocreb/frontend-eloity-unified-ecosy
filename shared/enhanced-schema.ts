@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, timestamp, boolean, jsonb, numeric, integer, varchar } from 'drizzle-orm/pg-core';
+import { pgTable, uuid, text, timestamp, boolean, jsonb, numeric, integer, varchar, serial } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 import { users, followers } from './schema';
 import { freelance_payments } from './freelance-schema.js';
@@ -744,6 +744,53 @@ export const stream_donations = pgTable('stream_donations', {
   message: text('message'),
   is_anonymous: boolean('is_anonymous').default(false),
   created_at: timestamp('created_at').defaultNow(),
+});
+
+// Receipts table
+export const receipts = pgTable('receipts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  transaction_id: uuid('transaction_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  receipt_number: text('receipt_number').notNull().unique(),
+  generated_at: timestamp('generated_at').defaultNow(),
+  file_path: text('file_path'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// Payment Links table
+export const payment_links = pgTable('payment_links', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  code: text('code').notNull().unique(),
+  amount: numeric('amount', { precision: 10, scale: 2 }),
+  description: text('description'),
+  expires_at: timestamp('expires_at'),
+  max_uses: integer('max_uses'),
+  current_uses: integer('current_uses').default(0),
+  is_active: boolean('is_active').default(true),
+  share_url: text('share_url').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// Invoices table
+export const invoices = pgTable('invoices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  invoice_number: text('invoice_number').notNull().unique(),
+  user_id: uuid('user_id').notNull(),
+  recipient_email: text('recipient_email'),
+  recipient_name: text('recipient_name'),
+  items: jsonb('items').default('[]'),
+  subtotal: numeric('subtotal', { precision: 10, scale: 2 }).notNull().default('0'),
+  tax: numeric('tax', { precision: 10, scale: 2 }).default('0'),
+  total: numeric('total', { precision: 10, scale: 2 }).notNull().default('0'),
+  status: text('status').default('draft'),
+  notes: text('notes'),
+  due_date: timestamp('due_date'),
+  paid_at: timestamp('paid_at'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
 });
 
 // Relations for live streams
