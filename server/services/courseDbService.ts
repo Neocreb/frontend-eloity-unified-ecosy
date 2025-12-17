@@ -117,6 +117,7 @@ export class CourseDbService {
    */
   static async getCourseById(courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('courses')
         .select(`
@@ -143,6 +144,7 @@ export class CourseDbService {
     courseType?: 'platform' | 'creator';
   }) {
     try {
+      this.ensureSupabase();
       let query = supabase
         .from('courses')
         .select(`
@@ -177,6 +179,7 @@ export class CourseDbService {
    */
   static async getCoursesByInstructor(instructorId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('courses')
         .select(`
@@ -199,6 +202,7 @@ export class CourseDbService {
    */
   static async updateCourse(courseId: string, input: CourseUpdateInput) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('courses')
         .update(input)
@@ -219,6 +223,7 @@ export class CourseDbService {
    */
   static async deleteCourse(courseId: string) {
     try {
+      this.ensureSupabase();
       const { error } = await supabase
         .from('courses')
         .delete()
@@ -237,6 +242,7 @@ export class CourseDbService {
    */
   static async addLesson(courseId: string, input: LessonInput) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_lessons')
         .insert({
@@ -266,6 +272,7 @@ export class CourseDbService {
    */
   static async updateLesson(lessonId: string, input: Partial<LessonInput>) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_lessons')
         .update(input)
@@ -286,6 +293,7 @@ export class CourseDbService {
    */
   static async deleteLesson(lessonId: string) {
     try {
+      this.ensureSupabase();
       const { error } = await supabase
         .from('course_lessons')
         .delete()
