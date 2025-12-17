@@ -99,7 +99,10 @@ const CreatePaymentLinkEnhanced: React.FC = () => {
     try {
       setIsSubmitting(true);
       const link = await createPaymentLink(formData as CreatePaymentLinkInput);
-      if (link) {
+      if (link && user?.id) {
+        // Record the payment link creation in sync service
+        await recordPaymentLinkCreated(link.id, link.amount);
+
         toast({
           title: 'Success',
           description: 'Payment link created successfully',
