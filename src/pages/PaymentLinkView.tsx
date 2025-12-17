@@ -30,7 +30,7 @@ const PaymentLinkView: React.FC = () => {
   useEffect(() => {
     const loadPaymentLink = async () => {
       if (!code) {
-        setError('Invalid payment link');
+        setError('Invalid payment link: No code provided');
         setLoading(false);
         return;
       }
@@ -40,19 +40,29 @@ const PaymentLinkView: React.FC = () => {
         const link = await paymentLinkService.getPaymentLinkByCode(code);
 
         if (!link) {
-          setError('Payment link not found');
+          setError(`Payment link with code "${code}" not found. Please check the link and try again.`);
           return;
+        }
+
+        // Load customization for the payment creator
+        try {
+          const customData = await invoiceTemplateService.getPaymentLinkCustomization(link.userId);
+          if (customData) {
+            setCustomization(customData);
+          }
+        } catch (customErr) {
+          console.warn('Could not load payment link customization:', customErr);
         }
 
         // Check if valid
         const isValid = await paymentLinkService.isPaymentLinkValid(code);
         if (!isValid) {
           if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
-            setError('This payment link has expired');
+            setError('This payment link has expired. Please contact the sender for a new link.');
           } else if (link.maxUses && link.currentUses >= link.maxUses) {
-            setError('This payment link has reached its usage limit');
+            setError('This payment link has reached its maximum usage limit. Please contact the sender.');
           } else {
-            setError('This payment link is no longer active');
+            setError('This payment link is no longer active. Please contact the sender for a new link.');
           }
           setPaymentLink(link);
           return;
@@ -62,7 +72,7 @@ const PaymentLinkView: React.FC = () => {
         setError(null);
       } catch (err) {
         console.error('Error loading payment link:', err);
-        setError('Failed to load payment link. Please try again later.');
+        setError('Failed to load payment link. Please try again later or contact support.');
       } finally {
         setLoading(false);
       }
