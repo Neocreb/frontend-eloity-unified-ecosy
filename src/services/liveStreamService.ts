@@ -51,6 +51,11 @@ export const liveStreamService = {
         .limit(20);
 
       if (error) {
+        // Check if table doesn't exist (PGRST116 or similar error codes)
+        if (error.code === 'PGRST116' || error.message?.includes('relation "public.live_streams" does not exist')) {
+          console.warn('Live streams table not yet created. Please run the migration script.');
+          return [];
+        }
         // Log detailed error information
         console.error('Error loading live streams - Details:', {
           message: error?.message,
