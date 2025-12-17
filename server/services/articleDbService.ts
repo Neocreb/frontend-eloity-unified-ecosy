@@ -2,7 +2,19 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+let supabase: any = null;
+
+// Only initialize Supabase if credentials are available
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  } catch (error) {
+    console.warn('Failed to initialize Supabase client in ArticleDbService:', error);
+  }
+} else {
+  console.warn('Supabase credentials not configured. Article database features will be unavailable.');
+}
 
 export interface ArticleInput {
   title: string;
@@ -13,26 +25,35 @@ export interface ArticleInput {
   reading_time?: number;
   featured_image?: string;
   quiz_questions?: any;
-  quiz_passing_score?: number;
-  reward_reading?: number;
-  reward_quiz_completion?: number;
-  reward_perfect_score?: number;
   tags?: string[];
+  reward_reading?: number;
+  reward_completion?: number;
+  author_avatar?: string;
+  author_name?: string;
+  author_bio?: string;
 }
 
 export interface ArticleUpdateInput extends Partial<ArticleInput> {
   is_published?: boolean;
   published_at?: string;
+  is_active?: boolean;
 }
 
 export class ArticleDbService {
+  private static ensureSupabase() {
+    if (!supabase) {
+      throw new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
+    }
+  }
+
   /**
-   * Create a new educational article
+   * Create a new article
    */
   static async createArticle(authorId: string, input: ArticleInput) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
-        .from('educational_articles')
+        .from('articles')
         .insert({
           author_id: authorId,
           title: input.title,
@@ -40,14 +61,15 @@ export class ArticleDbService {
           content: input.content,
           difficulty: input.difficulty || 'Beginner',
           category: input.category || '',
-          reading_time: input.reading_time || 5,
+          reading_time: input.reading_time || 0,
           featured_image: input.featured_image || '',
-          quiz_questions: input.quiz_questions || null,
-          quiz_passing_score: input.quiz_passing_score || 70,
-          reward_reading: input.reward_reading || 1,
-          reward_quiz_completion: input.reward_quiz_completion || 2,
-          reward_perfect_score: input.reward_perfect_score || 3,
+          quiz_questions: input.quiz_questions || [],
           tags: input.tags || [],
+          reward_reading: input.reward_reading || 0.5,
+          reward_completion: input.reward_completion || 2,
+          author_avatar: input.author_avatar || '',
+          author_name: input.author_name || '',
+          author_bio: input.author_bio || '',
         })
         .select()
         .single();
@@ -65,8 +87,9 @@ export class ArticleDbService {
    */
   static async getArticleById(articleId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
-        .from('educational_articles')
+        .from('articles')
         .select('*')
         .eq('id', articleId)
         .single();
@@ -82,22 +105,20 @@ export class ArticleDbService {
   /**
    * Get all published articles
    */
-  static async getAllPublishedArticles(filters?: {
-    difficulty?: string;
-    category?: string;
-    tags?: string[];
-  }) {
+  static async getAllPublishedArticles(filters?: { category?: string; difficulty?: string }) {
     try {
+      this.ensureSupabase();
       let query = supabase
-        .from('educational_articles')
+        .from('articles')
         .select('*')
-        .eq('is_published', true);
+        .eq('is_published', true)
+        .eq('is_active', true);
 
-      if (filters?.difficulty) {
-        query = query.eq('difficulty', filters.difficulty);
-      }
       if (filters?.category) {
         query = query.eq('category', filters.category);
+      }
+      if (filters?.difficulty) {
+        query = query.eq('difficulty', filters.difficulty);
       }
 
       const { data, error } = await query.order('published_at', { ascending: false });
@@ -115,11 +136,12 @@ export class ArticleDbService {
    */
   static async getArticlesByAuthor(authorId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
-        .from('educational_articles')
+        .from('articles')
         .select('*')
         .eq('author_id', authorId)
-        .order('created_at', { ascending: false });
+        .order('published_at', { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -134,8 +156,9 @@ export class ArticleDbService {
    */
   static async updateArticle(articleId: string, input: ArticleUpdateInput) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
-        .from('educational_articles')
+        .from('articles')
         .update(input)
         .eq('id', articleId)
         .select()
@@ -154,254 +177,13 @@ export class ArticleDbService {
    */
   static async deleteArticle(articleId: string) {
     try {
-      const { error } = await supabase
-        .from('educational_articles')
-        .delete()
-        .eq('id', articleId);
+      this.ensureSupabase();
+      const { error } = await supabase.from('articles').delete().eq('id', articleId);
 
       if (error) throw error;
       return { success: true };
     } catch (error) {
       console.error('Error deleting article:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Publish article
-   */
-  static async publishArticle(articleId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('educational_articles')
-        .update({
-          is_published: true,
-          published_at: new Date().toISOString(),
-        })
-        .eq('id', articleId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      console.error('Error publishing article:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Unpublish article
-   */
-  static async unpublishArticle(articleId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('educational_articles')
-        .update({ is_published: false })
-        .eq('id', articleId)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      console.error('Error unpublishing article:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Record user article reading
-   */
-  static async markArticleRead(userId: string, articleId: string, timeSpent: number = 0) {
-    try {
-      const { data, error } = await supabase
-        .from('article_progress')
-        .upsert(
-          {
-            user_id: userId,
-            article_id: articleId,
-            read: true,
-            time_spent_minutes: timeSpent,
-            read_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id,article_id' }
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Increment views count
-      await supabase.rpc('increment_article_views', { article_id: articleId });
-
-      return { success: true, data };
-    } catch (error) {
-      console.error('Error marking article read:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Submit article quiz answer
-   */
-  static async submitArticleQuiz(userId: string, articleId: string, score: number) {
-    try {
-      const { data, error } = await supabase
-        .from('article_progress')
-        .upsert(
-          {
-            user_id: userId,
-            article_id: articleId,
-            quiz_score: score,
-          },
-          { onConflict: 'user_id,article_id' }
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      console.error('Error submitting quiz:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Bookmark article
-   */
-  static async bookmarkArticle(userId: string, articleId: string, bookmarked: boolean) {
-    try {
-      const { data, error } = await supabase
-        .from('article_progress')
-        .upsert(
-          {
-            user_id: userId,
-            article_id: articleId,
-            bookmarked: bookmarked,
-          },
-          { onConflict: 'user_id,article_id' }
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      console.error('Error bookmarking article:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Like article
-   */
-  static async likeArticle(userId: string, articleId: string, liked: boolean) {
-    try {
-      const { data, error } = await supabase
-        .from('article_progress')
-        .upsert(
-          {
-            user_id: userId,
-            article_id: articleId,
-            liked: liked,
-          },
-          { onConflict: 'user_id,article_id' }
-        )
-        .select()
-        .single();
-
-      if (error) throw error;
-      return { success: true, data };
-    } catch (error) {
-      console.error('Error liking article:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get user's article progress
-   */
-  static async getUserArticleProgress(userId: string, articleId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('article_progress')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('article_id', articleId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error; // PGRST116 = not found
-      return data || null;
-    } catch (error) {
-      console.error('Error fetching article progress:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get user's all article progress
-   */
-  static async getUserArticlesProgress(userId: string) {
-    try {
-      const { data, error } = await supabase
-        .from('article_progress')
-        .select(
-          `
-          *,
-          article:article_id(id, title, difficulty, category)
-        `
-        )
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching user article progress:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Claim article reading reward
-   */
-  static async claimReadingReward(userId: string, articleId: string, amount: number) {
-    try {
-      await supabase.from('article_progress').update({ reading_reward_claimed: true }).eq('user_id', userId).eq('article_id', articleId);
-
-      return { success: true, amount };
-    } catch (error) {
-      console.error('Error claiming reading reward:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Claim article quiz reward
-   */
-  static async claimQuizReward(userId: string, articleId: string, amount: number) {
-    try {
-      await supabase.from('article_progress').update({ quiz_reward_claimed: true }).eq('user_id', userId).eq('article_id', articleId);
-
-      return { success: true, amount };
-    } catch (error) {
-      console.error('Error claiming quiz reward:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Claim perfect score reward
-   */
-  static async claimPerfectScoreReward(userId: string, articleId: string, amount: number) {
-    try {
-      await supabase.from('article_progress').update({ perfect_score_reward_claimed: true }).eq('user_id', userId).eq('article_id', articleId);
-
-      return { success: true, amount };
-    } catch (error) {
-      console.error('Error claiming perfect score reward:', error);
       throw error;
     }
   }
