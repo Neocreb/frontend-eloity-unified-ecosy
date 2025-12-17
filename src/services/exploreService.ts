@@ -94,7 +94,11 @@ export const exploreService = {
         }
 
         return (fallbackData || [])
-          .filter((profile: any) => !excludeIds.has(profile.user_id))
+          .filter((profile: any) => {
+            // Include users that are not excluded and have public/followers visibility or no visibility set
+            const isPublic = !profile.profile_visibility || profile.profile_visibility === 'public' || profile.profile_visibility === 'followers';
+            return !excludeIds.has(profile.user_id) && isPublic;
+          })
           .slice(0, limit)
           .map((profile: any) => ({
             id: profile.user_id,
