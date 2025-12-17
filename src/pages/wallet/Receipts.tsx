@@ -1,12 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Download, Printer, Mail, AlertCircle, Loader } from 'lucide-react';
+import { ChevronLeft, Download, Printer, Mail, AlertCircle, Loader, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { WalletProvider, useWalletContext } from '@/contexts/WalletContext';
 import { useReceipts } from '@/hooks/useReceipts';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
+import { invoiceTemplateService } from '@/services/invoiceTemplateService';
+import ProfessionalReceiptTemplate from '@/components/receipt/ProfessionalReceiptTemplate';
 
 const ReceiptsInner: React.FC = () => {
   const navigate = useNavigate();
