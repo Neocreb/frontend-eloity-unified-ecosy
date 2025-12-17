@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ChevronLeft,
@@ -12,6 +12,7 @@ import {
   Loader,
   MoreHorizontal,
   FileText,
+  Settings,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,7 +25,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useInvoices } from '@/hooks/useInvoices';
 import { useToast } from '@/components/ui/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 import { CreateInvoiceInput, InvoiceItem } from '@/services/invoiceService';
+import { invoiceTemplateService } from '@/services/invoiceTemplateService';
+import ProfessionalInvoiceTemplate from '@/components/invoice/ProfessionalInvoiceTemplate';
 
 const Invoices: React.FC = () => {
   const navigate = useNavigate();
