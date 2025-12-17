@@ -746,6 +746,18 @@ export const stream_donations = pgTable('stream_donations', {
   created_at: timestamp('created_at').defaultNow(),
 });
 
+// Receipts table
+export const receipts = pgTable('receipts', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  transaction_id: uuid('transaction_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  receipt_number: text('receipt_number').notNull().unique(),
+  generated_at: timestamp('generated_at').defaultNow(),
+  file_path: text('file_path'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
 // Relations for live streams
 export const liveStreamsRelations = relations(live_streams, ({ one, many }) => ({
   user: one(profiles, {
