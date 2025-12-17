@@ -119,6 +119,25 @@ const ReceiptsInner: React.FC = () => {
             <Loader className="h-8 w-8 text-purple-600 animate-spin mb-4" />
             <p className="text-gray-600">Loading receipts...</p>
           </div>
+        ) : error ? (
+          <Card className="border-red-200 bg-red-50">
+            <CardContent className="p-6">
+              <div className="flex items-start gap-4">
+                <AlertCircle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-semibold text-red-900 mb-2">Error Loading Receipts</h3>
+                  <p className="text-sm text-red-800 mb-3">{error}</p>
+                  <Button
+                    size="sm"
+                    onClick={() => window.location.reload()}
+                    className="bg-red-600 hover:bg-red-700"
+                  >
+                    Retry
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         ) : receipts.length === 0 && transactions.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
