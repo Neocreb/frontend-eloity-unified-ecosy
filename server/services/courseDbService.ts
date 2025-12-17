@@ -58,6 +58,12 @@ export interface LessonInput {
 }
 
 export class CourseDbService {
+  private static ensureSupabase() {
+    if (!supabase) {
+      throw new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
+    }
+  }
+
   /**
    * Create a new course
    */
@@ -67,6 +73,7 @@ export class CourseDbService {
     input: CourseInput
   ) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('courses')
         .insert({
