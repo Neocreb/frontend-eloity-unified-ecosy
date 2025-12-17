@@ -25,6 +25,7 @@ const PaymentLinkView: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [processing, setProcessing] = useState(false);
+  const [customization, setCustomization] = useState<any>(null);
 
   useEffect(() => {
     const loadPaymentLink = async () => {
