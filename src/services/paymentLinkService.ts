@@ -64,6 +64,15 @@ class PaymentLinkService {
             current_uses: 0,
             is_active: true,
             share_url: shareUrl,
+            payment_type: input.paymentType || 'standard',
+            link_category: input.linkCategory || 'standard',
+            recurring_interval: input.recurringInterval,
+            recurring_active: input.recurringActive || false,
+            min_amount: input.minAmount,
+            max_amount: input.maxAmount,
+            success_redirect_url: input.successRedirectUrl,
+            webhook_url: input.webhookUrl,
+            metadata: input.metadata,
           },
         ])
         .select()
