@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useInvoicePaymentSync } from '@/hooks/useInvoicePaymentSync';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { invoiceTemplateService } from '@/services/invoiceTemplateService';
