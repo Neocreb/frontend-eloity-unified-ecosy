@@ -276,6 +276,25 @@ class ServiceReviewService {
   }
 
   /**
+   * Get all reviews submitted by a specific user across all services
+   */
+  async getUserReviewsForAllServices(userId: string): Promise<ServiceReview[]> {
+    try {
+      const { data, error } = await supabase
+        .from("service_reviews")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data?.map(this.mapFromDatabase) || [];
+    } catch (error) {
+      console.error("Error fetching user reviews for all services:", error);
+      return [];
+    }
+  }
+
+  /**
    * Map database response to interface
    */
   private mapFromDatabase(data: any): ServiceReview {
