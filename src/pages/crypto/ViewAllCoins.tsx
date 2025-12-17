@@ -171,8 +171,8 @@ const ViewAllCoins = () => {
 
   const formatPercentage = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 
-  const handleNavigateToTrade = (cryptoId: string) => {
-    navigate(`/app/crypto-trading?pair=${cryptoId.toUpperCase()}USDT`);
+  const handleViewAnalysis = (cryptoId: string) => {
+    navigate(`/app/crypto-intelligence?coin=${cryptoId}`);
   };
 
   const getFilteredCoins = () => {
@@ -310,7 +310,7 @@ const ViewAllCoins = () => {
                   {filteredCoins.map((crypto, index) => (
                     <div
                       key={crypto.id}
-                      onClick={() => handleNavigateToTrade(crypto.id)}
+                      onClick={() => handleViewAnalysis(crypto.id)}
                       className={cn(
                         "grid md:grid-cols-12 gap-4 p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer border-b dark:border-slate-700 last:border-b-0",
                         "flex flex-col"
