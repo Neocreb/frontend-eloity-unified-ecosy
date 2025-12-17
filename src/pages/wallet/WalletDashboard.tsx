@@ -268,6 +268,18 @@ const DashboardInner = () => {
                 <DropdownMenuItem onClick={()=>navigate('/app/wallet/transactions')} className="flex items-center gap-2">
                   <List className="h-4 w-4"/> Transactions
                 </DropdownMenuItem>
+                <DropdownMenuItem onClick={()=>navigate('/app/wallet/export')} className="flex items-center gap-2">
+                  <Plane className="h-4 w-4"/> Export
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={()=>navigate('/app/wallet/receipts')} className="flex items-center gap-2">
+                  <Plane className="h-4 w-4"/> Receipts
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={()=>navigate('/app/wallet/payment-links')} className="flex items-center gap-2">
+                  <Plane className="h-4 w-4"/> Payment Links
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={()=>navigate('/app/wallet/invoices')} className="flex items-center gap-2">
+                  <Plane className="h-4 w-4"/> Invoices
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={()=>navigate('/app/wallet/reviews')} className="flex items-center gap-2">
                   <Star className="h-4 w-4"/> My Reviews
                 </DropdownMenuItem>
