@@ -336,14 +336,14 @@ const MoreServices = () => {
       isNew: true,
     },
 
-    // Financial Tools & Management
+    // Finance & Investment - Management Tools
     {
       id: "transaction-export",
       label: "Export Transactions",
       icon: <Download className="h-6 w-6" />,
       action: () => navigate("/app/wallet/export"),
       gradient: "bg-gradient-to-br from-green-400 to-emerald-600",
-      category: "Financial Tools",
+      category: "Finance & Investment",
       description: "Download CSV, JSON, PDF",
       isNew: true,
     },
@@ -353,7 +353,7 @@ const MoreServices = () => {
       icon: <FileText className="h-6 w-6" />,
       action: () => navigate("/app/wallet/receipts"),
       gradient: "bg-gradient-to-br from-purple-400 to-violet-600",
-      category: "Financial Tools",
+      category: "Finance & Investment",
       description: "Generate & manage receipts",
       isNew: true,
     },
@@ -363,7 +363,7 @@ const MoreServices = () => {
       icon: <Link2 className="h-6 w-6" />,
       action: () => navigate("/app/wallet/payment-links"),
       gradient: "bg-gradient-to-br from-orange-400 to-red-600",
-      category: "Financial Tools",
+      category: "Finance & Investment",
       description: "Shareable payment requests",
       isNew: true,
     },
@@ -373,7 +373,7 @@ const MoreServices = () => {
       icon: <Receipt className="h-6 w-6" />,
       action: () => navigate("/app/wallet/invoices"),
       gradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
-      category: "Financial Tools",
+      category: "Finance & Investment",
       description: "Create & send invoices",
       isNew: true,
     },
