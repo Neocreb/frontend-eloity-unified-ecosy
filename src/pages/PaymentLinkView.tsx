@@ -13,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { paymentLinkService, PaymentLink } from '@/services/paymentLinkService';
 import { formatCurrency } from '@/lib/utils';
-import { EloityLogo } from '@/components/shared/EloityLogo';
+import EloityLogo from '@/components/ui/logo';
 
 const PaymentLinkView: React.FC = () => {
   const { code } = useParams<{ code: string }>();
