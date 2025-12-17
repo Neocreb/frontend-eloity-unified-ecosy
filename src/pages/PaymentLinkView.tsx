@@ -171,11 +171,13 @@ const PaymentLinkView: React.FC = () => {
       </div>
 
       {/* Main content */}
-      <div className="max-w-3xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8 relative">
         {error && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+          <Alert variant="destructive" className="mb-6 backdrop-blur-sm bg-red-50/95">
+            <AlertCircle className="h-5 w-5 text-red-600" />
+            <AlertDescription className="text-red-900 font-medium ml-2">
+              {error}
+            </AlertDescription>
           </Alert>
         )}
 
