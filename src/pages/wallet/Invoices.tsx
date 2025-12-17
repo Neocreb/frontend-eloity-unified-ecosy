@@ -269,13 +269,23 @@ const Invoices: React.FC = () => {
               <p className="text-sm text-gray-600">Create and manage your invoices</p>
             </div>
           </div>
-          <Button
-            onClick={() => setShowCreateForm(!showCreateForm)}
-            className="bg-purple-600 hover:bg-purple-700"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Create Invoice
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => setShowCustomization(!showCustomization)}
+              variant="outline"
+              className="gap-2"
+            >
+              <Settings className="h-4 w-4" />
+              Template
+            </Button>
+            <Button
+              onClick={() => setShowCreateForm(!showCreateForm)}
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Create Invoice
+            </Button>
+          </div>
         </div>
       </div>
 
