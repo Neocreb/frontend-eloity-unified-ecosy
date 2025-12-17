@@ -32,6 +32,7 @@ import ProfessionalInvoiceTemplate from '@/components/invoice/ProfessionalInvoic
 
 const Invoices: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const {
     invoices,
     isLoading,
@@ -46,6 +47,10 @@ const Invoices: React.FC = () => {
   const { toast } = useToast();
 
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [customization, setCustomization] = useState<any>(null);
+  const [previewInvoice, setPreviewInvoice] = useState<any>(null);
   const [formData, setFormData] = useState<CreateInvoiceInput>({
     items: [{ description: '', quantity: 1, unitPrice: 0, amount: 0 }],
     recipientName: '',
@@ -53,6 +58,13 @@ const Invoices: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeStatus, setActiveStatus] = useState<string>('all');
+
+  // Load customization on mount
+  useEffect(() => {
+    if (user?.id) {
+      invoiceTemplateService.getInvoiceCustomization(user.id).then(setCustomization);
+    }
+  }, [user?.id]);
 
   const handleAddItem = () => {
     setFormData({
