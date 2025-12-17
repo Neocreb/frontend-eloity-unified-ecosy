@@ -254,6 +254,9 @@ const WalletAnalyticsDashboard = () => {
         </Card>
       </div>
 
+      {/* Invoice & Payment Link Analytics */}
+      <InvoicePaymentAnalytics />
+
       {/* Charts Section */}
       <Tabs defaultValue="earnings" className="space-y-6">
         <TabsList className="grid w-full grid-cols-4">
