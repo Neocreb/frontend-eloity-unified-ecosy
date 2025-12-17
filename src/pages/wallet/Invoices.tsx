@@ -278,7 +278,7 @@ const Invoices: React.FC = () => {
               Template
             </Button>
             <Button
-              onClick={() => setShowCreateForm(!showCreateForm)}
+              onClick={() => navigate('/app/wallet/invoices/create')}
               className="bg-purple-600 hover:bg-purple-700"
             >
               <Plus className="h-4 w-4 mr-2" />
