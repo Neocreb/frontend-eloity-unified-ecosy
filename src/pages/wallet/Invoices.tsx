@@ -426,7 +426,7 @@ const Invoices: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No Invoices Yet</h3>
               <p className="text-gray-600 mb-6">Create your first invoice to get started.</p>
               <Button
-                onClick={() => setShowCreateForm(true)}
+                onClick={() => navigate('/app/wallet/invoices/create')}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
