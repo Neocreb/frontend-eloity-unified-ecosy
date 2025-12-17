@@ -123,16 +123,49 @@ const PaymentLinkView: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100">
-      {/* Header with platform branding */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-40">
+    <div
+      className="min-h-screen bg-gradient-to-br via-white"
+      style={{
+        backgroundImage: customization?.bannerImage
+          ? `url(${customization.bannerImage}), linear-gradient(135deg, #667eea 0%, #764ba2 100%)`
+          : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        backgroundSize: 'cover, cover',
+        backgroundPosition: 'center, center',
+      }}
+    >
+      {/* Header with platform and creator branding */}
+      <div
+        className="border-b shadow-md sticky top-0 z-40"
+        style={{
+          backgroundColor: customization?.primaryColor || '#ffffff',
+          borderBottomColor: customization?.secondaryColor || '#e5e7eb',
+        }}
+      >
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <EloityLogo className="h-8 w-8" />
-              <span className="font-bold text-lg text-gray-900">Eloity</span>
+            <div className="flex items-center gap-3">
+              {customization?.companyLogo ? (
+                <img
+                  src={customization.companyLogo}
+                  alt="Company Logo"
+                  className="h-8 w-8 rounded-lg object-cover"
+                />
+              ) : (
+                <EloityLogo className="h-8 w-8" />
+              )}
+              <div>
+                <span className="font-bold text-lg text-white">
+                  {customization?.companyName || 'Eloity'}
+                </span>
+                {customization?.companyName && (
+                  <p className="text-xs text-gray-200">Powered by Eloity</p>
+                )}
+              </div>
             </div>
-            <p className="text-sm text-gray-500">Secure Payment Link</p>
+            <div className="flex items-center gap-2 text-white">
+              <Lock className="h-4 w-4" />
+              <p className="text-sm font-medium">Secure Payment</p>
+            </div>
           </div>
         </div>
       </div>
