@@ -107,6 +107,41 @@ const ReceiptsInner: React.FC = () => {
     }
   };
 
+  const handleSaveCustomization = async (customizationData: any) => {
+    if (!user?.id) return;
+    try {
+      const updated = await invoiceTemplateService.updateReceiptCustomization(
+        user.id,
+        customizationData
+      );
+      setCustomization(updated);
+      setShowCustomization(false);
+      toast({
+        title: 'Success',
+        description: 'Receipt template customization saved',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save customization',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePreviewReceipt = (receiptData: any) => {
+    setPreviewReceipt({
+      id: receiptData.id,
+      receiptNumber: receiptData.receipt_number || receiptData.receiptNumber || 'RCP-001',
+      timestamp: receiptData.created_at || receiptData.timestamp || new Date().toISOString(),
+      amount: receiptData.amount || 0,
+      currency: customization?.currency || 'USD',
+      description: receiptData.description || 'Transaction Receipt',
+      status: 'completed',
+    });
+    setShowPreview(true);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Header */}
