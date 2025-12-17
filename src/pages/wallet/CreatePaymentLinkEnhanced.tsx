@@ -72,7 +72,9 @@ interface EnhancedPaymentLinkInput extends CreatePaymentLinkInput {
 
 const CreatePaymentLinkEnhanced: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { isCreating, createPaymentLink } = usePaymentLinks();
+  const { recordPaymentLinkCreated } = useInvoicePaymentSync();
   const { toast } = useToast();
 
   const [selectedType, setSelectedType] = useState<string>('standard');
