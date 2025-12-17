@@ -168,7 +168,7 @@ import DriverApplicationPublic from "./pages/DriverApplicationPublic";
 // import CryptoMarket from "./pages/CryptoMarket";
 // import EnhancedCrypto from "./pages/EnhancedCrypto";
 import ProfessionalCrypto from "./pages/ProfessionalCrypto";
-import CryptoTrading from "./pages/CryptoTrading";
+import CryptoIntelligence from "./pages/CryptoIntelligence";
 import CryptoP2P from "./pages/CryptoP2P";
 import CryptoPortfolio from "./pages/CryptoPortfolio";
 import CryptoLearn from "./pages/CryptoLearn";
@@ -739,7 +739,7 @@ const AppRoutes = () => {
 
           <Route path="crypto" element={<ProfessionalCrypto />} />
           <Route path="crypto/view-all" element={<ViewAllCoins />} />
-          <Route path="crypto-trading" element={<CryptoTrading />} />
+          <Route path="crypto-intelligence" element={<CryptoIntelligence />} />
           <Route path="crypto-convert" element={<CryptoConvert />} />
           <Route path="crypto-p2p" element={<CryptoP2P />} />
           <Route path="crypto-portfolio" element={<CryptoPortfolio />} />
