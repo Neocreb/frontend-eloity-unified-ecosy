@@ -929,7 +929,7 @@ const AppRoutes = () => {
         element={<Navigate to="/app/marketplace/list" replace />}
       />
       <Route path="/crypto" element={<Navigate to="/app/crypto" replace />} />
-      <Route path="/crypto-trading" element={<Navigate to="/app/crypto-trading" replace />} />
+      <Route path="/crypto-trading" element={<Navigate to="/app/crypto-intelligence" replace />} />
       <Route path="/crypto-p2p" element={<Navigate to="/app/crypto-p2p" replace />} />
       <Route path="/crypto-portfolio" element={<Navigate to="/app/crypto-portfolio" replace />} />
       <Route path="/crypto-learn" element={<Navigate to="/app/crypto-learn" replace />} />
