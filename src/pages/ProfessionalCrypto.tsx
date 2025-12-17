@@ -565,7 +565,7 @@ const ProfessionalCrypto = () => {
                         {cryptos.slice(0, 4).map((crypto) => (
                           <div
                             key={crypto.id}
-                            onClick={() => handleNavigateToTrade(crypto.id)}
+                            onClick={() => handleNavigateToAnalysis(crypto.id)}
                             className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
                           >
                             <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -607,7 +607,7 @@ const ProfessionalCrypto = () => {
                         {trendingCryptos.map((crypto) => (
                           <div
                             key={crypto.id}
-                            onClick={() => handleNavigateToTrade(crypto.id)}
+                            onClick={() => handleNavigateToAnalysis(crypto.id)}
                             className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
                           >
                             <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -650,7 +650,7 @@ const ProfessionalCrypto = () => {
                           gainersListings.map((crypto) => (
                             <div
                               key={crypto.id}
-                              onClick={() => handleNavigateToTrade(crypto.id)}
+                              onClick={() => handleNavigateToAnalysis(crypto.id)}
                               className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
                             >
                               <div className="flex items-center gap-4 flex-1 min-w-0">
@@ -701,7 +701,7 @@ const ProfessionalCrypto = () => {
                           losersListings.map((crypto) => (
                             <div
                               key={crypto.id}
-                              onClick={() => handleNavigateToTrade(crypto.id)}
+                              onClick={() => handleNavigateToAnalysis(crypto.id)}
                               className="flex items-center justify-between p-6 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer group"
                             >
                               <div className="flex items-center gap-4 flex-1 min-w-0">
