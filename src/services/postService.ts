@@ -88,7 +88,8 @@ export class PostService {
     try {
       // Get posts from users that the current user is following + their own posts
       let followingUserIds: string[] = [userId]; // Always include own posts
-      
+      let hasFollowing = false;
+
       try {
         const { data: followingIds, error: followingError } = await supabase
           .from("followers")
@@ -97,7 +98,7 @@ export class PostService {
 
         if (followingError) {
           console.warn("Warning fetching following IDs:", followingError);
-          // Continue with just own posts if following fetch fails
+          // Continue - will fall back to public posts if following fetch fails
         } else if (followingIds && followingIds.length > 0) {
           // Add following user IDs to the list
           followingIds.forEach((f: any) => {
@@ -105,34 +106,45 @@ export class PostService {
               followingUserIds.push(f.following_id);
             }
           });
+          hasFollowing = true;
         }
       } catch (followingError: any) {
         console.warn("Error fetching following IDs:", followingError);
-        // Continue with just own posts if following fetch fails
+        // Continue - will fall back to public posts if following fetch fails
       }
 
       // Remove duplicates
       followingUserIds = [...new Set(followingUserIds)];
 
-      // Validate that we have user IDs to query
-      if (!followingUserIds || followingUserIds.length === 0) {
-        console.warn("No user IDs to fetch posts for");
-        return [];
-      }
-
       // Validate each user ID
       const validUserIds = followingUserIds.filter(id => id && typeof id === 'string' && id.length > 0);
-      if (!validUserIds || validUserIds.length === 0) {
-        console.warn("No valid user IDs to fetch posts for");
-        return [];
-      }
 
-      const { data, error } = await supabase
-        .from("posts")
-        .select("*")
-        .in("user_id", validUserIds)
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
+      let data, error;
+
+      // If user has following relationships, fetch posts from those users
+      if (hasFollowing && validUserIds && validUserIds.length > 0) {
+        const result = await supabase
+          .from("posts")
+          .select("*")
+          .in("user_id", validUserIds)
+          .order("created_at", { ascending: false })
+          .range(offset, offset + limit - 1);
+
+        data = result.data;
+        error = result.error;
+      } else {
+        // For new users with no following relationships, show all public posts
+        // This ensures new users see content instead of an empty feed
+        const result = await supabase
+          .from("posts")
+          .select("*")
+          .eq("privacy", "public")
+          .order("created_at", { ascending: false })
+          .range(offset, offset + limit - 1);
+
+        data = result.data;
+        error = result.error;
+      }
 
       if (error) {
         console.error("Error fetching feed posts:", error);
