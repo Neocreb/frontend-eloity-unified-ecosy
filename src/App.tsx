@@ -625,7 +625,9 @@ const AppRoutes = () => {
           <Route path="wallet/export" element={<TransactionExport />} />
           <Route path="wallet/receipts" element={<Receipts />} />
           <Route path="wallet/payment-links" element={<PaymentLinks />} />
+          <Route path="wallet/payment-links/create" element={<CreatePaymentLink />} />
           <Route path="wallet/invoices" element={<Invoices />} />
+          <Route path="wallet/invoices/create" element={<CreateInvoice />} />
 
           {/* Crypto Trading Routes - Full Page Flows */}
           <Route path="crypto/kyc" element={<CryptoKYC />} />
