@@ -319,22 +319,29 @@ const PaymentLinkView: React.FC = () => {
             </Card>
 
             {/* Security Information */}
-            <Card className="border-0 shadow-lg">
+            <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-emerald-50">
               <CardContent className="p-6">
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-gray-900">Security Information</h3>
-                  <ul className="space-y-2 text-sm text-gray-600">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Shield className="h-5 w-5 text-green-600" />
+                    <h3 className="font-semibold text-gray-900">Payment Security</h3>
+                  </div>
+                  <ul className="space-y-2 text-sm text-gray-700">
                     <li className="flex gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span>SSL encrypted connection</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0" />
+                      <span><strong>256-bit SSL Encryption</strong> - Your data is encrypted in transit</span>
                     </li>
                     <li className="flex gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span>PCI-DSS compliant payment processing</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0" />
+                      <span><strong>PCI-DSS Compliant</strong> - Industry-standard security compliance</span>
                     </li>
                     <li className="flex gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0 mt-0.5" />
-                      <span>Your payment information is secure</span>
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0" />
+                      <span><strong>Secure Processing</strong> - Your payment information is never stored on insecure servers</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="h-5 w-5 text-green-600 flex-shrink-0 mt-0" />
+                      <span><strong>Fraud Protection</strong> - Advanced fraud detection systems active</span>
                     </li>
                   </ul>
                 </div>
@@ -342,9 +349,15 @@ const PaymentLinkView: React.FC = () => {
             </Card>
 
             {/* Footer */}
-            <div className="text-center text-xs text-gray-500">
-              <p>Powered by Eloity Platform</p>
-              <p className="mt-1">For questions or issues, contact the payment creator</p>
+            <div className="text-center space-y-2 text-xs text-gray-500 py-4">
+              <p className="font-medium text-gray-600">Secure Payment Link powered by <span className="text-purple-600 font-bold">Eloity</span></p>
+              {customization?.companyEmail && (
+                <p>For questions, contact: <a href={`mailto:${customization.companyEmail}`} className="text-purple-600 hover:underline">{customization.companyEmail}</a></p>
+              )}
+              {customization?.companyWebsite && (
+                <p>Visit: <a href={customization.companyWebsite} target="_blank" rel="noopener noreferrer" className="text-purple-600 hover:underline">{customization.companyWebsite}</a></p>
+              )}
+              <p className="text-gray-400 mt-2">© {new Date().getFullYear()} Eloity Platform. All rights reserved.</p>
             </div>
           </div>
         )}
