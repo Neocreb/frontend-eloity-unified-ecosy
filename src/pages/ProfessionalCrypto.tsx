@@ -277,8 +277,8 @@ const ProfessionalCrypto = () => {
 
   const formatPercentage = (value: number) => `${value >= 0 ? "+" : ""}${value.toFixed(2)}%`;
 
-  const handleNavigateToTrade = (cryptoId: string) => {
-    navigate(`/app/crypto-trading?pair=${cryptoId.toUpperCase()}USDT`);
+  const handleNavigateToAnalysis = (cryptoId: string) => {
+    navigate(`/app/crypto-intelligence?coin=${cryptoId}`);
   };
 
   const handleQuickNavigation = (section: string) => {
@@ -287,7 +287,7 @@ const ProfessionalCrypto = () => {
         navigate("/app/crypto-portfolio");
         break;
       case "trade":
-        navigate("/app/crypto-trading");
+        navigate("/app/crypto-intelligence");
         break;
       case "p2p":
         navigate("/app/crypto-p2p");
