@@ -743,11 +743,21 @@ const Invoices: React.FC = () => {
                     <div className="flex gap-2 flex-wrap">
                       <Button
                         size="sm"
-                        onClick={() => handleDownload(invoice.id)}
+                        onClick={() => {
+                          if (customization) {
+                            handlePreviewInvoice(invoice);
+                          } else {
+                            toast({
+                              title: 'Setup Required',
+                              description: 'Please configure your invoice template first',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
                         className="bg-blue-600 hover:bg-blue-700"
                       >
                         <Download className="h-4 w-4 mr-1" />
-                        Download
+                        Preview & Download
                       </Button>
                       {invoice.status === 'draft' && (
                         <Button
