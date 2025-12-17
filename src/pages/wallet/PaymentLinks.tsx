@@ -41,38 +41,6 @@ const PaymentLinks: React.FC = () => {
   const { toast } = useToast();
 
 
-  const handleCreateLink = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.description && !formData.amount) {
-      toast({
-        title: 'Error',
-        description: 'Please fill in at least one field',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      const link = await createPaymentLink(formData);
-      if (link) {
-        toast({
-          title: 'Success',
-          description: 'Payment link created successfully',
-        });
-        setShowCreateForm(false);
-        setFormData({ description: '' });
-      }
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to create payment link',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
 
   const handleCopyLink = async (shareUrl: string) => {
     await copyLinkToClipboard(shareUrl);
