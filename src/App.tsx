@@ -101,7 +101,9 @@ import MoreServices from "./pages/wallet/MoreServices";
 import TransactionExport from "./pages/wallet/TransactionExport";
 import Receipts from "./pages/wallet/Receipts";
 import PaymentLinks from "./pages/wallet/PaymentLinks";
+import CreatePaymentLink from "./pages/wallet/CreatePaymentLink";
 import Invoices from "./pages/wallet/Invoices";
+import CreateInvoice from "./pages/wallet/CreateInvoice";
 import PaymentLinkView from "./pages/PaymentLinkView";
 // Crypto pages
 import CryptoKYC from "./pages/CryptoKYC";
