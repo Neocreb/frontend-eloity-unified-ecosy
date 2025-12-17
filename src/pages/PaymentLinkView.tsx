@@ -7,6 +7,8 @@ import {
   Loader,
   ArrowLeft,
   Download,
+  Lock,
+  Shield,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,6 +16,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { paymentLinkService, PaymentLink } from '@/services/paymentLinkService';
 import { formatCurrency } from '@/utils/formatters';
 import EloityLogo from '@/components/ui/logo';
+import { invoiceTemplateService } from '@/services/invoiceTemplateService';
 
 const PaymentLinkView: React.FC = () => {
   const { code } = useParams<{ code: string }>();
