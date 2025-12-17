@@ -98,6 +98,10 @@ import SavingsGoals from "./pages/wallet/SavingsGoals";
 import Electricity from "./pages/wallet/Electricity";
 import MoneyRequest from "./pages/wallet/MoneyRequest";
 import MoreServices from "./pages/wallet/MoreServices";
+import TransactionExport from "./pages/wallet/TransactionExport";
+import Receipts from "./pages/wallet/Receipts";
+import PaymentLinks from "./pages/wallet/PaymentLinks";
+import Invoices from "./pages/wallet/Invoices";
 // Crypto pages
 import CryptoKYC from "./pages/CryptoKYC";
 import UniversalCryptoPayment from "./pages/UniversalCryptoPayment";
