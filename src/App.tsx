@@ -489,6 +489,9 @@ const AppRoutes = () => {
       {/* Join route - for referral links */}
       <Route path="/join" element={<Join />} />
 
+      {/* Public payment link route - accessible to everyone without authentication */}
+      <Route path="/pay/:code" element={<PaymentLinkView />} />
+
       {/* Auth route - handle loading state and redirects */}
       <Route
         path="/auth"
