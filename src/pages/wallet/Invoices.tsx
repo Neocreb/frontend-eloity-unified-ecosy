@@ -204,6 +204,45 @@ const Invoices: React.FC = () => {
     }
   };
 
+  const handleSaveCustomization = async (customizationData: any) => {
+    if (!user?.id) return;
+    try {
+      const updated = await invoiceTemplateService.updateInvoiceCustomization(
+        user.id,
+        customizationData
+      );
+      setCustomization(updated);
+      setShowCustomization(false);
+      toast({
+        title: 'Success',
+        description: 'Invoice template customization saved',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to save customization',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handlePreviewInvoice = (invoice: any) => {
+    setPreviewInvoice({
+      ...invoice,
+      createdAt: invoice.created_at || new Date().toISOString(),
+      invoiceNumber: invoice.invoice_number || invoice.invoiceNumber || 'PREVIEW-001',
+      recipientName: invoice.recipient_name || invoice.recipientName || 'Sample Recipient',
+      recipientEmail: invoice.recipient_email || invoice.recipientEmail,
+      items: invoice.items || [],
+      subtotal: invoice.subtotal || 0,
+      tax: invoice.tax || 0,
+      total: invoice.total || 0,
+      dueDate: invoice.due_date || invoice.dueDate,
+      status: invoice.status || 'draft',
+    });
+    setShowPreview(true);
+  };
+
   const filteredInvoices = invoices.filter(inv =>
     activeStatus === 'all' ? true : inv.status === activeStatus
   );
