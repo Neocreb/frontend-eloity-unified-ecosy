@@ -134,11 +134,19 @@ class PaymentLinkService {
   async updatePaymentLink(linkId: string, updates: Partial<CreatePaymentLinkInput>): Promise<PaymentLink> {
     try {
       const updateData: any = {};
-      
+
       if (updates.amount !== undefined) updateData.amount = updates.amount;
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.expiresAt !== undefined) updateData.expires_at = updates.expiresAt.toISOString();
       if (updates.maxUses !== undefined) updateData.max_uses = updates.maxUses;
+      if (updates.linkCategory !== undefined) updateData.link_category = updates.linkCategory;
+      if (updates.recurringInterval !== undefined) updateData.recurring_interval = updates.recurringInterval;
+      if (updates.recurringActive !== undefined) updateData.recurring_active = updates.recurringActive;
+      if (updates.minAmount !== undefined) updateData.min_amount = updates.minAmount;
+      if (updates.maxAmount !== undefined) updateData.max_amount = updates.maxAmount;
+      if (updates.successRedirectUrl !== undefined) updateData.success_redirect_url = updates.successRedirectUrl;
+      if (updates.webhookUrl !== undefined) updateData.webhook_url = updates.webhookUrl;
+      if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
 
       const { data, error } = await supabase
         .from('payment_links')
