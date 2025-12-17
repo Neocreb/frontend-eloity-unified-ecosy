@@ -466,11 +466,21 @@ const ReceiptsInner: React.FC = () => {
                               <>
                                 <Button
                                   size="sm"
-                                  onClick={() => handleDownloadReceipt(receipt.id)}
+                                  onClick={() => {
+                                    if (customization) {
+                                      handlePreviewReceipt(receipt);
+                                    } else {
+                                      toast({
+                                        title: 'Setup Required',
+                                        description: 'Please configure your receipt template first',
+                                        variant: 'destructive',
+                                      });
+                                    }
+                                  }}
                                   className="bg-green-600 hover:bg-green-700 text-white"
                                 >
                                   <Download className="h-3 w-3 mr-1" />
-                                  Download
+                                  Preview & Download
                                 </Button>
                                 <Button
                                   size="sm"
