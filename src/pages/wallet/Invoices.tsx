@@ -23,7 +23,6 @@ import {
 import { useInvoices } from '@/hooks/useInvoices';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
-import { CreateInvoiceInput, InvoiceItem } from '@/services/invoiceService';
 import { invoiceTemplateService } from '@/services/invoiceTemplateService';
 import ProfessionalInvoiceTemplate from '@/components/invoice/ProfessionalInvoiceTemplate';
 
