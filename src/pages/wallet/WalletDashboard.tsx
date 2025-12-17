@@ -259,6 +259,9 @@ const DashboardInner = () => {
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center">
+                <DropdownMenuItem onClick={()=>navigate('/app/wallet/more-services')} className="flex items-center gap-2">
+                  <Zap className="h-4 w-4"/> All Services
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={()=>navigate('/app/wallet/top-up')} className="flex items-center gap-2">
                   <Phone className="h-4 w-4"/> Top Up
                 </DropdownMenuItem>
