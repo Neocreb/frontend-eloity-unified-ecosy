@@ -59,7 +59,7 @@ router.get('/users', async (req, res) => {
       return p.user_id &&
              p.user_id !== userId &&
              !followingIds.includes(p.user_id) &&
-             p.profile_visibility === 'public';
+             (!p.profile_visibility || p.profile_visibility === 'public' || p.profile_visibility === 'followers');
     });
 
     const selected = candidates.slice(0, limit);
