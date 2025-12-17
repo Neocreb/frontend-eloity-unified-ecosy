@@ -137,7 +137,7 @@ const PaymentLinks: React.FC = () => {
                 Create a payment link to share with customers for quick payments.
               </p>
               <Button
-                onClick={() => setShowCreateForm(true)}
+                onClick={() => navigate('/app/wallet/payment-links/create')}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 <Plus className="h-4 w-4 mr-2" />
