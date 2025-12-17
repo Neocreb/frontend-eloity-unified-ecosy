@@ -223,6 +223,36 @@ const MoreServices = () => {
 
     // Finance & Investment
     {
+      id: "analytics",
+      label: "My Analytics",
+      icon: <BarChart3 className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/analytics"),
+      gradient: "bg-gradient-to-br from-indigo-400 to-blue-600",
+      category: "Finance & Investment",
+      description: "View wallet analytics & insights",
+      isNew: true,
+    },
+    {
+      id: "transactions",
+      label: "My Transactions",
+      icon: <ListChecks className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/transactions"),
+      gradient: "bg-gradient-to-br from-cyan-400 to-teal-600",
+      category: "Finance & Investment",
+      description: "Track all transactions",
+      isNew: true,
+    },
+    {
+      id: "reviews",
+      label: "My Reviews",
+      icon: <MessageSquare className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/reviews"),
+      gradient: "bg-gradient-to-br from-rose-400 to-pink-600",
+      category: "Finance & Investment",
+      description: "Manage service reviews",
+      isNew: true,
+    },
+    {
       id: "savings",
       label: "Savings Goals",
       icon: <Wallet className="h-6 w-6" />,
