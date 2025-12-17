@@ -758,6 +758,41 @@ export const receipts = pgTable('receipts', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
+// Payment Links table
+export const payment_links = pgTable('payment_links', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  code: text('code').notNull().unique(),
+  amount: numeric('amount', { precision: 10, scale: 2 }),
+  description: text('description'),
+  expires_at: timestamp('expires_at'),
+  max_uses: integer('max_uses'),
+  current_uses: integer('current_uses').default(0),
+  is_active: boolean('is_active').default(true),
+  share_url: text('share_url').notNull(),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// Invoices table
+export const invoices = pgTable('invoices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  invoice_number: text('invoice_number').notNull().unique(),
+  user_id: uuid('user_id').notNull(),
+  recipient_email: text('recipient_email'),
+  recipient_name: text('recipient_name'),
+  items: jsonb('items').default('[]'),
+  subtotal: numeric('subtotal', { precision: 10, scale: 2 }).notNull().default('0'),
+  tax: numeric('tax', { precision: 10, scale: 2 }).default('0'),
+  total: numeric('total', { precision: 10, scale: 2 }).notNull().default('0'),
+  status: text('status').default('draft'),
+  notes: text('notes'),
+  due_date: timestamp('due_date'),
+  paid_at: timestamp('paid_at'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
 // Relations for live streams
 export const liveStreamsRelations = relations(live_streams, ({ one, many }) => ({
   user: one(profiles, {
