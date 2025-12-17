@@ -31,7 +31,7 @@ class PaymentLinkService {
   async createPaymentLink(userId: string, input: CreatePaymentLinkInput): Promise<PaymentLink> {
     try {
       const code = this.generateLinkCode();
-      const shareUrl = `${this.baseUrl}/app/pay/${code}`;
+      const shareUrl = `${this.baseUrl}/pay/${code}`;
 
       const { data, error } = await supabase
         .from('payment_links')
