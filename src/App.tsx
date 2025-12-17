@@ -78,6 +78,7 @@ import WalletAnalytics from "./pages/wallet/WalletAnalytics";
 import WalletTransactions from "./pages/wallet/WalletTransactions";
 import WalletIntegrations from "./pages/wallet/WalletIntegrations";
 import WalletCards from "./pages/wallet/WalletCards";
+import ManageReviews from "./pages/wallet/ManageReviews";
 import GiftCards from "./pages/wallet/GiftCards";
 import SendMoney from "./pages/wallet/SendMoney";
 import SendToEloity from "./pages/wallet/SendToEloity";
