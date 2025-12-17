@@ -184,15 +184,27 @@ const PaymentLinkView: React.FC = () => {
         {paymentLink && (
           <div className="space-y-6">
             {/* Payment Card */}
-            <Card className="border-0 shadow-lg overflow-hidden">
+            <Card className="border-0 shadow-2xl overflow-hidden">
               {/* Card Header with accent */}
-              <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6">
-                <h1 className="text-2xl font-bold text-white mb-2">
-                  {paymentLink.description || 'Payment Required'}
-                </h1>
-                <p className="text-blue-100 text-sm">
-                  Secure payment via Eloity Platform
-                </p>
+              <div
+                className="px-8 py-8 text-white relative overflow-hidden"
+                style={{
+                  background: customization?.primaryColor
+                    ? `linear-gradient(135deg, ${customization.primaryColor} 0%, ${customization.secondaryColor || '#0f766e'} 100%)`
+                    : 'linear-gradient(135deg, #2563eb 0%, #0f766e 100%)',
+                }}
+              >
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-0 right-0 w-40 h-40 bg-white rounded-full transform translate-x-20 -translate-y-20"></div>
+                </div>
+                <div className="relative z-10">
+                  <h1 className="text-3xl font-bold text-white mb-2">
+                    {paymentLink.description || 'Payment Required'}
+                  </h1>
+                  <p className="text-white/80 text-sm">
+                    {customization?.companyName ? `Requested by ${customization.companyName}` : 'Secure payment via Eloity Platform'}
+                  </p>
+                </div>
               </div>
 
               <CardContent className="p-8">
