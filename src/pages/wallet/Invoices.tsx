@@ -21,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useInvoices } from '@/hooks/useInvoices';
+import { useInvoicePaymentSync } from '@/hooks/useInvoicePaymentSync';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { invoiceTemplateService } from '@/services/invoiceTemplateService';
@@ -40,6 +41,7 @@ const Invoices: React.FC = () => {
     deleteInvoice,
     downloadInvoicePDF,
   } = useInvoices();
+  const { recordInvoicePayment } = useInvoicePaymentSync();
   const { toast } = useToast();
 
   const [showCustomization, setShowCustomization] = useState(false);
@@ -54,6 +56,24 @@ const Invoices: React.FC = () => {
       invoiceTemplateService.getInvoiceCustomization(user.id).then(setCustomization);
     }
   }, [user?.id]);
+
+  // Record invoice creation in sync service
+  useEffect(() => {
+    const recordNewInvoices = async () => {
+      for (const invoice of invoices) {
+        // Only record draft invoices (newly created ones)
+        if (invoice.status === 'draft' && user?.id) {
+          try {
+            await recordInvoicePayment(invoice.id, invoice.total, 'invoice_received');
+          } catch (error) {
+            console.error('Error recording invoice creation:', error);
+          }
+        }
+      }
+    };
+
+    recordNewInvoices();
+  }, [invoices, user?.id, recordInvoicePayment]);
 
 
   const handleSendInvoice = async (invoiceId: string) => {
@@ -78,6 +98,13 @@ const Invoices: React.FC = () => {
     try {
       const success = await markAsPaid(invoiceId);
       if (success) {
+        // Find the invoice to get the amount for syncing
+        const invoice = invoices.find(inv => inv.id === invoiceId);
+        if (invoice && user?.id) {
+          // Record the payment in invoice sync service
+          await recordInvoicePayment(invoiceId, invoice.total, 'invoice_paid');
+        }
+
         toast({
           title: 'Success',
           description: 'Invoice marked as paid',

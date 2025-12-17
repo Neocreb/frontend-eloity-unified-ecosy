@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useWalletContext } from "@/contexts/WalletContext";
+import InvoicePaymentAnalytics from "./InvoicePaymentAnalytics";
 import {
   LineChart,
   Line,
@@ -252,6 +253,9 @@ const WalletAnalyticsDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Invoice & Payment Link Analytics */}
+      <InvoicePaymentAnalytics />
 
       {/* Charts Section */}
       <Tabs defaultValue="earnings" className="space-y-6">

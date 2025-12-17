@@ -13,6 +13,15 @@ export interface PaymentLink {
   createdAt: string;
   updatedAt: string;
   shareUrl: string;
+  paymentType?: string;
+  linkCategory?: string;
+  recurringInterval?: string;
+  recurringActive?: boolean;
+  minAmount?: number;
+  maxAmount?: number;
+  successRedirectUrl?: string;
+  webhookUrl?: string;
+  metadata?: any;
 }
 
 export interface CreatePaymentLinkInput {
@@ -20,6 +29,15 @@ export interface CreatePaymentLinkInput {
   description?: string;
   expiresAt?: Date;
   maxUses?: number;
+  paymentType?: string;
+  linkCategory?: string;
+  recurringInterval?: string;
+  recurringActive?: boolean;
+  minAmount?: number;
+  maxAmount?: number;
+  successRedirectUrl?: string;
+  webhookUrl?: string;
+  metadata?: any;
 }
 
 class PaymentLinkService {
@@ -46,6 +64,15 @@ class PaymentLinkService {
             current_uses: 0,
             is_active: true,
             share_url: shareUrl,
+            payment_type: input.paymentType || 'standard',
+            link_category: input.linkCategory || 'standard',
+            recurring_interval: input.recurringInterval,
+            recurring_active: input.recurringActive || false,
+            min_amount: input.minAmount,
+            max_amount: input.maxAmount,
+            success_redirect_url: input.successRedirectUrl,
+            webhook_url: input.webhookUrl,
+            metadata: input.metadata,
           },
         ])
         .select()
@@ -107,11 +134,19 @@ class PaymentLinkService {
   async updatePaymentLink(linkId: string, updates: Partial<CreatePaymentLinkInput>): Promise<PaymentLink> {
     try {
       const updateData: any = {};
-      
+
       if (updates.amount !== undefined) updateData.amount = updates.amount;
       if (updates.description !== undefined) updateData.description = updates.description;
       if (updates.expiresAt !== undefined) updateData.expires_at = updates.expiresAt.toISOString();
       if (updates.maxUses !== undefined) updateData.max_uses = updates.maxUses;
+      if (updates.linkCategory !== undefined) updateData.link_category = updates.linkCategory;
+      if (updates.recurringInterval !== undefined) updateData.recurring_interval = updates.recurringInterval;
+      if (updates.recurringActive !== undefined) updateData.recurring_active = updates.recurringActive;
+      if (updates.minAmount !== undefined) updateData.min_amount = updates.minAmount;
+      if (updates.maxAmount !== undefined) updateData.max_amount = updates.maxAmount;
+      if (updates.successRedirectUrl !== undefined) updateData.success_redirect_url = updates.successRedirectUrl;
+      if (updates.webhookUrl !== undefined) updateData.webhook_url = updates.webhookUrl;
+      if (updates.metadata !== undefined) updateData.metadata = updates.metadata;
 
       const { data, error } = await supabase
         .from('payment_links')
@@ -261,6 +296,15 @@ class PaymentLinkService {
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       shareUrl: data.share_url,
+      paymentType: data.payment_type,
+      linkCategory: data.link_category,
+      recurringInterval: data.recurring_interval,
+      recurringActive: data.recurring_active,
+      minAmount: data.min_amount,
+      maxAmount: data.max_amount,
+      successRedirectUrl: data.success_redirect_url,
+      webhookUrl: data.webhook_url,
+      metadata: data.metadata,
     };
   }
 }

@@ -101,7 +101,9 @@ import MoreServices from "./pages/wallet/MoreServices";
 import TransactionExport from "./pages/wallet/TransactionExport";
 import Receipts from "./pages/wallet/Receipts";
 import PaymentLinks from "./pages/wallet/PaymentLinks";
+import PaymentLinksEnhanced from "./pages/wallet/PaymentLinksEnhanced";
 import CreatePaymentLink from "./pages/wallet/CreatePaymentLink";
+import CreatePaymentLinkEnhanced from "./pages/wallet/CreatePaymentLinkEnhanced";
 import Invoices from "./pages/wallet/Invoices";
 import CreateInvoice from "./pages/wallet/CreateInvoice";
 import PaymentLinkView from "./pages/PaymentLinkView";
@@ -624,8 +626,9 @@ const AppRoutes = () => {
           <Route path="wallet/more-services" element={<MoreServices />} />
           <Route path="wallet/export" element={<TransactionExport />} />
           <Route path="wallet/receipts" element={<Receipts />} />
-          <Route path="wallet/payment-links" element={<PaymentLinks />} />
-          <Route path="wallet/payment-links/create" element={<CreatePaymentLink />} />
+          <Route path="wallet/payment-links" element={<PaymentLinksEnhanced />} />
+          <Route path="wallet/payment-links/create" element={<CreatePaymentLinkEnhanced />} />
+          <Route path="wallet/payment-links/:id/edit" element={<CreatePaymentLinkEnhanced />} />
           <Route path="wallet/invoices" element={<Invoices />} />
           <Route path="wallet/invoices/create" element={<CreateInvoice />} />
 
