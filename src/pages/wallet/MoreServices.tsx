@@ -298,6 +298,48 @@ const MoreServices = () => {
       description: "Book travel & hotels",
       isNew: true,
     },
+
+    // Financial Tools & Management
+    {
+      id: "transaction-export",
+      label: "Export Transactions",
+      icon: <Download className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/export"),
+      gradient: "bg-gradient-to-br from-green-400 to-emerald-600",
+      category: "Financial Tools",
+      description: "Download CSV, JSON, PDF",
+      isNew: true,
+    },
+    {
+      id: "receipts",
+      label: "Receipts",
+      icon: <FileText className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/receipts"),
+      gradient: "bg-gradient-to-br from-purple-400 to-violet-600",
+      category: "Financial Tools",
+      description: "Generate & manage receipts",
+      isNew: true,
+    },
+    {
+      id: "payment-links",
+      label: "Payment Links",
+      icon: <Link2 className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/payment-links"),
+      gradient: "bg-gradient-to-br from-orange-400 to-red-600",
+      category: "Financial Tools",
+      description: "Shareable payment requests",
+      isNew: true,
+    },
+    {
+      id: "invoices",
+      label: "Invoices",
+      icon: <Receipt className="h-6 w-6" />,
+      action: () => navigate("/app/wallet/invoices"),
+      gradient: "bg-gradient-to-br from-blue-500 to-indigo-600",
+      category: "Financial Tools",
+      description: "Create & send invoices",
+      isNew: true,
+    },
   ];
 
   // Recently used (mock - in production, fetch from user activity)
