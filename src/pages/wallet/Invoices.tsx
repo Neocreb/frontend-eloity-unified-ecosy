@@ -41,6 +41,7 @@ const Invoices: React.FC = () => {
     deleteInvoice,
     downloadInvoicePDF,
   } = useInvoices();
+  const { recordInvoicePayment } = useInvoicePaymentSync();
   const { toast } = useToast();
 
   const [showCustomization, setShowCustomization] = useState(false);
