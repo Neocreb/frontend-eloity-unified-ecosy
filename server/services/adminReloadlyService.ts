@@ -1,9 +1,21 @@
 import { logger } from '../utils/logger.js';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.SUPABASE_URL!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-const supabase = createClient(supabaseUrl, supabaseServiceKey);
+const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || '';
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+let supabase: any = null;
+
+// Only initialize Supabase if credentials are available
+if (supabaseUrl && supabaseServiceKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseServiceKey);
+  } catch (error) {
+    logger.warn('Failed to initialize Supabase client in AdminReloadlyService:', error);
+  }
+} else {
+  logger.warn('Supabase credentials not configured. Admin Reloadly service will be unavailable.');
+}
 
 interface BillPaymentOperator {
   id: number;
@@ -37,6 +49,12 @@ interface BillPaymentSetting {
   description: string;
 }
 
+function ensureSupabase() {
+  if (!supabase) {
+    throw new Error('Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY environment variables.');
+  }
+}
+
 // Get bill payment transactions
 export async function getBillPaymentTransactions(
   userId?: string,
@@ -46,6 +64,7 @@ export async function getBillPaymentTransactions(
   endDate?: string,
 ) {
   try {
+    ensureSupabase();
     let query = supabase.from('bill_payment_transactions').select('*');
 
     if (userId) {
@@ -84,6 +103,7 @@ export async function getBillPaymentTransactions(
 // Get bill payment operators
 export async function getBillPaymentOperators(filters: Partial<BillPaymentOperator> = {}) {
   try {
+    ensureSupabase();
     let query = supabase.from('bill_payment_operators').select('*');
 
     // Apply filters
@@ -115,6 +135,7 @@ export async function getBillPaymentOperators(filters: Partial<BillPaymentOperat
 // Update operator status
 export async function updateOperatorStatus(operatorId: number, isActive: boolean) {
   try {
+    ensureSupabase();
     const { data, error } = await supabase
       .from('bill_payment_operators')
       .update({ is_active: isActive, updated_at: new Date().toISOString() })
@@ -133,6 +154,7 @@ export async function updateOperatorStatus(operatorId: number, isActive: boolean
 // Sync operators from RELOADLY (placeholder implementation)
 export async function syncOperatorsFromReloadly(countryCode?: string) {
   try {
+    ensureSupabase();
     // This would typically call the RELOADLY API to get operators
     // For now, we'll return a placeholder response
     const operators: BillPaymentOperator[] = [
@@ -198,6 +220,7 @@ export async function syncOperatorsFromReloadly(countryCode?: string) {
 // Get transaction statistics
 export async function getTransactionStatistics(userId?: string) {
   try {
+    ensureSupabase();
     let query = supabase.from('bill_payment_transactions').select('*');
 
     if (userId) {
@@ -237,6 +260,7 @@ export async function getTransactionStatistics(userId?: string) {
 // Get or create setting
 export async function getSetting(settingKey: string) {
   try {
+    ensureSupabase();
     const { data, error } = await supabase
       .from('bill_payment_settings')
       .select('*')
@@ -263,6 +287,7 @@ export async function updateSetting(
   description?: string,
 ) {
   try {
+    ensureSupabase();
     const existing = await getSetting(settingKey);
 
     const { data, error } = await supabase
@@ -304,6 +329,7 @@ export async function logAuditAction(
   changes?: any,
 ) {
   try {
+    ensureSupabase();
     const { error } = await supabase.from('bill_payment_audit_log').insert({
       admin_id: adminId,
       action,
@@ -325,6 +351,7 @@ export async function logAuditAction(
 // Get audit logs
 export async function getAuditLogs(limit = 100, offset = 0) {
   try {
+    ensureSupabase();
     const { data, error } = await supabase
       .from('bill_payment_audit_log')
       .select('*')
