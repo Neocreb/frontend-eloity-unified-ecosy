@@ -13,12 +13,24 @@ import ProfessionalReceiptTemplate from '@/components/receipt/ProfessionalReceip
 
 const ReceiptsInner: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { transactions } = useWalletContext();
   const { receipts, isLoading, generateReceipt, downloadReceiptPDF, emailReceipt } = useReceipts();
   const { formatCurrency } = useCurrency();
   const { toast } = useToast();
   const [generatingId, setGeneratingId] = useState<string | null>(null);
   const [emailingId, setEmailingId] = useState<string | null>(null);
+  const [customization, setCustomization] = useState<any>(null);
+  const [showCustomization, setShowCustomization] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewReceipt, setPreviewReceipt] = useState<any>(null);
+
+  // Load customization on mount
+  useEffect(() => {
+    if (user?.id) {
+      invoiceTemplateService.getReceiptCustomization(user.id).then(setCustomization);
+    }
+  }, [user?.id]);
 
   const handleGenerateReceipt = async (transactionId: string) => {
     const transaction = transactions.find(tx => tx.id === transactionId);
