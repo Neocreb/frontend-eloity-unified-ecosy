@@ -57,6 +57,24 @@ const Invoices: React.FC = () => {
     }
   }, [user?.id]);
 
+  // Record invoice creation in sync service
+  useEffect(() => {
+    const recordNewInvoices = async () => {
+      for (const invoice of invoices) {
+        // Only record draft invoices (newly created ones)
+        if (invoice.status === 'draft' && user?.id) {
+          try {
+            await recordInvoicePayment(invoice.id, invoice.total, 'invoice_received');
+          } catch (error) {
+            console.error('Error recording invoice creation:', error);
+          }
+        }
+      }
+    };
+
+    recordNewInvoices();
+  }, [invoices, user?.id, recordInvoicePayment]);
+
 
   const handleSendInvoice = async (invoiceId: string) => {
     try {
