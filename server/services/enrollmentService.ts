@@ -4,7 +4,19 @@ import { ActivityRewardService } from '../services/activityRewardService';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+let supabase: any = null;
+
+// Only initialize Supabase if credentials are available
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  } catch (error) {
+    console.warn('Failed to initialize Supabase client in EnrollmentService:', error);
+  }
+} else {
+  console.warn('Supabase credentials not configured. Enrollment service will be unavailable.');
+}
 
 export class EnrollmentService {
   /**

@@ -2,7 +2,19 @@ import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+let supabase: any = null;
+
+// Only initialize Supabase if credentials are available
+if (supabaseUrl && supabaseKey) {
+  try {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  } catch (error) {
+    console.warn('Failed to initialize Supabase client:', error);
+  }
+} else {
+  console.warn('Supabase credentials not configured. Course database features will be unavailable.');
+}
 
 export interface CourseInput {
   title: string;
@@ -46,6 +58,12 @@ export interface LessonInput {
 }
 
 export class CourseDbService {
+  private static ensureSupabase() {
+    if (!supabase) {
+      throw new Error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY environment variables.');
+    }
+  }
+
   /**
    * Create a new course
    */
@@ -55,6 +73,7 @@ export class CourseDbService {
     input: CourseInput
   ) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('courses')
         .insert({
@@ -98,6 +117,7 @@ export class CourseDbService {
    */
   static async getCourseById(courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('courses')
         .select(`
@@ -124,6 +144,7 @@ export class CourseDbService {
     courseType?: 'platform' | 'creator';
   }) {
     try {
+      this.ensureSupabase();
       let query = supabase
         .from('courses')
         .select(`
@@ -158,6 +179,7 @@ export class CourseDbService {
    */
   static async getCoursesByInstructor(instructorId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('courses')
         .select(`
@@ -180,6 +202,7 @@ export class CourseDbService {
    */
   static async updateCourse(courseId: string, input: CourseUpdateInput) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('courses')
         .update(input)
@@ -200,6 +223,7 @@ export class CourseDbService {
    */
   static async deleteCourse(courseId: string) {
     try {
+      this.ensureSupabase();
       const { error } = await supabase
         .from('courses')
         .delete()
@@ -218,6 +242,7 @@ export class CourseDbService {
    */
   static async addLesson(courseId: string, input: LessonInput) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_lessons')
         .insert({
@@ -247,6 +272,7 @@ export class CourseDbService {
    */
   static async updateLesson(lessonId: string, input: Partial<LessonInput>) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_lessons')
         .update(input)
@@ -267,6 +293,7 @@ export class CourseDbService {
    */
   static async deleteLesson(lessonId: string) {
     try {
+      this.ensureSupabase();
       const { error } = await supabase
         .from('course_lessons')
         .delete()
@@ -285,6 +312,7 @@ export class CourseDbService {
    */
   static async getCourseLessons(courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_lessons')
         .select('*')
@@ -304,6 +332,7 @@ export class CourseDbService {
    */
   static async enrollInCourse(userId: string, courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .insert({
@@ -334,6 +363,7 @@ export class CourseDbService {
    */
   static async getUserEnrollment(userId: string, courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .select('*')
@@ -354,6 +384,7 @@ export class CourseDbService {
    */
   static async getUserEnrollments(userId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .select(`
@@ -380,6 +411,7 @@ export class CourseDbService {
     completedLessons: string[]
   ) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .update({
@@ -408,6 +440,7 @@ export class CourseDbService {
     quizScore?: number
   ) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('lesson_progress')
         .upsert(
@@ -437,6 +470,7 @@ export class CourseDbService {
    */
   static async getCourseEnrollments(courseId: string) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_enrollments')
         .select(`
@@ -464,6 +498,7 @@ export class CourseDbService {
     amount: number
   ) {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_reward_claims')
         .insert({
@@ -492,6 +527,7 @@ export class CourseDbService {
     rewardType: string
   ): Promise<boolean> {
     try {
+      this.ensureSupabase();
       const { data, error } = await supabase
         .from('course_reward_claims')
         .select('id')

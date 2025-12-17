@@ -102,6 +102,7 @@ import TransactionExport from "./pages/wallet/TransactionExport";
 import Receipts from "./pages/wallet/Receipts";
 import PaymentLinks from "./pages/wallet/PaymentLinks";
 import Invoices from "./pages/wallet/Invoices";
+import PaymentLinkView from "./pages/PaymentLinkView";
 // Crypto pages
 import CryptoKYC from "./pages/CryptoKYC";
 import UniversalCryptoPayment from "./pages/UniversalCryptoPayment";
@@ -487,6 +488,9 @@ const AppRoutes = () => {
 
       {/* Join route - for referral links */}
       <Route path="/join" element={<Join />} />
+
+      {/* Public payment link route - accessible to everyone without authentication */}
+      <Route path="/pay/:code" element={<PaymentLinkView />} />
 
       {/* Auth route - handle loading state and redirects */}
       <Route
