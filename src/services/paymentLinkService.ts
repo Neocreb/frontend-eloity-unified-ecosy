@@ -13,6 +13,15 @@ export interface PaymentLink {
   createdAt: string;
   updatedAt: string;
   shareUrl: string;
+  paymentType?: string;
+  linkCategory?: string;
+  recurringInterval?: string;
+  recurringActive?: boolean;
+  minAmount?: number;
+  maxAmount?: number;
+  successRedirectUrl?: string;
+  webhookUrl?: string;
+  metadata?: any;
 }
 
 export interface CreatePaymentLinkInput {
@@ -20,6 +29,15 @@ export interface CreatePaymentLinkInput {
   description?: string;
   expiresAt?: Date;
   maxUses?: number;
+  paymentType?: string;
+  linkCategory?: string;
+  recurringInterval?: string;
+  recurringActive?: boolean;
+  minAmount?: number;
+  maxAmount?: number;
+  successRedirectUrl?: string;
+  webhookUrl?: string;
+  metadata?: any;
 }
 
 class PaymentLinkService {
