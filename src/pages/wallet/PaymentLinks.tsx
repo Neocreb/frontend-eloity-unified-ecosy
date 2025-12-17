@@ -25,7 +25,6 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { usePaymentLinks } from '@/hooks/usePaymentLinks';
 import { useToast } from '@/components/ui/use-toast';
-import { CreatePaymentLinkInput } from '@/services/paymentLinkService';
 
 const PaymentLinks: React.FC = () => {
   const navigate = useNavigate();
