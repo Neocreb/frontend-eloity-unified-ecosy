@@ -32,6 +32,10 @@ import {
   MoreHorizontal,
   Heart as HeartIcon,
   Sparkles,
+  Download,
+  FileText,
+  Link2,
+  Receipt,
 } from "lucide-react";
 
 interface Service {
