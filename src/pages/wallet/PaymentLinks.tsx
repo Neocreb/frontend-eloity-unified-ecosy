@@ -40,11 +40,6 @@ const PaymentLinks: React.FC = () => {
   } = usePaymentLinks();
   const { toast } = useToast();
 
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [formData, setFormData] = useState<CreatePaymentLinkInput>({
-    description: '',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateLink = async (e: React.FormEvent) => {
     e.preventDefault();
