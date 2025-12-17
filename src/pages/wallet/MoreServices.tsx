@@ -342,61 +342,69 @@ const MoreServices = () => {
     const isFav = isFavorited(service.id);
 
     return (
-    <button
-      onClick={service.action}
-      className="relative group flex flex-col items-center gap-2 p-3 sm:p-4 w-full transition-all duration-300 hover:scale-105"
-    >
-      {/* Badges */}
-      <div className="absolute top-0 right-0 flex gap-1 z-10">
-        {service.isHot && (
-          <Badge className="bg-red-500 text-white text-xs h-5">HOT</Badge>
-        )}
-        {service.isNew && (
-          <Badge className="bg-blue-500 text-white text-xs h-5">NEW</Badge>
-        )}
-        {/* Favorite Button */}
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFavorite(service.id);
-          }}
-          className="bg-white text-red-500 text-xs h-5 px-1.5 rounded-full hover:bg-red-50 transition-colors flex items-center justify-center"
-          title={isFav ? "Remove from favorites" : "Add to favorites"}
-        >
-          <Heart className={`h-3 w-3 ${isFav ? 'fill-red-500' : ''}`} />
-        </button>
-      </div>
-
-      {/* Icon Container */}
       <div
-        className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:shadow-lg ${service.gradient}`}
+        onClick={service.action}
+        className="relative group flex flex-col items-center gap-2 p-3 sm:p-4 w-full transition-all duration-300 hover:scale-105 cursor-pointer"
       >
-        <div className="text-white">{service.icon}</div>
-      </div>
+        {/* Badges */}
+        <div className="absolute top-0 right-0 flex gap-1 z-10">
+          {service.isHot && (
+            <Badge className="bg-red-500 text-white text-xs h-5">HOT</Badge>
+          )}
+          {service.isNew && (
+            <Badge className="bg-blue-500 text-white text-xs h-5">NEW</Badge>
+          )}
+          {/* Favorite Button */}
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(service.id);
+            }}
+            className="bg-white text-red-500 text-xs h-5 px-1.5 rounded-full hover:bg-red-50 transition-colors flex items-center justify-center cursor-pointer"
+            role="button"
+            tabIndex={0}
+            title={isFav ? "Remove from favorites" : "Add to favorites"}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleFavorite(service.id);
+              }
+            }}
+          >
+            <Heart className={`h-3 w-3 ${isFav ? 'fill-red-500' : ''}`} />
+          </div>
+        </div>
 
-      {/* Label */}
-      <div className="text-center w-full">
-        <p className="font-semibold text-gray-800 text-xs sm:text-sm leading-tight">
-          {service.label}
-        </p>
-        {service.description && (
-          <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-            {service.description}
+        {/* Icon Container */}
+        <div
+          className={`relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:shadow-lg ${service.gradient}`}
+        >
+          <div className="text-white">{service.icon}</div>
+        </div>
+
+        {/* Label */}
+        <div className="text-center w-full">
+          <p className="font-semibold text-gray-800 text-xs sm:text-sm leading-tight">
+            {service.label}
           </p>
-        )}
+          {service.description && (
+            <p className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+              {service.description}
+            </p>
+          )}
 
-        {/* Integration Badges */}
-        <div className="mt-2 flex justify-center">
-          <ServiceBadges
-            serviceId={service.id}
-            size="sm"
-            showLabel={false}
-            maxBadges={2}
-            className="justify-center"
-          />
+          {/* Integration Badges */}
+          <div className="mt-2 flex justify-center">
+            <ServiceBadges
+              serviceId={service.id}
+              size="sm"
+              showLabel={false}
+              maxBadges={2}
+              className="justify-center"
+            />
+          </div>
         </div>
       </div>
-    </button>
     );
   };
 
