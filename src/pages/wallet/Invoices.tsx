@@ -50,12 +50,6 @@ const Invoices: React.FC = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [customization, setCustomization] = useState<any>(null);
   const [previewInvoice, setPreviewInvoice] = useState<any>(null);
-  const [formData, setFormData] = useState<CreateInvoiceInput>({
-    items: [{ description: '', quantity: 1, unitPrice: 0, amount: 0 }],
-    recipientName: '',
-    recipientEmail: '',
-  });
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeStatus, setActiveStatus] = useState<string>('all');
 
   // Load customization on mount
