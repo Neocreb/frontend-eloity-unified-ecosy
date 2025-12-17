@@ -23,7 +23,7 @@ class ReceiptService {
   async generateReceipt(transaction: Transaction, userId: string): Promise<Receipt> {
     try {
       const receiptNumber = this.generateReceiptNumber();
-      
+
       // Store receipt record in database
       const { data, error } = await supabase
         .from('receipts')
@@ -38,7 +38,10 @@ class ReceiptService {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+        throw new Error(`Failed to generate receipt: ${errorMsg}`);
+      }
 
       return {
         id: data.id,
@@ -49,8 +52,9 @@ class ReceiptService {
         filePath: data.file_path,
       };
     } catch (error) {
-      console.error('Error generating receipt:', error);
-      throw new Error('Failed to generate receipt');
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('Error generating receipt:', errorMsg);
+      throw new Error(errorMsg);
     }
   }
 
