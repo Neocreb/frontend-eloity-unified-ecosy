@@ -351,10 +351,14 @@ export class FollowService {
         return [];
       }
 
-      // Filter out users that are already being followed
+      // Filter out users that are already being followed and have private profiles
       const suggestions = [];
       for (const user of data) {
-        const isFollowing = await this.isFollowing(userId, user.id);
+        // Skip private profiles (only show public or followers visibility)
+        const isPublic = !user.profile_visibility || user.profile_visibility === 'public' || user.profile_visibility === 'followers';
+        if (!isPublic) continue;
+
+        const isFollowing = await this.isFollowing(userId, user.user_id || user.id);
         if (!isFollowing) {
           suggestions.push(user);
         }

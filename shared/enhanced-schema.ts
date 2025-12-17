@@ -656,3 +656,160 @@ export const sponsoredProductsRelations = relations(sponsored_products, ({ one }
 
 // Relations for marketplace ads
 export const marketplaceAdsRelations = relations(marketplace_ads, ({ }) => ({}));
+
+// Live Streams table
+export const live_streams = pgTable('live_streams', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull(),
+  title: text('title').notNull(),
+  description: text('description'),
+  category: text('category'),
+  viewer_count: integer('viewer_count').default(0),
+  is_active: boolean('is_active').default(true),
+  started_at: timestamp('started_at').defaultNow(),
+  ended_at: timestamp('ended_at'),
+  stream_key: text('stream_key'),
+  rtmp_url: text('rtmp_url'),
+  thumbnail_url: text('thumbnail_url'),
+  duration: integer('duration'),
+  recording_enabled: boolean('recording_enabled').default(false),
+  recording_url: text('recording_url'),
+  is_private: boolean('is_private').default(false),
+  requires_subscription: boolean('requires_subscription').default(false),
+  monetization_enabled: boolean('monetization_enabled').default(false),
+  chat_enabled: boolean('chat_enabled').default(true),
+  moderation_enabled: boolean('moderation_enabled').default(true),
+  tags: text('tags').array(),
+  language: text('language').default('en'),
+  max_viewers: integer('max_viewers'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// Battles table
+export const battles = pgTable('battles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  live_stream_id: uuid('live_stream_id'),
+  challenger_id: uuid('challenger_id').notNull(),
+  opponent_id: uuid('opponent_id'),
+  battle_type: text('battle_type').default('general'),
+  status: text('status').default('pending'),
+  time_remaining: integer('time_remaining'),
+  challenger_score: integer('challenger_score').default(0),
+  opponent_score: integer('opponent_score').default(0),
+  winner_id: uuid('winner_id'),
+  duration: integer('duration'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// Stream viewers table
+export const stream_viewers = pgTable('stream_viewers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  stream_id: uuid('stream_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  joined_at: timestamp('joined_at').defaultNow(),
+  left_at: timestamp('left_at'),
+  watch_time: integer('watch_time').default(0),
+  interaction_count: integer('interaction_count').default(0),
+  gifts_sent: integer('gifts_sent').default(0),
+  tips_sent: numeric('tips_sent', { precision: 10, scale: 2 }).default('0'),
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
+// Stream messages/chat table
+export const stream_messages = pgTable('stream_messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  stream_id: uuid('stream_id').notNull(),
+  user_id: uuid('user_id').notNull(),
+  username: text('username'),
+  user_avatar: text('user_avatar'),
+  message: text('message').notNull(),
+  type: text('type').default('chat'),
+  metadata: jsonb('metadata'),
+  is_deleted: boolean('is_deleted').default(false),
+  created_at: timestamp('created_at').defaultNow(),
+});
+
+// Stream donations/gifts table
+export const stream_donations = pgTable('stream_donations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  stream_id: uuid('stream_id').notNull(),
+  from_user_id: uuid('from_user_id').notNull(),
+  to_user_id: uuid('to_user_id').notNull(),
+  amount: numeric('amount', { precision: 10, scale: 2 }).notNull(),
+  currency: text('currency').default('USD'),
+  donation_type: text('donation_type').default('gift'),
+  message: text('message'),
+  is_anonymous: boolean('is_anonymous').default(false),
+  created_at: timestamp('created_at').defaultNow(),
+});
+
+// Relations for live streams
+export const liveStreamsRelations = relations(live_streams, ({ one, many }) => ({
+  user: one(profiles, {
+    fields: [live_streams.user_id],
+    references: [profiles.user_id],
+  }),
+  battles: many(battles),
+  viewers: many(stream_viewers),
+  messages: many(stream_messages),
+  donations: many(stream_donations),
+}));
+
+// Relations for battles
+export const battlesRelations = relations(battles, ({ one }) => ({
+  stream: one(live_streams, {
+    fields: [battles.live_stream_id],
+    references: [live_streams.id],
+  }),
+  challenger: one(profiles, {
+    fields: [battles.challenger_id],
+    references: [profiles.user_id],
+  }),
+  opponent: one(profiles, {
+    fields: [battles.opponent_id],
+    references: [profiles.user_id],
+  }),
+}));
+
+// Relations for stream viewers
+export const streamViewersRelations = relations(stream_viewers, ({ one }) => ({
+  stream: one(live_streams, {
+    fields: [stream_viewers.stream_id],
+    references: [live_streams.id],
+  }),
+  user: one(profiles, {
+    fields: [stream_viewers.user_id],
+    references: [profiles.user_id],
+  }),
+}));
+
+// Relations for stream messages
+export const streamMessagesRelations = relations(stream_messages, ({ one }) => ({
+  stream: one(live_streams, {
+    fields: [stream_messages.stream_id],
+    references: [live_streams.id],
+  }),
+  user: one(profiles, {
+    fields: [stream_messages.user_id],
+    references: [profiles.user_id],
+  }),
+}));
+
+// Relations for stream donations
+export const streamDonationsRelations = relations(stream_donations, ({ one }) => ({
+  stream: one(live_streams, {
+    fields: [stream_donations.stream_id],
+    references: [live_streams.id],
+  }),
+  fromUser: one(profiles, {
+    fields: [stream_donations.from_user_id],
+    references: [profiles.user_id],
+  }),
+  toUser: one(profiles, {
+    fields: [stream_donations.to_user_id],
+    references: [profiles.user_id],
+  }),
+}));

@@ -78,6 +78,7 @@ import WalletAnalytics from "./pages/wallet/WalletAnalytics";
 import WalletTransactions from "./pages/wallet/WalletTransactions";
 import WalletIntegrations from "./pages/wallet/WalletIntegrations";
 import WalletCards from "./pages/wallet/WalletCards";
+import ManageReviews from "./pages/wallet/ManageReviews";
 import GiftCards from "./pages/wallet/GiftCards";
 import SendMoney from "./pages/wallet/SendMoney";
 import SendToEloity from "./pages/wallet/SendToEloity";
@@ -588,6 +589,7 @@ const AppRoutes = () => {
           <Route path="wallet" element={<Wallet />} />
           <Route path="wallet/analytics" element={<WalletAnalytics />} />
           <Route path="wallet/transactions" element={<WalletTransactions />} />
+          <Route path="wallet/reviews" element={<ManageReviews />} />
           <Route path="wallet/integrations" element={<WalletIntegrations />} />
           <Route path="wallet/cards" element={<WalletCards />} />
           <Route path="wallet/gift-cards" element={<GiftCards />} />
