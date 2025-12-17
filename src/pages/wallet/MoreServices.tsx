@@ -36,6 +36,9 @@ import {
   FileText,
   Link2,
   Receipt,
+  BarChart3,
+  ListChecks,
+  MessageSquare,
 } from "lucide-react";
 
 interface Service {
