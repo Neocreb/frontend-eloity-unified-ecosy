@@ -46,7 +46,6 @@ const Invoices: React.FC = () => {
   } = useInvoices();
   const { toast } = useToast();
 
-  const [showCreateForm, setShowCreateForm] = useState(false);
   const [showCustomization, setShowCustomization] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
   const [customization, setCustomization] = useState<any>(null);
