@@ -15,6 +15,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePaymentLinks } from '@/hooks/usePaymentLinks';
+import { useInvoicePaymentSync } from '@/hooks/useInvoicePaymentSync';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { CreatePaymentLinkInput } from '@/services/paymentLinkService';
 
