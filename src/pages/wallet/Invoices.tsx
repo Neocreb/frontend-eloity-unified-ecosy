@@ -80,6 +80,13 @@ const Invoices: React.FC = () => {
     try {
       const success = await markAsPaid(invoiceId);
       if (success) {
+        // Find the invoice to get the amount for syncing
+        const invoice = invoices.find(inv => inv.id === invoiceId);
+        if (invoice && user?.id) {
+          // Record the payment in invoice sync service
+          await recordInvoicePayment(invoiceId, invoice.total, 'invoice_paid');
+        }
+
         toast({
           title: 'Success',
           description: 'Invoice marked as paid',
