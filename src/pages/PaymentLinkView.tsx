@@ -133,38 +133,34 @@ const PaymentLinkView: React.FC = () => {
         backgroundPosition: 'center, center',
       }}
     >
-      {/* Header with platform and creator branding */}
+      {/* Header with platform and creator branding - 3 column layout */}
       <div
-        className="border-b shadow-md sticky top-0 z-40"
-        style={{
-          backgroundColor: customization?.primaryColor || '#ffffff',
-          borderBottomColor: customization?.secondaryColor || '#e5e7eb',
-        }}
+        className="border-b shadow-md sticky top-0 z-40 bg-gray-900"
       >
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {customization?.companyLogo ? (
-                <img
-                  src={customization.companyLogo}
-                  alt="Company Logo"
-                  className="h-8 w-8 rounded-lg object-cover"
-                />
-              ) : (
-                <EloityLogo className="h-8 w-8" />
-              )}
-              <div>
-                <span className="font-bold text-lg text-white">
-                  {customization?.companyName || 'Eloity'}
-                </span>
-                {customization?.companyName && (
-                  <p className="text-xs text-gray-200">Powered by Eloity</p>
-                )}
-              </div>
+            {/* Left: Eloity Logo and Brand */}
+            <div className="flex items-center gap-2 flex-shrink-0">
+              <EloityLogo className="h-8 w-8" />
+              <span className="font-bold text-lg text-cyan-400">Eloity</span>
             </div>
-            <div className="flex items-center gap-2 text-white">
-              <Lock className="h-4 w-4" />
-              <p className="text-sm font-medium">Secure Payment</p>
+
+            {/* Middle: Company Name and Subtitle */}
+            <div className="flex-1 flex flex-col items-center justify-center px-4">
+              {customization?.companyName && (
+                <>
+                  <span className="font-semibold text-white text-sm sm:text-base">
+                    {customization.companyName}
+                  </span>
+                  <p className="text-xs text-gray-400">Powered by Eloity</p>
+                </>
+              )}
+            </div>
+
+            {/* Right: Secure Payment Badge */}
+            <div className="flex items-center gap-2 text-emerald-400 flex-shrink-0">
+              <Shield className="h-4 w-4" />
+              <p className="text-sm font-medium hidden sm:block">Secure Payment</p>
             </div>
           </div>
         </div>
