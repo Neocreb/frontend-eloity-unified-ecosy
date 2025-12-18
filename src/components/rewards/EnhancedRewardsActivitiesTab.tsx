@@ -24,6 +24,9 @@ import {
   Zap,
   RefreshCw,
   ChevronDown,
+  Download,
+  Share2,
+  FolderOpen,
 } from "lucide-react";
 import { formatCurrency, formatNumber } from "@/utils/formatters";
 import { useActivityFeed } from "@/hooks/useActivityFeed";
