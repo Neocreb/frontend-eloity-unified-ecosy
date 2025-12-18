@@ -386,6 +386,130 @@ const CreatorEconomy = () => {
               <EnhancedGiftsTipsAnalytics />
             </TabsContent>
           </Tabs>
+
+          {/* Helpful Resources Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            {/* Getting Started Guide */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-6 h-6 text-blue-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-2">Getting Started</h3>
+                  <p className="text-sm text-gray-700 mb-4">
+                    Learn how to maximize your earnings by exploring all features.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                  >
+                    View Guide
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Performance Tips */}
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Award className="w-6 h-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-2">Performance Tips</h3>
+                  <p className="text-sm text-gray-700 mb-4">
+                    Discover strategies to increase your earnings and level up.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-green-300 text-green-700 hover:bg-green-100"
+                  >
+                    Learn More
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Support Center */}
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Gift className="w-6 h-6 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-2">Rewards Program</h3>
+                  <p className="text-sm text-gray-700 mb-4">
+                    Unlock exclusive benefits and rewards as you progress.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                  >
+                    Explore
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Support */}
+            <div className="bg-gradient-to-br from-orange-50 to-red-50 border border-orange-200 rounded-xl p-6">
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Zap className="w-6 h-6 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-900 mb-2">Need Help?</h3>
+                  <p className="text-sm text-gray-700 mb-4">
+                    Our support team is here to assist you with any questions.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-orange-300 text-orange-700 hover:bg-orange-100"
+                  >
+                    Contact Support
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* FAQ Section */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h3 className="font-bold text-lg text-gray-900 mb-4">
+              Frequently Asked Questions
+            </h3>
+            <div className="space-y-3">
+              <div className="border-b border-gray-200 pb-3">
+                <p className="font-medium text-gray-900 text-sm mb-1">
+                  When will I receive my withdrawal?
+                </p>
+                <p className="text-sm text-gray-600">
+                  Withdrawals typically process within 3-5 business days depending on your payment method.
+                </p>
+              </div>
+              <div className="border-b border-gray-200 pb-3">
+                <p className="font-medium text-gray-900 text-sm mb-1">
+                  How are earnings calculated?
+                </p>
+                <p className="text-sm text-gray-600">
+                  Earnings come from various sources including content views, tips, referrals, challenges, and more.
+                </p>
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 text-sm mb-1">
+                  What does the trust score mean?
+                </p>
+                <p className="text-sm text-gray-600">
+                  Your trust score reflects your activity, reliability, and engagement on the platform.
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
