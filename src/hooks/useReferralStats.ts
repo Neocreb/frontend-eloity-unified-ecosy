@@ -25,13 +25,17 @@ const DEFAULT_LIMIT = 20;
 
 export const useReferralStats = (): UseReferralStatsReturn => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [stats, setStats] = useState<ReferralStats | null>(null);
   const [referrals, setReferrals] = useState<ReferralRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [offset, setOffset] = useState(0);
   const [totalReferrals, setTotalReferrals] = useState(0);
   const [limit] = useState(DEFAULT_LIMIT);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const subscriptionRef = useRef<any>(null);
 
   // Fetch stats and referrals
   const fetchStats = useCallback(async () => {
