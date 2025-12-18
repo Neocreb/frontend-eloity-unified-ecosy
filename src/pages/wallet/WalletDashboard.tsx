@@ -448,10 +448,10 @@ const DashboardInner = () => {
           </div>
 
           {/* Gifts & Tips */}
-          <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+          <div className="bg-purple-50 rounded-xl p-4 md:p-6 border border-purple-100">
             <div className="flex items-center gap-2 mb-3">
               <Gift className="h-5 w-5 text-purple-600" />
-              <h3 className="font-bold text-gray-900">Gifts & Tips</h3>
+              <h3 className="font-bold text-gray-900 text-base md:text-lg">Gifts & Tips</h3>
             </div>
             <div className="text-sm text-gray-600 mb-4">No gifts or tips sent yet</div>
             <button
