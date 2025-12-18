@@ -298,6 +298,34 @@ const CreatorEconomy = () => {
         ></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-6 pb-12">
+          {/* Quick Stats Bar - Mobile Optimized */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 md:p-4">
+              <p className="text-xs text-gray-600 font-medium">Total Earned</p>
+              <p className="text-lg md:text-xl font-bold text-green-700 mt-1">
+                {formatCurrencyContext(revenueData?.totalEarnings || 0)}
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-3 md:p-4">
+              <p className="text-xs text-gray-600 font-medium">Available</p>
+              <p className="text-lg md:text-xl font-bold text-blue-700 mt-1">
+                {formatCurrencyContext(revenueData?.availableToWithdraw || 0)}
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 md:p-4">
+              <p className="text-xs text-gray-600 font-medium">Level</p>
+              <p className="text-lg md:text-xl font-bold text-purple-700 mt-1">
+                <Badge className="bg-purple-600 text-white">Gold</Badge>
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-3 md:p-4">
+              <p className="text-xs text-gray-600 font-medium">Trust Score</p>
+              <p className="text-lg md:text-xl font-bold text-amber-700 mt-1">
+                85%
+              </p>
+            </div>
+          </div>
+
           {/* Tab Navigation */}
           <CreatorEconomyHeader activeTab={activeTab} setActiveTab={setActiveTab} />
 
