@@ -30,6 +30,7 @@ const EnhancedRewardsChallengesTab = () => {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [isClaimingReward, setIsClaimingReward] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDiscovery, setShowDiscovery] = useState(false);
 
   const categories = [
     { value: "all", label: "All Challenges", icon: Target },
