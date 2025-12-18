@@ -304,7 +304,10 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     async (challengeId: string): Promise<boolean> => {
       if (!user?.id) return false;
 
+      setIsUpdating(true);
       try {
+        setError(null);
+
         const { data, error } = await supabase
           .from("user_challenges")
           .update({
@@ -318,6 +321,12 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
 
         if (error) {
           console.error("Error claiming reward:", error);
+          setError(error instanceof Error ? error : new Error("Failed to claim reward"));
+          toast({
+            title: "Error",
+            description: "Failed to claim reward",
+            variant: "destructive",
+          });
           return false;
         }
 
@@ -330,15 +339,29 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
                 : c
             )
           );
+
+          toast({
+            title: "Reward Claimed!",
+            description: "You've claimed your reward",
+          });
         }
 
         return !error;
       } catch (err) {
         console.error("Exception claiming reward:", err);
+        const errorMsg = err instanceof Error ? err.message : "Failed to claim reward";
+        setError(new Error(errorMsg));
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
         return false;
+      } finally {
+        setIsUpdating(false);
       }
     },
-    [user?.id]
+    [user?.id, toast]
   );
 
   // Refresh data
@@ -346,12 +369,34 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     await fetchChallenges();
   }, [fetchChallenges]);
 
+  // Filter by status
+  const filterByStatus = useCallback((status: string): ChallengeWithProgress[] => {
+    return challenges.filter((c) => c.userProgress?.status === status || status === "all");
+  }, [challenges]);
+
+  // Get active and completed challenges
+  const activeChallenges = filterByStatus("active");
+  const completedChallenges = filterByStatus("completed");
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+    };
+  }, []);
+
   return {
     challenges,
+    activeChallenges,
+    completedChallenges,
     isLoading,
+    isUpdating,
     error,
     updateProgress,
     claimReward,
     refresh,
+    filterByStatus,
   };
 };
