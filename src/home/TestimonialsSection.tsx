@@ -93,8 +93,12 @@ export const TestimonialsSection: React.FC = () => {
     // Cleanup function
     return () => {
       isMounted = false;
-      controller.abort();
       clearTimeout(timeoutId);
+      try {
+        controller.abort();
+      } catch (err) {
+        // Ignore abort errors during cleanup
+      }
     };
   }, []);
 
