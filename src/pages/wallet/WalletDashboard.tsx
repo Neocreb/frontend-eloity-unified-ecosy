@@ -175,15 +175,15 @@ const DashboardInner = () => {
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Greeting */}
-          <div className="text-white text-sm font-medium mb-6">
+          <div className="text-white text-sm md:text-base font-medium mb-6">
             Hi {firstName} Jeremiah Chidiebube 👋
           </div>
 
           {/* Portfolio Section */}
-          <div className="space-y-3 mb-8">
-            <div className="text-white/80 text-xs font-medium">Total Portfolio</div>
-            
-            <div className="flex items-center gap-2">
+          <div className="space-y-3 mb-8 max-w-2xl">
+            <div className="text-white/80 text-xs md:text-sm font-medium">Total Portfolio</div>
+
+            <div className="flex items-center gap-2 flex-wrap">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button className="bg-white/20 text-white border border-white/30 hover:bg-white/30 h-9 px-3 text-sm font-medium rounded-lg flex items-center gap-1">
