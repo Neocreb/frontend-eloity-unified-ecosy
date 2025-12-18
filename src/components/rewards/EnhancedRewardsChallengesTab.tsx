@@ -20,6 +20,7 @@ import {
   RefreshCw,
   Flame,
   Lock,
+  Sparkles,
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import { useChallengesProgress } from "@/hooks/useChallengesProgress";
