@@ -53,6 +53,14 @@ export const useReferralStats = (): UseReferralStatsReturn => {
       setStats(statsData);
       setTotalReferrals(statsData.totalReferrals);
 
+      // Get referral code (first referral's code or generate new one)
+      if (statsData.totalReferrals > 0) {
+        const referralsData = await referralTrackingService.getReferralsList(user.id, 1, 0);
+        if (referralsData.length > 0 && referralsData[0].referral_code) {
+          setReferralCode(referralsData[0].referral_code);
+        }
+      }
+
       // Get first page of referrals
       const referralsData = await referralTrackingService.getReferralsList(user.id, limit, 0);
       setReferrals(referralsData);
