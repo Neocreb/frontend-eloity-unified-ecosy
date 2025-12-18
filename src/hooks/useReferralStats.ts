@@ -112,43 +112,104 @@ export const useReferralStats = (): UseReferralStatsReturn => {
   useEffect(() => {
     if (!user?.id) return;
 
+    let isMounted = true;
+
     // Initial fetch
     fetchStats();
 
-    // Subscribe to new referrals
-    subscriptionRef.current = referralTrackingService.subscribeToReferrals(
-      user.id,
-      (newReferral) => {
-        // Add to top of list
-        setReferrals((prev) => [newReferral, ...prev]);
+    // Subscribe to referral updates
+    const setupSubscription = () => {
+      subscriptionRef.current = supabase
+        .channel(`referral_tracking_${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "referral_tracking",
+            filter: `referrer_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (!isMounted) return;
 
-        // Update stats
-        setStats((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            totalReferrals: prev.totalReferrals + 1,
-            activeReferrals:
-              newReferral.status === "active" ? prev.activeReferrals + 1 : prev.activeReferrals,
-            totalEarnings: prev.totalEarnings + (newReferral.earnings_total || 0),
-          };
-        });
+            if (payload.eventType === "INSERT") {
+              const newReferral = payload.new as ReferralRecord;
+              // Add to top of list
+              setReferrals((prev) => [newReferral, ...prev]);
 
-        // Show toast notification
-        toast({
-          title: "New Referral!",
-          description: `You referred ${newReferral.referred_user_id}`,
+              // Update stats
+              setStats((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  totalReferrals: prev.totalReferrals + 1,
+                  activeReferrals:
+                    newReferral.status === "active"
+                      ? prev.activeReferrals + 1
+                      : prev.activeReferrals,
+                  totalEarnings: prev.totalEarnings + (newReferral.earnings_total || 0),
+                };
+              });
+
+              // Show toast notification
+              toast({
+                title: "New Referral!",
+                description: "You've successfully referred a new user",
+              });
+            } else if (payload.eventType === "UPDATE") {
+              const updatedReferral = payload.new as ReferralRecord;
+              const oldReferral = payload.old as ReferralRecord;
+
+              // Update referral in list
+              setReferrals((prev) =>
+                prev.map((r) => (r.id === updatedReferral.id ? updatedReferral : r))
+              );
+
+              // Update stats if status changed
+              if (oldReferral.status !== updatedReferral.status) {
+                setStats((prev) => {
+                  if (!prev) return prev;
+                  const statusChanged =
+                    oldReferral.status !== "active" && updatedReferral.status === "active";
+                  return {
+                    ...prev,
+                    activeReferrals: statusChanged
+                      ? prev.activeReferrals + 1
+                      : prev.activeReferrals,
+                  };
+                });
+              }
+
+              // Update earnings
+              if (oldReferral.earnings_total !== updatedReferral.earnings_total) {
+                setStats((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    totalEarnings:
+                      prev.totalEarnings + (updatedReferral.earnings_total - oldReferral.earnings_total),
+                  };
+                });
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED" && isMounted) {
+            // Subscription is active
+          } else if (status === "CHANNEL_ERROR" && isMounted) {
+            console.error("Referral channel error");
+            setError(new Error("Real-time subscription error"));
+          }
         });
-      },
-      (err) => {
-        console.error("Subscription error:", err);
-        setError(err instanceof Error ? err : new Error("Real-time subscription error"));
-      }
-    );
+    };
+
+    setupSubscription();
 
     return () => {
+      isMounted = false;
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, [user?.id, fetchStats, toast]);
