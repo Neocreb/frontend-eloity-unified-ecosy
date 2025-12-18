@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface ChallengeProgress {
   id: string;
@@ -14,7 +15,7 @@ export interface ChallengeProgress {
   reward_claimed: boolean;
   claim_date: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface Challenge {
@@ -26,16 +27,20 @@ export interface Challenge {
   points_reward: number;
   icon?: string;
   difficulty?: string;
+  category?: string;
 }
 
 export interface ChallengeWithProgress extends Challenge {
   userProgress?: ChallengeProgress;
+  progressPercentage?: number;
+  isCompleted?: boolean;
 }
 
 interface UseChallengesProgressReturn {
   challenges: ChallengeWithProgress[];
   activeChallenges: ChallengeWithProgress[];
   completedChallenges: ChallengeWithProgress[];
+  unclaimedChallenges: ChallengeWithProgress[];
   isLoading: boolean;
   error: Error | null;
   isUpdating: boolean;
@@ -43,6 +48,8 @@ interface UseChallengesProgressReturn {
   claimReward: (challengeId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
   filterByStatus: (status: string) => ChallengeWithProgress[];
+  filterByType: (type: string) => ChallengeWithProgress[];
+  getTotalRewardsAvailable: () => number;
 }
 
 export const useChallengesProgress = (): UseChallengesProgressReturn => {
