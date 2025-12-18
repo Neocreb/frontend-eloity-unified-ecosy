@@ -398,7 +398,11 @@ const EnhancedRewardsBattleTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6"
+      role="main"
+      aria-label="Battle Rewards Tab - View and manage your battle earnings"
+    >
       {/* User Balance Alert */}
       {userBalance <= 0 && (
         <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
