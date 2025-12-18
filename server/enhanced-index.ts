@@ -119,6 +119,8 @@ import adminLandingRouter from './routes/adminLanding.js';
 import bybitRouter from './routes/bybit.js';
 import deliveryRouter from './routes/delivery.js';
 import chatRouter from './routes/chat.js';
+import { enhancedEloitsService } from '../src/services/enhancedEloitsService.js';
+import { supabase } from '../src/integrations/supabase/client.js';
 
 
 const __filename = fileURLToPath(import.meta.url);
