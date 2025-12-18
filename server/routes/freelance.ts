@@ -382,20 +382,21 @@ router.put('/jobs/:id', requireTier2(), async (req, res) => {
 
     // Award rewards if job is completed
     if (status === 'completed' && result[0].freelancer_id) {
-      try {
-        await enhancedEloitsService.awardPoints(result[0].freelancer_id, 'complete_job', {
-          jobId: id,
-          title: result[0].title
-        });
-
-        // Also award the client for successful completion
-        await enhancedEloitsService.awardPoints(userId, 'client_job_completed', {
-          jobId: id,
-          title: result[0].title
-        });
-      } catch (rewardError) {
-        logger.error('Error awarding freelance rewards:', rewardError);
-      }
+      // TODO: Implement rewards service integration
+      // try {
+      //   await enhancedEloitsService.awardPoints(result[0].freelancer_id, 'complete_job', {
+      //     jobId: id,
+      //     title: result[0].title
+      //   });
+      //
+      //   // Also award the client for successful completion
+      //   await enhancedEloitsService.awardPoints(userId, 'client_job_completed', {
+      //     jobId: id,
+      //     title: result[0].title
+      //   });
+      // } catch (rewardError) {
+      //   logger.error('Error awarding freelance rewards:', rewardError);
+      // }
     }
 
     logger.info('Job updated', { jobId: id, userId });
