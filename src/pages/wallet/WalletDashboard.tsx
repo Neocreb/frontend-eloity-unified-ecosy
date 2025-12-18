@@ -371,10 +371,10 @@ const DashboardInner = () => {
           </div>
 
           {/* Today's Activity */}
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+          <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-100">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="h-5 w-5 text-blue-600" />
-              <h3 className="font-bold text-gray-900">Today's Activity</h3>
+              <h3 className="font-bold text-gray-900 text-base md:text-lg">Today's Activity</h3>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
