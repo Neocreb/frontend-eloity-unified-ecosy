@@ -632,7 +632,7 @@ app.use('/api/chat', chatRouter);
 
 app.post('/api/auth/signup', async (req, res) => {
   try {
-    const { email, password, full_name, username } = req.body;
+    const { email, password, full_name, username, referral_code } = req.body;
 
     if (!email || !password || !full_name) {
       return res.status(400).json({ error: 'Email, password, and full name are required' });
@@ -660,6 +660,38 @@ app.post('/api/auth/signup', async (req, res) => {
       points: 100, // Welcome bonus
       level: 'bronze'
     }).returning();
+
+    const userId = newUser[0].id;
+
+    // Handle referral if provided
+    if (referral_code) {
+      try {
+        // Find referrer by code
+        const { data: referralLink, error: linkError } = await supabase
+          .from('referral_links')
+          .select('referrer_id')
+          .eq('referral_code', referral_code)
+          .single();
+
+        if (!linkError && referralLink) {
+          await enhancedEloitsService.processMultiLevelReferral(
+            referralLink.referrer_id,
+            userId,
+            referral_code
+          );
+          logger.info('Referral processed during signup', { referrerId: referralLink.referrer_id, refereeId: userId });
+        }
+      } catch (referralError) {
+        logger.error('Error processing referral during signup:', referralError);
+      }
+    }
+
+    // Initialize rewards data
+    try {
+      await enhancedEloitsService.initializeUserEloitsData(userId);
+    } catch (rewardError) {
+      logger.error('Error initializing rewards data:', rewardError);
+    }
 
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(newUser[0].id);
