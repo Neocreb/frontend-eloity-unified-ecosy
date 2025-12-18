@@ -383,9 +383,20 @@ const MoreServices = () => {
   // Recently used (mock - in production, fetch from user activity)
   const recentlyUsed = allServices.slice(0, 3);
 
+  // Get current favorites (max 7)
+  const favoriteServiceIds = new Set(
+    favorites
+      .map(fav => fav.serviceId)
+      .filter(id => id !== 'more')
+      .slice(0, 7)
+  );
+
+  const currentFavorites = allServices.filter(s => favoriteServiceIds.has(s.id));
+  const availableServices = allServices.filter(s => !favoriteServiceIds.has(s.id));
+
   // Filter services based on search
   const filteredServices = useMemo(() => {
-    let filtered = allServices;
+    let filtered = viewMode === "favorites" ? availableServices : allServices;
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -397,12 +408,12 @@ const MoreServices = () => {
       );
     }
 
-    if (selectedCategory) {
+    if (selectedCategory && viewMode === "all") {
       filtered = filtered.filter((service) => service.category === selectedCategory);
     }
 
     return filtered;
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, viewMode, availableServices]);
 
   // Group services by category
   const groupedServices = useMemo(() => {
