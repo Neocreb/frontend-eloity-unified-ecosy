@@ -499,10 +499,10 @@ const DashboardInner = () => {
           </div>
 
           {/* Smart Recommendations */}
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+          <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-100">
             <div className="flex items-center gap-2 mb-3">
               <Zap className="h-5 w-5 text-blue-600" />
-              <h3 className="font-bold text-gray-900">Smart Recommendations</h3>
+              <h3 className="font-bold text-gray-900 text-base md:text-lg">Smart Recommendations</h3>
             </div>
             <div className="space-y-3">
               <div>
