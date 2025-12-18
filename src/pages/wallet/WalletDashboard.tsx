@@ -228,24 +228,24 @@ const DashboardInner = () => {
 
         {/* Floating Action Buttons */}
         <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mt-12 -mb-6">
-          <div className="flex gap-3 justify-center flex-wrap">
+          <div className="flex gap-3 justify-center flex-wrap max-w-2xl">
             <button
               onClick={()=>navigate('/app/wallet/deposit')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
               <Plus className="h-5 w-5" />
               <span>Deposit</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/send-money')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
               <Send className="h-5 w-5" />
               <span>Send</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/withdraw')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
               <ArrowUp className="h-5 w-5" />
               <span>Withdraw</span>
