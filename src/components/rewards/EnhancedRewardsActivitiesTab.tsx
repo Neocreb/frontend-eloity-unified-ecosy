@@ -481,22 +481,33 @@ const EnhancedRewardsActivitiesTab = () => {
       {/* Filters and Search */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between flex-wrap gap-3">
             <CardTitle className="flex items-center gap-2">
               <Filter className="h-5 w-5" />
-              Filter Activities
+              Filter & Organize Activities
             </CardTitle>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-            >
-              <RefreshCw
-                className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
-              />
-              Refresh
-            </Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleExportCSV}
+                disabled={isExporting || filteredActivities.length === 0}
+              >
+                <Download className={`h-4 w-4 mr-2 ${isExporting ? "animate-spin" : ""}`} />
+                Export CSV
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw
+                  className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
