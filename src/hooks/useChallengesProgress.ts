@@ -212,7 +212,10 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     async (challengeId: string, newProgress: number): Promise<boolean> => {
       if (!user?.id) return false;
 
+      setIsUpdating(true);
       try {
+        setError(null);
+
         // Get or create challenge progress record
         const { data: existing, error: fetchError } = await supabase
           .from("user_challenges")
@@ -238,11 +241,15 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
 
           if (updateError) {
             console.error("Error updating progress:", updateError);
+            setError(updateError instanceof Error ? updateError : new Error("Failed to update progress"));
           }
         } else {
           // Create new record
           const challenge = challenges.find((c) => c.id === challengeId);
-          if (!challenge) return false;
+          if (!challenge) {
+            setError(new Error("Challenge not found"));
+            return false;
+          }
 
           const { error: insertError } = await supabase
             .from("user_challenges")
@@ -261,21 +268,35 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
 
           if (insertError) {
             console.error("Error creating progress:", insertError);
+            setError(insertError instanceof Error ? insertError : new Error("Failed to create progress"));
           }
         }
 
         if (success) {
           // Refresh challenges data
           await fetchChallenges();
+          toast({
+            title: "Progress Updated",
+            description: `Progress for ${challengeId} updated successfully`,
+          });
         }
 
         return success;
       } catch (err) {
         console.error("Exception updating progress:", err);
+        const errorMsg = err instanceof Error ? err.message : "Failed to update progress";
+        setError(new Error(errorMsg));
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
         return false;
+      } finally {
+        setIsUpdating(false);
       }
     },
-    [user?.id, challenges, fetchChallenges]
+    [user?.id, challenges, fetchChallenges, toast]
   );
 
   // Claim reward
