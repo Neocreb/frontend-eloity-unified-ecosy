@@ -564,6 +564,31 @@ const EnhancedRewardsActivitiesTab = () => {
             </Select>
           </div>
 
+          {/* Grouping Option */}
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              Group By
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {[
+                { value: "none" as const, label: "No Grouping" },
+                { value: "category" as const, label: "Group by Category" },
+                { value: "type" as const, label: "Group by Type" },
+              ].map((option) => (
+                <Button
+                  key={option.value}
+                  variant={groupBy === option.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setGroupBy(option.value)}
+                  className="justify-start"
+                >
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+
           {/* Apply Button */}
           <Button
             onClick={handleFilterChange}
