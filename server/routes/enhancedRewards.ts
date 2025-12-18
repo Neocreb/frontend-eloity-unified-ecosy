@@ -309,6 +309,68 @@ router.post('/claim-reward', verifyAuth, async (req, res) => {
   }
 });
 
+// Send gift with rewards
+router.post('/send-gift', verifyAuth, async (req, res) => {
+  try {
+    const { toUserId, giftId, quantity, message, isAnonymous } = req.body;
+    const fromUserId = req.user.id;
+
+    // 1. Get gift details
+    const { data: gift, error: giftError } = await supabase
+      .from('virtual_gifts')
+      .select('*')
+      .eq('id', giftId)
+      .single();
+
+    if (giftError || !gift) {
+      return res.status(404).json({ error: 'Gift not found' });
+    }
+
+    const totalAmount = gift.price * quantity;
+
+    // 2. Check user balance (this would normally be in a wallet service)
+    // For now, we'll assume the user has enough balance or it's handled by the payment flow
+
+    // 3. Create gift transaction
+    const { data: transaction, error: txError } = await supabase
+      .from('gift_transactions')
+      .insert({
+        from_user_id: fromUserId,
+        to_user_id: toUserId,
+        gift_id: giftId,
+        quantity,
+        total_amount: totalAmount,
+        message,
+        is_anonymous: isAnonymous,
+        status: 'completed'
+      })
+      .select()
+      .single();
+
+    if (txError) throw txError;
+
+    // 4. Award rewards
+    // Award the sender for being generous
+    await enhancedEloitsService.awardPoints(fromUserId, 'send_gift', {
+      recipientId: toUserId,
+      giftId,
+      amount: totalAmount
+    });
+
+    // Award the recipient for receiving a gift
+    await enhancedEloitsService.awardPoints(toUserId, 'receive_gift', {
+      senderId: fromUserId,
+      giftId,
+      amount: totalAmount
+    });
+
+    res.json({ success: true, data: transaction });
+  } catch (error) {
+    console.error('Error sending gift:', error);
+    res.status(500).json({ error: 'Failed to send gift' });
+  }
+});
+
 // Admin routes
 // Get system configuration
 router.get('/admin/config', verifyAdmin, async (req, res) => {
