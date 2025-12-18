@@ -282,6 +282,278 @@ const EnhancedSafeReferralComponent = () => {
         </div>
       )}
 
+      {/* Detailed Earning Calculations - NEW */}
+      {stats && projections && (
+        <Card className="shadow-lg border-0 overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-b">
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <DollarSign className="h-6 w-6 text-green-600" />
+              Earnings Calculations & Projections
+            </CardTitle>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Detailed breakdown of your referral earnings potential</p>
+          </CardHeader>
+          <CardContent className="p-8 space-y-8">
+            {/* Current Earnings Breakdown */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">
+                Current Month Earnings Breakdown
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Direct Referral Bonus</p>
+                  <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                    {formatCurrency(
+                      stats.activeReferrals * projections.tierCalcs.baseReward,
+                      currency
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {stats.activeReferrals} active referrals × {formatCurrency(projections.tierCalcs.baseReward, currency)}
+                  </p>
+                </div>
+
+                <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 rounded-xl border border-green-200 dark:border-green-800">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Revenue Share</p>
+                  <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                    {formatCurrency(
+                      stats.earningsThisMonth * projections.tierCalcs.revenueShare,
+                      currency
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {(projections.tierCalcs.revenueShare * 100).toFixed(1)}% of your earnings
+                  </p>
+                </div>
+
+                <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Total This Month</p>
+                  <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                    {formatCurrency(stats.earningsThisMonth, currency)}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    All referral sources combined
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Projected Earnings */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">
+                Projected Monthly Earnings
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-6 bg-gradient-to-br from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl border-2 border-cyan-200 dark:border-cyan-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-sm font-semibold text-muted-foreground mb-1">Conservative Estimate</p>
+                      <p className="text-3xl font-bold text-cyan-600 dark:text-cyan-400">
+                        {formatCurrency(projections.projectedMonthlyEarnings, currency)}
+                      </p>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-cyan-400" />
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                    <p>📊 Based on current {stats.activeReferrals} active referrals</p>
+                    <p>💰 {formatCurrency(projections.tierCalcs.baseReward, currency)} per referral/month</p>
+                  </div>
+                </div>
+
+                <div className="p-6 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border-2 border-green-200 dark:border-green-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <p className="text-sm font-semibold text-muted-foreground mb-1">With Revenue Share</p>
+                      <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                        {formatCurrency(projections.totalProjectedMonthly, currency)}
+                      </p>
+                    </div>
+                    <Zap className="h-8 w-8 text-green-400" />
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+                    <p>🚀 Includes {(projections.tierCalcs.revenueShare * 100).toFixed(1)}% revenue share</p>
+                    <p>📈 If you maintain current activity level</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Earnings Limits */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">
+                {stats?.tier.charAt(0).toUpperCase() + stats?.tier.slice(1)} Tier Limits
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Clock className="h-5 w-5 text-amber-600" />
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">Daily Limit</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Max per day</span>
+                      <span className="font-bold text-amber-600 dark:text-amber-400">
+                        {formatCurrency(projections.tierCalcs.dailyLimit, currency)}
+                      </span>
+                    </div>
+                    <Progress
+                      value={Math.min((stats.earningsThisMonth / 30 / projections.tierCalcs.dailyLimit) * 100, 100)}
+                      className="h-2"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {((stats.earningsThisMonth / 30 / projections.tierCalcs.dailyLimit) * 100).toFixed(0)}% of daily limit used
+                    </p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
+                  <div className="flex items-center gap-3 mb-3">
+                    <Calendar className="h-5 w-5 text-orange-600" />
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">Monthly Limit</p>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-muted-foreground">Max per month</span>
+                      <span className="font-bold text-orange-600 dark:text-orange-400">
+                        {formatCurrency(projections.tierCalcs.monthlyLimit, currency)}
+                      </span>
+                    </div>
+                    <Progress
+                      value={Math.min((stats.earningsThisMonth / projections.tierCalcs.monthlyLimit) * 100, 100)}
+                      className="h-2"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {((stats.earningsThisMonth / projections.tierCalcs.monthlyLimit) * 100).toFixed(0)}% of monthly limit used
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Next Tier Information */}
+            <div className="p-6 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl border-l-4 border-purple-600">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <Star className="h-5 w-5 text-yellow-500" />
+                  Path to {projections.nextTier.charAt(0).toUpperCase() + projections.nextTier.slice(1)} Tier
+                </h3>
+                <Badge className="bg-purple-600 text-white capitalize">
+                  {projections.referralsNeeded} referrals needed
+                </Badge>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="text-sm font-medium">Progress</span>
+                    <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
+                      {stats.totalReferrals}/{projections.nextTierThreshold}
+                    </span>
+                  </div>
+                  <Progress
+                    value={(stats.totalReferrals / projections.nextTierThreshold) * 100}
+                    className="h-3"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Reward Increase</p>
+                    <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                      +{formatCurrency(
+                        projections.nextTierCalcs.baseReward - projections.tierCalcs.baseReward,
+                        currency
+                      )}
+                    </p>
+                    <p className="text-xs text-muted-foreground">per referral</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-1">Revenue Share Boost</p>
+                    <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                      +{(
+                        (projections.nextTierCalcs.revenueShare - projections.tierCalcs.revenueShare) *
+                        100
+                      ).toFixed(1)}%
+                    </p>
+                    <p className="text-xs text-muted-foreground">additional share</p>
+                  </div>
+                </div>
+                <div className="p-3 bg-white dark:bg-gray-900 rounded-lg">
+                  <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                    Estimated new monthly earnings:
+                  </p>
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
+                    {formatCurrency(
+                      (projections.nextTierThreshold * projections.nextTierCalcs.baseReward) +
+                        (stats.totalEarnings * projections.nextTierCalcs.revenueShare),
+                      currency
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Auto-Share Breakdown */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                <Gift className="h-5 w-5 text-pink-600" />
+                Auto Sharing Program
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-xl border border-pink-200 dark:border-pink-800">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">How It Works</p>
+                  <ul className="space-y-2 text-sm text-gray-700 dark:text-gray-300">
+                    <li className="flex gap-2">
+                      <span className="text-pink-600">✓</span>
+                      <span>0.5% of your earnings automatically shared</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-pink-600">✓</span>
+                      <span>Distributed evenly among active referrals</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-pink-600">✓</span>
+                      <span>Keeps referrals motivated and engaged</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-pink-600">✓</span>
+                      <span>Optional - can be toggled off</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="p-4 bg-pink-50 dark:bg-pink-900/20 rounded-xl border border-pink-200 dark:border-pink-800">
+                  <p className="text-xs font-semibold text-muted-foreground mb-2">Your Auto-Share Stats</p>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">This Month</span>
+                      <span className="font-bold text-pink-600 dark:text-pink-400">
+                        {formatCurrency(stats.autoSharedThisMonth || 0, currency)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Avg per Referral</span>
+                      <span className="font-bold text-pink-600 dark:text-pink-400">
+                        {formatCurrency(
+                          (stats.autoSharedThisMonth || 0) / Math.max(1, stats.activeReferrals),
+                          currency
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm text-gray-700 dark:text-gray-300">Est. Monthly</span>
+                      <span className="font-bold text-pink-600 dark:text-pink-400">
+                        {formatCurrency(
+                          (stats.earningsThisMonth || 0) * 0.005,
+                          currency
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Automatic Reward Sharing Info */}
       <Alert className="border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 shadow-md">
         <Zap className="h-5 w-5 text-blue-600" />
