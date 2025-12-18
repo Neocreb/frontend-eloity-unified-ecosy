@@ -678,6 +678,12 @@ const AppRoutes = () => {
 
           {/* Rewards Routes - Full Page Implementation COMPLETE */}
           <Route path="rewards/withdraw" element={<WithdrawRewards />} />
+          <Route path="rewards/more" element={<RewardsMoreServices />} />
+          <Route path="rewards/withdraw" element={<RewardsWithdraw />} />
+          <Route path="rewards/send-gifts" element={<RewardsSendGifts />} />
+          <Route path="rewards/analytics" element={<RewardsAnalytics />} />
+          <Route path="rewards/partnerships" element={<RewardsPartnerships />} />
+          <Route path="rewards/boost-manager" element={<RewardsBoostManager />} />
 
           {/* Chat & Social Routes - Pending Full Page Implementation */}
           <Route path="chat/create-sticker" element={<StickerCreation />} />
