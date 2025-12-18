@@ -130,17 +130,40 @@ router.get('/user/:userId/redemptions', verifyAuth, async (req, res) => {
   try {
     const { userId } = req.params;
     const { status } = req.query;
-    
+
     // Verify user is accessing their own data or is admin
     if (req.user.id !== userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    
+
     const redemptions = await enhancedEloitsService.getRedemptions(userId, status?.toString());
     res.json({ success: true, data: redemptions });
   } catch (error) {
     console.error('Error fetching redemptions:', error);
     res.status(500).json({ error: 'Failed to fetch redemptions' });
+  }
+});
+
+// Get leaderboard
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+    const leaderboard = await enhancedEloitsService.getLeaderboard(parseInt(limit));
+    res.json({ success: true, data: leaderboard });
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
+// Get reward rules (public)
+router.get('/rules', async (req, res) => {
+  try {
+    const rules = await enhancedEloitsService.getRewardRules();
+    res.json({ success: true, data: rules });
+  } catch (error) {
+    console.error('Error fetching reward rules:', error);
+    res.status(500).json({ error: 'Failed to fetch reward rules' });
   }
 });
 
@@ -254,17 +277,35 @@ router.post('/request-redemption', verifyAuth, async (req, res) => {
 router.post('/process-referral', verifyAuth, async (req, res) => {
   try {
     const { referrerId, refereeId, referralCode } = req.body;
-    
+
     // Verify user is the referrer or is admin
     if (req.user.id !== referrerId && !req.user.isAdmin) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    
+
     const result = await enhancedEloitsService.processMultiLevelReferral(referrerId, refereeId, referralCode);
     res.json({ success: true, data: result });
   } catch (error) {
     console.error('Error processing referral:', error);
     res.status(500).json({ error: 'Failed to process referral' });
+  }
+});
+
+// Claim challenge reward
+router.post('/claim-reward', verifyAuth, async (req, res) => {
+  try {
+    const { userId, challengeId } = req.body;
+
+    // Verify user is accessing their own data
+    if (req.user.id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const result = await enhancedEloitsService.claimChallengeReward(userId, challengeId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error claiming reward:', error);
+    res.status(500).json({ error: 'Failed to claim reward' });
   }
 });
 
