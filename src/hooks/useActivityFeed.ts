@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { activityTransactionService, ActivityTransaction, ActivityFilter } from "@/services/activityTransactionService";
 
@@ -12,9 +12,14 @@ interface UseActivityFeedReturn {
   refresh: () => Promise<void>;
   filter: (filters: ActivityFilter) => Promise<void>;
   clearFilters: () => Promise<void>;
+  search: (query: string) => Promise<void>;
+  clearSearch: () => Promise<void>;
+  searchQuery: string;
+  isSearching: boolean;
 }
 
 const DEFAULT_LIMIT = 50;
+const SEARCH_DEBOUNCE_MS = 500;
 
 export const useActivityFeed = (initialLimit: number = DEFAULT_LIMIT): UseActivityFeedReturn => {
   const { user } = useAuth();
@@ -25,6 +30,10 @@ export const useActivityFeed = (initialLimit: number = DEFAULT_LIMIT): UseActivi
   const [totalCount, setTotalCount] = useState(0);
   const [currentFilters, setCurrentFilters] = useState<ActivityFilter | undefined>();
   const [limit] = useState(initialLimit);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const subscriptionRef = useRef<any>(null);
 
   // Initial fetch
   const fetchActivities = useCallback(async () => {
