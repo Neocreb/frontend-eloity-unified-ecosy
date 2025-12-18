@@ -40,6 +40,9 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
   const { activities } = useActivityFeed(100);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [earningsByCategory, setEarningsByCategory] = useState<Record<string, number>>({});
+  const [sparklineData, setSparklineData] = useState<Array<{ day: string; earnings: number }>>([]);
+  const [monthComparisonData, setMonthComparisonData] = useState<{ current: number; previous: number; percentChange: number }>({ current: 0, previous: 0, percentChange: 0 });
+  const [achievements, setAchievements] = useState<Array<{ id: string; title: string; icon: string; unlockedAt?: string; progress: number }>>([]);
 
   // Calculate earnings by category from activities
   useEffect(() => {
