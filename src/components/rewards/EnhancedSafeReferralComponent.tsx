@@ -50,9 +50,9 @@ const EnhancedSafeReferralComponent = () => {
 
   // Calculate projections
   const calculateProjections = () => {
-    if (!stats) return null;
+    if (!stats || !stats.tier) return null;
 
-    const currentTier = stats.tier.toLowerCase() as keyof typeof tierCalculations;
+    const currentTier = (stats.tier || "bronze").toLowerCase() as keyof typeof tierCalculations;
     const tierCalcs = tierCalculations[currentTier] || tierCalculations.bronze;
 
     // Calculate potential next tier
