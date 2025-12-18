@@ -18,6 +18,7 @@ import {
   Filter,
   Calendar,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import {
   Select,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { virtualGiftsService } from "@/services/virtualGiftsService";
 import { formatCurrency } from "@/utils/formatters";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface GiftTipStats {
   totalGiftsSent: number;
