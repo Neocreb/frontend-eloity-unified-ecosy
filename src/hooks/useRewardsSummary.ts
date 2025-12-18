@@ -203,8 +203,9 @@ export const useRewardsSummary = (): UseRewardsSummaryReturn => {
             };
           });
 
-          // Fetch fresh data
-          await fetchSummary();
+          // Clear cache and fetch fresh data
+          cacheRef.current = { data: null, timestamp: 0 };
+          await fetchSummary(true);
         }
 
         return success;
@@ -217,12 +218,36 @@ export const useRewardsSummary = (): UseRewardsSummaryReturn => {
     [user?.id, summary, fetchSummary]
   );
 
+  // Clear cache
+  const clearCache = useCallback(() => {
+    cacheRef.current = { data: null, timestamp: 0 };
+  }, []);
+
+  // Calculate cache age
+  const cacheAge = lastUpdated ? Date.now() - lastUpdated.getTime() : -1;
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current);
+      }
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+    };
+  }, []);
+
   return {
     summary,
     isLoading,
+    isRefreshing,
     error,
     refresh,
     updateTrustScore,
     withdraw,
+    clearCache,
+    lastUpdated,
+    cacheAge,
   };
 };
