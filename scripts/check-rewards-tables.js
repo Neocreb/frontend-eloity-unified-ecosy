@@ -26,7 +26,9 @@ async function checkTables() {
       'spam_detection',
       'referral_links',
       'referral_events',
-      'trust_decay_log'
+      'trust_decay_log',
+      'gift_transactions',
+      'tip_transactions'
     ];
 
     console.log('Checking tables...');
