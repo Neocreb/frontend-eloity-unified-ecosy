@@ -934,6 +934,253 @@ const EnhancedRewardsBattleTab = () => {
         </CardContent>
       </Card>
 
+      {/* Strategy Tips Section - NEW */}
+      <Card className="shadow-lg border-0 overflow-hidden">
+        <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-b">
+          <CardTitle className="flex items-center gap-3 text-2xl">
+            <Zap className="h-6 w-6 text-amber-600" />
+            Battle Betting Strategy Guide
+          </CardTitle>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Pro tips to maximize your battle earnings</p>
+        </CardHeader>
+        <CardContent className="p-8 space-y-8">
+          {/* Strategy Categories */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Battle Selection Strategy */}
+            <div className="p-6 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30 rounded-xl border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center font-bold">1</div>
+                <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Battle Selection</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex gap-3">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Check Creator Stats</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Analyze win rate, verification, and follower count</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Read Past Performance</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Look at recent battle history and trends</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Avoid High Odds Favorites</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">High odds often indicate uncertainty</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-blue-600 dark:text-blue-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Diversify Battles</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Don't put all bets on the same battle</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Odds Understanding */}
+            <div className="p-6 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-purple-600 text-white rounded-lg flex items-center justify-center font-bold">2</div>
+                <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Understanding Odds</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex gap-3">
+                  <span className="text-purple-600 dark:text-purple-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Low Odds (1.5-2x)</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Safer bets with smaller returns but higher win probability</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-purple-600 dark:text-purple-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Medium Odds (2-4x)</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Balanced risk-reward with moderate probability</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-purple-600 dark:text-purple-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">High Odds (4x+)</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">High risk, high reward - use sparingly for maximizing gains</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-purple-600 dark:text-purple-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Expected Value</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Only bet if (probability × odds) {">"} cost</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Risk Management */}
+            <div className="p-6 bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-900/30 rounded-xl border border-red-200 dark:border-red-800">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-red-600 text-white rounded-lg flex items-center justify-center font-bold">3</div>
+                <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Risk Management</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex gap-3">
+                  <span className="text-red-600 dark:text-red-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">The 1-3% Rule</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Bet 1-3% of your balance per battle</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-red-600 dark:text-red-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Set Loss Limits</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Stop betting if you lose more than 10% daily</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-red-600 dark:text-red-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Never Chase Losses</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Don't increase bets to recover losses</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-red-600 dark:text-red-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Secure Your Wins</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Withdraw earnings periodically</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+
+            {/* Timing & Volume */}
+            <div className="p-6 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 rounded-xl border border-green-200 dark:border-green-800">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-green-600 text-white rounded-lg flex items-center justify-center font-bold">4</div>
+                <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100">Timing & Volume</h3>
+              </div>
+              <ul className="space-y-3">
+                <li className="flex gap-3">
+                  <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Bet Early in Battles</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Better odds are available before battles start</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Quality Over Quantity</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Fewer high-confidence bets beat many random ones</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Avoid Peak Hours</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Odds shift during high-volume periods</p>
+                  </div>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-green-600 dark:text-green-400 font-bold">✓</span>
+                  <div>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Track Streaks</p>
+                    <p className="text-xs text-gray-700 dark:text-gray-300">Monitor your win/loss streaks for pattern analysis</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Advanced Strategy Tips */}
+          <div className="p-6 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20 rounded-xl border-2 border-cyan-200 dark:border-cyan-700">
+            <h3 className="font-bold text-lg mb-4 flex items-center gap-2 text-gray-900 dark:text-gray-100">
+              <Star className="h-5 w-5 text-yellow-500" />
+              Pro Tips for Maximum Earnings
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex gap-3">
+                <span className="text-cyan-600 dark:text-cyan-400 font-bold text-lg leading-none">→</span>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Statistical Edge</p>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">Only bet when you have a clear statistical advantage. Know your confidence level.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-cyan-600 dark:text-cyan-400 font-bold text-lg leading-none">→</span>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Emotional Control</p>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">Don't let wins make you overconfident or losses make you reckless.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-cyan-600 dark:text-cyan-400 font-bold text-lg leading-none">→</span>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Track Everything</p>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">Review your battle history regularly to identify winning patterns and mistakes.</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <span className="text-cyan-600 dark:text-cyan-400 font-bold text-lg leading-none">→</span>
+                <div>
+                  <p className="font-semibold text-gray-900 dark:text-gray-100 text-sm mb-1">Community Insights</p>
+                  <p className="text-xs text-gray-700 dark:text-gray-300">Learn from other successful bettors in the community forums.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Your Current Performance Summary */}
+          {allVotes.length > 0 && (
+            <div className="p-6 bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-xl border-l-4 border-indigo-600">
+              <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">
+                📊 Your Performance Summary
+              </h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Current Win Rate</p>
+                  <p className={`font-bold text-lg ${winRate >= 50 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                    {winRate.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">{winRate >= 50 ? "Above average" : "Below average"}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Overall ROI</p>
+                  <p className={`font-bold text-lg ${roi >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                    {roi >= 0 ? "+" : ""}{roi.toFixed(1)}%
+                  </p>
+                  <p className="text-xs text-muted-foreground">Profit/loss ratio</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Best Strategy</p>
+                  <p className="font-bold text-lg">
+                    {oddsPerformance["Medium (2-4x)"].earnings > Math.max(
+                      oddsPerformance["Low (<2x)"].earnings,
+                      oddsPerformance["High (4x+)"].earnings
+                    ) ? "Medium Odds" : oddsPerformance["Low (<2x)"].earnings > oddsPerformance["High (4x+)"].earnings ? "Low Odds" : "High Odds"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Most profitable</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs mb-1">Next Level</p>
+                  <p className="font-bold text-lg">
+                    {roi >= 50 ? "Expert" : roi >= 20 ? "Advanced" : roi >= 0 ? "Good" : "Learning"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Skill level</p>
+                </div>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Battle Voting Modal */}
       {showVotingModal && selectedBattle && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
