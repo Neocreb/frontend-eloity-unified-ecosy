@@ -25,6 +25,7 @@
     "migrate": "npx drizzle-kit generate:pg",
     "migrate:apply": "node scripts/apply-migrations-supabase.js",
     "migrate:product-reviews": "node scripts/apply-product-reviews-migration.js",
+    "fix:reward-rules-rls": "node scripts/fix-reward-rules-rls.js",
     "db:studio": "npx drizzle-kit studio",
     "db:push": "npx drizzle-kit push:pg",
     "setup:supabase": "node scripts/setup-supabase-integration.js",
