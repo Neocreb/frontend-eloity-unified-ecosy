@@ -174,9 +174,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         setConversations(formattedConversations);
 
-        // Load messages for each conversation
+        // Load messages for each conversation (non-blocking)
+        // Don't await these to prevent blocking conversation list
         formattedConversations.forEach((conv) => {
-          loadMessages(conv.id);
+          loadMessages(conv.id).catch(() => {
+            // Silently fail - messages will be empty until available
+            // This prevents error logs from network issues
+          });
         });
       } catch (error) {
         console.error("Error in loadConversations:", error);
