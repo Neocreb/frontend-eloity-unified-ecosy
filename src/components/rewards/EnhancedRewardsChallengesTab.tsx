@@ -183,9 +183,17 @@ const EnhancedRewardsChallengesTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6"
+      role="main"
+      aria-label="Challenges Tab - Complete challenges and earn rewards"
+    >
       {/* Challenge Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div
+        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+        role="region"
+        aria-label="Challenge Statistics Overview"
+      >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">

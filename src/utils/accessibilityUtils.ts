@@ -1,54 +1,105 @@
 /**
- * Accessibility Utilities for WCAG compliance
- * Helps with keyboard navigation, ARIA labels, and screen reader support
+ * Accessibility Utilities
+ * Provides utilities for keyboard navigation, focus management, high contrast mode support, and screen reader optimization
  */
 
 /**
- * Check if key pressed is Enter or Space
+ * Check if user prefers reduced motion
  */
-export const isActivationKey = (event: React.KeyboardEvent): boolean => {
-  return event.key === 'Enter' || event.key === ' ';
+export const prefersReducedMotion = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 };
 
 /**
- * Check if key pressed is Escape
+ * Check if user prefers high contrast mode
  */
-export const isEscapeKey = (event: React.KeyboardEvent): boolean => {
-  return event.key === 'Escape';
+export const prefersHighContrast = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-contrast: more)').matches;
 };
 
 /**
- * Check if key is arrow key
+ * Check if user prefers dark mode
  */
-export const isArrowKey = (event: React.KeyboardEvent): boolean => {
-  return ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key);
+export const prefersDarkMode = (): boolean => {
+  if (typeof window === 'undefined') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
 };
 
 /**
- * Get arrow direction
+ * Get high contrast CSS classes for components
  */
-export const getArrowDirection = (
-  event: React.KeyboardEvent
-): 'up' | 'down' | 'left' | 'right' | null => {
-  const keyMap = {
-    ArrowUp: 'up',
-    ArrowDown: 'down',
-    ArrowLeft: 'left',
-    ArrowRight: 'right',
-  } as const;
-  return keyMap[event.key as keyof typeof keyMap] || null;
+export const getHighContrastClasses = (baseClass: string, highContrastClass: string): string => {
+  return prefersHighContrast() ? highContrastClass : baseClass;
 };
 
 /**
- * Announce message to screen readers
+ * Keyboard navigation helper - check for specific keys
+ */
+export const isKeyboardEvent = (e: React.KeyboardEvent, key: string | string[]): boolean => {
+  const keys = Array.isArray(key) ? key : [key];
+  return keys.some(k => e.key === k || e.code === k);
+};
+
+/**
+ * Handle keyboard navigation in lists/grids
+ */
+export const handleListKeyboard = (
+  e: React.KeyboardEvent,
+  index: number,
+  itemCount: number,
+  onSelect: (index: number) => void,
+  columns?: number
+): void => {
+  let nextIndex = index;
+  const colCount = columns || 1;
+
+  switch (e.key) {
+    case 'ArrowUp':
+      e.preventDefault();
+      nextIndex = Math.max(0, index - colCount);
+      break;
+    case 'ArrowDown':
+      e.preventDefault();
+      nextIndex = Math.min(itemCount - 1, index + colCount);
+      break;
+    case 'ArrowLeft':
+      e.preventDefault();
+      nextIndex = Math.max(0, index - 1);
+      break;
+    case 'ArrowRight':
+      e.preventDefault();
+      nextIndex = Math.min(itemCount - 1, index + 1);
+      break;
+    case 'Home':
+      e.preventDefault();
+      nextIndex = 0;
+      break;
+    case 'End':
+      e.preventDefault();
+      nextIndex = itemCount - 1;
+      break;
+    default:
+      return;
+  }
+
+  onSelect(nextIndex);
+};
+
+/**
+ * Announce text to screen readers
  */
 export const announceToScreenReader = (message: string, priority: 'polite' | 'assertive' = 'polite'): void => {
+  if (typeof document === 'undefined') return;
+
   const announcement = document.createElement('div');
   announcement.setAttribute('role', 'status');
   announcement.setAttribute('aria-live', priority);
   announcement.setAttribute('aria-atomic', 'true');
-  announcement.className = 'sr-only'; // Make visually hidden but available to screen readers
+  announcement.className = 'sr-only';
   announcement.textContent = message;
+
   document.body.appendChild(announcement);
 
   setTimeout(() => {
@@ -57,275 +108,153 @@ export const announceToScreenReader = (message: string, priority: 'polite' | 'as
 };
 
 /**
- * Focus management utilities
+ * Focus management utility
  */
-export const focusUtils = {
-  /**
-   * Move focus to next element in tab order
-   */
-  moveFocusToNext(element: HTMLElement): void {
-    const focusableElements = document.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const focusArray = Array.from(focusableElements) as HTMLElement[];
-    const currentIndex = focusArray.indexOf(element);
-    const nextElement = focusArray[currentIndex + 1];
-    if (nextElement) {
-      nextElement.focus();
-    }
-  },
-
-  /**
-   * Move focus to previous element in tab order
-   */
-  moveFocusToPrevious(element: HTMLElement): void {
-    const focusableElements = document.querySelectorAll(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    const focusArray = Array.from(focusableElements) as HTMLElement[];
-    const currentIndex = focusArray.indexOf(element);
-    const prevElement = focusArray[currentIndex - 1];
-    if (prevElement) {
-      prevElement.focus();
-    }
-  },
-
-  /**
-   * Focus element with visible indicator
-   */
-  focusElement(element: HTMLElement): void {
-    element.focus();
-    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  },
-
-  /**
-   * Check if element is focusable
-   */
-  isFocusable(element: HTMLElement): boolean {
-    return element.matches(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-  },
+export const focusElement = (element: HTMLElement | null): void => {
+  if (element) {
+    setTimeout(() => element.focus(), 0);
+  }
 };
 
 /**
- * ARIA utilities for common patterns
+ * Set focus to first interactive element
  */
-export const ariaUtils = {
-  /**
-   * Set up button attributes
-   */
-  setButtonAttributes(element: HTMLElement, options?: { label?: string; pressed?: boolean }): void {
-    element.setAttribute('role', 'button');
-    element.setAttribute('tabindex', '0');
-    if (options?.label) {
-      element.setAttribute('aria-label', options.label);
-    }
-    if (options?.pressed !== undefined) {
-      element.setAttribute('aria-pressed', String(options.pressed));
-    }
-  },
+export const focusFirstInteractive = (container: HTMLElement | null): void => {
+  if (!container) return;
 
-  /**
-   * Set up toggle button
-   */
-  setToggleAttributes(
-    element: HTMLElement,
-    isActive: boolean,
-    label?: string
-  ): void {
-    element.setAttribute('role', 'switch');
-    element.setAttribute('aria-checked', String(isActive));
-    element.setAttribute('tabindex', '0');
-    if (label) {
-      element.setAttribute('aria-label', label);
-    }
-  },
+  const interactive = container.querySelector(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  ) as HTMLElement;
 
-  /**
-   * Set up modal dialog
-   */
-  setModalAttributes(element: HTMLElement, label?: string): void {
-    element.setAttribute('role', 'dialog');
-    element.setAttribute('aria-modal', 'true');
-    if (label) {
-      element.setAttribute('aria-labelledby', label);
-    }
-  },
-
-  /**
-   * Set up combobox
-   */
-  setComboboxAttributes(
-    element: HTMLElement,
-    isOpen: boolean,
-    listId: string
-  ): void {
-    element.setAttribute('role', 'combobox');
-    element.setAttribute('aria-expanded', String(isOpen));
-    element.setAttribute('aria-controls', listId);
-    element.setAttribute('aria-haspopup', 'listbox');
-  },
-
-  /**
-   * Set up progress indicator
-   */
-  setProgressAttributes(
-    element: HTMLElement,
-    current: number,
-    max: number,
-    label?: string
-  ): void {
-    element.setAttribute('role', 'progressbar');
-    element.setAttribute('aria-valuenow', String(current));
-    element.setAttribute('aria-valuemax', String(max));
-    element.setAttribute('aria-valuemin', '0');
-    if (label) {
-      element.setAttribute('aria-label', label);
-    }
-  },
-
-  /**
-   * Mark element as loading
-   */
-  setLoadingAttributes(element: HTMLElement, isLoading: boolean): void {
-    if (isLoading) {
-      element.setAttribute('aria-busy', 'true');
-      element.setAttribute('aria-label', 'Loading');
-    } else {
-      element.removeAttribute('aria-busy');
-    }
-  },
-
-  /**
-   * Set up live region for updates
-   */
-  setLiveRegionAttributes(
-    element: HTMLElement,
-    priority: 'polite' | 'assertive' = 'polite',
-    atomic = false
-  ): void {
-    element.setAttribute('aria-live', priority);
-    element.setAttribute('aria-atomic', String(atomic));
-  },
+  if (interactive) {
+    focusElement(interactive);
+  }
 };
 
 /**
- * Skip link utilities
+ * Trap focus within a container (useful for modals)
  */
-export const skipLinkUtils = {
-  /**
-   * Create skip link to main content
-   */
-  createMainContentSkipLink(): HTMLAnchorElement {
-    const skipLink = document.createElement('a');
-    skipLink.href = '#main-content';
-    skipLink.className = 'sr-only focus:not-sr-only focus:fixed focus:top-0 focus:left-0 focus:z-50 focus:bg-black focus:text-white focus:p-2';
-    skipLink.textContent = 'Skip to main content';
-    return skipLink;
-  },
+export const trapFocus = (e: React.KeyboardEvent, container: HTMLElement | null): void => {
+  if (!container || e.key !== 'Tab') return;
 
-  /**
-   * Create skip link to navigation
-   */
-  createNavigationSkipLink(): HTMLAnchorElement {
-    const skipLink = document.createElement('a');
-    skipLink.href = '#navigation';
-    skipLink.className = 'sr-only focus:not-sr-only focus:fixed focus:top-0 focus:left-0 focus:z-50 focus:bg-black focus:text-white focus:p-2';
-    skipLink.textContent = 'Skip to navigation';
-    return skipLink;
-  },
+  const focusableElements = container.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  );
+
+  if (focusableElements.length === 0) return;
+
+  const firstElement = focusableElements[0] as HTMLElement;
+  const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+  const activeElement = document.activeElement as HTMLElement;
+
+  if (e.shiftKey) {
+    if (activeElement === firstElement) {
+      e.preventDefault();
+      lastElement.focus();
+    }
+  } else {
+    if (activeElement === lastElement) {
+      e.preventDefault();
+      firstElement.focus();
+    }
+  }
 };
 
 /**
- * Color contrast utilities
+ * Generate ARIA labels from data
  */
-export const contrastUtils = {
-  /**
-   * Calculate relative luminance (WCAG formula)
-   */
-  getLuminance(rgb: string): number {
-    const matches = rgb.match(/\d+/g);
-    if (!matches || matches.length < 3) return 0;
-
-    const [r, g, b] = matches.map(v => {
-      const val = parseInt(v) / 255;
-      return val <= 0.03928 ? val / 12.92 : Math.pow((val + 0.055) / 1.055, 2.4);
-    });
-
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-  },
-
-  /**
-   * Calculate contrast ratio (WCAG formula)
-   */
-  getContrastRatio(foreground: string, background: string): number {
-    const l1 = this.getLuminance(foreground);
-    const l2 = this.getLuminance(background);
-    const lighter = Math.max(l1, l2);
-    const darker = Math.min(l1, l2);
-    return (lighter + 0.05) / (darker + 0.05);
-  },
-
-  /**
-   * Check WCAG AA compliance (4.5:1 for normal text, 3:1 for large text)
-   */
-  isWCAGAACompliant(foreground: string, background: string, largeText = false): boolean {
-    const ratio = this.getContrastRatio(foreground, background);
-    return largeText ? ratio >= 3 : ratio >= 4.5;
-  },
-
-  /**
-   * Check WCAG AAA compliance (7:1 for normal text, 4.5:1 for large text)
-   */
-  isWCAGAAACompliant(foreground: string, background: string, largeText = false): boolean {
-    const ratio = this.getContrastRatio(foreground, background);
-    return largeText ? ratio >= 4.5 : ratio >= 7;
-  },
+export const generateAriaLabel = (parts: (string | number | undefined)[]): string => {
+  return parts.filter(p => p !== undefined && p !== null && p !== '').join(' • ');
 };
 
 /**
- * Keyboard shortcut utilities
+ * Format number for screen readers with commas
  */
-export const shortcutUtils = {
-  /**
-   * Register keyboard shortcut
-   */
-  registerShortcut(
-    keys: string[],
-    callback: () => void,
-    options?: { ctrlKey?: boolean; shiftKey?: boolean; altKey?: boolean }
-  ): () => void {
-    const handler = (event: KeyboardEvent) => {
-      const matchCtrl = (options?.ctrlKey ?? false) === event.ctrlKey;
-      const matchShift = (options?.shiftKey ?? false) === event.shiftKey;
-      const matchAlt = (options?.altKey ?? false) === event.altKey;
-      const matchKey = keys.includes(event.key.toLowerCase());
+export const formatNumberForScreenReader = (num: number): string => {
+  return num.toLocaleString();
+};
 
-      if (matchCtrl && matchShift && matchAlt && matchKey) {
-        event.preventDefault();
-        callback();
-      }
+/**
+ * Format currency for screen readers
+ */
+export const formatCurrencyForScreenReader = (amount: number, currency: string): string => {
+  return `${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`;
+};
+
+/**
+ * Create accessible error messages
+ */
+export const createAccessibleErrorMessage = (fieldName: string, error: string): string => {
+  return `Error in ${fieldName}: ${error}. Please correct this before proceeding.`;
+};
+
+/**
+ * Get button/link aria-label from content
+ */
+export const getInteractiveLabel = (content: string, action: string, context?: string): string => {
+  const parts = [content, action];
+  if (context) parts.push(`(${context})`);
+  return parts.join(' - ');
+};
+
+/**
+ * Format time for accessibility
+ */
+export const formatTimeForAccessibility = (ms: number): string => {
+  const seconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+
+  if (hours > 0) {
+    return `${hours} hour${hours !== 1 ? 's' : ''} ${minutes % 60} minute${(minutes % 60) !== 1 ? 's' : ''}`;
+  }
+  if (minutes > 0) {
+    return `${minutes} minute${minutes !== 1 ? 's' : ''} ${seconds % 60} second${(seconds % 60) !== 1 ? 's' : ''}`;
+  }
+  return `${seconds} second${seconds !== 1 ? 's' : ''}`;
+};
+
+/**
+ * Get contrast-appropriate color classes
+ */
+export const getContrastSafeColors = (): {
+  success: string;
+  error: string;
+  warning: string;
+  info: string;
+} => {
+  if (prefersHighContrast()) {
+    return {
+      success: 'text-green-900 dark:text-green-100 bg-green-100 dark:bg-green-900',
+      error: 'text-red-900 dark:text-red-100 bg-red-100 dark:bg-red-900',
+      warning: 'text-yellow-900 dark:text-yellow-100 bg-yellow-100 dark:bg-yellow-900',
+      info: 'text-blue-900 dark:text-blue-100 bg-blue-100 dark:bg-blue-900',
     };
-
-    document.addEventListener('keydown', handler);
-
-    // Return unregister function
-    return () => {
-      document.removeEventListener('keydown', handler);
-    };
-  },
+  }
+  return {
+    success: 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20',
+    error: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20',
+    warning: 'text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/20',
+    info: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20',
+  };
 };
 
 export default {
-  isActivationKey,
-  isEscapeKey,
-  isArrowKey,
-  getArrowDirection,
+  prefersReducedMotion,
+  prefersHighContrast,
+  prefersDarkMode,
+  getHighContrastClasses,
+  isKeyboardEvent,
+  handleListKeyboard,
   announceToScreenReader,
-  focusUtils,
-  ariaUtils,
-  skipLinkUtils,
-  contrastUtils,
-  shortcutUtils,
+  focusElement,
+  focusFirstInteractive,
+  trapFocus,
+  generateAriaLabel,
+  formatNumberForScreenReader,
+  formatCurrencyForScreenReader,
+  createAccessibleErrorMessage,
+  getInteractiveLabel,
+  formatTimeForAccessibility,
+  getContrastSafeColors,
 };
