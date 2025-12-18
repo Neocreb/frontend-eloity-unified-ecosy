@@ -46,41 +46,67 @@ export const useReferralStats = (): UseReferralStatsReturn => {
     timestamp: 0,
   });
 
-  // Fetch stats and referrals
-  const fetchStats = useCallback(async () => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Get stats
-      const statsData = await referralTrackingService.getReferralStats(user.id);
-      setStats(statsData);
-      setTotalReferrals(statsData.totalReferrals);
-
-      // Get referral code (first referral's code or generate new one)
-      if (statsData.totalReferrals > 0) {
-        const referralsData = await referralTrackingService.getReferralsList(user.id, 1, 0);
-        if (referralsData.length > 0 && referralsData[0].referral_code) {
-          setReferralCode(referralsData[0].referral_code);
-        }
+  // Fetch stats and referrals with caching
+  const fetchStats = useCallback(
+    async (skipCache = false) => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
       }
 
-      // Get first page of referrals
-      const referralsData = await referralTrackingService.getReferralsList(user.id, limit, 0);
-      setReferrals(referralsData);
-      setOffset(limit);
-    } catch (err) {
-      console.error("Error fetching referral stats:", err);
-      setError(err instanceof Error ? err : new Error("Failed to fetch referral stats"));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id, limit]);
+      // Check cache
+      const now = Date.now();
+      const cacheAge = now - cacheRef.current.timestamp;
+      const cacheValid = !skipCache && cacheRef.current.data && cacheAge < CACHE_DURATION_MS;
+
+      if (cacheValid && cacheRef.current.data) {
+        setStats(cacheRef.current.data);
+        setTotalReferrals(cacheRef.current.data.totalReferrals);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Get stats
+        const statsData = await referralTrackingService.getReferralStats(user.id);
+        if (!statsData) {
+          throw new Error("Failed to fetch referral stats");
+        }
+
+        setStats(statsData);
+        setTotalReferrals(statsData.totalReferrals);
+        cacheRef.current = { data: statsData, timestamp: now };
+
+        // Get referral code (first referral's code or generate new one)
+        if (statsData.totalReferrals > 0) {
+          const referralsData = await referralTrackingService.getReferralsList(user.id, 1, 0);
+          if (referralsData.length > 0 && referralsData[0].referral_code) {
+            setReferralCode(referralsData[0].referral_code);
+          }
+        }
+
+        // Get first page of referrals
+        const referralsData = await referralTrackingService.getReferralsList(
+          user.id,
+          limit,
+          0
+        );
+        if (referralsData && referralsData.length > 0) {
+          setReferrals(referralsData);
+          setOffset(limit);
+        }
+      } catch (err) {
+        console.error("Error fetching referral stats:", err);
+        setError(err instanceof Error ? err : new Error("Failed to fetch referral stats"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id, limit]
+  );
 
   // Set up real-time subscription
   useEffect(() => {
