@@ -296,7 +296,11 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
   ];
 
   return (
-    <div className="space-y-6">
+    <div
+      className="space-y-6"
+      role="main"
+      aria-label="Earnings Overview Dashboard - Track your rewards and progress"
+    >
       {/* Earnings Cards with Sparkline Trend */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {earningsCards.map((card) => {
