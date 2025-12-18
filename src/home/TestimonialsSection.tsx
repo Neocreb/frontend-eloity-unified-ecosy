@@ -46,16 +46,23 @@ export const TestimonialsSection: React.FC = () => {
   useEffect(() => {
     let isMounted = true;
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
     const fetchTestimonials = async () => {
       try {
+        timeoutId = setTimeout(() => {
+          if (!controller.signal.aborted) {
+            controller.abort();
+          }
+        }, 5000);
+
         const response = await fetch('/api/landing/testimonials?featured=true', {
           signal: controller.signal,
         });
 
         if (!isMounted) return;
-        clearTimeout(timeoutId);
+
+        if (timeoutId) clearTimeout(timeoutId);
 
         if (!response.ok) {
           console.warn('Failed to fetch testimonials, using defaults');
@@ -93,11 +100,11 @@ export const TestimonialsSection: React.FC = () => {
     // Cleanup function
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
-      try {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (!controller.signal.aborted) {
         controller.abort();
-      } catch (err) {
-        // Ignore abort errors during cleanup
       }
     };
   }, []);

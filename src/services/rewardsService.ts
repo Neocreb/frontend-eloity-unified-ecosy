@@ -204,18 +204,29 @@ export const rewardsService = {
 
   // Fetch reward rules
   async getRewardRules(): Promise<RewardRule[]> {
-    const { data, error } = await supabase
-      .from('reward_rules')
-      .select('*')
-      .eq('is_active', true)
-      .order('action_type');
+    try {
+      const { data, error } = await supabase
+        .from('reward_rules')
+        .select('*')
+        .eq('is_active', true)
+        .order('action_type');
 
-    if (error) {
-      console.error('Error fetching reward rules:', error);
+      if (error) {
+        // Code 42501 = permission denied - likely RLS policy issue
+        if (error.code === '42501') {
+          console.warn('Permission denied accessing reward_rules - RLS policy may not be configured correctly');
+        } else {
+          console.error('Error fetching reward rules:', JSON.stringify(error, null, 2));
+        }
+        // Return empty array gracefully - app continues to work
+        return [];
+      }
+
+      return data || [];
+    } catch (err) {
+      console.error('Exception fetching reward rules:', err instanceof Error ? err.message : JSON.stringify(err));
       return [];
     }
-
-    return data || [];
   },
 
   // Fetch daily action counts would need to come from a different source since there's no daily_action_counts table
@@ -302,18 +313,25 @@ export const rewardsService = {
 
   // Fetch creator tip settings
   async getTipSettings(userId: string): Promise<CreatorTipSetting | null> {
-    const { data, error } = await supabase
-      .from('creator_tip_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('creator_tip_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching tip settings:', error);
+      if (error) {
+        if (error.code !== 'PGRST116') { // PGRST116 = no rows found (expected for new users)
+          console.error('Error fetching tip settings:', JSON.stringify(error, null, 2));
+        }
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Exception fetching tip settings:', err instanceof Error ? err.message : JSON.stringify(err));
       return null;
     }
-
-    return data;
   },
 
   // Fetch all rewards data for a user

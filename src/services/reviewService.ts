@@ -40,7 +40,8 @@ export class ReviewService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error fetching product reviews:", error);
+        console.error("Error fetching product reviews:", JSON.stringify(error, null, 2));
+        // Return empty array instead of failing - table might not be fully set up
         return [];
       }
 

@@ -295,11 +295,18 @@ class EnhancedEloitsService {
         .from('reward_rules')
         .select('*')
         .eq('is_active', true);
-      
-      if (error) throw error;
+
+      if (error) {
+        if (error.code === '42501') {
+          console.warn('Permission denied accessing reward_rules - RLS policy may not be configured correctly');
+        } else {
+          console.error('Error fetching reward rules:', error);
+        }
+        return [];
+      }
       return data || [];
     } catch (error) {
-      console.error('Error fetching reward rules:', error);
+      console.error('Exception fetching reward rules:', error instanceof Error ? error.message : JSON.stringify(error));
       return [];
     }
   }
@@ -313,11 +320,18 @@ class EnhancedEloitsService {
         .eq('action_type', actionType)
         .eq('is_active', true)
         .single();
-      
-      if (error) throw error;
+
+      if (error) {
+        if (error.code === '42501') {
+          console.warn('Permission denied accessing reward_rules - RLS policy may not be configured correctly');
+        } else if (error.code !== 'PGRST116') { // PGRST116 = no rows found (expected)
+          console.error('Error fetching reward rule:', error);
+        }
+        return null;
+      }
       return data;
     } catch (error) {
-      console.error('Error fetching reward rule:', error);
+      console.error('Exception fetching reward rule:', error instanceof Error ? error.message : JSON.stringify(error));
       return null;
     }
   }
