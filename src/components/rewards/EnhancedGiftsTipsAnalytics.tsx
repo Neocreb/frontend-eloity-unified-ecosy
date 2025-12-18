@@ -18,6 +18,7 @@ import {
   Filter,
   Calendar,
   AlertCircle,
+  Lock,
 } from "lucide-react";
 import {
   Select,
@@ -28,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { virtualGiftsService } from "@/services/virtualGiftsService";
 import { formatCurrency } from "@/utils/formatters";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 interface GiftTipStats {
   totalGiftsSent: number;
@@ -81,6 +83,8 @@ const EnhancedGiftsTipsAnalytics = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
+  const [trendsData, setTrendsData] = useState<Array<{ date: string; gifts: number; tips: number }>>([]);
+  const [anonymousMode, setAnonymousMode] = useState(false);
 
   const loadStats = async () => {
     if (!user?.id) return;
@@ -166,6 +170,35 @@ const EnhancedGiftsTipsAnalytics = () => {
           (a.recipientName || "").localeCompare(b.recipientName || "")
         );
       }
+
+      // Calculate daily trends
+      const dailyTrends: Record<string, { gifts: number; tips: number }> = {};
+
+      filteredGifts.forEach((gift) => {
+        const dateKey = new Date(gift.createdAt).toISOString().split("T")[0];
+        if (!dailyTrends[dateKey]) {
+          dailyTrends[dateKey] = { gifts: 0, tips: 0 };
+        }
+        dailyTrends[dateKey].gifts += gift.totalAmount;
+      });
+
+      filteredTips.forEach((tip) => {
+        const dateKey = new Date(tip.createdAt).toISOString().split("T")[0];
+        if (!dailyTrends[dateKey]) {
+          dailyTrends[dateKey] = { gifts: 0, tips: 0 };
+        }
+        dailyTrends[dateKey].tips += tip.amount;
+      });
+
+      const trendsArray = Object.entries(dailyTrends)
+        .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+        .map(([date, data]) => ({
+          date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          gifts: data.gifts,
+          tips: data.tips,
+        }));
+
+      setTrendsData(trendsArray);
 
       setStats({
         totalGiftsSent: filteredGifts.length,
@@ -382,6 +415,104 @@ const EnhancedGiftsTipsAnalytics = () => {
         </CardContent>
       </Card>
 
+      {/* Trends Chart */}
+      {trendsData.length > 0 && (
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Gift & Tip Trends
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-64 bg-gradient-to-b from-muted/20 to-transparent rounded-lg p-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(255, 255, 255, 0.95)",
+                      border: "1px solid rgba(0,0,0,0.1)",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value: number) => formatCurrency(value, currency)}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="gifts"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    dot={{ fill: "#a855f7", r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Gifts"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="tips"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ fill: "#10b981", r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Tips"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex gap-6 mt-4 justify-center flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-purple-500" />
+                <span className="text-sm text-muted-foreground">Gifts</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="text-sm text-muted-foreground">Tips</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Thank You Message Suggestions */}
+      <Card className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border-pink-200 dark:border-pink-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-pink-900 dark:text-pink-100">
+            <Heart className="h-5 w-5 text-pink-600" />
+            Thank You Message Ideas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              "Thanks so much for all your amazing content! 🙏",
+              "Your creativity keeps me inspired every day! 💫",
+              "Supporting great creators like you! Keep it up! 🚀",
+              "Your work means the world to us! ❤️",
+              "Thank you for sharing your talent with us! 🎉",
+              "You're an amazing creator! Keep shining! ⭐",
+            ].map((message, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  navigator.clipboard.writeText(message);
+                  toast({
+                    title: "Copied!",
+                    description: "Message copied to clipboard",
+                  });
+                }}
+                className="p-3 bg-white dark:bg-gray-900 border border-pink-200 dark:border-pink-700 rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors text-left text-sm text-gray-700 dark:text-gray-300 hover:text-pink-700 dark:hover:text-pink-300 cursor-pointer"
+              >
+                {message}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-pink-700 dark:text-pink-300 mt-4">
+            💡 Click any message to copy it and include in your gift message
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Gifts */}
@@ -511,6 +642,39 @@ const EnhancedGiftsTipsAnalytics = () => {
         </Card>
       ) : null}
 
+      {/* Anonymous Gifting Feature */}
+      <Card className="border-dashed border-2 border-purple-300 dark:border-purple-700 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-900/10 dark:to-pink-900/10">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3 flex-1">
+              <Lock className="h-5 w-5 text-purple-600 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold mb-1">Anonymous Gifting</h3>
+                <p className="text-sm text-muted-foreground">
+                  Send gifts without revealing your identity. Perfect for supporting creators anonymously!
+                </p>
+              </div>
+            </div>
+            <Button
+              variant={anonymousMode ? "default" : "outline"}
+              onClick={() => setAnonymousMode(!anonymousMode)}
+              className={`whitespace-nowrap transition-all ${
+                anonymousMode
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : ""
+              }`}
+            >
+              {anonymousMode ? "✓ Enabled" : "Enable"}
+            </Button>
+          </div>
+          {anonymousMode && (
+            <div className="mt-4 p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-sm text-purple-900 dark:text-purple-200">
+              💡 Anonymous mode is active. Your next gift will be sent without revealing your identity.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* CTA */}
       <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
         <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -518,6 +682,7 @@ const EnhancedGiftsTipsAnalytics = () => {
             <h3 className="font-semibold mb-1">Send More Gifts & Tips</h3>
             <p className="text-sm text-muted-foreground">
               Support your favorite creators and spread joy in the community
+              {anonymousMode && " (Anonymous mode enabled)"}
             </p>
           </div>
           <Button

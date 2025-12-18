@@ -14,15 +14,20 @@ import {
   Zap,
   RefreshCw,
   ArrowUpRight,
+  ArrowDownRight,
   Star,
   Trophy,
   Flame,
   Target,
+  Sparkles,
+  Award,
+  ChevronRight,
 } from "lucide-react";
 import { formatCurrency, formatNumber } from "@/utils/formatters";
 import { useRewardsSummary } from "@/hooks/useRewardsSummary";
 import { useActivityFeed } from "@/hooks/useActivityFeed";
 import { activityTransactionService } from "@/services/activityTransactionService";
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 
 interface EnhancedEarningsOverviewProps {
   user: any;
@@ -35,11 +40,23 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
   const { activities } = useActivityFeed(100);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [earningsByCategory, setEarningsByCategory] = useState<Record<string, number>>({});
+  const [sparklineData, setSparklineData] = useState<Array<{ day: string; earnings: number }>>([]);
+  const [monthComparisonData, setMonthComparisonData] = useState<{ current: number; previous: number; percentChange: number }>({ current: 0, previous: 0, percentChange: 0 });
+  const [achievements, setAchievements] = useState<Array<{ id: string; title: string; icon: string; unlockedAt?: string; progress: number }>>([]);
 
-  // Calculate earnings by category from activities
+  // Calculate earnings by category, sparkline data, month comparison, and achievements
   useEffect(() => {
     if (activities.length > 0) {
       const breakdown: Record<string, number> = {};
+      const dailyEarnings: Record<string, number> = {};
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+      let currentMonthEarnings = 0;
+      let previousMonthEarnings = 0;
 
       activities.forEach((activity) => {
         if (!breakdown[activity.category]) {
@@ -48,11 +65,99 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
         if (activity.amount_currency) {
           breakdown[activity.category] += activity.amount_currency;
         }
+
+        // Calculate daily earnings for sparkline
+        const actDate = new Date(activity.created_at);
+        const dayKey = actDate.toISOString().split("T")[0];
+        if (!dailyEarnings[dayKey]) {
+          dailyEarnings[dayKey] = 0;
+        }
+        dailyEarnings[dayKey] += activity.amount_currency || 0;
+
+        // Track current and previous month earnings
+        if (actDate.getMonth() === currentMonth && actDate.getFullYear() === currentYear) {
+          currentMonthEarnings += activity.amount_currency || 0;
+        } else if (actDate.getMonth() === previousMonth && actDate.getFullYear() === previousYear) {
+          previousMonthEarnings += activity.amount_currency || 0;
+        }
       });
 
       setEarningsByCategory(breakdown);
+
+      // Create sparkline data (last 30 days)
+      const sparklineArray: Array<{ day: string; earnings: number }> = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dayKey = date.toISOString().split("T")[0];
+        const shortDay = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        sparklineArray.push({
+          day: shortDay,
+          earnings: dailyEarnings[dayKey] || 0,
+        });
+      }
+      setSparklineData(sparklineArray);
+
+      // Calculate month comparison
+      const percentChange = previousMonthEarnings > 0
+        ? ((currentMonthEarnings - previousMonthEarnings) / previousMonthEarnings) * 100
+        : currentMonthEarnings > 0 ? 100 : 0;
+
+      setMonthComparisonData({
+        current: currentMonthEarnings,
+        previous: previousMonthEarnings,
+        percentChange,
+      });
+
+      // Calculate achievements based on summary
+      const newAchievements: typeof achievements = [];
+
+      if (summary) {
+        if (summary.total_activities >= 10) {
+          newAchievements.push({
+            id: "first-10",
+            title: "Getting Started",
+            icon: "🚀",
+            progress: Math.min((summary.total_activities / 10) * 100, 100),
+          });
+        }
+        if (summary.total_activities >= 50) {
+          newAchievements.push({
+            id: "milestone-50",
+            title: "Milestone Master",
+            icon: "⭐",
+            progress: Math.min((summary.total_activities / 50) * 100, 100),
+          });
+        }
+        if (summary.current_streak >= 7) {
+          newAchievements.push({
+            id: "streak-7",
+            title: "On Fire",
+            icon: "🔥",
+            progress: Math.min((summary.current_streak / 7) * 100, 100),
+          });
+        }
+        if (summary.trust_score >= 75) {
+          newAchievements.push({
+            id: "trusted",
+            title: "Trusted Member",
+            icon: "✅",
+            progress: summary.trust_score,
+          });
+        }
+        if (summary.level >= 5) {
+          newAchievements.push({
+            id: "high-level",
+            title: "Elite Performer",
+            icon: "👑",
+            progress: Math.min((summary.level / 6) * 100, 100),
+          });
+        }
+      }
+
+      setAchievements(newAchievements);
     }
-  }, [activities]);
+  }, [activities, summary]);
 
   const handleRefresh = async () => {
     try {
@@ -192,17 +297,17 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
 
   return (
     <div className="space-y-6">
-      {/* Earnings Cards */}
+      {/* Earnings Cards with Sparkline Trend */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {earningsCards.map((card) => {
           const Icon = card.icon;
           return (
             <Card
               key={card.title}
-              className="hover:shadow-lg transition-shadow hover:border-purple-300 dark:hover:border-purple-500"
+              className="hover:shadow-lg transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-500 overflow-hidden group"
             >
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
                     <p className="text-2xl font-bold mt-2">
@@ -210,17 +315,124 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
                         ? formatCurrency(card.value, summary.currency_code)
                         : formatNumber(card.value)}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-2">{card.change}</p>
+                    <div className="flex items-center gap-1 mt-2">
+                      {card.changeType === "positive" ? (
+                        <ArrowUpRight className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <ArrowDownRight className="h-4 w-4 text-red-600" />
+                      )}
+                      <p className={`text-xs font-medium ${
+                        card.changeType === "positive" ? "text-green-600" : "text-red-600"
+                      }`}>
+                        {card.change}
+                      </p>
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-lg ${card.bgColor}`}>
+                  <div className={`p-3 rounded-lg ${card.bgColor} group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className={`h-6 w-6 ${card.color}`} />
                   </div>
                 </div>
+
+                {/* Sparkline for total earned card */}
+                {card.title === "Total Earned" && sparklineData.length > 0 && (
+                  <div className="mt-4 -mx-2 -mb-2 h-12 bg-gradient-to-t from-green-50 to-transparent dark:from-green-900/20 dark:to-transparent rounded-b-lg">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={sparklineData}>
+                        <Tooltip
+                          contentStyle={{ backgroundColor: "transparent", border: "none" }}
+                          cursor={{ stroke: "rgba(168, 85, 247, 0.1)" }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="earnings"
+                          stroke="#16a34a"
+                          strokeWidth={2}
+                          isAnimationActive={true}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
         })}
       </div>
+
+      {/* Month Comparison Card */}
+      <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+            Month-over-Month Growth
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">This Month</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {formatCurrency(monthComparisonData.current, summary.currency_code)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Previous Month</p>
+              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                {formatCurrency(monthComparisonData.previous, summary.currency_code)}
+              </p>
+            </div>
+            <div className="flex flex-col justify-center">
+              <p className="text-sm text-muted-foreground mb-1">Growth</p>
+              <div className="flex items-center gap-2">
+                {monthComparisonData.percentChange > 0 ? (
+                  <ArrowUpRight className="h-5 w-5 text-green-600" />
+                ) : (
+                  <ArrowDownRight className="h-5 w-5 text-red-600" />
+                )}
+                <p className={`text-2xl font-bold ${
+                  monthComparisonData.percentChange > 0 ? "text-green-600" : "text-red-600"
+                }`}>
+                  {Math.abs(monthComparisonData.percentChange).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Achievements Section */}
+      {achievements.length > 0 && (
+        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-purple-600" />
+              Your Achievements
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className="relative p-4 rounded-xl border-2 border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-900 hover:shadow-md hover:border-purple-400 transition-all duration-300 group"
+                >
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">{achievement.icon}</div>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-2">
+                      {achievement.title}
+                    </p>
+                    <Progress value={achievement.progress} className="h-1.5" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {Math.round(achievement.progress)}%
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Level and Trust Score Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
