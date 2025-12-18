@@ -224,7 +224,17 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         .order("created_at", { ascending: true });
 
       if (error) {
-        console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
+        // Only log as debug - network errors are expected
+        if (error instanceof Error && error.message.includes('Failed to fetch')) {
+          console.debug("Network unavailable for messages - will retry when connection restored");
+        } else {
+          console.warn("Warning loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
+        }
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setMessages([]);
         return;
       }
 
@@ -264,9 +274,17 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         };
       });
 
-      setMessages(formattedMessages);
+      setMessages(prev => ({
+        ...prev,
+        [conversationId]: formattedMessages
+      }));
     } catch (error) {
-      console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
+      // Network errors are expected - only log at debug level
+      if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        console.debug("Network error loading messages - will retry when connection restored");
+      } else {
+        console.warn("Warning loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
+      }
     }
   };
 
