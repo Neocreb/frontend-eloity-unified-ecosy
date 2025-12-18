@@ -288,30 +288,37 @@ export const useReferralStats = (): UseReferralStatsReturn => {
   }, [user?.id, toast]);
 
   // Get tier info
-  const tierInfo = stats ? referralTrackingService.getTierInfo(stats.tier) : null;
+  const tierInfo = stats ? referralTrackingService.getTierInfo(stats.referralTier || "bronze") : null;
 
   // Get next tier info
-  const tiers = ["bronze", "silver", "gold", "platinum"];
-  const currentTierIndex = tiers.indexOf(stats?.tier || "bronze");
-  const nextTierInfo = currentTierIndex < tiers.length - 1
-    ? referralTrackingService.getTierInfo(tiers[currentTierIndex + 1])
-    : null;
+  const tiers: Array<"bronze" | "silver" | "gold" | "platinum"> = ["bronze", "silver", "gold", "platinum"];
+  const currentTierIndex = tiers.indexOf(stats?.referralTier || "bronze");
+  const nextTierInfo =
+    currentTierIndex < tiers.length - 1
+      ? referralTrackingService.getTierInfo(tiers[currentTierIndex + 1])
+      : null;
 
   // Calculate progress to next tier
-  const progressToNextTier = nextTierInfo && stats
-    ? Math.round((stats.totalEarnings / (nextTierInfo.minEarnings || 1)) * 100)
-    : 100;
+  const progressToNextTier =
+    nextTierInfo && stats ? Math.round((stats.totalEarnings / (nextTierInfo.minEarnings || 1)) * 100) : 100;
+
+  // Calculate progress percentage
+  const progressPercentage = Math.min(
+    100,
+    nextTierInfo && stats ? (stats.totalEarnings / (nextTierInfo.minEarnings || stats.totalEarnings)) * 100 : 100
+  );
+
+  // Get total earnings this month
+  const totalEarningsThisMonth = stats?.thisMonthEarnings || 0;
 
   // Referral link
-  const referralLink = referralCode
-    ? `${window.location.origin}/join?ref=${referralCode}`
-    : null;
+  const referralLink = referralCode ? `${window.location.origin}/join?ref=${referralCode}` : null;
 
   // Cleanup
   useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, []);
@@ -332,5 +339,7 @@ export const useReferralStats = (): UseReferralStatsReturn => {
     copyReferralCode,
     generateNewCode,
     progressToNextTier,
+    totalEarningsThisMonth,
+    progressPercentage,
   };
 };
