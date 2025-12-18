@@ -7,30 +7,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
 import {
-  BarChart3,
-  TrendingUp,
-  Zap,
-  Users,
-  ArrowUpDown,
-  History,
-  Handshake,
-  Activity,
-  Target,
-  Trophy,
-  Gift,
-  UserPlus,
-  ChevronDown,
   Eye,
   EyeOff,
-  Plus,
-  Send,
   ArrowUp,
-  MoreHorizontal,
+  Gift,
+  UserPlus,
   Star,
   Sparkles,
   Award,
+  Zap,
 } from "lucide-react";
 import CreatorEconomyHeader from "@/components/rewards/CreatorEconomyHeader";
 import EnhancedEarningsOverview from "@/components/rewards/EnhancedEarningsOverview";
