@@ -34,8 +34,7 @@ export class ReviewService {
           helpful_count,
           is_featured,
           created_at,
-          updated_at,
-          user:users(full_name, avatar_url)
+          updated_at
         `)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
@@ -59,8 +58,8 @@ export class ReviewService {
         verifiedPurchase: review.verified_purchase || false,
         helpfulCount: review.helpful_count || 0,
         isFeatured: review.is_featured || false,
-        userName: review.user?.full_name || "Anonymous",
-        userAvatar: review.user?.avatar_url || "",
+        userName: "Anonymous",
+        userAvatar: "",
         createdAt: new Date(review.created_at).toISOString(),
         updatedAt: new Date(review.updated_at).toISOString()
       }));
@@ -77,10 +76,7 @@ export class ReviewService {
     try {
       const { data, error } = await supabase
         .from('product_reviews')
-        .select(`
-          *,
-          user:users(full_name, avatar_url)
-        `)
+        .select('*')
         .eq('id', reviewId)
         .single();
 
@@ -103,8 +99,8 @@ export class ReviewService {
         verifiedPurchase: data.verified_purchase || false,
         helpfulCount: data.helpful_count || 0,
         isFeatured: data.is_featured || false,
-        userName: data.user?.full_name || "Anonymous",
-        userAvatar: data.user?.avatar_url || "",
+        userName: "Anonymous",
+        userAvatar: "",
         createdAt: new Date(data.created_at).toISOString(),
         updatedAt: new Date(data.updated_at).toISOString()
       };

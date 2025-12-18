@@ -44,39 +44,63 @@ export const TestimonialsSection: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchTestimonials();
-  }, []);
+    let isMounted = true;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
 
-  const fetchTestimonials = async () => {
-    try {
-      setIsLoading(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const fetchTestimonials = async () => {
+      try {
+        const response = await fetch('/api/landing/testimonials?featured=true', {
+          signal: controller.signal,
+        });
 
-      const response = await fetch('/api/landing/testimonials?featured=true', {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+        if (!isMounted) return;
+        clearTimeout(timeoutId);
 
-      if (!response.ok) {
-        console.warn('Failed to fetch testimonials, using defaults');
-        setTestimonials(defaultTestimonials);
-        setError(null);
-        return;
+        if (!response.ok) {
+          console.warn('Failed to fetch testimonials, using defaults');
+          if (isMounted) {
+            setTestimonials(defaultTestimonials);
+            setError(null);
+          }
+          return;
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setTestimonials(Array.isArray(data) && data.length > 0 ? data : defaultTestimonials);
+          setError(null);
+        }
+      } catch (err) {
+        // Only log non-abort errors
+        if (err instanceof Error && err.name !== 'AbortError') {
+          console.error('Error fetching testimonials:', err);
+        }
+        // Use default testimonials on error, but only if component is still mounted
+        if (isMounted) {
+          setTestimonials(defaultTestimonials);
+          setError(null);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
+    };
 
-      const data = await response.json();
-      setTestimonials(Array.isArray(data) && data.length > 0 ? data : defaultTestimonials);
-      setError(null);
-    } catch (err) {
-      console.error('Error fetching testimonials:', err);
-      // Use default testimonials on error
-      setTestimonials(defaultTestimonials);
-      setError(null);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    fetchTestimonials();
+
+    // Cleanup function
+    return () => {
+      isMounted = false;
+      clearTimeout(timeoutId);
+      try {
+        controller.abort();
+      } catch (err) {
+        // Ignore abort errors during cleanup
+      }
+    };
+  }, []);
 
   const nextSlide = () => {
     setCurrentIndex((prev) => (prev + 1) % testimonials.length);

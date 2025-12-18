@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { referralTrackingService, ReferralStats, ReferralRecord, ReferralTierInfo } from "@/services/referralTrackingService";
 import { useToast } from "@/hooks/use-toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseReferralStatsReturn {
   stats: ReferralStats | null;
@@ -19,9 +21,12 @@ interface UseReferralStatsReturn {
   copyReferralCode: () => void;
   generateNewCode: () => Promise<void>;
   progressToNextTier: number;
+  totalEarningsThisMonth: number;
+  progressPercentage: number;
 }
 
 const DEFAULT_LIMIT = 20;
+const CACHE_DURATION_MS = 30000; // 30 seconds
 
 export const useReferralStats = (): UseReferralStatsReturn => {
   const { user } = useAuth();
@@ -35,85 +40,176 @@ export const useReferralStats = (): UseReferralStatsReturn => {
   const [totalReferrals, setTotalReferrals] = useState(0);
   const [limit] = useState(DEFAULT_LIMIT);
   const [referralCode, setReferralCode] = useState<string | null>(null);
-  const subscriptionRef = useRef<any>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
+  const cacheRef = useRef<{ data: ReferralStats | null; timestamp: number }>({
+    data: null,
+    timestamp: 0,
+  });
 
-  // Fetch stats and referrals
-  const fetchStats = useCallback(async () => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Get stats
-      const statsData = await referralTrackingService.getReferralStats(user.id);
-      setStats(statsData);
-      setTotalReferrals(statsData.totalReferrals);
-
-      // Get referral code (first referral's code or generate new one)
-      if (statsData.totalReferrals > 0) {
-        const referralsData = await referralTrackingService.getReferralsList(user.id, 1, 0);
-        if (referralsData.length > 0 && referralsData[0].referral_code) {
-          setReferralCode(referralsData[0].referral_code);
-        }
+  // Fetch stats and referrals with caching
+  const fetchStats = useCallback(
+    async (skipCache = false) => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
       }
 
-      // Get first page of referrals
-      const referralsData = await referralTrackingService.getReferralsList(user.id, limit, 0);
-      setReferrals(referralsData);
-      setOffset(limit);
-    } catch (err) {
-      console.error("Error fetching referral stats:", err);
-      setError(err instanceof Error ? err : new Error("Failed to fetch referral stats"));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id, limit]);
+      // Check cache
+      const now = Date.now();
+      const cacheAge = now - cacheRef.current.timestamp;
+      const cacheValid = !skipCache && cacheRef.current.data && cacheAge < CACHE_DURATION_MS;
+
+      if (cacheValid && cacheRef.current.data) {
+        setStats(cacheRef.current.data);
+        setTotalReferrals(cacheRef.current.data.totalReferrals);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Get stats
+        const statsData = await referralTrackingService.getReferralStats(user.id);
+        if (!statsData) {
+          throw new Error("Failed to fetch referral stats");
+        }
+
+        setStats(statsData);
+        setTotalReferrals(statsData.totalReferrals);
+        cacheRef.current = { data: statsData, timestamp: now };
+
+        // Get referral code (first referral's code or generate new one)
+        if (statsData.totalReferrals > 0) {
+          const referralsData = await referralTrackingService.getReferralsList(user.id, 1, 0);
+          if (referralsData.length > 0 && referralsData[0].referral_code) {
+            setReferralCode(referralsData[0].referral_code);
+          }
+        }
+
+        // Get first page of referrals
+        const referralsData = await referralTrackingService.getReferralsList(
+          user.id,
+          limit,
+          0
+        );
+        if (referralsData && referralsData.length > 0) {
+          setReferrals(referralsData);
+          setOffset(limit);
+        }
+      } catch (err) {
+        console.error("Error fetching referral stats:", err);
+        setError(err instanceof Error ? err : new Error("Failed to fetch referral stats"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id, limit]
+  );
 
   // Set up real-time subscription
   useEffect(() => {
     if (!user?.id) return;
 
+    let isMounted = true;
+
     // Initial fetch
     fetchStats();
 
-    // Subscribe to new referrals
-    subscriptionRef.current = referralTrackingService.subscribeToReferrals(
-      user.id,
-      (newReferral) => {
-        // Add to top of list
-        setReferrals((prev) => [newReferral, ...prev]);
+    // Subscribe to referral updates
+    const setupSubscription = () => {
+      subscriptionRef.current = supabase
+        .channel(`referral_tracking_${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "referral_tracking",
+            filter: `referrer_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (!isMounted) return;
 
-        // Update stats
-        setStats((prev) => {
-          if (!prev) return prev;
-          return {
-            ...prev,
-            totalReferrals: prev.totalReferrals + 1,
-            activeReferrals:
-              newReferral.status === "active" ? prev.activeReferrals + 1 : prev.activeReferrals,
-            totalEarnings: prev.totalEarnings + (newReferral.earnings_total || 0),
-          };
-        });
+            if (payload.eventType === "INSERT") {
+              const newReferral = payload.new as ReferralRecord;
+              // Add to top of list
+              setReferrals((prev) => [newReferral, ...prev]);
 
-        // Show toast notification
-        toast({
-          title: "New Referral!",
-          description: `You referred ${newReferral.referred_user_id}`,
+              // Update stats
+              setStats((prev) => {
+                if (!prev) return prev;
+                return {
+                  ...prev,
+                  totalReferrals: prev.totalReferrals + 1,
+                  activeReferrals:
+                    newReferral.status === "active"
+                      ? prev.activeReferrals + 1
+                      : prev.activeReferrals,
+                  totalEarnings: prev.totalEarnings + (newReferral.earnings_total || 0),
+                };
+              });
+
+              // Show toast notification
+              toast({
+                title: "New Referral!",
+                description: "You've successfully referred a new user",
+              });
+            } else if (payload.eventType === "UPDATE") {
+              const updatedReferral = payload.new as ReferralRecord;
+              const oldReferral = payload.old as ReferralRecord;
+
+              // Update referral in list
+              setReferrals((prev) =>
+                prev.map((r) => (r.id === updatedReferral.id ? updatedReferral : r))
+              );
+
+              // Update stats if status changed
+              if (oldReferral.status !== updatedReferral.status) {
+                setStats((prev) => {
+                  if (!prev) return prev;
+                  const statusChanged =
+                    oldReferral.status !== "active" && updatedReferral.status === "active";
+                  return {
+                    ...prev,
+                    activeReferrals: statusChanged
+                      ? prev.activeReferrals + 1
+                      : prev.activeReferrals,
+                  };
+                });
+              }
+
+              // Update earnings
+              if (oldReferral.earnings_total !== updatedReferral.earnings_total) {
+                setStats((prev) => {
+                  if (!prev) return prev;
+                  return {
+                    ...prev,
+                    totalEarnings:
+                      prev.totalEarnings + (updatedReferral.earnings_total - oldReferral.earnings_total),
+                  };
+                });
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED" && isMounted) {
+            // Subscription is active
+          } else if (status === "CHANNEL_ERROR" && isMounted) {
+            console.error("Referral channel error");
+            setError(new Error("Real-time subscription error"));
+          }
         });
-      },
-      (err) => {
-        console.error("Subscription error:", err);
-        setError(err instanceof Error ? err : new Error("Real-time subscription error"));
-      }
-    );
+    };
+
+    setupSubscription();
 
     return () => {
+      isMounted = false;
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, [user?.id, fetchStats, toast]);
@@ -129,8 +225,10 @@ export const useReferralStats = (): UseReferralStatsReturn => {
         offset
       );
 
-      setReferrals((prev) => [...prev, ...moreData]);
-      setOffset((prev) => prev + limit);
+      if (moreData && moreData.length > 0) {
+        setReferrals((prev) => [...prev, ...moreData]);
+        setOffset((prev) => prev + limit);
+      }
     } catch (err) {
       console.error("Error loading more referrals:", err);
       setError(err instanceof Error ? err : new Error("Failed to load more referrals"));
@@ -139,18 +237,20 @@ export const useReferralStats = (): UseReferralStatsReturn => {
 
   // Refresh stats
   const refresh = useCallback(async () => {
+    if (isRefreshing) return;
     setIsRefreshing(true);
     setOffset(0);
     try {
       setError(null);
-      await fetchStats();
+      cacheRef.current = { data: null, timestamp: 0 };
+      await fetchStats(true);
     } catch (err) {
       console.error("Error refreshing stats:", err);
       setError(err instanceof Error ? err : new Error("Failed to refresh stats"));
     } finally {
       setIsRefreshing(false);
     }
-  }, [fetchStats]);
+  }, [isRefreshing, fetchStats]);
 
   // Copy referral code to clipboard
   const copyReferralCode = useCallback(() => {
@@ -188,30 +288,37 @@ export const useReferralStats = (): UseReferralStatsReturn => {
   }, [user?.id, toast]);
 
   // Get tier info
-  const tierInfo = stats ? referralTrackingService.getTierInfo(stats.tier) : null;
+  const tierInfo = stats ? referralTrackingService.getTierInfo(stats.referralTier || "bronze") : null;
 
   // Get next tier info
-  const tiers = ["bronze", "silver", "gold", "platinum"];
-  const currentTierIndex = tiers.indexOf(stats?.tier || "bronze");
-  const nextTierInfo = currentTierIndex < tiers.length - 1
-    ? referralTrackingService.getTierInfo(tiers[currentTierIndex + 1])
-    : null;
+  const tiers: Array<"bronze" | "silver" | "gold" | "platinum"> = ["bronze", "silver", "gold", "platinum"];
+  const currentTierIndex = tiers.indexOf(stats?.referralTier || "bronze");
+  const nextTierInfo =
+    currentTierIndex < tiers.length - 1
+      ? referralTrackingService.getTierInfo(tiers[currentTierIndex + 1])
+      : null;
 
   // Calculate progress to next tier
-  const progressToNextTier = nextTierInfo && stats
-    ? Math.round((stats.totalEarnings / (nextTierInfo.minEarnings || 1)) * 100)
-    : 100;
+  const progressToNextTier =
+    nextTierInfo && stats ? Math.round((stats.totalEarnings / (nextTierInfo.minEarnings || 1)) * 100) : 100;
+
+  // Calculate progress percentage
+  const progressPercentage = Math.min(
+    100,
+    nextTierInfo && stats ? (stats.totalEarnings / (nextTierInfo.minEarnings || stats.totalEarnings)) * 100 : 100
+  );
+
+  // Get total earnings this month
+  const totalEarningsThisMonth = stats?.thisMonthEarnings || 0;
 
   // Referral link
-  const referralLink = referralCode
-    ? `${window.location.origin}/join?ref=${referralCode}`
-    : null;
+  const referralLink = referralCode ? `${window.location.origin}/join?ref=${referralCode}` : null;
 
   // Cleanup
   useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, []);
@@ -232,5 +339,7 @@ export const useReferralStats = (): UseReferralStatsReturn => {
     copyReferralCode,
     generateNewCode,
     progressToNextTier,
+    totalEarningsThisMonth,
+    progressPercentage,
   };
 };

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface TrustScoreHistory {
   id: string;
@@ -21,6 +22,8 @@ export interface TrustScoreData {
   history: TrustScoreHistory[];
   recentChange: number;
   trend: "improving" | "stable" | "declining";
+  lastUpdated: string;
+  daysToNextLevel?: number;
 }
 
 interface UseTrustScoreReturn {
@@ -30,13 +33,22 @@ interface UseTrustScoreReturn {
   error: Error | null;
   refresh: () => Promise<void>;
   updateScore: (change: number, reason: string, metadata?: Record<string, any>) => Promise<boolean>;
-  getHistory: () => Promise<TrustScoreHistory[]>;
-  getTrustLevel: (score: number) => string;
+  getHistory: (limit?: number) => Promise<TrustScoreHistory[]>;
+  getTrustLevel: (score: number) => "low" | "medium" | "high" | "excellent";
   canPerformAction: (requiredScore: number) => boolean;
+  getScoreBreakdown: () => Record<string, number>;
 }
 
 const TRUST_SCORE_MAX = 100;
 const CACHE_DURATION_MS = 60000; // 1 minute
+
+// Trust score levels and their descriptions
+const TRUST_LEVELS = {
+  low: { name: "Low", color: "#EF4444", minScore: 0, maxScore: 49 },
+  medium: { name: "Medium", color: "#F59E0B", minScore: 50, maxScore: 69 },
+  high: { name: "High", color: "#3B82F6", minScore: 70, maxScore: 84 },
+  excellent: { name: "Excellent", color: "#10B981", minScore: 85, maxScore: 100 },
+};
 
 export const useTrustScore = (): UseTrustScoreReturn => {
   const { user } = useAuth();
@@ -45,7 +57,7 @@ export const useTrustScore = (): UseTrustScoreReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const subscriptionRef = useRef<any>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
   const cacheRef = useRef<{ data: TrustScoreData | null; timestamp: number }>({
     data: null,
     timestamp: 0,
@@ -59,7 +71,7 @@ export const useTrustScore = (): UseTrustScoreReturn => {
     return "low";
   }, []);
 
-  // Fetch trust score data
+  // Fetch trust score data with improved caching
   const fetchTrustScore = useCallback(
     async (skipCache = false) => {
       if (!user?.id) {
@@ -101,7 +113,7 @@ export const useTrustScore = (): UseTrustScoreReturn => {
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-          .limit(50);
+          .limit(100);
 
         if (historyError && historyError.code !== "PGRST116") {
           console.error("Error fetching history:", historyError);
@@ -124,6 +136,20 @@ export const useTrustScore = (): UseTrustScoreReturn => {
           if (avgChange < -1) trend = "declining";
         }
 
+        // Estimate days to next level (if applicable)
+        const currentLevel = getTrustLevel(currentScore);
+        const levelThresholds = {
+          low: 50,
+          medium: 70,
+          high: 85,
+          excellent: 100,
+        };
+        const thresholds = Object.values(levelThresholds);
+        const nextThreshold = thresholds.find((t) => t > currentScore);
+        const pointsNeeded = nextThreshold ? nextThreshold - currentScore : 0;
+        const avgPointsPerDay = history.length > 10 ? pointsNeeded / 7 : 1; // Estimate based on 7 days
+        const daysToNextLevel = avgPointsPerDay > 0 ? Math.ceil(pointsNeeded / avgPointsPerDay) : undefined;
+
         const data: TrustScoreData = {
           currentScore,
           maxScore: TRUST_SCORE_MAX,
@@ -132,6 +158,8 @@ export const useTrustScore = (): UseTrustScoreReturn => {
           history,
           recentChange,
           trend,
+          lastUpdated: new Date().toISOString(),
+          daysToNextLevel,
         };
 
         setTrustScore(data);
@@ -150,36 +178,59 @@ export const useTrustScore = (): UseTrustScoreReturn => {
   useEffect(() => {
     if (!user?.id) return;
 
+    let isMounted = true;
+
     // Initial fetch
     fetchTrustScore();
 
     // Subscribe to trust score changes
-    subscriptionRef.current = supabase
-      .from(`user_rewards_summary:user_id=eq.${user.id}`)
-      .on("UPDATE", (payload) => {
-        if (payload.new.trust_score !== payload.old.trust_score) {
-          // Clear cache and refetch
-          cacheRef.current = { data: null, timestamp: 0 };
-          fetchTrustScore(true);
+    const setupSubscription = () => {
+      subscriptionRef.current = supabase
+        .channel(`trust_score_${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "user_rewards_summary",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (!isMounted) return;
 
-          // Show notification
-          const change = payload.new.trust_score - payload.old.trust_score;
-          const direction = change > 0 ? "increased" : "decreased";
-          toast({
-            title: `Trust Score ${direction === "increased" ? "Increased" : "Decreased"}`,
-            description: `Your trust score changed by ${Math.abs(change)} points`,
-          });
-        }
-      })
-      .subscribe((status, err) => {
-        if (err) {
-          console.error("Subscription error:", err);
-        }
-      });
+            const oldScore = payload.old?.trust_score || 0;
+            const newScore = payload.new?.trust_score || 0;
+
+            if (oldScore !== newScore) {
+              // Clear cache and refetch
+              cacheRef.current = { data: null, timestamp: 0 };
+              fetchTrustScore(true);
+
+              // Show notification
+              const change = newScore - oldScore;
+              const direction = change > 0 ? "increased" : "decreased";
+              toast({
+                title: `Trust Score ${direction === "increased" ? "📈" : "📉"} ${direction === "increased" ? "Increased" : "Decreased"}`,
+                description: `Your trust score changed by ${Math.abs(change)} point${Math.abs(change) !== 1 ? "s" : ""}`,
+              });
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED" && isMounted) {
+            // Subscription is active
+          } else if (status === "CHANNEL_ERROR" && isMounted) {
+            console.error("Trust score channel error");
+          }
+        });
+    };
+
+    setupSubscription();
 
     return () => {
+      isMounted = false;
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, [user?.id, fetchTrustScore, toast]);
@@ -261,27 +312,47 @@ export const useTrustScore = (): UseTrustScoreReturn => {
     [user?.id, trustScore, fetchTrustScore, toast]
   );
 
-  // Get full history
-  const getHistory = useCallback(async (): Promise<TrustScoreHistory[]> => {
-    if (!user?.id) return [];
+  // Get full history with optional limit
+  const getHistory = useCallback(
+    async (limit = 100): Promise<TrustScoreHistory[]> => {
+      if (!user?.id) return [];
 
-    try {
-      const { data, error } = await supabase
-        .from("trust_history")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("trust_history")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(limit);
 
-      if (error && error.code !== "PGRST116") {
-        throw error;
+        if (error && error.code !== "PGRST116") {
+          throw error;
+        }
+
+        return (data || []) as TrustScoreHistory[];
+      } catch (err) {
+        console.error("Error fetching history:", err);
+        return [];
       }
+    },
+    [user?.id]
+  );
 
-      return (data || []) as TrustScoreHistory[];
-    } catch (err) {
-      console.error("Error fetching history:", err);
-      return [];
-    }
-  }, [user?.id]);
+  // Get score breakdown by reason
+  const getScoreBreakdown = useCallback((): Record<string, number> => {
+    if (!trustScore || !trustScore.history) return {};
+
+    const breakdown: Record<string, number> = {};
+
+    trustScore.history.forEach((entry) => {
+      if (!breakdown[entry.change_reason]) {
+        breakdown[entry.change_reason] = 0;
+      }
+      breakdown[entry.change_reason] += entry.new_score - entry.old_score;
+    });
+
+    return breakdown;
+  }, [trustScore]);
 
   // Check if user can perform action
   const canPerformAction = useCallback(
@@ -295,7 +366,7 @@ export const useTrustScore = (): UseTrustScoreReturn => {
   useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, []);
@@ -310,5 +381,6 @@ export const useTrustScore = (): UseTrustScoreReturn => {
     getHistory,
     getTrustLevel,
     canPerformAction,
+    getScoreBreakdown,
   };
 };

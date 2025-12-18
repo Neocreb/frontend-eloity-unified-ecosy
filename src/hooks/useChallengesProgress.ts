@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface ChallengeProgress {
   id: string;
@@ -14,7 +15,7 @@ export interface ChallengeProgress {
   reward_claimed: boolean;
   claim_date: string | null;
   created_at: string;
-  updated_at: string;
+  updated_at?: string;
 }
 
 export interface Challenge {
@@ -26,16 +27,20 @@ export interface Challenge {
   points_reward: number;
   icon?: string;
   difficulty?: string;
+  category?: string;
 }
 
 export interface ChallengeWithProgress extends Challenge {
   userProgress?: ChallengeProgress;
+  progressPercentage?: number;
+  isCompleted?: boolean;
 }
 
 interface UseChallengesProgressReturn {
   challenges: ChallengeWithProgress[];
   activeChallenges: ChallengeWithProgress[];
   completedChallenges: ChallengeWithProgress[];
+  unclaimedChallenges: ChallengeWithProgress[];
   isLoading: boolean;
   error: Error | null;
   isUpdating: boolean;
@@ -43,6 +48,8 @@ interface UseChallengesProgressReturn {
   claimReward: (challengeId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
   filterByStatus: (status: string) => ChallengeWithProgress[];
+  filterByType: (type: string) => ChallengeWithProgress[];
+  getTotalRewardsAvailable: () => number;
 }
 
 export const useChallengesProgress = (): UseChallengesProgressReturn => {
@@ -52,157 +59,235 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const subscriptionRef = useRef<any>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
+  const cacheRef = useRef<{ data: ChallengeWithProgress[] | null; timestamp: number }>({
+    data: null,
+    timestamp: 0,
+  });
+
+  // Default challenges library
+  const getMockChallenges = useCallback((): Challenge[] => {
+    return [
+      {
+        id: "daily-post",
+        title: "Daily Post",
+        description: "Create a post every day to build your streak",
+        type: "daily",
+        target_value: 1,
+        points_reward: 10,
+        difficulty: "easy",
+        category: "content",
+      },
+      {
+        id: "weekly-engagement",
+        title: "Weekly Engagement",
+        description: "Get 100+ engagements on your content this week",
+        type: "content",
+        target_value: 100,
+        points_reward: 50,
+        difficulty: "medium",
+        category: "content",
+      },
+      {
+        id: "referral-friend",
+        title: "Invite a Friend",
+        description: "Refer a friend who completes signup",
+        type: "referral",
+        target_value: 1,
+        points_reward: 25,
+        difficulty: "easy",
+        category: "social",
+      },
+      {
+        id: "challenge-champion",
+        title: "Challenge Champion",
+        description: "Win 5 challenges",
+        type: "challenge",
+        target_value: 5,
+        points_reward: 75,
+        difficulty: "hard",
+        category: "challenges",
+      },
+      {
+        id: "generous-tipper",
+        title: "Generous Tipper",
+        description: "Send tips 10 times",
+        type: "engagement",
+        target_value: 10,
+        points_reward: 40,
+        difficulty: "medium",
+        category: "engagement",
+      },
+      {
+        id: "marketplace-master",
+        title: "Marketplace Master",
+        description: "Make 3 marketplace sales",
+        type: "marketplace",
+        target_value: 3,
+        points_reward: 60,
+        difficulty: "medium",
+        category: "marketplace",
+      },
+    ];
+  }, []);
 
   // Fetch challenges and user progress
-  const fetchChallenges = useCallback(async () => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Fetch all challenges (from a hypothetical challenges table)
-      // Since we don't have a challenges table in the schema, we'll use mock challenges
-      const mockChallenges: Challenge[] = [
-        {
-          id: "daily-post",
-          title: "Daily Post",
-          description: "Create a post every day to build your streak",
-          type: "daily",
-          target_value: 1,
-          points_reward: 10,
-          difficulty: "easy",
-        },
-        {
-          id: "weekly-engagement",
-          title: "Weekly Engagement",
-          description: "Get 100+ engagements on your content this week",
-          type: "content",
-          target_value: 100,
-          points_reward: 50,
-          difficulty: "medium",
-        },
-        {
-          id: "referral-friend",
-          title: "Invite a Friend",
-          description: "Refer a friend who completes signup",
-          type: "referral",
-          target_value: 1,
-          points_reward: 25,
-          difficulty: "easy",
-        },
-        {
-          id: "challenge-champion",
-          title: "Challenge Champion",
-          description: "Win 5 challenges",
-          type: "challenge",
-          target_value: 5,
-          points_reward: 75,
-          difficulty: "hard",
-        },
-        {
-          id: "generous-tipper",
-          title: "Generous Tipper",
-          description: "Send tips 10 times",
-          type: "engagement",
-          target_value: 10,
-          points_reward: 40,
-          difficulty: "medium",
-        },
-        {
-          id: "marketplace-master",
-          title: "Marketplace Master",
-          description: "Make 3 marketplace sales",
-          type: "marketplace",
-          target_value: 3,
-          points_reward: 60,
-          difficulty: "medium",
-        },
-      ];
-
-      // Fetch user progress for each challenge
-      const { data: userProgress, error: progressError } = await supabase
-        .from("user_challenges")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (progressError && progressError.code !== "PGRST116") {
-        console.error("Error fetching user progress:", progressError);
-        throw progressError;
+  const fetchChallenges = useCallback(
+    async (skipCache = false) => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
       }
 
-      // Combine challenges with user progress
-      const combinedChallenges: ChallengeWithProgress[] = mockChallenges.map((challenge) => {
-        const userChallengeProgress = userProgress?.find(
-          (p) => p.challenge_id === challenge.id
-        );
+      // Check cache
+      const now = Date.now();
+      const cacheAge = now - cacheRef.current.timestamp;
+      const cacheValid = !skipCache && cacheRef.current.data && cacheAge < 60000; // 1 minute cache
 
-        return {
-          ...challenge,
-          userProgress: userChallengeProgress,
-        };
-      });
+      if (cacheValid && cacheRef.current.data) {
+        setChallenges(cacheRef.current.data);
+        setIsLoading(false);
+        return;
+      }
 
-      setChallenges(combinedChallenges);
-    } catch (err) {
-      console.error("Error fetching challenges:", err);
-      setError(err instanceof Error ? err : new Error("Failed to fetch challenges"));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id]);
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const mockChallenges = getMockChallenges();
+
+        // Fetch user progress for each challenge
+        const { data: userProgress, error: progressError } = await supabase
+          .from("user_challenges")
+          .select("*")
+          .eq("user_id", user.id);
+
+        if (progressError && progressError.code !== "PGRST116") {
+          console.error("Error fetching user progress:", progressError);
+          throw progressError;
+        }
+
+        // Combine challenges with user progress and calculate percentages
+        const combinedChallenges: ChallengeWithProgress[] = mockChallenges.map((challenge) => {
+          const userChallengeProgress = userProgress?.find(
+            (p) => p.challenge_id === challenge.id
+          );
+
+          const progressPercentage = userChallengeProgress
+            ? Math.min(100, (userChallengeProgress.progress / challenge.target_value) * 100)
+            : 0;
+
+          return {
+            ...challenge,
+            userProgress: userChallengeProgress,
+            progressPercentage,
+            isCompleted: userChallengeProgress?.status === "completed",
+          };
+        });
+
+        setChallenges(combinedChallenges);
+        cacheRef.current = { data: combinedChallenges, timestamp: now };
+      } catch (err) {
+        console.error("Error fetching challenges:", err);
+        setError(err instanceof Error ? err : new Error("Failed to fetch challenges"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id, getMockChallenges]
+  );
 
   // Set up real-time subscription
   useEffect(() => {
     if (!user?.id) return;
 
+    let isMounted = true;
+
+    // Fetch initial data
     fetchChallenges();
 
     // Subscribe to real-time updates
-    subscriptionRef.current = supabase
-      .from(`user_challenges:user_id=eq.${user.id}`)
-      .on("INSERT", (payload) => {
-        // Add new challenge progress
-        setChallenges((prev) =>
-          prev.map((c) =>
-            c.id === payload.new.challenge_id
-              ? { ...c, userProgress: payload.new }
-              : c
-          )
-        );
-      })
-      .on("UPDATE", (payload) => {
-        // Update challenge progress
-        setChallenges((prev) =>
-          prev.map((c) =>
-            c.id === payload.new.challenge_id
-              ? { ...c, userProgress: payload.new }
-              : c
-          )
-        );
+    const setupSubscription = () => {
+      subscriptionRef.current = supabase
+        .channel(`user_challenges_${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_challenges",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (!isMounted) return;
 
-        // Show notification for completion
-        if (payload.new.status === "completed" && !payload.old?.completion_date) {
-          toast({
-            title: "Challenge Completed!",
-            description: "You've completed a challenge. Claim your reward!",
-          });
-        }
-      })
-      .subscribe((status, err) => {
-        if (err) {
-          console.error("Subscription error:", err);
-          setError(err instanceof Error ? err : new Error("Subscription failed"));
-        }
-      });
+            if (payload.eventType === "INSERT") {
+              // Add new challenge progress
+              const newProgress = payload.new as ChallengeProgress;
+              setChallenges((prev) =>
+                prev.map((c) =>
+                  c.id === newProgress.challenge_id
+                    ? {
+                        ...c,
+                        userProgress: newProgress,
+                        progressPercentage: Math.min(
+                          100,
+                          (newProgress.progress / c.target_value) * 100
+                        ),
+                        isCompleted: newProgress.status === "completed",
+                      }
+                    : c
+                )
+              );
+            } else if (payload.eventType === "UPDATE") {
+              // Update challenge progress
+              const updatedProgress = payload.new as ChallengeProgress;
+              const oldProgress = payload.old as ChallengeProgress;
+
+              setChallenges((prev) =>
+                prev.map((c) =>
+                  c.id === updatedProgress.challenge_id
+                    ? {
+                        ...c,
+                        userProgress: updatedProgress,
+                        progressPercentage: Math.min(
+                          100,
+                          (updatedProgress.progress / c.target_value) * 100
+                        ),
+                        isCompleted: updatedProgress.status === "completed",
+                      }
+                    : c
+                )
+              );
+
+              // Show notification for completion
+              if (
+                updatedProgress.status === "completed" &&
+                oldProgress.status !== "completed"
+              ) {
+                toast({
+                  title: "Challenge Completed!",
+                  description: "You've completed a challenge. Claim your reward!",
+                });
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED" && isMounted) {
+            // Subscription active
+          } else if (status === "CHANNEL_ERROR" && isMounted) {
+            console.error("Channel error");
+          }
+        });
+    };
+
+    setupSubscription();
 
     return () => {
+      isMounted = false;
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, [user?.id, fetchChallenges, toast]);
@@ -370,19 +455,50 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
   }, [fetchChallenges]);
 
   // Filter by status
-  const filterByStatus = useCallback((status: string): ChallengeWithProgress[] => {
-    return challenges.filter((c) => c.userProgress?.status === status || status === "all");
+  const filterByStatus = useCallback(
+    (status: string): ChallengeWithProgress[] => {
+      if (status === "all") return challenges;
+      return challenges.filter((c) => c.userProgress?.status === status || (!c.userProgress && status === "active"));
+    },
+    [challenges]
+  );
+
+  // Filter by type
+  const filterByType = useCallback(
+    (type: string): ChallengeWithProgress[] => {
+      return challenges.filter((c) => c.type === type);
+    },
+    [challenges]
+  );
+
+  // Get total rewards available
+  const getTotalRewardsAvailable = useCallback((): number => {
+    return challenges.reduce((total, c) => {
+      if (c.userProgress?.status === "completed" && !c.userProgress?.reward_claimed) {
+        return total + c.points_reward;
+      }
+      return total;
+    }, 0);
   }, [challenges]);
+
+  // Refresh data
+  const refresh = useCallback(async () => {
+    cacheRef.current = { data: null, timestamp: 0 };
+    await fetchChallenges(true);
+  }, [fetchChallenges]);
 
   // Get active and completed challenges
   const activeChallenges = filterByStatus("active");
   const completedChallenges = filterByStatus("completed");
+  const unclaimedChallenges = challenges.filter(
+    (c) => c.userProgress?.status === "completed" && !c.userProgress?.reward_claimed
+  );
 
   // Cleanup
   useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, []);
@@ -391,6 +507,7 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     challenges,
     activeChallenges,
     completedChallenges,
+    unclaimedChallenges,
     isLoading,
     isUpdating,
     error,
@@ -398,5 +515,7 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     claimReward,
     refresh,
     filterByStatus,
+    filterByType,
+    getTotalRewardsAvailable,
   };
 };
