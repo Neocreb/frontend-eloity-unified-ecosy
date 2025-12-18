@@ -70,21 +70,27 @@ export const useActivityFeed = (initialLimit: number = DEFAULT_LIMIT): UseActivi
     fetchActivities();
 
     // Subscribe to real-time updates
-    const subscription = activityTransactionService.subscribeToActivities(
+    subscriptionRef.current = activityTransactionService.subscribeToActivities(
       user.id,
       (newActivity) => {
-        // Add new activity to the top of the list
-        setActivities((prev) => [newActivity, ...prev]);
+        // Add new activity to the top of the list if matches current filters
+        if (matchesFilters(newActivity, currentFilters)) {
+          setActivities((prev) => [newActivity, ...prev]);
+          setTotalCount((prev) => prev + 1);
+        }
       },
       (err) => {
         console.error("Subscription error:", err);
+        setError(err instanceof Error ? err : new Error("Real-time subscription error"));
       }
     );
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
     };
-  }, [user?.id, fetchActivities]);
+  }, [user?.id, fetchActivities, currentFilters]);
 
   // Load more activities
   const loadMore = useCallback(async () => {
