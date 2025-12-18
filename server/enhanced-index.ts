@@ -675,25 +675,27 @@ app.post('/api/auth/signup', async (req, res) => {
           .eq('referral_code', referral_code)
           .single();
 
-        if (!linkError && referralLink) {
-          await enhancedEloitsService.processMultiLevelReferral(
-            referralLink.referrer_id,
-            userId,
-            referral_code
-          );
-          logger.info('Referral processed during signup', { referrerId: referralLink.referrer_id, refereeId: userId });
-        }
+        // TODO: Implement rewards service integration
+        // if (!linkError && referralLink) {
+        //   await enhancedEloitsService.processMultiLevelReferral(
+        //     referralLink.referrer_id,
+        //     userId,
+        //     referral_code
+        //   );
+        //   logger.info('Referral processed during signup', { referrerId: referralLink.referrer_id, refereeId: userId });
+        // }
       } catch (referralError) {
         logger.error('Error processing referral during signup:', referralError);
       }
     }
 
     // Initialize rewards data
-    try {
-      await enhancedEloitsService.initializeUserEloitsData(userId);
-    } catch (rewardError) {
-      logger.error('Error initializing rewards data:', rewardError);
-    }
+    // TODO: Implement rewards service integration
+    // try {
+    //   await enhancedEloitsService.initializeUserEloitsData(userId);
+    // } catch (rewardError) {
+    //   logger.error('Error initializing rewards data:', rewardError);
+    // }
 
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(newUser[0].id);
