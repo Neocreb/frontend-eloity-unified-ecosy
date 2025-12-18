@@ -161,6 +161,87 @@ const EnhancedRewardsActivitiesTab = () => {
     }
   };
 
+  const handleExportCSV = async () => {
+    try {
+      setIsExporting(true);
+
+      // Prepare CSV header
+      const headers = ["Date", "Activity Type", "Category", "Description", "Amount", "Currency", "Status"];
+      const rows = filteredActivities.map((activity) => [
+        new Date(activity.created_at).toLocaleString(),
+        activity.activity_type,
+        activity.category,
+        activity.description || "",
+        activity.amount_currency || 0,
+        summary?.currency_code || "USD",
+        activity.status,
+      ]);
+
+      // Create CSV content
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((row) =>
+          row
+            .map((cell) =>
+              typeof cell === "string" && cell.includes(",")
+                ? `"${cell}"`
+                : cell
+            )
+            .join(",")
+        ),
+      ].join("\n");
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute(
+        "download",
+        `activities-${new Date().toISOString().split("T")[0]}.csv`
+      );
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      toast({
+        title: "✓ Exported",
+        description: `${filteredActivities.length} activities exported to CSV`,
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to export activities",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleShareActivity = (activity: any) => {
+    const text = `I just earned ${formatCurrency(
+      activity.amount_currency,
+      summary?.currency_code || "USD"
+    )} from ${activity.description} on Eloity! 🎉`;
+
+    if (navigator.share) {
+      navigator.share({
+        title: "Activity Achievement",
+        text: text,
+        url: window.location.href,
+      }).catch((err) => console.log("Share failed:", err));
+    } else {
+      // Fallback: copy to clipboard
+      navigator.clipboard.writeText(text);
+      toast({
+        title: "✓ Copied",
+        description: "Activity text copied to clipboard",
+      });
+    }
+  };
+
   const getCategoryColor = (category: string): string => {
     const colors: Record<string, string> = {
       Content: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
