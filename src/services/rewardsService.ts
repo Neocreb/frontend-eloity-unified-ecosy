@@ -212,7 +212,13 @@ export const rewardsService = {
         .order('action_type');
 
       if (error) {
-        console.error('Error fetching reward rules:', JSON.stringify(error, null, 2));
+        // Code 42501 = permission denied - likely RLS policy issue
+        if (error.code === '42501') {
+          console.warn('Permission denied accessing reward_rules - RLS policy may not be configured correctly');
+        } else {
+          console.error('Error fetching reward rules:', JSON.stringify(error, null, 2));
+        }
+        // Return empty array gracefully - app continues to work
         return [];
       }
 
