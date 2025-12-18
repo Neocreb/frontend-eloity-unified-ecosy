@@ -920,12 +920,88 @@ class EnhancedEloitsService {
         .select('*')
         .eq('referrer_id', userId)
         .order('created_at', { ascending: false });
-      
+
       if (error) throw error;
       return data || [];
     } catch (error) {
       console.error('Error fetching user referrals:', error);
       return [];
+    }
+  }
+
+  // Get leaderboard
+  async getLeaderboard(limit: number = 10): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from('user_rewards')
+        .select('user_id, current_balance, total_earned, tier, trust_level')
+        .order('total_earned', { ascending: false })
+        .limit(limit);
+
+      if (error) throw error;
+
+      // Fetch usernames for the leaderboard
+      const userIds = data.map(item => item.user_id);
+      const { data: userData, error: userError } = await supabase
+        .from('profiles')
+        .select('user_id, username, avatar_url')
+        .in('user_id', userIds);
+
+      if (userError) throw userError;
+
+      return data.map(item => {
+        const user = userData.find(u => u.user_id === item.user_id);
+        return {
+          ...item,
+          username: user?.username || 'Anonymous',
+          avatar_url: user?.avatar_url
+        };
+      });
+    } catch (error) {
+      console.error('Error fetching leaderboard:', error);
+      return [];
+    }
+  }
+
+  // Claim challenge reward
+  async claimChallengeReward(userId: string, challengeId: string): Promise<{ success: boolean; message: string; amount?: number }> {
+    try {
+      // Check if challenge is completed and not yet claimed
+      const { data: challenge, error } = await supabase
+        .from('user_challenges')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('challenge_id', challengeId)
+        .single();
+
+      if (error) throw error;
+      if (!challenge) return { success: false, message: 'Challenge not found' };
+      if (challenge.status !== 'completed') return { success: false, message: 'Challenge not completed' };
+      if (challenge.reward_claimed) return { success: false, message: 'Reward already claimed' };
+
+      // Award points
+      const result = await this.awardPoints(userId, 'complete_challenge', {
+        challengeId,
+        challengeName: challenge.name
+      });
+
+      if (result && result.success) {
+        // Update challenge status
+        await supabase
+          .from('user_challenges')
+          .update({
+            reward_claimed: true,
+            claim_date: new Date().toISOString()
+          })
+          .eq('id', challenge.id);
+
+        return { success: true, message: 'Reward claimed successfully!', amount: result.amount };
+      }
+
+      return { success: false, message: 'Failed to award challenge reward' };
+    } catch (error) {
+      console.error('Error claiming challenge reward:', error);
+      return { success: false, message: 'Failed to claim challenge reward' };
     }
   }
 
