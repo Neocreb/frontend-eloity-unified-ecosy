@@ -227,8 +227,8 @@ const DashboardInner = () => {
         </div>
 
         {/* Floating Action Buttons */}
-        <div className="relative z-20 max-w-md mx-auto px-4 mt-12 -mb-6">
-          <div className="flex gap-3 justify-center">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mt-12 -mb-6">
+          <div className="flex gap-3 justify-center flex-wrap">
             <button
               onClick={()=>navigate('/app/wallet/deposit')}
               className="flex-1 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
