@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { referralTrackingService, ReferralStats, ReferralRecord, ReferralTierInfo } from "@/services/referralTrackingService";
 import { useToast } from "@/hooks/use-toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UseReferralStatsReturn {
   stats: ReferralStats | null;
@@ -19,9 +21,12 @@ interface UseReferralStatsReturn {
   copyReferralCode: () => void;
   generateNewCode: () => Promise<void>;
   progressToNextTier: number;
+  totalEarningsThisMonth: number;
+  progressPercentage: number;
 }
 
 const DEFAULT_LIMIT = 20;
+const CACHE_DURATION_MS = 30000; // 30 seconds
 
 export const useReferralStats = (): UseReferralStatsReturn => {
   const { user } = useAuth();
@@ -35,7 +40,11 @@ export const useReferralStats = (): UseReferralStatsReturn => {
   const [totalReferrals, setTotalReferrals] = useState(0);
   const [limit] = useState(DEFAULT_LIMIT);
   const [referralCode, setReferralCode] = useState<string | null>(null);
-  const subscriptionRef = useRef<any>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
+  const cacheRef = useRef<{ data: ReferralStats | null; timestamp: number }>({
+    data: null,
+    timestamp: 0,
+  });
 
   // Fetch stats and referrals
   const fetchStats = useCallback(async () => {
