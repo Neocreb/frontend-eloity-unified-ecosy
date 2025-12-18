@@ -407,7 +407,7 @@ const EnhancedSafeReferralComponent = () => {
             {/* Earnings Limits */}
             <div>
               <h3 className="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100">
-                {stats?.tier.charAt(0).toUpperCase() + stats?.tier.slice(1)} Tier Limits
+                {stats?.tier ? (stats.tier.charAt(0).toUpperCase() + stats.tier.slice(1)) : "Tier"} Limits
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 bg-amber-50 dark:bg-amber-900/20 rounded-xl border border-amber-200 dark:border-amber-800">
