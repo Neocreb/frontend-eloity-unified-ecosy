@@ -224,27 +224,6 @@ export const useActivityFeed = (initialLimit: number = DEFAULT_LIMIT): UseActivi
     };
   }, []);
 
-  // Helper function to check if activity matches current filters
-  const matchesFilters = (activity: ActivityTransaction, filters?: ActivityFilter): boolean => {
-    if (!filters) return true;
-
-    if (filters.type && activity.activity_type !== filters.type) return false;
-    if (filters.category && activity.category !== filters.category) return false;
-    if (filters.status && activity.status !== filters.status) return false;
-
-    if (filters.startDate) {
-      const activityDate = new Date(activity.created_at);
-      if (activityDate < filters.startDate) return false;
-    }
-
-    if (filters.endDate) {
-      const activityDate = new Date(activity.created_at);
-      if (activityDate > filters.endDate) return false;
-    }
-
-    return true;
-  };
-
   return {
     activities,
     isLoading,
