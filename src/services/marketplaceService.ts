@@ -548,12 +548,15 @@ export class MarketplaceService {
     }
   }
 
-  // Reviews
+  // Reviews (using canonical product_reviews table)
   static async getReviews(productId: string): Promise<Review[]> {
     try {
       const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
+        .from('product_reviews')
+        .select(`
+          *,
+          user:users(full_name, avatar_url)
+        `)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
@@ -570,11 +573,11 @@ export class MarketplaceService {
         id: review.id,
         productId: review.product_id,
         userId: review.user_id,
-        userName: "Anonymous",
-        userAvatar: "",
+        userName: review.user?.full_name || "Anonymous",
+        userAvatar: review.user?.avatar_url || "",
         rating: review.rating,
         title: review.title || "",
-        comment: review.comment || "",
+        comment: review.content || "",
         helpfulCount: review.helpful_count || 0,
         verifiedPurchase: review.verified_purchase || false,
         createdAt: new Date(review.created_at),
@@ -590,13 +593,13 @@ export class MarketplaceService {
   static async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<Review | null> {
     try {
       const { data, error } = await supabase
-        .from('reviews')
+        .from('product_reviews')
         .insert([{
           product_id: reviewData.productId,
           user_id: reviewData.userId,
           rating: reviewData.rating,
           title: reviewData.title,
-          comment: reviewData.comment,
+          content: reviewData.comment,
           helpful_count: reviewData.helpfulCount,
           verified_purchase: reviewData.verifiedPurchase,
           created_at: new Date().toISOString(),
@@ -954,20 +957,20 @@ export class MarketplaceService {
     }
   }
 
-  // Get sellers (using marketplace_profiles table)
+  // Get sellers (using canonical store_profiles table)
   static async getSellers(): Promise<SellerProfile[]> {
     try {
-      // First try to get from marketplace_profiles table
+      // Get from canonical store_profiles table
       const { data: profiles, error: profilesError } = await supabase
-        .from('marketplace_profiles')
+        .from('store_profiles')
         .select(`
           *,
-          users:profiles(user_id, username, full_name, avatar_url)
+          users:profiles(username, full_name, avatar_url, bio)
         `)
         .eq('is_active', true);
 
       if (profilesError) {
-        console.warn("Error fetching marketplace profiles:", profilesError);
+        console.warn("Error fetching store profiles:", profilesError);
         // Fallback to using profiles table with store information
         const { data: profiles, error: profilesFailover } = await supabase
           .from('profiles')
@@ -1013,14 +1016,14 @@ export class MarketplaceService {
     }
   }
 
-  // Get reviews for products
+  // Get reviews for products using canonical product_reviews table
   static async getProductReviews(productId: string): Promise<Review[]> {
     try {
       const { data, error } = await supabase
-        .from('marketplace_reviews')
+        .from('product_reviews')
         .select(`
           *,
-          reviewer:reviewer_id(full_name, avatar_url)
+          user:users(full_name, avatar_url)
         `)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
@@ -1034,14 +1037,14 @@ export class MarketplaceService {
       return data.map(review => ({
         id: review.id,
         productId: review.product_id,
-        userId: review.reviewer_id,
-        userName: review.reviewer?.full_name || 'Anonymous User',
-        userAvatar: review.reviewer?.avatar_url || '',
-        rating: review.overall_rating,
+        userId: review.user_id,
+        userName: review.user?.full_name || 'Anonymous User',
+        userAvatar: review.user?.avatar_url || '',
+        rating: review.rating,
         title: review.title || '',
-        comment: review.comment || '',
-        helpfulCount: review.helpful_votes || 0,
-        verifiedPurchase: review.is_verified_purchase || false,
+        comment: review.content || '',
+        helpfulCount: review.helpful_count || 0,
+        verifiedPurchase: review.verified_purchase || false,
         createdAt: new Date(review.created_at),
         updatedAt: new Date(review.updated_at)
       }));
