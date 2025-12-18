@@ -242,6 +242,23 @@ const EnhancedRewardsActivitiesTab = () => {
     }
   };
 
+  // Group activities by category or type
+  const groupedActivities = useMemo(() => {
+    if (groupBy === "none") {
+      return { "All Activities": filteredActivities };
+    }
+
+    const grouped: Record<string, typeof filteredActivities> = {};
+    filteredActivities.forEach((activity) => {
+      const key = groupBy === "category" ? activity.category : activity.activity_type;
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+      grouped[key].push(activity);
+    });
+    return grouped;
+  }, [filteredActivities, groupBy]);
+
   const getCategoryColor = (category: string): string => {
     const colors: Record<string, string> = {
       Content: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
