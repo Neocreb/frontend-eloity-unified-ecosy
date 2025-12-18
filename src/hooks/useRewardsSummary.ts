@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { userRewardsSummaryService, UserRewardsSummary } from "@/services/userRewardsSummaryService";
 
@@ -6,10 +6,17 @@ interface UseRewardsSummaryReturn {
   summary: UserRewardsSummary | null;
   isLoading: boolean;
   error: Error | null;
+  isRefreshing: boolean;
   refresh: () => Promise<void>;
   updateTrustScore: () => Promise<void>;
   withdraw: (amount: number, method: string) => Promise<boolean>;
+  clearCache: () => void;
+  lastUpdated: Date | null;
+  cacheAge: number;
 }
+
+const CACHE_DURATION_MS = 30000; // 30 seconds
+const REFRESH_DEBOUNCE_MS = 1000;
 
 export const useRewardsSummary = (): UseRewardsSummaryReturn => {
   const { user } = useAuth();
