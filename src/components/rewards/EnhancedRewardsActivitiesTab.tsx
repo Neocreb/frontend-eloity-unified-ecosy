@@ -616,89 +616,117 @@ const EnhancedRewardsActivitiesTab = () => {
         </CardContent>
       </Card>
 
-      {/* Activity List */}
+      {/* Activity List - Grouped */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Activity History
+            Activity History {filteredActivities.length > 0 && `(${filteredActivities.length})`}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {filteredActivities.length > 0 ? (
-            <div className="space-y-3">
-              {filteredActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className="border rounded-lg p-4 hover:bg-muted/50 transition-colors cursor-pointer"
-                  onClick={() =>
-                    setExpandedActivity(
-                      expandedActivity === activity.id ? null : activity.id
-                    )
-                  }
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className="mt-1">{getActivityIcon(activity.activity_type)}</div>
-                      <div className="flex-1">
-                        <p className="font-medium">{activity.description}</p>
-                        <div className="flex items-center gap-2 mt-1 flex-wrap">
-                          <Badge className={getCategoryColor(activity.category)}>
-                            {activity.category}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(activity.created_at).toLocaleDateString()} at{" "}
-                            {new Date(activity.created_at).toLocaleTimeString([], {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </span>
-                          {activity.source_type && (
-                            <Badge variant="secondary" className="text-xs">
-                              {activity.source_type}
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="text-right ml-4">
-                      <p
-                        className={`font-bold text-lg ${
-                          activity.amount_currency && activity.amount_currency > 0
-                            ? "text-green-600 dark:text-green-400"
-                            : "text-gray-600"
-                        }`}
-                      >
-                        {activity.amount_currency && activity.amount_currency > 0
-                          ? "+"
-                          : ""}
-                        {formatCurrency(
-                          activity.amount_currency || 0,
-                          summary?.currency_code || "USD"
-                        )}
-                      </p>
-                      {activity.amount_eloits && (
-                        <p className="text-xs text-muted-foreground">
-                          {formatNumber(activity.amount_eloits)} ELO
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Expanded Details */}
-                  {expandedActivity === activity.id && activity.metadata && (
-                    <div className="mt-3 pt-3 border-t bg-muted/30 p-3 rounded text-sm space-y-1">
-                      <p className="font-semibold text-muted-foreground">Details:</p>
-                      {Object.entries(activity.metadata).map(([key, value]) => (
-                        <p key={key} className="text-xs text-muted-foreground">
-                          <span className="font-medium">{key}:</span>{" "}
-                          {typeof value === "object"
-                            ? JSON.stringify(value)
-                            : String(value)}
-                        </p>
-                      ))}
-                    </div>
+            <div className="space-y-6">
+              {Object.entries(groupedActivities).map(([groupName, groupActivities]) => (
+                <div key={groupName}>
+                  {groupBy !== "none" && (
+                    <h3 className="font-semibold text-lg text-muted-foreground mb-3 flex items-center gap-2">
+                      <FolderOpen className="h-4 w-4" />
+                      {groupName}
+                      <Badge variant="secondary" className="ml-auto">
+                        {groupActivities.length}
+                      </Badge>
+                    </h3>
                   )}
+
+                  <div className="space-y-3">
+                    {groupActivities.map((activity) => (
+                      <div
+                        key={activity.id}
+                        className="border rounded-lg p-4 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-300 group"
+                        onClick={() =>
+                          setExpandedActivity(
+                            expandedActivity === activity.id ? null : activity.id
+                          )
+                        }
+                      >
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex items-start gap-3 flex-1 cursor-pointer">
+                            <div className="mt-1">{getActivityIcon(activity.activity_type)}</div>
+                            <div className="flex-1">
+                              <p className="font-medium">{activity.description}</p>
+                              <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                <Badge className={getCategoryColor(activity.category)}>
+                                  {activity.category}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {new Date(activity.created_at).toLocaleDateString()} at{" "}
+                                  {new Date(activity.created_at).toLocaleTimeString([], {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  })}
+                                </span>
+                                {activity.source_type && (
+                                  <Badge variant="secondary" className="text-xs">
+                                    {activity.source_type}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-right ml-4 flex flex-col items-end gap-2">
+                            <p
+                              className={`font-bold text-lg ${
+                                activity.amount_currency && activity.amount_currency > 0
+                                  ? "text-green-600 dark:text-green-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              {activity.amount_currency && activity.amount_currency > 0
+                                ? "+"
+                                : ""}
+                              {formatCurrency(
+                                activity.amount_currency || 0,
+                                summary?.currency_code || "USD"
+                              )}
+                            </p>
+                            {activity.amount_eloits && (
+                              <p className="text-xs text-muted-foreground">
+                                {formatNumber(activity.amount_eloits)} ELO
+                              </p>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleShareActivity(activity);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Share this activity"
+                            >
+                              <Share2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Expanded Details */}
+                        {expandedActivity === activity.id && activity.metadata && (
+                          <div className="mt-3 pt-3 border-t bg-muted/30 dark:bg-muted/10 p-3 rounded text-sm space-y-1 animate-in fade-in-50 duration-300">
+                            <p className="font-semibold text-muted-foreground">Details:</p>
+                            {Object.entries(activity.metadata).map(([key, value]) => (
+                              <p key={key} className="text-xs text-muted-foreground">
+                                <span className="font-medium">{key}:</span>{" "}
+                                {typeof value === "object"
+                                  ? JSON.stringify(value)
+                                  : String(value)}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
 
