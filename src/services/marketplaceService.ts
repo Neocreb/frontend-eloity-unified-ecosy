@@ -548,12 +548,15 @@ export class MarketplaceService {
     }
   }
 
-  // Reviews
+  // Reviews (using canonical product_reviews table)
   static async getReviews(productId: string): Promise<Review[]> {
     try {
       const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
+        .from('product_reviews')
+        .select(`
+          *,
+          user:users(full_name, avatar_url)
+        `)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
 
@@ -570,11 +573,11 @@ export class MarketplaceService {
         id: review.id,
         productId: review.product_id,
         userId: review.user_id,
-        userName: "Anonymous",
-        userAvatar: "",
+        userName: review.user?.full_name || "Anonymous",
+        userAvatar: review.user?.avatar_url || "",
         rating: review.rating,
         title: review.title || "",
-        comment: review.comment || "",
+        comment: review.content || "",
         helpfulCount: review.helpful_count || 0,
         verifiedPurchase: review.verified_purchase || false,
         createdAt: new Date(review.created_at),
