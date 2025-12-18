@@ -83,6 +83,8 @@ const EnhancedGiftsTipsAnalytics = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
   const [sortBy, setSortBy] = useState("recent");
+  const [trendsData, setTrendsData] = useState<Array<{ date: string; gifts: number; tips: number }>>([]);
+  const [anonymousMode, setAnonymousMode] = useState(false);
 
   const loadStats = async () => {
     if (!user?.id) return;
