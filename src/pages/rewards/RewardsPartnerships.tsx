@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Mail,
   MessageSquare,
+  Clock,
 } from "lucide-react";
 
 interface Partnership {
