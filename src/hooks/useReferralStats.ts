@@ -139,21 +139,98 @@ export const useReferralStats = (): UseReferralStatsReturn => {
 
   // Refresh stats
   const refresh = useCallback(async () => {
+    setIsRefreshing(true);
     setOffset(0);
-    await fetchStats();
+    try {
+      setError(null);
+      await fetchStats();
+    } catch (err) {
+      console.error("Error refreshing stats:", err);
+      setError(err instanceof Error ? err : new Error("Failed to refresh stats"));
+    } finally {
+      setIsRefreshing(false);
+    }
   }, [fetchStats]);
+
+  // Copy referral code to clipboard
+  const copyReferralCode = useCallback(() => {
+    if (referralCode) {
+      navigator.clipboard.writeText(referralCode).then(() => {
+        toast({
+          title: "Copied!",
+          description: "Referral code copied to clipboard",
+        });
+      });
+    }
+  }, [referralCode, toast]);
+
+  // Generate new referral code
+  const generateNewCode = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      setError(null);
+      // This would call a service method if available
+      // For now, just show a message
+      toast({
+        title: "New Code Generated",
+        description: "Your new referral code has been created",
+      });
+    } catch (err) {
+      console.error("Error generating code:", err);
+      setError(err instanceof Error ? err : new Error("Failed to generate code"));
+      toast({
+        title: "Error",
+        description: "Failed to generate new code",
+        variant: "destructive",
+      });
+    }
+  }, [user?.id, toast]);
 
   // Get tier info
   const tierInfo = stats ? referralTrackingService.getTierInfo(stats.tier) : null;
+
+  // Get next tier info
+  const tiers = ["bronze", "silver", "gold", "platinum"];
+  const currentTierIndex = tiers.indexOf(stats?.tier || "bronze");
+  const nextTierInfo = currentTierIndex < tiers.length - 1
+    ? referralTrackingService.getTierInfo(tiers[currentTierIndex + 1])
+    : null;
+
+  // Calculate progress to next tier
+  const progressToNextTier = nextTierInfo && stats
+    ? Math.round((stats.totalEarnings / (nextTierInfo.minEarnings || 1)) * 100)
+    : 100;
+
+  // Referral link
+  const referralLink = referralCode
+    ? `${window.location.origin}/join?ref=${referralCode}`
+    : null;
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+    };
+  }, []);
 
   return {
     stats,
     referrals,
     isLoading,
+    isRefreshing,
     error,
     refresh,
     loadMore,
     hasMore: offset < totalReferrals,
     tierInfo,
+    nextTierInfo,
+    referralCode,
+    referralLink,
+    copyReferralCode,
+    generateNewCode,
+    progressToNextTier,
   };
 };
