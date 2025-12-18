@@ -677,7 +677,6 @@ const AppRoutes = () => {
           <Route path="profile/add-work" element={<AddExternalWork />} />
 
           {/* Rewards Routes - Full Page Implementation COMPLETE */}
-          <Route path="rewards/withdraw" element={<WithdrawRewards />} />
           <Route path="rewards/more" element={<RewardsMoreServices />} />
           <Route path="rewards/withdraw" element={<RewardsWithdraw />} />
           <Route path="rewards/send-gifts" element={<RewardsSendGifts />} />
