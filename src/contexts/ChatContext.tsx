@@ -127,15 +127,25 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           // Get the last message for this conversation
-          const { data: lastMessageArray, error: lastMessageError } =
-            await supabase
-              .from("chat_messages")
-              .select("*")
-              .eq("conversation_id", conv.id)
-              .order("created_at", { ascending: false })
-              .limit(1);
+          let lastMessageData = null;
+          try {
+            const { data: lastMessageArray, error: lastMessageError } =
+              await supabase
+                .from("chat_messages")
+                .select("*")
+                .eq("conversation_id", conv.id)
+                .order("created_at", { ascending: false })
+                .limit(1);
 
-          const lastMessageData = lastMessageArray?.[0] || null;
+            if (lastMessageError) {
+              console.warn("Error fetching last message:", lastMessageError);
+            } else {
+              lastMessageData = lastMessageArray?.[0] || null;
+            }
+          } catch (messageError) {
+            console.warn("Exception fetching last message:", messageError instanceof Error ? messageError.message : 'Unknown');
+            lastMessageData = null;
+          }
 
           formattedConversations.push({
             id: conv.id,
