@@ -759,7 +759,7 @@ const AppRoutes = () => {
           <Route path="delivery/profile/:username" element={<DeliveryProfile />} />
           <Route path="campaigns" element={<CampaignCenter />} />
           <Route path="campaigns/create" element={<CreateCampaignPage />} />
-          <Route path="rewards" element={<EnhancedRewards />} />
+          <Route path="rewards" element={<Rewards />} />
           <Route path="videos" element={<VideosPage />} />
           <Route path="videos/:videoId" element={<VideoDetail />} />
           <Route path="live/:id" element={<LiveStreamPage />} />
