@@ -160,7 +160,9 @@ export const useRewardsSummary = (): UseRewardsSummaryReturn => {
       const success = await userRewardsSummaryService.updateTrustScore(user.id);
 
       if (success) {
-        await fetchSummary();
+        // Clear cache to fetch fresh data
+        cacheRef.current = { data: null, timestamp: 0 };
+        await fetchSummary(true);
       }
     } catch (err) {
       console.error("Error updating trust score:", err);
