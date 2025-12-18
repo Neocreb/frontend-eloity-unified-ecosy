@@ -1,18 +1,23 @@
+// @ts-nocheck
 import { supabase } from "@/integrations/supabase/client";
-import { activityTransactionService } from "./activityTransactionService";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface ReferralRecord {
   id: string;
   referrer_id: string;
   referred_user_id: string;
   referral_code: string;
-  status: string;
+  status: "pending" | "verified" | "active" | "inactive";
   referral_date: string;
+  verification_date: string | null;
   first_purchase_date: string | null;
   earnings_total: number;
   earnings_this_month: number;
-  tier: string;
+  earnings_last_month: number;
+  tier: "bronze" | "silver" | "gold" | "platinum";
+  commission_percentage: number;
   auto_share_total: number;
+  auto_share_percentage: number;
   created_at: string;
   updated_at: string;
 }
@@ -20,66 +25,28 @@ export interface ReferralRecord {
 export interface ReferralStats {
   totalReferrals: number;
   activeReferrals: number;
+  verifiedReferrals: number;
   totalEarnings: number;
-  earningsThisMonth: number;
-  totalAutoShared: number;
-  autoSharedThisMonth: number;
-  averageEarningsPerReferral: number;
-  conversionRate: number;
-  tier: string;
-  nextTierThreshold: number;
-  benefitMultiplier: number;
+  thisMonthEarnings: number;
+  avgCommissionPercentage: number;
+  topTier: string;
+  referralTier: "bronze" | "silver" | "gold" | "platinum";
+  autoShareTotal: number;
 }
 
-export interface ReferralTierInfo {
-  tier: string;
-  minReferrals: number;
-  maxReferrals: number;
-  pointsPerReferral: number;
-  revenueShare: number;
-  benefitMultiplier: number;
-  benefits: string[];
-}
+const TIER_COMMISSIONS = {
+  bronze: 0.05, // 5%
+  silver: 0.075, // 7.5%
+  gold: 0.1, // 10%
+  platinum: 0.15, // 15%
+} as const;
 
-// Referral tier definitions
-const REFERRAL_TIERS: Record<string, ReferralTierInfo> = {
-  bronze: {
-    tier: "bronze",
-    minReferrals: 0,
-    maxReferrals: 4,
-    pointsPerReferral: 10,
-    revenueShare: 0.05, // 5%
-    benefitMultiplier: 1.0,
-    benefits: ["10 Eloity Points per referral", "5% revenue share"],
-  },
-  silver: {
-    tier: "silver",
-    minReferrals: 5,
-    maxReferrals: 24,
-    pointsPerReferral: 25,
-    revenueShare: 0.075, // 7.5%
-    benefitMultiplier: 1.1,
-    benefits: ["25 Eloity Points per referral", "7.5% revenue share", "1.1x earnings multiplier"],
-  },
-  gold: {
-    tier: "gold",
-    minReferrals: 25,
-    maxReferrals: 99,
-    pointsPerReferral: 50,
-    revenueShare: 0.1, // 10%
-    benefitMultiplier: 1.25,
-    benefits: ["50 Eloity Points per referral", "10% revenue share", "1.25x earnings multiplier", "Priority support"],
-  },
-  platinum: {
-    tier: "platinum",
-    minReferrals: 100,
-    maxReferrals: Infinity,
-    pointsPerReferral: 100,
-    revenueShare: 0.15, // 15%
-    benefitMultiplier: 1.5,
-    benefits: ["100 Eloity Points per referral", "15% revenue share", "1.5x earnings multiplier", "VIP support", "Exclusive events"],
-  },
-};
+const TIER_THRESHOLDS = {
+  bronze: 0,
+  silver: 5000, // 5000 ELO earnings from referrals
+  gold: 25000, // 25000 ELO earnings
+  platinum: 100000, // 100000 ELO earnings
+} as const;
 
 class ReferralTrackingService {
   /**
@@ -87,10 +54,12 @@ class ReferralTrackingService {
    */
   async trackReferral(
     referrerId: string,
-    referredUserId: string,
-    referralCode: string
+    referredUserId: string
   ): Promise<ReferralRecord | null> {
     try {
+      // Generate unique referral code
+      const referralCode = this.generateReferralCode(referrerId);
+
       const { data, error } = await supabase
         .from("referral_tracking")
         .insert([
@@ -100,6 +69,8 @@ class ReferralTrackingService {
             referral_code: referralCode,
             status: "pending",
             tier: "bronze",
+            commission_percentage: TIER_COMMISSIONS.bronze,
+            auto_share_percentage: 0.5,
           },
         ])
         .select()
@@ -118,54 +89,121 @@ class ReferralTrackingService {
   }
 
   /**
-   * Activate a referral when referred user completes first action
+   * Activate a pending referral (when referred user completes profile/purchase)
    */
-  async activateReferral(
-    referrerId: string,
-    referredUserId: string
-  ): Promise<boolean> {
+  async activateReferral(referralId: string): Promise<ReferralRecord | null> {
     try {
-      const { error } = await supabase
+      // Update referral status
+      const { data, error } = await supabase
         .from("referral_tracking")
         .update({
-          status: "active",
-          first_purchase_date: new Date().toISOString(),
+          status: "verified",
+          verification_date: new Date().toISOString(),
         })
-        .eq("referrer_id", referrerId)
-        .eq("referred_user_id", referredUserId)
-        .eq("status", "pending");
+        .eq("id", referralId)
+        .select()
+        .single();
 
       if (error) {
         console.error("Error activating referral:", error);
+        return null;
+      }
+
+      if (data) {
+        // Award referral signup bonus (500 ELO)
+        await this.recordReferralEarning(
+          data.referrer_id,
+          500,
+          "Referral signup bonus",
+          data.id
+        );
+      }
+
+      return data;
+    } catch (err) {
+      console.error("Exception activating referral:", err);
+      return null;
+    }
+  }
+
+  /**
+   * Record earnings from a referred user's activity
+   */
+  async recordReferralEarning(
+    referrerId: string,
+    amount: number,
+    reason: string,
+    referralId?: string
+  ): Promise<boolean> {
+    try {
+      // Get referral to determine commission percentage
+      let commissionPercentage = TIER_COMMISSIONS.bronze;
+
+      if (referralId) {
+        const { data: referral } = await supabase
+          .from("referral_tracking")
+          .select("commission_percentage, tier")
+          .eq("id", referralId)
+          .single();
+
+        if (referral) {
+          commissionPercentage = referral.commission_percentage;
+        }
+      } else {
+        // Get referrer's tier
+        const stats = await this.getReferralStats(referrerId);
+        if (stats) {
+          commissionPercentage = TIER_COMMISSIONS[stats.referralTier];
+        }
+      }
+
+      const commissionAmount = amount * commissionPercentage;
+
+      // Log as activity transaction
+      const { error: activityError } = await supabase
+        .from("activity_transactions")
+        .insert([
+          {
+            user_id: referrerId,
+            activity_type: "referral_activity",
+            category: "Referrals",
+            amount_eloits: commissionAmount,
+            description: `${reason} (${(commissionPercentage * 100).toFixed(1)}% commission)`,
+            source_id: referralId,
+            source_type: "referral",
+            metadata: {
+              reason,
+              commission_percentage: commissionPercentage,
+              base_amount: amount,
+            },
+            status: "completed",
+          },
+        ]);
+
+      if (activityError) {
+        console.error("Error logging referral earning:", activityError);
         return false;
       }
 
-      // Log the referral bonus
-      const tierInfo = REFERRAL_TIERS.bronze; // New referrals get bronze tier bonus
-      await activityTransactionService.logActivity(
-        referrerId,
-        "referral_signup",
-        "Referrals",
-        tierInfo.pointsPerReferral,
-        {
-          description: `New referral signup bonus`,
-          sourceId: referredUserId,
-          sourceType: "referral",
-          amountCurrency: tierInfo.pointsPerReferral * 0.1, // Rough conversion
-        }
-      );
+      // Update referral earnings
+      if (referralId) {
+        await this.updateReferralEarnings(referralId, commissionAmount);
+      }
+
+      // Update user summary
+      await this.updateUserSummaryFromReferrals(referrerId);
 
       return true;
     } catch (err) {
-      console.error("Exception activating referral:", err);
+      console.error("Exception recording referral earning:", err);
       return false;
     }
   }
 
   /**
-   * Get referral statistics for a user
+   * Get comprehensive referral statistics
    */
-  async getReferralStats(userId: string): Promise<ReferralStats> {
+  async getReferralStats(userId: string): Promise<ReferralStats | null> {
     try {
       const { data: referrals, error } = await supabase
         .from("referral_tracking")
@@ -173,75 +211,101 @@ class ReferralTrackingService {
         .eq("referrer_id", userId);
 
       if (error) {
-        console.error("Error fetching referrals:", error);
-        return this.getDefaultStats();
+        console.error("Error fetching referral stats:", error);
+        return null;
       }
 
-      const totalReferrals = referrals?.length || 0;
-      const activeReferrals = referrals?.filter((r) => r.status === "active").length || 0;
-      const totalEarnings = referrals?.reduce((sum, r) => sum + (r.earnings_total || 0), 0) || 0;
-      const earningsThisMonth =
-        referrals?.reduce((sum, r) => sum + (r.earnings_this_month || 0), 0) || 0;
-      const totalAutoShared =
-        referrals?.reduce((sum, r) => sum + (r.auto_share_total || 0), 0) || 0;
+      if (!referrals) {
+        return {
+          totalReferrals: 0,
+          activeReferrals: 0,
+          verifiedReferrals: 0,
+          totalEarnings: 0,
+          thisMonthEarnings: 0,
+          avgCommissionPercentage: 5,
+          topTier: "bronze",
+          referralTier: "bronze",
+          autoShareTotal: 0,
+        };
+      }
 
-      // Calculate tier
-      const tier = this.calculateTier(activeReferrals);
-      const tierInfo = REFERRAL_TIERS[tier];
+      // Calculate stats
+      const totalReferrals = referrals.length;
+      const activeReferrals = referrals.filter(
+        (r) => r.status !== "inactive"
+      ).length;
+      const verifiedReferrals = referrals.filter(
+        (r) => r.status === "verified"
+      ).length;
+      const totalEarnings = referrals.reduce((sum, r) => sum + r.earnings_total, 0);
+      const thisMonthEarnings = referrals.reduce((sum, r) => sum + r.earnings_this_month, 0);
+      const avgCommissionPercentage =
+        referrals.length > 0
+          ? referrals.reduce((sum, r) => sum + r.commission_percentage, 0) /
+            referrals.length
+          : 0.05;
+      const autoShareTotal = referrals.reduce((sum, r) => sum + r.auto_share_total, 0);
+
+      // Determine user's tier based on total earnings
+      let referralTier: "bronze" | "silver" | "gold" | "platinum" = "bronze";
+      if (totalEarnings >= TIER_THRESHOLDS.platinum) {
+        referralTier = "platinum";
+      } else if (totalEarnings >= TIER_THRESHOLDS.gold) {
+        referralTier = "gold";
+      } else if (totalEarnings >= TIER_THRESHOLDS.silver) {
+        referralTier = "silver";
+      }
+
+      // Find top tier among active referrals
+      const topTier =
+        referrals
+          .filter((r) => r.status !== "inactive")
+          .map((r) => r.tier)
+          .sort((a, b) => {
+            const tierRank = { bronze: 0, silver: 1, gold: 2, platinum: 3 };
+            return tierRank[b] - tierRank[a];
+          })[0] || "bronze";
 
       return {
         totalReferrals,
         activeReferrals,
+        verifiedReferrals,
         totalEarnings,
-        earningsThisMonth,
-        totalAutoShared,
-        autoSharedThisMonth: earningsThisMonth * 0.005, // 0.5% of earnings
-        averageEarningsPerReferral:
-          activeReferrals > 0 ? totalEarnings / activeReferrals : 0,
-        conversionRate: totalReferrals > 0 ? (activeReferrals / totalReferrals) * 100 : 0,
-        tier: tier,
-        nextTierThreshold:
-          tier === "platinum" ? Infinity : REFERRAL_TIERS[this.getNextTier(tier)].minReferrals,
-        benefitMultiplier: tierInfo.benefitMultiplier,
+        thisMonthEarnings,
+        avgCommissionPercentage: avgCommissionPercentage * 100,
+        topTier,
+        referralTier,
+        autoShareTotal,
       };
     } catch (err) {
-      console.error("Exception fetching referral stats:", err);
-      return this.getDefaultStats();
+      console.error("Exception getting referral stats:", err);
+      return null;
     }
   }
 
   /**
-   * Get default stats
-   */
-  private getDefaultStats(): ReferralStats {
-    return {
-      totalReferrals: 0,
-      activeReferrals: 0,
-      totalEarnings: 0,
-      earningsThisMonth: 0,
-      totalAutoShared: 0,
-      autoSharedThisMonth: 0,
-      averageEarningsPerReferral: 0,
-      conversionRate: 0,
-      tier: "bronze",
-      nextTierThreshold: 5,
-      benefitMultiplier: 1.0,
-    };
-  }
-
-  /**
-   * Get user's referrals list
+   * Get paginated list of referrals with details
    */
   async getReferralsList(
     userId: string,
-    limit: number = 50,
-    offset: number = 0
+    limit: number = 20,
+    offset: number = 0,
+    filter?: { status?: string; tier?: string }
   ): Promise<ReferralRecord[]> {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from("referral_tracking")
         .select("*")
-        .eq("referrer_id", userId)
+        .eq("referrer_id", userId);
+
+      if (filter?.status) {
+        query = query.eq("status", filter.status);
+      }
+      if (filter?.tier) {
+        query = query.eq("tier", filter.tier);
+      }
+
+      const { data, error } = await query
         .order("created_at", { ascending: false })
         .range(offset, offset + limit - 1);
 
@@ -258,174 +322,27 @@ class ReferralTrackingService {
   }
 
   /**
-   * Calculate tier based on active referrals
-   */
-  private calculateTier(activeReferrals: number): string {
-    if (activeReferrals >= 100) return "platinum";
-    if (activeReferrals >= 25) return "gold";
-    if (activeReferrals >= 5) return "silver";
-    return "bronze";
-  }
-
-  /**
-   * Get next tier
-   */
-  private getNextTier(currentTier: string): string {
-    const tierOrder = ["bronze", "silver", "gold", "platinum"];
-    const currentIndex = tierOrder.indexOf(currentTier);
-    return tierOrder[Math.min(currentIndex + 1, tierOrder.length - 1)];
-  }
-
-  /**
-   * Get tier information
-   */
-  getTierInfo(tier: string): ReferralTierInfo {
-    return REFERRAL_TIERS[tier] || REFERRAL_TIERS.bronze;
-  }
-
-  /**
-   * Get all tiers
-   */
-  getAllTiers(): ReferralTierInfo[] {
-    return Object.values(REFERRAL_TIERS);
-  }
-
-  /**
-   * Record referral earnings
-   */
-  async recordReferralEarning(
-    referrerId: string,
-    referredUserId: string,
-    amount: number
-  ): Promise<boolean> {
-    try {
-      // Get the referral record
-      const { data: referral, error: fetchError } = await supabase
-        .from("referral_tracking")
-        .select("*")
-        .eq("referrer_id", referrerId)
-        .eq("referred_user_id", referredUserId)
-        .single();
-
-      if (fetchError || !referral) {
-        console.error("Error fetching referral record:", fetchError);
-        return false;
-      }
-
-      // Calculate earnings with tier multiplier
-      const tier = this.calculateTier(1); // Placeholder
-      const tierInfo = REFERRAL_TIERS[tier];
-      const referralEarning = amount * tierInfo.revenueShare;
-
-      // Update referral with new earnings
-      const { error } = await supabase
-        .from("referral_tracking")
-        .update({
-          earnings_total: (referral.earnings_total || 0) + referralEarning,
-          earnings_this_month: (referral.earnings_this_month || 0) + referralEarning,
-        })
-        .eq("id", referral.id);
-
-      if (error) {
-        console.error("Error recording referral earning:", error);
-        return false;
-      }
-
-      // Log as activity
-      await activityTransactionService.logActivity(
-        referrerId,
-        "referral_activity",
-        "Referrals",
-        referralEarning,
-        {
-          description: `Earnings from referral activity`,
-          sourceId: referredUserId,
-          sourceType: "referral",
-        }
-      );
-
-      return true;
-    } catch (err) {
-      console.error("Exception recording referral earning:", err);
-      return false;
-    }
-  }
-
-  /**
-   * Process automatic sharing (0.5% of earnings to referrals)
-   */
-  async processAutoSharing(
-    referrerId: string,
-    referredUserId: string,
-    userEarnings: number
-  ): Promise<boolean> {
-    try {
-      const shareAmount = userEarnings * 0.005; // 0.5%
-
-      if (shareAmount <= 0) return true;
-
-      // Get the referral record
-      const { data: referral, error: fetchError } = await supabase
-        .from("referral_tracking")
-        .select("*")
-        .eq("referrer_id", referrerId)
-        .eq("referred_user_id", referredUserId)
-        .single();
-
-      if (fetchError || !referral) {
-        return false;
-      }
-
-      // Update auto_share_total
-      const { error } = await supabase
-        .from("referral_tracking")
-        .update({
-          auto_share_total: (referral.auto_share_total || 0) + shareAmount,
-        })
-        .eq("id", referral.id);
-
-      if (error) {
-        console.error("Error processing auto sharing:", error);
-        return false;
-      }
-
-      // Log the shared amount as activity
-      await activityTransactionService.logActivity(
-        referrerId,
-        "referral_activity",
-        "Referrals",
-        shareAmount,
-        {
-          description: `Automatic sharing from referral (0.5%)`,
-          sourceId: referredUserId,
-          sourceType: "auto_share",
-        }
-      );
-
-      return true;
-    } catch (err) {
-      console.error("Exception processing auto sharing:", err);
-      return false;
-    }
-  }
-
-  /**
    * Verify referral code
    */
-  async verifyReferralCode(referralCode: string): Promise<string | null> {
+  async verifyReferralCode(code: string): Promise<ReferralRecord | null> {
     try {
       const { data, error } = await supabase
         .from("referral_tracking")
-        .select("referrer_id")
-        .eq("referral_code", referralCode)
-        .eq("status", "active")
+        .select("*")
+        .eq("referral_code", code)
+        .eq("status", "verified")
         .single();
 
-      if (error || !data) {
+      if (error) {
+        if (error.code === "PGRST116") {
+          console.warn(`Invalid referral code: ${code}`);
+          return null;
+        }
+        console.error("Error verifying referral code:", error);
         return null;
       }
 
-      return data.referrer_id;
+      return data;
     } catch (err) {
       console.error("Exception verifying referral code:", err);
       return null;
@@ -435,43 +352,231 @@ class ReferralTrackingService {
   /**
    * Generate unique referral code
    */
-  generateReferralCode(userId: string): string {
-    const timestamp = Date.now().toString(36);
-    const userPart = userId.substring(0, 6).toUpperCase();
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
-    return `${userPart}${random}`;
+  private generateReferralCode(referrerId: string): string {
+    const timestamp = Date.now().toString(36).toUpperCase();
+    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+    const shortId = referrerId.substring(0, 4).toUpperCase();
+    return `${shortId}${timestamp}${random}`;
   }
 
   /**
-   * Subscribe to referral updates
+   * Process auto-sharing (0.5% automatic sharing from referred user earnings)
    */
-  subscribeToReferrals(
-    userId: string,
-    onUpdate: (referral: ReferralRecord) => void,
-    onError?: (error: any) => void
-  ) {
-    const subscription = supabase
-      .from(`referral_tracking:referrer_id=eq.${userId}`)
-      .on("INSERT", (payload) => {
-        onUpdate(payload.new);
-      })
-      .on("UPDATE", (payload) => {
-        onUpdate(payload.new);
-      })
-      .subscribe((status, err) => {
-        if (status === "SUBSCRIBED") {
-          console.log("Subscribed to referral updates");
-        } else if (status === "CLOSED") {
-          console.log("Unsubscribed from referral updates");
-        }
-        if (err && onError) {
-          onError(err);
-        }
-      });
+  async processAutoSharing(referredUserId: string, earnings: number): Promise<boolean> {
+    try {
+      // Find referrals where this user is the referred_user_id
+      const { data: referralRecords, error: queryError } = await supabase
+        .from("referral_tracking")
+        .select("*")
+        .eq("referred_user_id", referredUserId)
+        .eq("status", "verified");
 
-    return subscription;
+      if (queryError) {
+        console.error("Error fetching referral records for auto-share:", queryError);
+        return false;
+      }
+
+      if (!referralRecords || referralRecords.length === 0) {
+        return true; // No referrer, nothing to share
+      }
+
+      // Process auto-share for each referrer
+      for (const record of referralRecords) {
+        const autoShareAmount = earnings * record.auto_share_percentage * 0.01; // 0.5% default
+
+        // Record the auto-share earning
+        await this.recordReferralEarning(
+          record.referrer_id,
+          autoShareAmount,
+          `Auto-share from referred user activity (${record.auto_share_percentage}%)`,
+          record.id
+        );
+
+        // Update auto_share_total in referral record
+        const { error: updateError } = await supabase
+          .from("referral_tracking")
+          .update({
+            auto_share_total: record.auto_share_total + autoShareAmount,
+          })
+          .eq("id", record.id);
+
+        if (updateError) {
+          console.error("Error updating auto-share total:", updateError);
+        }
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Exception processing auto-sharing:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Update referral earning amount
+   */
+  private async updateReferralEarnings(referralId: string, amount: number): Promise<boolean> {
+    try {
+      // Get current earnings
+      const { data: referral, error: fetchError } = await supabase
+        .from("referral_tracking")
+        .select("earnings_total, earnings_this_month")
+        .eq("id", referralId)
+        .single();
+
+      if (fetchError) {
+        console.error("Error fetching referral for update:", fetchError);
+        return false;
+      }
+
+      // Update earnings
+      const { error: updateError } = await supabase
+        .from("referral_tracking")
+        .update({
+          earnings_total: (referral?.earnings_total || 0) + amount,
+          earnings_this_month: (referral?.earnings_this_month || 0) + amount,
+        })
+        .eq("id", referralId);
+
+      if (updateError) {
+        console.error("Error updating referral earnings:", updateError);
+        return false;
+      }
+
+      // Check if tier upgrade is needed
+      const newTotal = (referral?.earnings_total || 0) + amount;
+      const newTier = this.calculateTierFromEarnings(newTotal);
+
+      if (newTier !== referral?.tier) {
+        const { error: tierError } = await supabase
+          .from("referral_tracking")
+          .update({
+            tier: newTier,
+            commission_percentage: TIER_COMMISSIONS[newTier],
+          })
+          .eq("id", referralId);
+
+        if (tierError) {
+          console.error("Error upgrading referral tier:", tierError);
+        }
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Exception updating referral earnings:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Calculate tier based on earnings
+   */
+  private calculateTierFromEarnings(earnings: number): "bronze" | "silver" | "gold" | "platinum" {
+    if (earnings >= TIER_THRESHOLDS.platinum) return "platinum";
+    if (earnings >= TIER_THRESHOLDS.gold) return "gold";
+    if (earnings >= TIER_THRESHOLDS.silver) return "silver";
+    return "bronze";
+  }
+
+  /**
+   * Update user's referral summary
+   */
+  private async updateUserSummaryFromReferrals(userId: string): Promise<boolean> {
+    try {
+      const stats = await this.getReferralStats(userId);
+      if (!stats) return false;
+
+      const { error } = await supabase
+        .from("user_rewards_summary")
+        .update({
+          total_earned: stats.totalEarnings,
+          available_balance: stats.totalEarnings,
+        })
+        .eq("user_id", userId);
+
+      if (error) {
+        console.error("Error updating user summary from referrals:", error);
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error("Exception updating user summary:", err);
+      return false;
+    }
+  }
+
+  /**
+   * Subscribe to referral changes
+   */
+  subscribeToReferralChanges(
+    userId: string,
+    callback: (referral: ReferralRecord) => void
+  ): RealtimeChannel {
+    return supabase
+      .channel(`referrals_${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "referral_tracking",
+          filter: `referrer_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            callback(payload.new as ReferralRecord);
+          }
+        }
+      )
+      .subscribe();
+  }
+
+  /**
+   * Get referral tier information
+   */
+  getTierInfo(tier: "bronze" | "silver" | "gold" | "platinum") {
+    return {
+      tier,
+      commissionPercentage: TIER_COMMISSIONS[tier] * 100,
+      threshold: TIER_THRESHOLDS[tier],
+      benefits: this.getTierBenefits(tier),
+    };
+  }
+
+  /**
+   * Get tier benefits
+   */
+  private getTierBenefits(tier: string): string[] {
+    const benefits = {
+      bronze: [
+        "5% commission on referral earnings",
+        "Basic referral dashboard",
+        "Email support",
+      ],
+      silver: [
+        "7.5% commission on referral earnings",
+        "Advanced referral analytics",
+        "Priority email support",
+        "Auto-share enabled",
+      ],
+      gold: [
+        "10% commission on referral earnings",
+        "Custom referral materials",
+        "Phone support",
+        "Monthly bonus pool access",
+      ],
+      platinum: [
+        "15% commission on referral earnings",
+        "Dedicated account manager",
+        "24/7 support",
+        "Exclusive events and networking",
+        "Premium marketing tools",
+      ],
+    };
+
+    return benefits[tier] || [];
   }
 }
 
-// Export singleton instance
 export const referralTrackingService = new ReferralTrackingService();

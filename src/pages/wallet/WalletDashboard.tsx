@@ -172,18 +172,18 @@ const DashboardInner = () => {
       {/* Upper Zone - Full Bleed Gradient */}
       <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-32">
         <AnimatedWave />
-        
-        <div className="relative z-10 max-w-md mx-auto px-4">
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Greeting */}
-          <div className="text-white text-sm font-medium mb-6">
+          <div className="text-white text-sm md:text-base font-medium mb-6">
             Hi {firstName} Jeremiah Chidiebube 👋
           </div>
 
           {/* Portfolio Section */}
-          <div className="space-y-3 mb-8">
-            <div className="text-white/80 text-xs font-medium">Total Portfolio</div>
-            
-            <div className="flex items-center gap-2">
+          <div className="space-y-3 mb-8 max-w-2xl">
+            <div className="text-white/80 text-xs md:text-sm font-medium">Total Portfolio</div>
+
+            <div className="flex items-center gap-2 flex-wrap">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button className="bg-white/20 text-white border border-white/30 hover:bg-white/30 h-9 px-3 text-sm font-medium rounded-lg flex items-center gap-1">
@@ -216,36 +216,36 @@ const DashboardInner = () => {
           </div>
 
           {/* Balance Display */}
-          <div className="mb-2">
-            <div className="text-white text-5xl font-bold tracking-tight mb-3">
+          <div className="mb-2 max-w-2xl">
+            <div className="text-white text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-3">
               {showBalance ? formatCurrency(viewBalance) : '••••••••'}
             </div>
-            <div className="inline-block bg-emerald-400/20 text-emerald-100 px-3 py-1 rounded-full text-xs font-medium border border-emerald-400/30">
+            <div className="inline-block bg-emerald-400/20 text-emerald-100 px-3 py-1 rounded-full text-xs md:text-sm font-medium border border-emerald-400/30">
               +0.0% from last month
             </div>
           </div>
         </div>
 
         {/* Floating Action Buttons */}
-        <div className="relative z-20 max-w-md mx-auto px-4 mt-12 -mb-6">
-          <div className="flex gap-3 justify-center">
+        <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mt-12 -mb-6">
+          <div className="flex gap-3 justify-center flex-wrap max-w-2xl">
             <button
               onClick={()=>navigate('/app/wallet/deposit')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
               <Plus className="h-5 w-5" />
               <span>Deposit</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/send-money')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
               <Send className="h-5 w-5" />
               <span>Send</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/withdraw')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
               <ArrowUp className="h-5 w-5" />
               <span>Withdraw</span>
@@ -293,7 +293,7 @@ const DashboardInner = () => {
           backgroundColor: 'white',
         }}></div>
 
-        <div className="relative z-10 max-w-md mx-auto px-4 space-y-4 pb-12">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12">
 
           {/* Ad Carousel Banner - Positioned to eliminate white space */}
           <div className="mt-0">
@@ -316,9 +316,9 @@ const DashboardInner = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <Gift className="h-5 w-5 text-red-500" />
-              <h2 className="text-lg font-bold text-gray-900">Gifts & Rewards</h2>
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">Gifts & Rewards</h2>
             </div>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-3 gap-2 md:gap-3">
               <button
                 onClick={()=>navigate('/app/send-gifts')}
                 className="bg-red-500 text-white rounded-xl py-4 px-2 flex flex-col items-center gap-1 font-semibold text-xs hover:bg-red-600 transition-all hover:scale-105 relative"
@@ -348,9 +348,9 @@ const DashboardInner = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="h-5 w-5 text-blue-500 flex items-center justify-center">👤</div>
-              <h2 className="text-lg font-bold text-gray-900">Frequent Recipients</h2>
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">Frequent Recipients</h2>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {recipients.map(recipient => (
                 <div key={recipient.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                   <div className="flex items-center gap-3">
@@ -371,10 +371,10 @@ const DashboardInner = () => {
           </div>
 
           {/* Today's Activity */}
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+          <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-100">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="h-5 w-5 text-blue-600" />
-              <h3 className="font-bold text-gray-900">Today's Activity</h3>
+              <h3 className="font-bold text-gray-900 text-base md:text-lg">Today's Activity</h3>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between items-center">
@@ -407,15 +407,15 @@ const DashboardInner = () => {
 
           {/* Recent Activity */}
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-purple-600" />
-                <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
+                <h2 className="text-lg md:text-xl font-bold text-gray-900">Recent Activity</h2>
               </div>
               <button onClick={()=>navigate('/app/wallet/transactions')} className="text-blue-600 text-sm font-medium hover:underline">See All</button>
             </div>
             {transactions && transactions.length > 0 ? (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {transactions.slice(0, 3).map((tx, idx) => (
                   <div key={tx.id || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center gap-3 flex-1">
@@ -448,10 +448,10 @@ const DashboardInner = () => {
           </div>
 
           {/* Gifts & Tips */}
-          <div className="bg-purple-50 rounded-xl p-4 border border-purple-100">
+          <div className="bg-purple-50 rounded-xl p-4 md:p-6 border border-purple-100">
             <div className="flex items-center gap-2 mb-3">
               <Gift className="h-5 w-5 text-purple-600" />
-              <h3 className="font-bold text-gray-900">Gifts & Tips</h3>
+              <h3 className="font-bold text-gray-900 text-base md:text-lg">Gifts & Tips</h3>
             </div>
             <div className="text-sm text-gray-600 mb-4">No gifts or tips sent yet</div>
             <button
@@ -465,11 +465,11 @@ const DashboardInner = () => {
 
           {/* My Cards */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">My Cards</h2>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">My Cards</h2>
               <button onClick={()=>navigate('/app/wallet/cards')} className="text-blue-600 text-sm font-medium hover:underline">Manage</button>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {/* Visa Card */}
               <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-5 text-white shadow-lg">
                 <div className="flex items-center justify-between mb-6">
@@ -499,10 +499,10 @@ const DashboardInner = () => {
           </div>
 
           {/* Smart Recommendations */}
-          <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+          <div className="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-100">
             <div className="flex items-center gap-2 mb-3">
               <Zap className="h-5 w-5 text-blue-600" />
-              <h3 className="font-bold text-gray-900">Smart Recommendations</h3>
+              <h3 className="font-bold text-gray-900 text-base md:text-lg">Smart Recommendations</h3>
             </div>
             <div className="space-y-3">
               <div>
