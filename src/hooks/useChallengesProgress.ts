@@ -59,109 +59,143 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const subscriptionRef = useRef<any>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
+  const cacheRef = useRef<{ data: ChallengeWithProgress[] | null; timestamp: number }>({
+    data: null,
+    timestamp: 0,
+  });
+
+  // Default challenges library
+  const getMockChallenges = useCallback((): Challenge[] => {
+    return [
+      {
+        id: "daily-post",
+        title: "Daily Post",
+        description: "Create a post every day to build your streak",
+        type: "daily",
+        target_value: 1,
+        points_reward: 10,
+        difficulty: "easy",
+        category: "content",
+      },
+      {
+        id: "weekly-engagement",
+        title: "Weekly Engagement",
+        description: "Get 100+ engagements on your content this week",
+        type: "content",
+        target_value: 100,
+        points_reward: 50,
+        difficulty: "medium",
+        category: "content",
+      },
+      {
+        id: "referral-friend",
+        title: "Invite a Friend",
+        description: "Refer a friend who completes signup",
+        type: "referral",
+        target_value: 1,
+        points_reward: 25,
+        difficulty: "easy",
+        category: "social",
+      },
+      {
+        id: "challenge-champion",
+        title: "Challenge Champion",
+        description: "Win 5 challenges",
+        type: "challenge",
+        target_value: 5,
+        points_reward: 75,
+        difficulty: "hard",
+        category: "challenges",
+      },
+      {
+        id: "generous-tipper",
+        title: "Generous Tipper",
+        description: "Send tips 10 times",
+        type: "engagement",
+        target_value: 10,
+        points_reward: 40,
+        difficulty: "medium",
+        category: "engagement",
+      },
+      {
+        id: "marketplace-master",
+        title: "Marketplace Master",
+        description: "Make 3 marketplace sales",
+        type: "marketplace",
+        target_value: 3,
+        points_reward: 60,
+        difficulty: "medium",
+        category: "marketplace",
+      },
+    ];
+  }, []);
 
   // Fetch challenges and user progress
-  const fetchChallenges = useCallback(async () => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Fetch all challenges (from a hypothetical challenges table)
-      // Since we don't have a challenges table in the schema, we'll use mock challenges
-      const mockChallenges: Challenge[] = [
-        {
-          id: "daily-post",
-          title: "Daily Post",
-          description: "Create a post every day to build your streak",
-          type: "daily",
-          target_value: 1,
-          points_reward: 10,
-          difficulty: "easy",
-        },
-        {
-          id: "weekly-engagement",
-          title: "Weekly Engagement",
-          description: "Get 100+ engagements on your content this week",
-          type: "content",
-          target_value: 100,
-          points_reward: 50,
-          difficulty: "medium",
-        },
-        {
-          id: "referral-friend",
-          title: "Invite a Friend",
-          description: "Refer a friend who completes signup",
-          type: "referral",
-          target_value: 1,
-          points_reward: 25,
-          difficulty: "easy",
-        },
-        {
-          id: "challenge-champion",
-          title: "Challenge Champion",
-          description: "Win 5 challenges",
-          type: "challenge",
-          target_value: 5,
-          points_reward: 75,
-          difficulty: "hard",
-        },
-        {
-          id: "generous-tipper",
-          title: "Generous Tipper",
-          description: "Send tips 10 times",
-          type: "engagement",
-          target_value: 10,
-          points_reward: 40,
-          difficulty: "medium",
-        },
-        {
-          id: "marketplace-master",
-          title: "Marketplace Master",
-          description: "Make 3 marketplace sales",
-          type: "marketplace",
-          target_value: 3,
-          points_reward: 60,
-          difficulty: "medium",
-        },
-      ];
-
-      // Fetch user progress for each challenge
-      const { data: userProgress, error: progressError } = await supabase
-        .from("user_challenges")
-        .select("*")
-        .eq("user_id", user.id);
-
-      if (progressError && progressError.code !== "PGRST116") {
-        console.error("Error fetching user progress:", progressError);
-        throw progressError;
+  const fetchChallenges = useCallback(
+    async (skipCache = false) => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
       }
 
-      // Combine challenges with user progress
-      const combinedChallenges: ChallengeWithProgress[] = mockChallenges.map((challenge) => {
-        const userChallengeProgress = userProgress?.find(
-          (p) => p.challenge_id === challenge.id
-        );
+      // Check cache
+      const now = Date.now();
+      const cacheAge = now - cacheRef.current.timestamp;
+      const cacheValid = !skipCache && cacheRef.current.data && cacheAge < 60000; // 1 minute cache
 
-        return {
-          ...challenge,
-          userProgress: userChallengeProgress,
-        };
-      });
+      if (cacheValid && cacheRef.current.data) {
+        setChallenges(cacheRef.current.data);
+        setIsLoading(false);
+        return;
+      }
 
-      setChallenges(combinedChallenges);
-    } catch (err) {
-      console.error("Error fetching challenges:", err);
-      setError(err instanceof Error ? err : new Error("Failed to fetch challenges"));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id]);
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        const mockChallenges = getMockChallenges();
+
+        // Fetch user progress for each challenge
+        const { data: userProgress, error: progressError } = await supabase
+          .from("user_challenges")
+          .select("*")
+          .eq("user_id", user.id);
+
+        if (progressError && progressError.code !== "PGRST116") {
+          console.error("Error fetching user progress:", progressError);
+          throw progressError;
+        }
+
+        // Combine challenges with user progress and calculate percentages
+        const combinedChallenges: ChallengeWithProgress[] = mockChallenges.map((challenge) => {
+          const userChallengeProgress = userProgress?.find(
+            (p) => p.challenge_id === challenge.id
+          );
+
+          const progressPercentage = userChallengeProgress
+            ? Math.min(100, (userChallengeProgress.progress / challenge.target_value) * 100)
+            : 0;
+
+          return {
+            ...challenge,
+            userProgress: userChallengeProgress,
+            progressPercentage,
+            isCompleted: userChallengeProgress?.status === "completed",
+          };
+        });
+
+        setChallenges(combinedChallenges);
+        cacheRef.current = { data: combinedChallenges, timestamp: now };
+      } catch (err) {
+        console.error("Error fetching challenges:", err);
+        setError(err instanceof Error ? err : new Error("Failed to fetch challenges"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id, getMockChallenges]
+  );
 
   // Set up real-time subscription
   useEffect(() => {
