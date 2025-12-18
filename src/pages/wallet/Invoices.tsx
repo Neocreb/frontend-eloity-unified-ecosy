@@ -199,9 +199,6 @@ const Invoices: React.FC = () => {
     activeStatus === 'all' ? true : inv.status === activeStatus
   );
 
-  const subtotal = formData.items.reduce((sum, item) => sum + item.amount, 0);
-  const total = subtotal + (formData.tax || 0);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
       {/* Header */}
