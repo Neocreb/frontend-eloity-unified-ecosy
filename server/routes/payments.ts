@@ -629,8 +629,8 @@ router.get('/transactions/:transactionId/status', authenticateToken, async (req,
 
 async function handleFlutterwavePaymentSuccess(data: any) {
   try {
-    const { tx_ref, flw_ref, amount, currency, customer } = data;
-    
+    const { tx_ref, flw_ref, amount, currency, customer, meta } = data;
+
     // Update transaction status in database
     await updateTransactionStatus(tx_ref, 'completed', {
       flutterwaveRef: flw_ref,
@@ -641,6 +641,22 @@ async function handleFlutterwavePaymentSuccess(data: any) {
 
     // Credit user wallet
     await creditUserWallet(customer.email, amount, currency);
+
+    // Award rewards if it's a marketplace purchase
+    if (meta && meta.type === 'marketplace_purchase' && meta.product_id && meta.user_id) {
+      try {
+        const { enhancedEloitsService } = await import('../../src/services/enhancedEloitsService.js');
+        await enhancedEloitsService.handleMarketplacePurchaseReward(meta.user_id, amount, meta.product_id);
+
+        // Also award the seller
+        const { data: product } = await supabase.from('products').select('seller_id').eq('id', meta.product_id).single();
+        if (product) {
+          await enhancedEloitsService.handleProductSoldReward(product.seller_id, meta.product_id);
+        }
+      } catch (rewardError) {
+        logger.error('Error awarding marketplace rewards:', rewardError);
+      }
+    }
 
     // Send success notification
     await sendPaymentNotification(customer.email, 'success', {
@@ -682,8 +698,8 @@ async function handleFlutterwavePaymentFailure(data: any) {
 
 async function handlePaystackPaymentSuccess(data: any) {
   try {
-    const { reference, amount, currency, customer } = data;
-    
+    const { reference, amount, currency, customer, metadata } = data;
+
     // Update transaction status
     await updateTransactionStatus(reference, 'completed', {
       paystackRef: data.id,
@@ -694,6 +710,23 @@ async function handlePaystackPaymentSuccess(data: any) {
 
     // Credit user wallet
     await creditUserWallet(customer.email, amount / 100, currency);
+
+    // Award rewards if it's a marketplace purchase
+    if (metadata && metadata.type === 'marketplace_purchase' && metadata.product_id && metadata.user_id) {
+      try {
+        const { enhancedEloitsService } = await import('../../src/services/enhancedEloitsService.js');
+        const actualAmount = amount / 100;
+        await enhancedEloitsService.handleMarketplacePurchaseReward(metadata.user_id, actualAmount, metadata.product_id);
+
+        // Also award the seller
+        const { data: product } = await supabase.from('products').select('seller_id').eq('id', metadata.product_id).single();
+        if (product) {
+          await enhancedEloitsService.handleProductSoldReward(product.seller_id, metadata.product_id);
+        }
+      } catch (rewardError) {
+        logger.error('Error awarding marketplace rewards:', rewardError);
+      }
+    }
 
     // Send success notification
     await sendPaymentNotification(customer.email, 'success', {
