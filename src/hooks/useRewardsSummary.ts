@@ -106,18 +106,23 @@ export const useRewardsSummary = (): UseRewardsSummaryReturn => {
     fetchSummary();
 
     // Subscribe to real-time updates
-    const subscription = userRewardsSummaryService.subscribeToSummary(
+    subscriptionRef.current = userRewardsSummaryService.subscribeToSummary(
       user.id,
       (updatedSummary) => {
         setSummary(updatedSummary);
+        cacheRef.current = { data: updatedSummary, timestamp: Date.now() };
+        setLastUpdated(new Date());
       },
       (err) => {
         console.error("Subscription error:", err);
+        setError(err instanceof Error ? err : new Error("Real-time subscription error"));
       }
     );
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
     };
   }, [user?.id, fetchSummary]);
 
