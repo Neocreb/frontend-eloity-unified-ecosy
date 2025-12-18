@@ -31,6 +31,7 @@ import {
   getUserTradingHistory,
   getTradingStatistics
 } from '../services/cryptoDbService.js';
+import { enhancedEloitsService } from '../services/enhancedEloitsService.js';
 
 const router = express.Router();
 
@@ -735,8 +736,27 @@ router.post('/escrow/:escrowId/release', requireTier2(), async (req, res) => {
     }
     
     const release = await releaseEscrowFunds(escrowId, userId);
-    
+
     if (release.success) {
+      // Award rewards for successful P2P trade
+      try {
+        // Award the buyer
+        await enhancedEloitsService.awardPoints(escrow.buyerId, 'p2p_trade_buy', {
+          escrowId,
+          amount: escrow.amount,
+          cryptocurrency: escrow.cryptocurrency
+        });
+
+        // Award the seller
+        await enhancedEloitsService.awardPoints(escrow.sellerId, 'p2p_trade_sell', {
+          escrowId,
+          amount: escrow.amount,
+          cryptocurrency: escrow.cryptocurrency
+        });
+      } catch (rewardError) {
+        logger.error('Error awarding crypto rewards:', rewardError);
+      }
+
       logger.info('Escrow funds released', { escrowId, userId });
       res.json({
         success: true,
