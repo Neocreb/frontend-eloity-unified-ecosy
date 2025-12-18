@@ -56,6 +56,8 @@ const EnhancedRewardsBattleTab = () => {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<"all" | "live" | "upcoming">("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [battleHistory, setBattleHistory] = useState<any[]>([]);
+  const [showBattleHistory, setShowBattleHistory] = useState(false);
 
   // Fetch battles data
   useEffect(() => {
