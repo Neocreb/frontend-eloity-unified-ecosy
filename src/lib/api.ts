@@ -352,7 +352,14 @@ export async function apiCall(endpoint: string, options: RequestInit = {}) {
   };
 
   try {
-    const response = await fetch(url, config);
+    let response: Response;
+    try {
+      response = await fetch(url, config);
+    } catch (networkError) {
+      // Handle network failures gracefully
+      console.warn(`Network error calling ${endpoint}:`, networkError instanceof Error ? networkError.message : 'Unknown');
+      throw new Error(`Network error: Failed to fetch from ${endpoint}`);
+    }
 
     // Read body once to avoid "body stream already read" errors
     let text = "";
