@@ -238,10 +238,45 @@ After running the fix script:
 
 ## Next Steps for User
 
-1. **Apply the database migration** to fix product_reviews table
-2. **Restart the development server** to refresh Supabase schema
-3. **Test the application** to verify errors are resolved
-4. If you encounter new errors, they should be properly formatted and logged
+### Critical Fixes (Do These First)
+
+1. **Fix RLS Policies for reward_rules**
+   ```bash
+   npm run fix:reward-rules-rls
+   ```
+   This fixes the "permission denied for table users" error.
+
+2. **Apply database migrations** (if needed)
+   ```bash
+   npm run migrate:apply
+   ```
+   This ensures all required tables exist.
+
+3. **Apply product_reviews migration** (if still needed)
+   ```bash
+   npm run migrate:product-reviews
+   ```
+
+### After Running Fixes
+
+1. **Restart the development server** to refresh all connections
+2. **Clear browser cache** (Ctrl+Shift+Delete) to clear stale data
+3. **Test the application** and verify all errors are resolved
+
+### Testing Checklist
+
+- [ ] Activity feed loads without real-time subscription errors
+- [ ] Reward rules display correctly
+- [ ] No "permission denied" errors in console
+- [ ] Product reviews can be fetched (if accessed)
+- [ ] Real-time updates work (make activity, see it update in feed)
+
+### If Errors Persist
+
+- Check that error codes are properly formatted (not `[object Object]`)
+- Review the browser console for more detailed error messages
+- Ensure database migrations ran successfully
+- Verify RLS script output for any warnings
 
 ---
 
