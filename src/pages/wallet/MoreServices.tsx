@@ -632,8 +632,8 @@ const MoreServices = () => {
             </div>
           )}
 
-          {/* Recently Used (only show when no search/filter) */}
-          {!searchQuery && !selectedCategory && (
+          {/* Recently Used (only show when no search/filter in "all" view) */}
+          {!searchQuery && !selectedCategory && viewMode === "all" && (
             <div className="mb-8">
               <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
