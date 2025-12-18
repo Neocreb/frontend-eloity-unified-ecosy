@@ -455,19 +455,50 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
   }, [fetchChallenges]);
 
   // Filter by status
-  const filterByStatus = useCallback((status: string): ChallengeWithProgress[] => {
-    return challenges.filter((c) => c.userProgress?.status === status || status === "all");
+  const filterByStatus = useCallback(
+    (status: string): ChallengeWithProgress[] => {
+      if (status === "all") return challenges;
+      return challenges.filter((c) => c.userProgress?.status === status || (!c.userProgress && status === "active"));
+    },
+    [challenges]
+  );
+
+  // Filter by type
+  const filterByType = useCallback(
+    (type: string): ChallengeWithProgress[] => {
+      return challenges.filter((c) => c.type === type);
+    },
+    [challenges]
+  );
+
+  // Get total rewards available
+  const getTotalRewardsAvailable = useCallback((): number => {
+    return challenges.reduce((total, c) => {
+      if (c.userProgress?.status === "completed" && !c.userProgress?.reward_claimed) {
+        return total + c.points_reward;
+      }
+      return total;
+    }, 0);
   }, [challenges]);
+
+  // Refresh data
+  const refresh = useCallback(async () => {
+    cacheRef.current = { data: null, timestamp: 0 };
+    await fetchChallenges(true);
+  }, [fetchChallenges]);
 
   // Get active and completed challenges
   const activeChallenges = filterByStatus("active");
   const completedChallenges = filterByStatus("completed");
+  const unclaimedChallenges = challenges.filter(
+    (c) => c.userProgress?.status === "completed" && !c.userProgress?.reward_claimed
+  );
 
   // Cleanup
   useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, []);
@@ -476,6 +507,7 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     challenges,
     activeChallenges,
     completedChallenges,
+    unclaimedChallenges,
     isLoading,
     isUpdating,
     error,
@@ -483,5 +515,7 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     claimReward,
     refresh,
     filterByStatus,
+    filterByType,
+    getTotalRewardsAvailable,
   };
 };
