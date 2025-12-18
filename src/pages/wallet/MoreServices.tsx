@@ -513,17 +513,91 @@ const MoreServices = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <WalletActionHeader title="All Services" />
+      <WalletActionHeader
+        title={viewMode === "favorites" ? "Manage Favorites" : "All Services"}
+      />
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          {/* View Mode Tabs */}
+          <div className="flex gap-2 mb-6">
+            <Button
+              variant={viewMode === "all" ? "default" : "outline"}
+              onClick={() => {
+                setViewMode("all");
+                setSearchQuery("");
+                setSelectedCategory(null);
+              }}
+              className="flex-1"
+            >
+              All Services
+            </Button>
+            <Button
+              variant={viewMode === "favorites" ? "default" : "outline"}
+              onClick={() => {
+                setViewMode("favorites");
+                setSearchQuery("");
+              }}
+              className="flex-1"
+            >
+              <Heart className="h-4 w-4 mr-2" />
+              Manage Favorites ({currentFavorites.length}/7)
+            </Button>
+          </div>
+
+          {/* Favorites Management View */}
+          {viewMode === "favorites" && (
+            <>
+              {/* Current Favorites Section */}
+              {currentFavorites.length > 0 && (
+                <div className="mb-8 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg border border-red-200">
+                  <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-red-500 fill-red-500" />
+                    Your Quick Access Services ({currentFavorites.length}/7)
+                  </h3>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                    {currentFavorites.map((service) => (
+                      <div key={service.id} className="relative">
+                        <ServiceCard service={service} />
+                        <div className="absolute top-1 left-1 bg-red-500 text-white rounded-full p-1">
+                          <Heart className="h-3 w-3 fill-current" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-600 italic">
+                    These services appear in your wallet home screen. Click the heart icon below to replace any service.
+                  </p>
+                </div>
+              )}
+
+              {/* Info Box */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  💡 How it works
+                </h4>
+                <ul className="text-xs text-blue-900 space-y-1">
+                  <li>✓ Your wallet home shows 7 quick-access services</li>
+                  <li>✓ Click the heart icon to add/remove services from your quick access</li>
+                  <li>✓ Maximum 7 services - add a new one to replace another</li>
+                  <li>✓ Changes appear instantly on your wallet home</li>
+                </ul>
+              </div>
+
+              {/* Available to Add Section */}
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                Available Services to Add
+              </h3>
+            </>
+          )}
+
           {/* Search Bar */}
           <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search services..."
+                placeholder={viewMode === "favorites" ? "Search available services..." : "Search services..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-10 rounded-lg"
@@ -531,8 +605,8 @@ const MoreServices = () => {
             </div>
           </div>
 
-          {/* Category Filter */}
-          {!searchQuery && (
+          {/* Category Filter - Only show in "All Services" mode */}
+          {!searchQuery && viewMode === "all" && (
             <div className="mb-6">
               <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
                 <Button
