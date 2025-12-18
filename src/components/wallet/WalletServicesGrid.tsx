@@ -264,14 +264,14 @@ const WalletServicesGrid = () => {
       {/* Main Services Grid */}
       <div className="space-y-6">
         {/* Row 1: Fixed Services (To Eloity, Transfer, Withdraw) - 3 items */}
-        <div className="grid grid-cols-3 gap-4 sm:gap-6">
+        <div className="grid grid-cols-3 md:grid-cols-6 lg:grid-cols-3 gap-4 sm:gap-6">
           {row1Services.map((service) => (
             <ServiceCard key={service.id} service={service} showFavoriteToggle={false} />
           ))}
         </div>
 
         {/* Row 2: Favorite Services (4 items) */}
-        <div className="grid grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-4 gap-4 sm:gap-6">
           {row2And3Services.slice(0, 4).map((service) => (
             <ServiceCard
               key={service.id}
@@ -282,7 +282,7 @@ const WalletServicesGrid = () => {
         </div>
 
         {/* Row 3: Favorite Services (4 items) */}
-        <div className="grid grid-cols-4 gap-4 sm:gap-6">
+        <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-4 gap-4 sm:gap-6">
           {row2And3Services.slice(4, 8).map((service) => (
             <ServiceCard
               key={service.id}
