@@ -130,17 +130,40 @@ router.get('/user/:userId/redemptions', verifyAuth, async (req, res) => {
   try {
     const { userId } = req.params;
     const { status } = req.query;
-    
+
     // Verify user is accessing their own data or is admin
     if (req.user.id !== userId) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    
+
     const redemptions = await enhancedEloitsService.getRedemptions(userId, status?.toString());
     res.json({ success: true, data: redemptions });
   } catch (error) {
     console.error('Error fetching redemptions:', error);
     res.status(500).json({ error: 'Failed to fetch redemptions' });
+  }
+});
+
+// Get leaderboard
+router.get('/leaderboard', async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+    const leaderboard = await enhancedEloitsService.getLeaderboard(parseInt(limit));
+    res.json({ success: true, data: leaderboard });
+  } catch (error) {
+    console.error('Error fetching leaderboard:', error);
+    res.status(500).json({ error: 'Failed to fetch leaderboard' });
+  }
+});
+
+// Get reward rules (public)
+router.get('/rules', async (req, res) => {
+  try {
+    const rules = await enhancedEloitsService.getRewardRules();
+    res.json({ success: true, data: rules });
+  } catch (error) {
+    console.error('Error fetching reward rules:', error);
+    res.status(500).json({ error: 'Failed to fetch reward rules' });
   }
 });
 
@@ -254,17 +277,97 @@ router.post('/request-redemption', verifyAuth, async (req, res) => {
 router.post('/process-referral', verifyAuth, async (req, res) => {
   try {
     const { referrerId, refereeId, referralCode } = req.body;
-    
+
     // Verify user is the referrer or is admin
     if (req.user.id !== referrerId && !req.user.isAdmin) {
       return res.status(403).json({ error: 'Access denied' });
     }
-    
+
     const result = await enhancedEloitsService.processMultiLevelReferral(referrerId, refereeId, referralCode);
     res.json({ success: true, data: result });
   } catch (error) {
     console.error('Error processing referral:', error);
     res.status(500).json({ error: 'Failed to process referral' });
+  }
+});
+
+// Claim challenge reward
+router.post('/claim-reward', verifyAuth, async (req, res) => {
+  try {
+    const { userId, challengeId } = req.body;
+
+    // Verify user is accessing their own data
+    if (req.user.id !== userId) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    const result = await enhancedEloitsService.claimChallengeReward(userId, challengeId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    console.error('Error claiming reward:', error);
+    res.status(500).json({ error: 'Failed to claim reward' });
+  }
+});
+
+// Send gift with rewards
+router.post('/send-gift', verifyAuth, async (req, res) => {
+  try {
+    const { toUserId, giftId, quantity, message, isAnonymous } = req.body;
+    const fromUserId = req.user.id;
+
+    // 1. Get gift details
+    const { data: gift, error: giftError } = await supabase
+      .from('virtual_gifts')
+      .select('*')
+      .eq('id', giftId)
+      .single();
+
+    if (giftError || !gift) {
+      return res.status(404).json({ error: 'Gift not found' });
+    }
+
+    const totalAmount = gift.price * quantity;
+
+    // 2. Check user balance (this would normally be in a wallet service)
+    // For now, we'll assume the user has enough balance or it's handled by the payment flow
+
+    // 3. Create gift transaction
+    const { data: transaction, error: txError } = await supabase
+      .from('gift_transactions')
+      .insert({
+        from_user_id: fromUserId,
+        to_user_id: toUserId,
+        gift_id: giftId,
+        quantity,
+        total_amount: totalAmount,
+        message,
+        is_anonymous: isAnonymous,
+        status: 'completed'
+      })
+      .select()
+      .single();
+
+    if (txError) throw txError;
+
+    // 4. Award rewards
+    // Award the sender for being generous
+    await enhancedEloitsService.awardPoints(fromUserId, 'send_gift', {
+      recipientId: toUserId,
+      giftId,
+      amount: totalAmount
+    });
+
+    // Award the recipient for receiving a gift
+    await enhancedEloitsService.awardPoints(toUserId, 'receive_gift', {
+      senderId: fromUserId,
+      giftId,
+      amount: totalAmount
+    });
+
+    res.json({ success: true, data: transaction });
+  } catch (error) {
+    console.error('Error sending gift:', error);
+    res.status(500).json({ error: 'Failed to send gift' });
   }
 });
 

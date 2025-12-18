@@ -7,6 +7,7 @@ import { freelance_projects as freelance_jobs, freelance_profiles as profiles } 
 import { freelance_proposals } from '../../shared/freelance-schema.js';
 import { eq, and, or, desc, asc, like, sql, count } from 'drizzle-orm';
 import { freelance_stats } from '../../shared/freelance-schema.js';
+import { enhancedEloitsService } from '../../src/services/enhancedEloitsService.js';
 
 const router = express.Router();
 
@@ -379,6 +380,24 @@ router.put('/jobs/:id', requireTier2(), async (req, res) => {
     };
 
     const result = await db.update(freelance_jobs).set(updateData).where(eq(freelance_jobs.id, id)).returning().execute();
+
+    // Award rewards if job is completed
+    if (status === 'completed' && result[0].freelancer_id) {
+      try {
+        await enhancedEloitsService.awardPoints(result[0].freelancer_id, 'complete_job', {
+          jobId: id,
+          title: result[0].title
+        });
+
+        // Also award the client for successful completion
+        await enhancedEloitsService.awardPoints(userId, 'client_job_completed', {
+          jobId: id,
+          title: result[0].title
+        });
+      } catch (rewardError) {
+        logger.error('Error awarding freelance rewards:', rewardError);
+      }
+    }
 
     logger.info('Job updated', { jobId: id, userId });
     res.json(result[0]);
