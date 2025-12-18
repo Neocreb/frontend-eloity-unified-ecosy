@@ -705,6 +705,194 @@ const EnhancedRewardsBattleTab = () => {
         </Card>
       )}
 
+      {/* Battle Earnings Breakdown - NEW SECTION */}
+      {allVotes.length > 0 && (
+        <Card className="shadow-lg border-0 overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-b">
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <TrendingUp className="h-6 w-6 text-emerald-600" />
+              Battle Performance & Earnings Breakdown
+            </CardTitle>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">Detailed analysis of your betting performance</p>
+          </CardHeader>
+          <CardContent className="p-8 space-y-8">
+            {/* Key Metrics */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/30 rounded-xl">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Win Rate</p>
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{winRate.toFixed(1)}%</p>
+                <p className="text-xs text-muted-foreground mt-2">{wonVotes.length} wins / {allVotes.length} total</p>
+              </div>
+
+              <div className="p-4 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-900/30 rounded-xl">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">ROI</p>
+                <p className={`text-3xl font-bold ${roi >= 0 ? "text-green-600 dark:text-green-400" : "text-red-600 dark:text-red-400"}`}>
+                  {roi >= 0 ? "+" : ""}{roi.toFixed(1)}%
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">Return on investment</p>
+              </div>
+
+              <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 rounded-xl">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Total Wagered</p>
+                <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
+                  {formatCurrency(totalBetAmount, summary?.currency_code || "USD")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">Across {allVotes.length} bets</p>
+              </div>
+
+              <div className="p-4 bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-900/30 rounded-xl">
+                <p className="text-xs font-semibold text-muted-foreground mb-1">Avg Odds</p>
+                <p className="text-3xl font-bold text-orange-600 dark:text-orange-400">
+                  {(allVotes.reduce((sum, v) => sum + v.odds, 0) / allVotes.length).toFixed(2)}x
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">Average odds selected</p>
+              </div>
+            </div>
+
+            {/* Earnings by Bet Size */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <DollarSign className="h-5 w-5 text-green-600" />
+                Earnings by Bet Size
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {Object.entries(earningsByRange).map(([range, data]) => (
+                  <div key={range} className="p-4 border-2 border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-lg transition-all">
+                    <p className="font-semibold text-gray-900 dark:text-gray-100 mb-3">{range}</p>
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Wins</span>
+                        <Badge variant="secondary">{data.wins}</Badge>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-muted-foreground">Total Earnings</span>
+                        <span className="font-bold text-green-600 dark:text-green-400">
+                          {formatCurrency(data.earnings, summary?.currency_code || "USD")}
+                        </span>
+                      </div>
+                      {data.wins > 0 && (
+                        <div className="flex justify-between items-center">
+                          <span className="text-xs text-muted-foreground">Avg Win</span>
+                          <span className="text-xs font-semibold">
+                            {formatCurrency(data.earnings / data.wins, summary?.currency_code || "USD")}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Odds Performance */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-600" />
+                Performance by Odds Level
+              </h3>
+              <div className="space-y-3">
+                {Object.entries(oddsPerformance).map(([oddsRange, data]) => {
+                  const totalBets = data.wins + data.losses;
+                  const successRate = totalBets > 0 ? (data.wins / totalBets) * 100 : 0;
+                  return (
+                    <div key={oddsRange} className="p-4 bg-muted/50 rounded-xl">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <p className="font-semibold text-gray-900 dark:text-gray-100">{oddsRange}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {data.wins} wins, {data.losses} losses ({totalBets} total)
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-green-600 dark:text-green-400">
+                            {formatCurrency(data.earnings, summary?.currency_code || "USD")}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {successRate.toFixed(1)}% success rate
+                          </p>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full bg-gradient-to-r from-green-500 to-emerald-500 transition-all duration-300"
+                          style={{ width: `${successRate}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Best Performing Battles */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Trophy className="h-5 w-5 text-yellow-600" />
+                Top Winning Bets
+              </h3>
+              {wonVotes.slice(0, 5).length > 0 ? (
+                <div className="space-y-2">
+                  {wonVotes
+                    .sort((a, b) => b.potential_winning - a.potential_winning)
+                    .slice(0, 5)
+                    .map((vote, idx) => {
+                      const profit = vote.potential_winning - vote.amount;
+                      return (
+                        <div
+                          key={vote.id}
+                          className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border-l-4 border-green-500"
+                        >
+                          <div className="flex-1">
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
+                              #{idx + 1} • {vote.odds.toFixed(2)}x odds
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Bet: {formatCurrency(vote.amount, summary?.currency_code || "USD")} → Won: {formatCurrency(vote.potential_winning, summary?.currency_code || "USD")}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-green-600 dark:text-green-400">
+                              +{formatCurrency(profit, summary?.currency_code || "USD")}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              +{((profit / vote.amount) * 100).toFixed(0)}%
+                            </p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              ) : (
+                <p className="text-muted-foreground">No winning bets yet</p>
+              )}
+            </div>
+
+            {/* Risk Analysis */}
+            <div className="p-4 bg-red-50 dark:bg-red-900/20 border-l-4 border-red-500 rounded">
+              <p className="font-semibold text-red-900 dark:text-red-100 mb-2 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Risk Analysis
+              </p>
+              <div className="grid grid-cols-2 gap-3 text-sm text-red-800 dark:text-red-200">
+                <div>
+                  <p className="text-xs text-red-700 dark:text-red-300">Total Lost</p>
+                  <p className="font-bold">{formatCurrency(totalRisk, summary?.currency_code || "USD")}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-red-700 dark:text-red-300">Largest Loss</p>
+                  <p className="font-bold">
+                    {formatCurrency(
+                      lostVotes.length > 0 ? Math.max(...lostVotes.map(v => v.amount)) : 0,
+                      summary?.currency_code || "USD"
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* How Battle Voting Works */}
       <Card>
         <CardHeader>
