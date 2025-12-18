@@ -312,27 +312,47 @@ export const useTrustScore = (): UseTrustScoreReturn => {
     [user?.id, trustScore, fetchTrustScore, toast]
   );
 
-  // Get full history
-  const getHistory = useCallback(async (): Promise<TrustScoreHistory[]> => {
-    if (!user?.id) return [];
+  // Get full history with optional limit
+  const getHistory = useCallback(
+    async (limit = 100): Promise<TrustScoreHistory[]> => {
+      if (!user?.id) return [];
 
-    try {
-      const { data, error } = await supabase
-        .from("trust_history")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
+      try {
+        const { data, error } = await supabase
+          .from("trust_history")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(limit);
 
-      if (error && error.code !== "PGRST116") {
-        throw error;
+        if (error && error.code !== "PGRST116") {
+          throw error;
+        }
+
+        return (data || []) as TrustScoreHistory[];
+      } catch (err) {
+        console.error("Error fetching history:", err);
+        return [];
       }
+    },
+    [user?.id]
+  );
 
-      return (data || []) as TrustScoreHistory[];
-    } catch (err) {
-      console.error("Error fetching history:", err);
-      return [];
-    }
-  }, [user?.id]);
+  // Get score breakdown by reason
+  const getScoreBreakdown = useCallback((): Record<string, number> => {
+    if (!trustScore || !trustScore.history) return {};
+
+    const breakdown: Record<string, number> = {};
+
+    trustScore.history.forEach((entry) => {
+      if (!breakdown[entry.change_reason]) {
+        breakdown[entry.change_reason] = 0;
+      }
+      breakdown[entry.change_reason] += entry.new_score - entry.old_score;
+    });
+
+    return breakdown;
+  }, [trustScore]);
 
   // Check if user can perform action
   const canPerformAction = useCallback(
