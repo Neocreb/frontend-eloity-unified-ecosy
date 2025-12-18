@@ -429,10 +429,21 @@ class UserRewardsSummaryService {
     onError?: (error: any) => void
   ) {
     const subscription = supabase
-      .from(`user_rewards_summary:user_id=eq.${userId}`)
-      .on("UPDATE", (payload) => {
-        onUpdate(payload.new);
-      })
+      .channel(`realtime:user_rewards_summary:user_id=eq.${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "user_rewards_summary",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            onUpdate(payload.new);
+          }
+        }
+      )
       .subscribe((status, err) => {
         if (status === "SUBSCRIBED") {
           console.log("Subscribed to summary updates");
