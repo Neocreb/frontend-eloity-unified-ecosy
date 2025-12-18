@@ -201,49 +201,93 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
   useEffect(() => {
     if (!user?.id) return;
 
+    let isMounted = true;
+
+    // Fetch initial data
     fetchChallenges();
 
     // Subscribe to real-time updates
-    subscriptionRef.current = supabase
-      .from(`user_challenges:user_id=eq.${user.id}`)
-      .on("INSERT", (payload) => {
-        // Add new challenge progress
-        setChallenges((prev) =>
-          prev.map((c) =>
-            c.id === payload.new.challenge_id
-              ? { ...c, userProgress: payload.new }
-              : c
-          )
-        );
-      })
-      .on("UPDATE", (payload) => {
-        // Update challenge progress
-        setChallenges((prev) =>
-          prev.map((c) =>
-            c.id === payload.new.challenge_id
-              ? { ...c, userProgress: payload.new }
-              : c
-          )
-        );
+    const setupSubscription = () => {
+      subscriptionRef.current = supabase
+        .channel(`user_challenges_${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "user_challenges",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (!isMounted) return;
 
-        // Show notification for completion
-        if (payload.new.status === "completed" && !payload.old?.completion_date) {
-          toast({
-            title: "Challenge Completed!",
-            description: "You've completed a challenge. Claim your reward!",
-          });
-        }
-      })
-      .subscribe((status, err) => {
-        if (err) {
-          console.error("Subscription error:", err);
-          setError(err instanceof Error ? err : new Error("Subscription failed"));
-        }
-      });
+            if (payload.eventType === "INSERT") {
+              // Add new challenge progress
+              const newProgress = payload.new as ChallengeProgress;
+              setChallenges((prev) =>
+                prev.map((c) =>
+                  c.id === newProgress.challenge_id
+                    ? {
+                        ...c,
+                        userProgress: newProgress,
+                        progressPercentage: Math.min(
+                          100,
+                          (newProgress.progress / c.target_value) * 100
+                        ),
+                        isCompleted: newProgress.status === "completed",
+                      }
+                    : c
+                )
+              );
+            } else if (payload.eventType === "UPDATE") {
+              // Update challenge progress
+              const updatedProgress = payload.new as ChallengeProgress;
+              const oldProgress = payload.old as ChallengeProgress;
+
+              setChallenges((prev) =>
+                prev.map((c) =>
+                  c.id === updatedProgress.challenge_id
+                    ? {
+                        ...c,
+                        userProgress: updatedProgress,
+                        progressPercentage: Math.min(
+                          100,
+                          (updatedProgress.progress / c.target_value) * 100
+                        ),
+                        isCompleted: updatedProgress.status === "completed",
+                      }
+                    : c
+                )
+              );
+
+              // Show notification for completion
+              if (
+                updatedProgress.status === "completed" &&
+                oldProgress.status !== "completed"
+              ) {
+                toast({
+                  title: "Challenge Completed!",
+                  description: "You've completed a challenge. Claim your reward!",
+                });
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED" && isMounted) {
+            // Subscription active
+          } else if (status === "CHANNEL_ERROR" && isMounted) {
+            console.error("Channel error");
+          }
+        });
+    };
+
+    setupSubscription();
 
     return () => {
+      isMounted = false;
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, [user?.id, fetchChallenges, toast]);
