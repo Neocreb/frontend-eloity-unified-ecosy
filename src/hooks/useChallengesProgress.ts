@@ -34,11 +34,15 @@ export interface ChallengeWithProgress extends Challenge {
 
 interface UseChallengesProgressReturn {
   challenges: ChallengeWithProgress[];
+  activeChallenges: ChallengeWithProgress[];
+  completedChallenges: ChallengeWithProgress[];
   isLoading: boolean;
   error: Error | null;
+  isUpdating: boolean;
   updateProgress: (challengeId: string, newProgress: number) => Promise<boolean>;
   claimReward: (challengeId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
+  filterByStatus: (status: string) => ChallengeWithProgress[];
 }
 
 export const useChallengesProgress = (): UseChallengesProgressReturn => {
