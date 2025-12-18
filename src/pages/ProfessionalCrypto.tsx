@@ -286,7 +286,7 @@ const ProfessionalCrypto = () => {
       case "portfolio":
         navigate("/app/crypto-portfolio");
         break;
-      case "trade":
+      case "intelligence":
         navigate("/app/crypto-intelligence");
         break;
       case "p2p":
@@ -324,11 +324,11 @@ const ProfessionalCrypto = () => {
       color: "from-purple-500 to-violet-600",
       iconColor: "text-purple-500"
     },
-    { 
-      label: "Trade", 
-      icon: ArrowUpDown, 
-      description: "Spot & Futures Trading", 
-      section: "trade",
+    {
+      label: "Intelligence",
+      icon: ArrowUpDown,
+      description: "Market Analysis & Insights",
+      section: "intelligence",
       color: "from-green-500 to-emerald-600",
       iconColor: "text-green-500",
       badge: "Hot"
