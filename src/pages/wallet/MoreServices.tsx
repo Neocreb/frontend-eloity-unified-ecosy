@@ -654,6 +654,11 @@ const MoreServices = () => {
                 <div key={category}>
                   <h2 className="text-lg font-bold text-gray-800 mb-4">
                     {category}
+                    {viewMode === "favorites" && services.length > 0 && (
+                      <span className="text-sm font-normal text-gray-600 ml-2">
+                        ({services.length} available)
+                      </span>
+                    )}
                   </h2>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4">
                     {services.map((service) => (
@@ -665,11 +670,23 @@ const MoreServices = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium">No services found</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Try adjusting your search or filters
-              </p>
+              {viewMode === "favorites" && currentFavorites.length === 7 ? (
+                <>
+                  <Heart className="h-12 w-12 text-red-300 mx-auto mb-3" />
+                  <p className="text-gray-500 font-medium">All 7 slots filled!</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Your wallet shows 7 quick-access services. Remove one to add another.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 font-medium">No services found</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Try adjusting your search or filters
+                  </p>
+                </>
+              )}
             </div>
           )}
 
