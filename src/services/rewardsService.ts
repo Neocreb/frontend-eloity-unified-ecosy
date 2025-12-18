@@ -307,18 +307,25 @@ export const rewardsService = {
 
   // Fetch creator tip settings
   async getTipSettings(userId: string): Promise<CreatorTipSetting | null> {
-    const { data, error } = await supabase
-      .from('creator_tip_settings')
-      .select('*')
-      .eq('user_id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('creator_tip_settings')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
 
-    if (error) {
-      console.error('Error fetching tip settings:', error);
+      if (error) {
+        if (error.code !== 'PGRST116') { // PGRST116 = no rows found (expected for new users)
+          console.error('Error fetching tip settings:', JSON.stringify(error, null, 2));
+        }
+        return null;
+      }
+
+      return data;
+    } catch (err) {
+      console.error('Exception fetching tip settings:', err instanceof Error ? err.message : JSON.stringify(err));
       return null;
     }
-
-    return data;
   },
 
   // Fetch all rewards data for a user
