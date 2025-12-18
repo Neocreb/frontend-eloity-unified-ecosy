@@ -71,7 +71,7 @@ export const useTrustScore = (): UseTrustScoreReturn => {
     return "low";
   }, []);
 
-  // Fetch trust score data
+  // Fetch trust score data with improved caching
   const fetchTrustScore = useCallback(
     async (skipCache = false) => {
       if (!user?.id) {
@@ -113,7 +113,7 @@ export const useTrustScore = (): UseTrustScoreReturn => {
           .select("*")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false })
-          .limit(50);
+          .limit(100);
 
         if (historyError && historyError.code !== "PGRST116") {
           console.error("Error fetching history:", historyError);
@@ -136,6 +136,20 @@ export const useTrustScore = (): UseTrustScoreReturn => {
           if (avgChange < -1) trend = "declining";
         }
 
+        // Estimate days to next level (if applicable)
+        const currentLevel = getTrustLevel(currentScore);
+        const levelThresholds = {
+          low: 50,
+          medium: 70,
+          high: 85,
+          excellent: 100,
+        };
+        const thresholds = Object.values(levelThresholds);
+        const nextThreshold = thresholds.find((t) => t > currentScore);
+        const pointsNeeded = nextThreshold ? nextThreshold - currentScore : 0;
+        const avgPointsPerDay = history.length > 10 ? pointsNeeded / 7 : 1; // Estimate based on 7 days
+        const daysToNextLevel = avgPointsPerDay > 0 ? Math.ceil(pointsNeeded / avgPointsPerDay) : undefined;
+
         const data: TrustScoreData = {
           currentScore,
           maxScore: TRUST_SCORE_MAX,
@@ -144,6 +158,8 @@ export const useTrustScore = (): UseTrustScoreReturn => {
           history,
           recentChange,
           trend,
+          lastUpdated: new Date().toISOString(),
+          daysToNextLevel,
         };
 
         setTrustScore(data);
