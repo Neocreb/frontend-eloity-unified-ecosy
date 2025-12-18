@@ -171,6 +171,35 @@ const EnhancedGiftsTipsAnalytics = () => {
         );
       }
 
+      // Calculate daily trends
+      const dailyTrends: Record<string, { gifts: number; tips: number }> = {};
+
+      filteredGifts.forEach((gift) => {
+        const dateKey = new Date(gift.createdAt).toISOString().split("T")[0];
+        if (!dailyTrends[dateKey]) {
+          dailyTrends[dateKey] = { gifts: 0, tips: 0 };
+        }
+        dailyTrends[dateKey].gifts += gift.totalAmount;
+      });
+
+      filteredTips.forEach((tip) => {
+        const dateKey = new Date(tip.createdAt).toISOString().split("T")[0];
+        if (!dailyTrends[dateKey]) {
+          dailyTrends[dateKey] = { gifts: 0, tips: 0 };
+        }
+        dailyTrends[dateKey].tips += tip.amount;
+      });
+
+      const trendsArray = Object.entries(dailyTrends)
+        .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+        .map(([date, data]) => ({
+          date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+          gifts: data.gifts,
+          tips: data.tips,
+        }));
+
+      setTrendsData(trendsArray);
+
       setStats({
         totalGiftsSent: filteredGifts.length,
         totalGiftsCost: totalGiftsCost,
