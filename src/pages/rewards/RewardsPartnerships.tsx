@@ -247,5 +247,3 @@ export default function RewardsPartnerships() {
     </div>
   );
 }
-
-import { Clock } from "lucide-react";
