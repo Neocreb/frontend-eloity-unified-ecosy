@@ -125,6 +125,62 @@ After running any of these, you need to:
 
 ---
 
+### 6. **TypeError: supabase.from(...).on is not a function (ActivityTransactionService)** ✅ FIXED
+
+**Problem:** Same Supabase v1 → v2 API issue in a different service.
+
+**Files Fixed:**
+- `src/services/activityTransactionService.ts` (Lines 387-435)
+
+**Changes Made:**
+Updated `subscribeToActivities()` method from v1 API to v2 API:
+- Changed from `.from(...).on()` pattern to `.channel()` with `postgres_changes`
+- Now handles both INSERT and UPDATE events properly with separate handlers
+- Proper error handling for subscription status
+
+**Impact:** Real-time activity feed updates now work correctly without throwing errors.
+
+---
+
+### 7. **Error fetching reward rules: permission denied for table users** ⚠️ IMPROVED + FIXABLE
+
+**Problem:** PostgreSQL error code 42501 (insufficient privilege) when accessing reward_rules table. This indicates RLS (Row Level Security) policies are either missing or too restrictive.
+
+**Files Fixed:**
+- `src/services/rewardsService.ts` - Added RLS-aware error handling
+- `src/services/enhancedEloitsService.ts` - Added RLS-aware error handling
+- Created: `scripts/fix-reward-rules-rls.js` (new RLS policy setup script)
+
+**Changes Made:**
+1. Added detection of error code 42501 (permission denied)
+2. Graceful fallback - returns empty array instead of crashing
+3. Better warning messages to guide users to fix RLS
+
+**What Needs to Be Done:**
+
+The RLS policies on reward_rules need to be configured. Run:
+
+```bash
+npm run fix:reward-rules-rls
+```
+
+This script will:
+- Enable RLS on reward_rules table
+- Create appropriate read and admin policies
+- Set table permissions correctly
+- Verify the configuration
+
+After running the fix script:
+1. Restart the development server
+2. Clear browser cache
+3. Reward rules should load without permission errors
+
+**If the error persists:**
+- Check that your user has the admin role set
+- Or temporarily disable RLS for testing (see script output for commands)
+
+---
+
 ## Additional Improvements
 
 ### Error Handling Enhancements
