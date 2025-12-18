@@ -22,7 +22,15 @@ export const useRewardsSummary = (): UseRewardsSummaryReturn => {
   const { user } = useAuth();
   const [summary, setSummary] = useState<UserRewardsSummary | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const subscriptionRef = useRef<any>(null);
+  const cacheRef = useRef<{ data: UserRewardsSummary | null; timestamp: number }>({
+    data: null,
+    timestamp: 0,
+  });
 
   // Fetch summary
   const fetchSummary = useCallback(async () => {
