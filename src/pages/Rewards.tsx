@@ -19,6 +19,8 @@ import {
   Award,
   Zap,
   TrendingUp,
+  MoreHorizontal,
+  BarChart3,
 } from "lucide-react";
 import CreatorEconomyHeader from "@/components/rewards/CreatorEconomyHeader";
 import EnhancedEarningsOverview from "@/components/rewards/EnhancedEarningsOverview";
