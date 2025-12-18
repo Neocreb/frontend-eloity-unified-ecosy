@@ -192,66 +192,100 @@ const WalletServicesGrid = () => {
   const row2And3Services = [...favoriteServices.slice(0, 7), allServices['more']];
 
 
-  const ServiceCard = ({ service }: { service: Service }) => (
-    <button
-      onClick={service.action}
-      className="relative group flex flex-col items-center gap-3 p-4 sm:p-5 w-full transition-all duration-300 hover:scale-105"
-    >
-      {/* Icon Container with gradient background */}
-      <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-3xl flex items-center justify-center transition-all duration-300 group-hover:shadow-xl ${service.gradient}`}>
-        <div className={service.iconColor}>
-          {service.icon}
-        </div>
+  const ServiceCard = ({ service, showFavoriteToggle = false }: { service: Service; showFavoriteToggle?: boolean }) => {
+    const isFav = isFavorited(service.id);
 
-        {/* Badge */}
-        {service.badge && (
-          <div
-            className={`absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-bold text-white whitespace-nowrap ${
-              service.badge.variant === "hot"
-                ? "bg-red-600"
-                : service.badge.variant === "popular"
-                ? "bg-amber-600"
-                : "bg-blue-600"
-            }`}
+    return (
+      <div className="relative group flex flex-col items-center gap-3 p-4 sm:p-5 w-full">
+        {/* Favorite Toggle Button - Only for non-fixed services */}
+        {showFavoriteToggle && service.id !== 'more' && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              toggleFavorite(service.id);
+            }}
+            className="absolute top-2 right-2 z-20 p-1.5 rounded-full bg-white shadow-md hover:shadow-lg transition-all"
+            title={isFav ? "Remove from favorites" : "Add to favorites"}
           >
-            {service.badge.text}
-          </div>
+            <Heart
+              className={`h-4 w-4 transition-colors ${
+                isFav
+                  ? "text-red-500 fill-red-500"
+                  : "text-gray-400"
+              }`}
+            />
+          </button>
         )}
-      </div>
 
-      {/* Label */}
-      <div className="text-center w-full">
-        <p className="font-semibold text-gray-800 text-sm sm:text-base leading-tight">{service.label}</p>
+        {/* Service Button */}
+        <button
+          onClick={service.action}
+          className="w-full flex flex-col items-center gap-3 transition-all duration-300 hover:scale-105 active:scale-95"
+        >
+          {/* Icon Container with gradient background */}
+          <div className={`relative w-16 h-16 sm:w-20 sm:h-20 rounded-3xl flex items-center justify-center transition-all duration-300 group-hover:shadow-xl ${service.gradient}`}>
+            <div className={service.iconColor}>
+              {service.icon}
+            </div>
+
+            {/* Badge */}
+            {service.badge && (
+              <div
+                className={`absolute -top-2 -right-2 px-2.5 py-1 rounded-full text-xs font-bold text-white whitespace-nowrap ${
+                  service.badge.variant === "hot"
+                    ? "bg-red-600"
+                    : service.badge.variant === "popular"
+                    ? "bg-amber-600"
+                    : "bg-blue-600"
+                }`}
+              >
+                {service.badge.text}
+              </div>
+            )}
+          </div>
+
+          {/* Label */}
+          <div className="text-center w-full">
+            <p className="font-semibold text-gray-800 text-sm sm:text-base leading-tight">{service.label}</p>
+          </div>
+        </button>
       </div>
-    </button>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6">
       {/* Main Services Grid */}
       <div className="space-y-6">
-        {/* Row 1: 3 items */}
+        {/* Row 1: Fixed Services (To Eloity, Transfer, Withdraw) - 3 items */}
         <div className="grid grid-cols-3 gap-4 sm:gap-6">
-          {mainServices.slice(0, 3).map((service) => (
-            <ServiceCard key={service.id} service={service} />
+          {row1Services.map((service) => (
+            <ServiceCard key={service.id} service={service} showFavoriteToggle={false} />
           ))}
         </div>
 
-        {/* Row 2: 4 items */}
+        {/* Row 2: Favorite Services (4 items) */}
         <div className="grid grid-cols-4 gap-4 sm:gap-6">
-          {mainServices.slice(3, 7).map((service) => (
-            <ServiceCard key={service.id} service={service} />
+          {row2And3Services.slice(0, 4).map((service) => (
+            <ServiceCard
+              key={service.id}
+              service={service}
+              showFavoriteToggle={service.id !== 'more'}
+            />
           ))}
         </div>
 
-        {/* Row 3: 4 items */}
+        {/* Row 3: Favorite Services (4 items) */}
         <div className="grid grid-cols-4 gap-4 sm:gap-6">
-          {mainServices.slice(7, 11).map((service) => (
-            <ServiceCard key={service.id} service={service} />
+          {row2And3Services.slice(4, 8).map((service) => (
+            <ServiceCard
+              key={service.id}
+              service={service}
+              showFavoriteToggle={service.id !== 'more'}
+            />
           ))}
         </div>
       </div>
-
     </div>
   );
 };
