@@ -302,22 +302,32 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
       aria-label="Earnings Overview Dashboard - Track your rewards and progress"
     >
       {/* Earnings Cards with Sparkline Trend */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+        role="region"
+        aria-label="Earnings Summary Cards"
+      >
         {earningsCards.map((card) => {
           const Icon = card.icon;
+          const cardValue = card.format === "currency"
+            ? formatCurrency(card.value, summary.currency_code)
+            : formatNumber(card.value);
           return (
             <Card
               key={card.title}
               className="hover:shadow-lg transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-500 overflow-hidden group"
+              role="article"
+              aria-label={`${card.title}: ${cardValue}. ${card.change}`}
             >
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-                    <p className="text-2xl font-bold mt-2">
-                      {card.format === "currency"
-                        ? formatCurrency(card.value, summary.currency_code)
-                        : formatNumber(card.value)}
+                    <p
+                      className="text-2xl font-bold mt-2"
+                      aria-label={`${card.title}: ${cardValue}`}
+                    >
+                      {cardValue}
                     </p>
                     <div className="flex items-center gap-1 mt-2">
                       {card.changeType === "positive" ? (
