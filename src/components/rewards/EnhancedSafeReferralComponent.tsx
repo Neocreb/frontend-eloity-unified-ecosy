@@ -250,40 +250,60 @@ const EnhancedSafeReferralComponent = () => {
 
       {/* Quick Stats Overview */}
       {stats && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+        <div
+          className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+          role="region"
+          aria-label="Quick Statistics Overview"
+        >
+          <div
+            className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
+            role="article"
+            aria-label={`Total Referrals: ${stats.totalReferrals}. ${stats.activeReferrals} active with ${stats.conversionRate.toFixed(1)}% conversion rate`}
+          >
             <div className="flex items-center justify-between mb-4">
-              <Users className="w-5 h-5 opacity-80" />
+              <Users className="w-5 h-5 opacity-80" aria-hidden="true" />
               <span className="text-xs font-semibold bg-white/20 px-2 py-1 rounded-full">
                 Active
               </span>
             </div>
             <p className="text-sm opacity-90 mb-1">Total Referrals</p>
-            <p className="text-3xl font-bold">{stats.totalReferrals}</p>
+            <p className="text-3xl font-bold" aria-label={`${stats.totalReferrals} total referrals`}>{stats.totalReferrals}</p>
             <p className="text-xs opacity-75 mt-2">
               {stats.activeReferrals} active • {stats.conversionRate.toFixed(1)}% conversion
             </p>
           </div>
 
-          <div className="rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <div
+            className="rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
+            role="article"
+            aria-label={`Total Earnings: ${formatCurrency(stats.totalEarnings, currency)}. ${formatCurrency(stats.earningsThisMonth, currency)} this month`}
+          >
             <div className="flex items-center justify-between mb-4">
-              <DollarSign className="w-5 h-5 opacity-80" />
-              <TrendingUp className="w-4 h-4 opacity-80" />
+              <DollarSign className="w-5 h-5 opacity-80" aria-hidden="true" />
+              <TrendingUp className="w-4 h-4 opacity-80" aria-hidden="true" />
             </div>
             <p className="text-sm opacity-90 mb-1">Total Earnings</p>
-            <p className="text-3xl font-bold">{formatCurrency(stats.totalEarnings, currency)}</p>
+            <p className="text-3xl font-bold" aria-label={`Total earnings: ${formatCurrency(stats.totalEarnings, currency)}`}>
+              {formatCurrency(stats.totalEarnings, currency)}
+            </p>
             <p className="text-xs opacity-75 mt-2">
               {formatCurrency(stats.earningsThisMonth, currency)} this month
             </p>
           </div>
 
-          <div className="rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow">
+          <div
+            className="rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
+            role="article"
+            aria-label={`Auto Shared: ${formatCurrency(stats.totalAutoShared, currency)}. 0.5% of your earnings automatically shared`}
+          >
             <div className="flex items-center justify-between mb-4">
-              <Heart className="w-5 h-5 opacity-80" />
-              <CheckCircle2 className="w-4 h-4 opacity-80" />
+              <Heart className="w-5 h-5 opacity-80" aria-hidden="true" />
+              <CheckCircle2 className="w-4 h-4 opacity-80" aria-hidden="true" />
             </div>
             <p className="text-sm opacity-90 mb-1">Auto Shared</p>
-            <p className="text-3xl font-bold">{formatCurrency(stats.totalAutoShared, currency)}</p>
+            <p className="text-3xl font-bold" aria-label={`Auto shared: ${formatCurrency(stats.totalAutoShared, currency)}`}>
+              {formatCurrency(stats.totalAutoShared, currency)}
+            </p>
             <p className="text-xs opacity-75 mt-2">0.5% of earnings shared</p>
           </div>
         </div>
