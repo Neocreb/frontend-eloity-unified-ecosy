@@ -230,19 +230,23 @@ export const liveStreamService = {
       if (!battles || battles.length === 0) return [];
 
       const streamIds = battles.map((b: any) => b.live_stream_id);
+      if (!streamIds.length) return [];
+
       const { data: streams, error: streamsError } = await supabase
         .from('live_streams')
         .select('id, user_id, title, description, viewer_count, is_active, started_at, ended_at, category, stream_key')
         .in('id', streamIds);
 
       if (streamsError) {
-        console.error('Error fetching live streams for battles - Details:', {
-          message: streamsError?.message,
-          code: streamsError?.code,
-          hint: streamsError?.hint,
-          details: streamsError?.details,
-          fullError: JSON.stringify(streamsError)
-        });
+        // Only log network errors at debug level
+        if (streamsError?.message?.includes('Failed to fetch')) {
+          console.debug('Network unavailable for battle streams - will retry when available');
+        } else {
+          console.warn('Warning fetching live streams for battles:', {
+            message: streamsError?.message,
+            code: streamsError?.code
+          });
+        }
         // Return empty array as fallback
         return [];
       }
