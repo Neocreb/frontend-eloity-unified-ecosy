@@ -225,8 +225,10 @@ export const useReferralStats = (): UseReferralStatsReturn => {
         offset
       );
 
-      setReferrals((prev) => [...prev, ...moreData]);
-      setOffset((prev) => prev + limit);
+      if (moreData && moreData.length > 0) {
+        setReferrals((prev) => [...prev, ...moreData]);
+        setOffset((prev) => prev + limit);
+      }
     } catch (err) {
       console.error("Error loading more referrals:", err);
       setError(err instanceof Error ? err : new Error("Failed to load more referrals"));
@@ -235,18 +237,20 @@ export const useReferralStats = (): UseReferralStatsReturn => {
 
   // Refresh stats
   const refresh = useCallback(async () => {
+    if (isRefreshing) return;
     setIsRefreshing(true);
     setOffset(0);
     try {
       setError(null);
-      await fetchStats();
+      cacheRef.current = { data: null, timestamp: 0 };
+      await fetchStats(true);
     } catch (err) {
       console.error("Error refreshing stats:", err);
       setError(err instanceof Error ? err : new Error("Failed to refresh stats"));
     } finally {
       setIsRefreshing(false);
     }
-  }, [fetchStats]);
+  }, [isRefreshing, fetchStats]);
 
   // Copy referral code to clipboard
   const copyReferralCode = useCallback(() => {
