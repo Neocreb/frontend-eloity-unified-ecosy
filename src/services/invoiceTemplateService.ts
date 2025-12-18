@@ -71,7 +71,8 @@ class InvoiceTemplateService {
       if (error && error.code !== 'PGRST116') throw error;
       return data ? this.mapInvoiceCustomization(data) : this.getDefaultInvoiceCustomization(userId);
     } catch (error) {
-      console.error('Error fetching invoice customization:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(`Using default invoice customization (fetch failed: ${errorMessage})`);
       return this.getDefaultInvoiceCustomization(userId);
     }
   }
@@ -119,7 +120,8 @@ class InvoiceTemplateService {
       if (error && error.code !== 'PGRST116') throw error;
       return data ? this.mapReceiptCustomization(data) : this.getDefaultReceiptCustomization(userId);
     } catch (error) {
-      console.error('Error fetching receipt customization:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(`Using default receipt customization (fetch failed: ${errorMessage})`);
       return this.getDefaultReceiptCustomization(userId);
     }
   }
@@ -167,7 +169,8 @@ class InvoiceTemplateService {
       if (error && error.code !== 'PGRST116') throw error;
       return data ? this.mapPaymentLinkCustomization(data) : this.getDefaultPaymentLinkCustomization(userId);
     } catch (error) {
-      console.error('Error fetching payment link customization:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(`Using default payment link customization (fetch failed: ${errorMessage})`);
       return this.getDefaultPaymentLinkCustomization(userId);
     }
   }

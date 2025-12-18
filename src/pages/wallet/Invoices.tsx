@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
   FileText,
   Settings,
+  Trash2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,7 +54,13 @@ const Invoices: React.FC = () => {
   // Load customization on mount
   useEffect(() => {
     if (user?.id) {
-      invoiceTemplateService.getInvoiceCustomization(user.id).then(setCustomization);
+      invoiceTemplateService
+        .getInvoiceCustomization(user.id)
+        .then(setCustomization)
+        .catch((error) => {
+          console.error('Failed to load invoice customization:', error);
+          setCustomization(null);
+        });
     }
   }, [user?.id]);
 
@@ -197,9 +204,6 @@ const Invoices: React.FC = () => {
   const filteredInvoices = invoices.filter(inv =>
     activeStatus === 'all' ? true : inv.status === activeStatus
   );
-
-  const subtotal = formData.items.reduce((sum, item) => sum + item.amount, 0);
-  const total = subtotal + (formData.tax || 0);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50">
