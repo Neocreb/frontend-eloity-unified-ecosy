@@ -603,6 +603,39 @@ const EnhancedGiftsTipsAnalytics = () => {
         </Card>
       ) : null}
 
+      {/* Anonymous Gifting Feature */}
+      <Card className="border-dashed border-2 border-purple-300 dark:border-purple-700 bg-gradient-to-br from-purple-50/50 to-pink-50/50 dark:from-purple-900/10 dark:to-pink-900/10">
+        <CardContent className="p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3 flex-1">
+              <Lock className="h-5 w-5 text-purple-600 mt-1 flex-shrink-0" />
+              <div>
+                <h3 className="font-semibold mb-1">Anonymous Gifting</h3>
+                <p className="text-sm text-muted-foreground">
+                  Send gifts without revealing your identity. Perfect for supporting creators anonymously!
+                </p>
+              </div>
+            </div>
+            <Button
+              variant={anonymousMode ? "default" : "outline"}
+              onClick={() => setAnonymousMode(!anonymousMode)}
+              className={`whitespace-nowrap transition-all ${
+                anonymousMode
+                  ? "bg-purple-600 hover:bg-purple-700 text-white"
+                  : ""
+              }`}
+            >
+              {anonymousMode ? "✓ Enabled" : "Enable"}
+            </Button>
+          </div>
+          {anonymousMode && (
+            <div className="mt-4 p-3 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-sm text-purple-900 dark:text-purple-200">
+              💡 Anonymous mode is active. Your next gift will be sent without revealing your identity.
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       {/* CTA */}
       <Card className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
         <CardContent className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -610,6 +643,7 @@ const EnhancedGiftsTipsAnalytics = () => {
             <h3 className="font-semibold mb-1">Send More Gifts & Tips</h3>
             <p className="text-sm text-muted-foreground">
               Support your favorite creators and spread joy in the community
+              {anonymousMode && " (Anonymous mode enabled)"}
             </p>
           </div>
           <Button
