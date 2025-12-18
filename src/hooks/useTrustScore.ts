@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface TrustScoreHistory {
   id: string;
@@ -21,6 +22,8 @@ export interface TrustScoreData {
   history: TrustScoreHistory[];
   recentChange: number;
   trend: "improving" | "stable" | "declining";
+  lastUpdated: string;
+  daysToNextLevel?: number;
 }
 
 interface UseTrustScoreReturn {
@@ -30,9 +33,10 @@ interface UseTrustScoreReturn {
   error: Error | null;
   refresh: () => Promise<void>;
   updateScore: (change: number, reason: string, metadata?: Record<string, any>) => Promise<boolean>;
-  getHistory: () => Promise<TrustScoreHistory[]>;
-  getTrustLevel: (score: number) => string;
+  getHistory: (limit?: number) => Promise<TrustScoreHistory[]>;
+  getTrustLevel: (score: number) => "low" | "medium" | "high" | "excellent";
   canPerformAction: (requiredScore: number) => boolean;
+  getScoreBreakdown: () => Record<string, number>;
 }
 
 const TRUST_SCORE_MAX = 100;
