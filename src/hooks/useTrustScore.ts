@@ -366,7 +366,7 @@ export const useTrustScore = (): UseTrustScoreReturn => {
   useEffect(() => {
     return () => {
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, []);
@@ -381,5 +381,6 @@ export const useTrustScore = (): UseTrustScoreReturn => {
     getHistory,
     getTrustLevel,
     canPerformAction,
+    getScoreBreakdown,
   };
 };
