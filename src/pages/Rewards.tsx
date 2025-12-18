@@ -33,7 +33,6 @@ import Subscribers from "@/components/rewards/Subscribers";
 import WithdrawEarnings from "@/components/rewards/WithdrawEarnings";
 import { PartnershipSystem } from "@/components/rewards/PartnershipSystem";
 import { useNavigate } from "react-router-dom";
-import { formatCurrency } from "@/utils/formatters";
 
 interface CreatorRevenueData {
   totalEarnings: number;
