@@ -214,7 +214,11 @@ const EnhancedSafeReferralComponent = () => {
   const tierColor = tierColors[stats?.tier as keyof typeof tierColors] || tierColors.bronze;
 
   return (
-    <div className="space-y-8">
+    <div
+      className="space-y-8"
+      role="main"
+      aria-label="Referral Program Dashboard - Manage and track your referrals"
+    >
       {/* Header Section - Premium Design */}
       <div className={`relative overflow-hidden rounded-2xl bg-gradient-to-r ${tierColor} p-8 text-white shadow-lg`}>
         <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32" />
