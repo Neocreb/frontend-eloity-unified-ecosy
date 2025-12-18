@@ -544,12 +544,28 @@ class ReferralTrackingService {
   /**
    * Get referral tier information
    */
-  getTierInfo(tier: "bronze" | "silver" | "gold" | "platinum") {
+  getTierInfo(tier: "bronze" | "silver" | "gold" | "platinum"): ReferralTierInfo {
+    const tierNames = {
+      bronze: "Bronze",
+      silver: "Silver",
+      gold: "Gold",
+      platinum: "Platinum",
+    };
+
+    const tierColors = {
+      bronze: "#92400E",
+      silver: "#C0C7D0",
+      gold: "#D97706",
+      platinum: "#3B82F6",
+    };
+
     return {
+      name: tierNames[tier],
       tier,
       commissionPercentage: TIER_COMMISSIONS[tier] * 100,
-      threshold: TIER_THRESHOLDS[tier],
+      minEarnings: TIER_THRESHOLDS[tier],
       benefits: this.getTierBenefits(tier),
+      color: tierColors[tier],
     };
   }
 
