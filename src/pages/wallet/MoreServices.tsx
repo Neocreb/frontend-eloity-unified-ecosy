@@ -690,14 +690,16 @@ const MoreServices = () => {
             </div>
           )}
 
-          {/* Coming Soon Section */}
-          <div className="mt-12 p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-            <h3 className="font-bold text-gray-800 mb-2">💡 Coming Soon</h3>
-            <p className="text-sm text-gray-600">
-              We're working on more exciting features like Insurance, Investment Products,
-              and International Remittance. Stay tuned!
-            </p>
-          </div>
+          {/* Coming Soon Section - Only in "all" view */}
+          {viewMode === "all" && (
+            <div className="mt-12 p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+              <h3 className="font-bold text-gray-800 mb-2">💡 Coming Soon</h3>
+              <p className="text-sm text-gray-600">
+                We're working on more exciting features like Insurance, Investment Products,
+                and International Remittance. Stay tuned!
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
