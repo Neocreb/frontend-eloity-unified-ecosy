@@ -32,10 +32,55 @@ const EnhancedSafeReferralComponent = () => {
   const { toast } = useToast();
   const { summary } = useRewardsSummary();
   const { stats, referrals, isLoading, error, refresh, loadMore, hasMore, tierInfo } = useReferralStats();
-  
+
   const [copiedLink, setCopiedLink] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [referralLink, setReferralLink] = useState("");
+
+  // Referral tier calculations
+  const tierCalculations = {
+    bronze: { baseReward: 10, revenueShare: 0.05, dailyLimit: 50, monthlyLimit: 500 },
+    silver: { baseReward: 25, revenueShare: 0.075, dailyLimit: 100, monthlyLimit: 1500 },
+    gold: { baseReward: 50, revenueShare: 0.1, dailyLimit: 200, monthlyLimit: 3000 },
+    platinum: { baseReward: 100, revenueShare: 0.15, dailyLimit: 500, monthlyLimit: 10000 },
+  };
+
+  // Calculate projections
+  const calculateProjections = () => {
+    if (!stats) return null;
+
+    const currentTier = stats.tier.toLowerCase() as keyof typeof tierCalculations;
+    const tierCalcs = tierCalculations[currentTier] || tierCalculations.bronze;
+
+    // Calculate potential next tier
+    const tierThresholds = { bronze: 5, silver: 25, gold: 100, platinum: 1000 };
+    const tierNames = { bronze: "silver", silver: "gold", gold: "platinum", platinum: "platinum" };
+    const nextTier = tierNames[currentTier] as keyof typeof tierCalculations;
+    const nextTierCalcs = tierCalculations[nextTier];
+    const nextTierThreshold = tierThresholds[nextTier];
+
+    // Referrals needed to reach next tier
+    const referralsNeeded = Math.max(0, nextTierThreshold - stats.totalReferrals);
+
+    // Daily/monthly earning projections
+    const projectedDailyEarnings = tierCalcs.baseReward * Math.min(5, referralsNeeded > 0 ? Math.ceil(referralsNeeded / 5) : stats.activeReferrals);
+    const projectedMonthlyEarnings = projectedDailyEarnings * 30;
+    const projectedRevenueShare = stats.totalEarnings * tierCalcs.revenueShare;
+
+    return {
+      tierCalcs,
+      nextTier,
+      nextTierCalcs,
+      nextTierThreshold,
+      referralsNeeded,
+      projectedDailyEarnings,
+      projectedMonthlyEarnings,
+      projectedRevenueShare,
+      totalProjectedMonthly: projectedMonthlyEarnings + projectedRevenueShare,
+    };
+  };
+
+  const projections = calculateProjections();
 
   // Generate or get referral code
   const generateReferralCode = () => {
