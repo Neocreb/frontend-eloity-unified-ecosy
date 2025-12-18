@@ -3,7 +3,6 @@ import { authenticateToken } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { PostService } from '../../src/services/postService.js';
 import { supabase } from '../../src/integrations/supabase/client.js';
-import { enhancedEloitsService } from '../../src/services/enhancedEloitsService.js';
 
 const router = express.Router();
 
