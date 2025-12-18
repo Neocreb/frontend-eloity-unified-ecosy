@@ -178,36 +178,59 @@ export const useTrustScore = (): UseTrustScoreReturn => {
   useEffect(() => {
     if (!user?.id) return;
 
+    let isMounted = true;
+
     // Initial fetch
     fetchTrustScore();
 
     // Subscribe to trust score changes
-    subscriptionRef.current = supabase
-      .from(`user_rewards_summary:user_id=eq.${user.id}`)
-      .on("UPDATE", (payload) => {
-        if (payload.new.trust_score !== payload.old.trust_score) {
-          // Clear cache and refetch
-          cacheRef.current = { data: null, timestamp: 0 };
-          fetchTrustScore(true);
+    const setupSubscription = () => {
+      subscriptionRef.current = supabase
+        .channel(`trust_score_${user.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "user_rewards_summary",
+            filter: `user_id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (!isMounted) return;
 
-          // Show notification
-          const change = payload.new.trust_score - payload.old.trust_score;
-          const direction = change > 0 ? "increased" : "decreased";
-          toast({
-            title: `Trust Score ${direction === "increased" ? "Increased" : "Decreased"}`,
-            description: `Your trust score changed by ${Math.abs(change)} points`,
-          });
-        }
-      })
-      .subscribe((status, err) => {
-        if (err) {
-          console.error("Subscription error:", err);
-        }
-      });
+            const oldScore = payload.old?.trust_score || 0;
+            const newScore = payload.new?.trust_score || 0;
+
+            if (oldScore !== newScore) {
+              // Clear cache and refetch
+              cacheRef.current = { data: null, timestamp: 0 };
+              fetchTrustScore(true);
+
+              // Show notification
+              const change = newScore - oldScore;
+              const direction = change > 0 ? "increased" : "decreased";
+              toast({
+                title: `Trust Score ${direction === "increased" ? "📈" : "📉"} ${direction === "increased" ? "Increased" : "Decreased"}`,
+                description: `Your trust score changed by ${Math.abs(change)} point${Math.abs(change) !== 1 ? "s" : ""}`,
+              });
+            }
+          }
+        )
+        .subscribe((status) => {
+          if (status === "SUBSCRIBED" && isMounted) {
+            // Subscription is active
+          } else if (status === "CHANNEL_ERROR" && isMounted) {
+            console.error("Trust score channel error");
+          }
+        });
+    };
+
+    setupSubscription();
 
     return () => {
+      isMounted = false;
       if (subscriptionRef.current) {
-        subscriptionRef.current.unsubscribe();
+        supabase.removeChannel(subscriptionRef.current);
       }
     };
   }, [user?.id, fetchTrustScore, toast]);
