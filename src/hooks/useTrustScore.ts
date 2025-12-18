@@ -42,6 +42,14 @@ interface UseTrustScoreReturn {
 const TRUST_SCORE_MAX = 100;
 const CACHE_DURATION_MS = 60000; // 1 minute
 
+// Trust score levels and their descriptions
+const TRUST_LEVELS = {
+  low: { name: "Low", color: "#EF4444", minScore: 0, maxScore: 49 },
+  medium: { name: "Medium", color: "#F59E0B", minScore: 50, maxScore: 69 },
+  high: { name: "High", color: "#3B82F6", minScore: 70, maxScore: 84 },
+  excellent: { name: "Excellent", color: "#10B981", minScore: 85, maxScore: 100 },
+};
+
 export const useTrustScore = (): UseTrustScoreReturn => {
   const { user } = useAuth();
   const { toast } = useToast();
@@ -49,7 +57,7 @@ export const useTrustScore = (): UseTrustScoreReturn => {
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const subscriptionRef = useRef<any>(null);
+  const subscriptionRef = useRef<RealtimeChannel | null>(null);
   const cacheRef = useRef<{ data: TrustScoreData | null; timestamp: number }>({
     data: null,
     timestamp: 0,
