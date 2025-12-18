@@ -141,6 +141,12 @@ import AddExternalWork from "./pages/profile/AddExternalWork";
 import EditProfile from "./pages/profile/EditProfile";
 // Phase 3 - Rewards Modal Conversions
 import WithdrawRewards from "./pages/rewards/WithdrawRewards";
+import RewardsMoreServices from "./pages/rewards/RewardsMoreServices";
+import RewardsWithdraw from "./pages/rewards/RewardsWithdraw";
+import RewardsSendGifts from "./pages/rewards/RewardsSendGifts";
+import RewardsAnalytics from "./pages/rewards/RewardsAnalytics";
+import RewardsPartnerships from "./pages/rewards/RewardsPartnerships";
+import RewardsBoostManager from "./pages/rewards/RewardsBoostManager";
 // import Marketplace from "./pages/Marketplace";
 import EnhancedMarketplace from "./pages/EnhancedMarketplace";
 import MarketplaceCart from "./pages/marketplace/MarketplaceCart";
