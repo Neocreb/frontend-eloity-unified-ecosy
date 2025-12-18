@@ -131,6 +131,99 @@ export const useActivityFeed = (initialLimit: number = DEFAULT_LIMIT): UseActivi
     setOffset(0);
   }, []);
 
+  // Search with debounce
+  const search = useCallback(async (query: string) => {
+    setSearchQuery(query);
+    setIsSearching(true);
+    setOffset(0);
+
+    // Clear previous timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Set new timeout for debounced search
+    searchTimeoutRef.current = setTimeout(async () => {
+      if (!user?.id) {
+        setIsSearching(false);
+        return;
+      }
+
+      try {
+        setError(null);
+
+        // Search in activity descriptions
+        const allActivities = await activityTransactionService.getActivityFeed(
+          user.id,
+          1000,
+          0,
+          currentFilters
+        );
+
+        // Filter by search query in description
+        const filtered = allActivities.filter((activity) =>
+          activity.description?.toLowerCase().includes(query.toLowerCase()) ||
+          activity.activity_type.toLowerCase().includes(query.toLowerCase()) ||
+          activity.category.toLowerCase().includes(query.toLowerCase())
+        );
+
+        setActivities(filtered);
+        setTotalCount(filtered.length);
+      } catch (err) {
+        console.error("Error searching activities:", err);
+        setError(err instanceof Error ? err : new Error("Search failed"));
+      } finally {
+        setIsSearching(false);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+  }, [user?.id, currentFilters]);
+
+  // Clear search
+  const clearSearch = useCallback(async () => {
+    setSearchQuery("");
+    setIsSearching(false);
+    setOffset(0);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    await fetchActivities();
+  }, [fetchActivities]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+    };
+  }, []);
+
+  // Helper function to check if activity matches current filters
+  const matchesFilters = (activity: ActivityTransaction, filters?: ActivityFilter): boolean => {
+    if (!filters) return true;
+
+    if (filters.type && activity.activity_type !== filters.type) return false;
+    if (filters.category && activity.category !== filters.category) return false;
+    if (filters.status && activity.status !== filters.status) return false;
+
+    if (filters.startDate) {
+      const activityDate = new Date(activity.created_at);
+      if (activityDate < filters.startDate) return false;
+    }
+
+    if (filters.endDate) {
+      const activityDate = new Date(activity.created_at);
+      if (activityDate > filters.endDate) return false;
+    }
+
+    return true;
+  };
+
   return {
     activities,
     isLoading,
@@ -141,5 +234,9 @@ export const useActivityFeed = (initialLimit: number = DEFAULT_LIMIT): UseActivi
     refresh,
     filter,
     clearFilters,
+    search,
+    clearSearch,
+    searchQuery,
+    isSearching,
   };
 };
