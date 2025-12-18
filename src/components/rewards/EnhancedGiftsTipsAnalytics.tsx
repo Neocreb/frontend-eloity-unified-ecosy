@@ -415,6 +415,65 @@ const EnhancedGiftsTipsAnalytics = () => {
         </CardContent>
       </Card>
 
+      {/* Trends Chart */}
+      {trendsData.length > 0 && (
+        <Card className="shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Gift & Tip Trends
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-64 bg-gradient-to-b from-muted/20 to-transparent rounded-lg p-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendsData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.1)" />
+                  <XAxis dataKey="date" tick={{ fontSize: 12 }} />
+                  <YAxis tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "rgba(255, 255, 255, 0.95)",
+                      border: "1px solid rgba(0,0,0,0.1)",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value: number) => formatCurrency(value, currency)}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="gifts"
+                    stroke="#a855f7"
+                    strokeWidth={2}
+                    dot={{ fill: "#a855f7", r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Gifts"
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="tips"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={{ fill: "#10b981", r: 4 }}
+                    activeDot={{ r: 6 }}
+                    name="Tips"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="flex gap-6 mt-4 justify-center flex-wrap">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-purple-500" />
+                <span className="text-sm text-muted-foreground">Gifts</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-green-500" />
+                <span className="text-sm text-muted-foreground">Tips</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Gifts */}
