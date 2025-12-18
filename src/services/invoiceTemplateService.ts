@@ -120,7 +120,8 @@ class InvoiceTemplateService {
       if (error && error.code !== 'PGRST116') throw error;
       return data ? this.mapReceiptCustomization(data) : this.getDefaultReceiptCustomization(userId);
     } catch (error) {
-      console.error('Error fetching receipt customization:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(`Using default receipt customization (fetch failed: ${errorMessage})`);
       return this.getDefaultReceiptCustomization(userId);
     }
   }
