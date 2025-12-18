@@ -297,17 +297,17 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
 
   return (
     <div className="space-y-6">
-      {/* Earnings Cards */}
+      {/* Earnings Cards with Sparkline Trend */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {earningsCards.map((card) => {
           const Icon = card.icon;
           return (
             <Card
               key={card.title}
-              className="hover:shadow-lg transition-shadow hover:border-purple-300 dark:hover:border-purple-500"
+              className="hover:shadow-lg transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-500 overflow-hidden group"
             >
               <CardContent className="p-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
                     <p className="text-2xl font-bold mt-2">
@@ -315,17 +315,124 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
                         ? formatCurrency(card.value, summary.currency_code)
                         : formatNumber(card.value)}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-2">{card.change}</p>
+                    <div className="flex items-center gap-1 mt-2">
+                      {card.changeType === "positive" ? (
+                        <ArrowUpRight className="h-4 w-4 text-green-600" />
+                      ) : (
+                        <ArrowDownRight className="h-4 w-4 text-red-600" />
+                      )}
+                      <p className={`text-xs font-medium ${
+                        card.changeType === "positive" ? "text-green-600" : "text-red-600"
+                      }`}>
+                        {card.change}
+                      </p>
+                    </div>
                   </div>
-                  <div className={`p-3 rounded-lg ${card.bgColor}`}>
+                  <div className={`p-3 rounded-lg ${card.bgColor} group-hover:scale-110 transition-transform duration-300`}>
                     <Icon className={`h-6 w-6 ${card.color}`} />
                   </div>
                 </div>
+
+                {/* Sparkline for total earned card */}
+                {card.title === "Total Earned" && sparklineData.length > 0 && (
+                  <div className="mt-4 -mx-2 -mb-2 h-12 bg-gradient-to-t from-green-50 to-transparent dark:from-green-900/20 dark:to-transparent rounded-b-lg">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={sparklineData}>
+                        <Tooltip
+                          contentStyle={{ backgroundColor: "transparent", border: "none" }}
+                          cursor={{ stroke: "rgba(168, 85, 247, 0.1)" }}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="earnings"
+                          stroke="#16a34a"
+                          strokeWidth={2}
+                          isAnimationActive={true}
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
               </CardContent>
             </Card>
           );
         })}
       </div>
+
+      {/* Month Comparison Card */}
+      <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+            Month-over-Month Growth
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">This Month</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                {formatCurrency(monthComparisonData.current, summary.currency_code)}
+              </p>
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground mb-1">Previous Month</p>
+              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
+                {formatCurrency(monthComparisonData.previous, summary.currency_code)}
+              </p>
+            </div>
+            <div className="flex flex-col justify-center">
+              <p className="text-sm text-muted-foreground mb-1">Growth</p>
+              <div className="flex items-center gap-2">
+                {monthComparisonData.percentChange > 0 ? (
+                  <ArrowUpRight className="h-5 w-5 text-green-600" />
+                ) : (
+                  <ArrowDownRight className="h-5 w-5 text-red-600" />
+                )}
+                <p className={`text-2xl font-bold ${
+                  monthComparisonData.percentChange > 0 ? "text-green-600" : "text-red-600"
+                }`}>
+                  {Math.abs(monthComparisonData.percentChange).toFixed(1)}%
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Achievements Section */}
+      {achievements.length > 0 && (
+        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-0">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Award className="h-5 w-5 text-purple-600" />
+              Your Achievements
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              {achievements.map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className="relative p-4 rounded-xl border-2 border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-900 hover:shadow-md hover:border-purple-400 transition-all duration-300 group"
+                >
+                  <div className="text-center">
+                    <div className="text-3xl mb-2">{achievement.icon}</div>
+                    <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-2">
+                      {achievement.title}
+                    </p>
+                    <Progress value={achievement.progress} className="h-1.5" />
+                    <p className="text-xs text-muted-foreground mt-2">
+                      {Math.round(achievement.progress)}%
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Level and Trust Score Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
