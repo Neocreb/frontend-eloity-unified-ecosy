@@ -44,6 +44,8 @@ const EnhancedRewardsActivitiesTab = () => {
   const [dateRange, setDateRange] = useState("all");
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [expandedActivity, setExpandedActivity] = useState<string | null>(null);
+  const [groupBy, setGroupBy] = useState<"none" | "category" | "type">("none");
+  const [isExporting, setIsExporting] = useState(false);
 
   // Activity type options
   const activityTypes = [
