@@ -557,6 +557,92 @@ const EnhancedRewardsBattleTab = () => {
         </Card>
       )}
 
+      {/* Battle History Section */}
+      {battleHistory.length > 0 && (
+        <Card className="shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 border-b">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-3">
+                <Trophy className="w-5 h-5 text-yellow-600" />
+                <span>Battle History ({battleHistory.length})</span>
+              </CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowBattleHistory(!showBattleHistory)}
+                className="text-xs"
+              >
+                {showBattleHistory ? "Hide" : "Show"} History
+              </Button>
+            </div>
+          </CardHeader>
+
+          {showBattleHistory && (
+            <CardContent className="p-6">
+              <div className="space-y-3">
+                {battleHistory.slice(0, 10).map((battle) => (
+                  <div
+                    key={battle.id}
+                    className={`p-4 rounded-lg border-l-4 transition-all ${
+                      battle.status === "won"
+                        ? "border-l-green-500 bg-green-50 dark:bg-green-900/10"
+                        : "border-l-red-500 bg-red-50 dark:bg-red-900/10"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">
+                          {battle.battleTitle}
+                        </p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {new Date(battle.createdAt).toLocaleDateString()} at{" "}
+                          {new Date(battle.createdAt).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <Badge
+                          variant={battle.status === "won" ? "default" : "destructive"}
+                          className="mb-2"
+                        >
+                          {battle.status === "won" ? "✓ Won" : "✗ Lost"}
+                        </Badge>
+                        <div className="text-right">
+                          <p className="font-bold">
+                            {battle.status === "won"
+                              ? "+"
+                              : "-"}
+                            {formatCurrency(
+                              battle.status === "won"
+                                ? battle.potentialWinning
+                                : battle.amount,
+                              summary?.currency_code || "USD"
+                            )}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Bet: {formatCurrency(battle.amount, summary?.currency_code || "USD")}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Odds: {battle.odds.toFixed(2)}x
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {battleHistory.length > 10 && (
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  Showing 10 of {battleHistory.length} battles
+                </p>
+              )}
+            </CardContent>
+          )}
+        </Card>
+      )}
+
       {/* How Battle Voting Works */}
       <Card>
         <CardHeader>
