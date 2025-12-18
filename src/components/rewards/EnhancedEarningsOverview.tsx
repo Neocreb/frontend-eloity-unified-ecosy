@@ -14,15 +14,20 @@ import {
   Zap,
   RefreshCw,
   ArrowUpRight,
+  ArrowDownRight,
   Star,
   Trophy,
   Flame,
   Target,
+  Sparkles,
+  Award,
+  ChevronRight,
 } from "lucide-react";
 import { formatCurrency, formatNumber } from "@/utils/formatters";
 import { useRewardsSummary } from "@/hooks/useRewardsSummary";
 import { useActivityFeed } from "@/hooks/useActivityFeed";
 import { activityTransactionService } from "@/services/activityTransactionService";
+import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
 
 interface EnhancedEarningsOverviewProps {
   user: any;
