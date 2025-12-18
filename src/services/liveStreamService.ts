@@ -191,26 +191,40 @@ export const liveStreamService = {
 
   async getActiveBattles(): Promise<(LiveStream & { battle: Battle })[]> {
     try {
-      const { data: battles, error } = await supabase
-        .from('battles')
-        .select('*')
-        .in('status', ['pending', 'active'])
-        .order('created_at', { ascending: false });
+      // Add timeout protection for fetch requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-      if (error) {
-        // Check if table doesn't exist
-        if (error.code === 'PGRST116' || error.message?.includes('relation "public.battles" does not exist')) {
-          console.warn('Battles table not yet created. Please run the migration script.');
+      try {
+        const { data: battles, error } = await supabase
+          .from('battles')
+          .select('*')
+          .in('status', ['pending', 'active'])
+          .order('created_at', { ascending: false });
+
+        clearTimeout(timeoutId);
+
+        if (error) {
+          // Check if table doesn't exist
+          if (error.code === 'PGRST116' || error.message?.includes('relation "public.battles" does not exist')) {
+            console.warn('Battles table not yet created. Please run the migration script.');
+            return [];
+          }
+          console.error('Error fetching battles - Details:', {
+            message: error?.message,
+            code: error?.code,
+            hint: error?.hint,
+            details: error?.details,
+            fullError: JSON.stringify(error)
+          });
+          // Return empty array as fallback
           return [];
         }
-        console.error('Error fetching battles - Details:', {
-          message: error?.message,
-          code: error?.code,
-          hint: error?.hint,
-          details: error?.details,
-          fullError: JSON.stringify(error)
+      } catch (fetchErr) {
+        clearTimeout(timeoutId);
+        console.warn('Network error fetching battles, returning empty array:', {
+          message: fetchErr instanceof Error ? fetchErr.message : 'Unknown network error'
         });
-        // Return empty array as fallback
         return [];
       }
 
