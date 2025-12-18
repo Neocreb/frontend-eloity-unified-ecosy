@@ -81,7 +81,7 @@ export const useReferralStats = (): UseReferralStatsReturn => {
     fetchStats();
 
     // Subscribe to new referrals
-    const subscription = referralTrackingService.subscribeToReferrals(
+    subscriptionRef.current = referralTrackingService.subscribeToReferrals(
       user.id,
       (newReferral) => {
         // Add to top of list
@@ -95,18 +95,28 @@ export const useReferralStats = (): UseReferralStatsReturn => {
             totalReferrals: prev.totalReferrals + 1,
             activeReferrals:
               newReferral.status === "active" ? prev.activeReferrals + 1 : prev.activeReferrals,
+            totalEarnings: prev.totalEarnings + (newReferral.earnings_total || 0),
           };
+        });
+
+        // Show toast notification
+        toast({
+          title: "New Referral!",
+          description: `You referred ${newReferral.referred_user_id}`,
         });
       },
       (err) => {
         console.error("Subscription error:", err);
+        setError(err instanceof Error ? err : new Error("Real-time subscription error"));
       }
     );
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
     };
-  }, [user?.id, fetchStats]);
+  }, [user?.id, fetchStats, toast]);
 
   // Load more referrals
   const loadMore = useCallback(async () => {
