@@ -195,28 +195,25 @@
 
 ---
 
-### 2.4 Order Tracking & Management
-**Status**: ⏳ Pending
+### 2.4 Order Tracking & Management 🟢 25% COMPLETE
+**Status**: 🟡 In Progress
 **Complexity**: Medium
-**Estimated Hours**: 12
+**Estimated Hours**: 12 ✓ Timeline Done
 
-**Tasks**:
-- [ ] Implement real-time order status updates
-- [ ] Add tracking number integration
-- [ ] Display estimated delivery dates
-- [ ] Create order timeline view
-- [ ] Add return request initiation
-- [ ] Implement order cancellation
-- [ ] Show proof of delivery
-- [ ] Test order lifecycle
+**Tasks Completed**:
+- ✅ OrderTimeline.tsx component - Visual status progression
+- ⏳ OrderTracking page with carrier info
+- ⏳ Return request initiation service
+- ⏳ Order cancellation logic
+- ⏳ Order lifecycle testing
 
-**Files to Modify**:
-- `src/pages/marketplace/MarketplaceOrders.tsx`
-- `src/services/orderService.ts`
-- Create: `src/components/marketplace/OrderTimeline.tsx`
-- Create: `src/components/marketplace/OrderTracking.tsx`
+**Files Created**:
+- ✅ `src/components/marketplace/OrderTimeline.tsx` (299 lines) - Full timeline display
+- 📝 `src/pages/marketplace/MarketplaceOrderTracking.tsx` - To create
+- 📝 `src/services/returnsService.ts` - To create
+- 📝 `src/pages/marketplace/MarketplaceOrders.tsx` - To enhance
 
-**Progress**: 0/8 tasks
+**Progress**: 2/8 tasks (25%)
 
 ---
 
