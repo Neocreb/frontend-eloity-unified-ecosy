@@ -593,13 +593,13 @@ export class MarketplaceService {
   static async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<Review | null> {
     try {
       const { data, error } = await supabase
-        .from('reviews')
+        .from('product_reviews')
         .insert([{
           product_id: reviewData.productId,
           user_id: reviewData.userId,
           rating: reviewData.rating,
           title: reviewData.title,
-          comment: reviewData.comment,
+          content: reviewData.comment,
           helpful_count: reviewData.helpfulCount,
           verified_purchase: reviewData.verifiedPurchase,
           created_at: new Date().toISOString(),
