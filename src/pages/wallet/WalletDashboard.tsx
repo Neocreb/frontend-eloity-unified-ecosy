@@ -172,8 +172,8 @@ const DashboardInner = () => {
       {/* Upper Zone - Full Bleed Gradient */}
       <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-32">
         <AnimatedWave />
-        
-        <div className="relative z-10 max-w-md mx-auto px-4">
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Greeting */}
           <div className="text-white text-sm font-medium mb-6">
             Hi {firstName} Jeremiah Chidiebube 👋
