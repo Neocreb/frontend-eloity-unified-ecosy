@@ -272,17 +272,79 @@ const EnhancedRewardsBattleTab = () => {
     }
   };
 
-  const totalEarnings = battlesWithVotes
-    .flatMap((b) => b.userVotes)
+  const allVotes = battlesWithVotes.flatMap((b) => b.userVotes);
+  const totalEarnings = allVotes
     .filter((vote) => vote.status === "won")
     .reduce((sum, vote) => sum + vote.potential_winning, 0);
 
-  const activeVotes = battlesWithVotes
-    .flatMap((b) => b.userVotes)
-    .filter((vote) => vote.status === "active").length;
+  const activeVotes = allVotes.filter((vote) => vote.status === "active").length;
+  const wonVotes = allVotes.filter((vote) => vote.status === "won");
+  const lostVotes = allVotes.filter((vote) => vote.status === "lost");
 
   // Get user balance - use real balance from summary or default to 0
   const userBalance = summary?.available_balance || 0;
+
+  // Calculate earnings metrics
+  const totalBetAmount = allVotes.reduce((sum, vote) => sum + vote.amount, 0);
+  const totalRisk = lostVotes.reduce((sum, vote) => sum + vote.amount, 0);
+  const winRate = allVotes.length > 0 ? (wonVotes.length / allVotes.length) * 100 : 0;
+  const roi = totalBetAmount > 0 ? ((totalEarnings - totalBetAmount) / totalBetAmount) * 100 : 0;
+
+  // Group earnings by bet ranges
+  const earningsByRange = (() => {
+    const ranges = {
+      "Small (<50)": { count: 0, earnings: 0, wins: 0 },
+      "Medium (50-200)": { count: 0, earnings: 0, wins: 0 },
+      "Large (200+)": { count: 0, earnings: 0, wins: 0 },
+    };
+
+    wonVotes.forEach((vote) => {
+      if (vote.amount < 50) {
+        ranges["Small (<50)"].count++;
+        ranges["Small (<50)"].earnings += vote.potential_winning;
+        ranges["Small (<50)"].wins++;
+      } else if (vote.amount < 200) {
+        ranges["Medium (50-200)"].count++;
+        ranges["Medium (50-200)"].earnings += vote.potential_winning;
+        ranges["Medium (50-200)"].wins++;
+      } else {
+        ranges["Large (200+)"].count++;
+        ranges["Large (200+)"].earnings += vote.potential_winning;
+        ranges["Large (200+)"].wins++;
+      }
+    });
+
+    return ranges;
+  })();
+
+  // Calculate odds performance
+  const oddsPerformance = (() => {
+    const performance: Record<string, { wins: number; losses: number; earnings: number }> = {
+      "High (4x+)": { wins: 0, losses: 0, earnings: 0 },
+      "Medium (2-4x)": { wins: 0, losses: 0, earnings: 0 },
+      "Low (<2x)": { wins: 0, losses: 0, earnings: 0 },
+    };
+
+    allVotes.forEach((vote) => {
+      let category: string;
+      if (vote.odds >= 4) {
+        category = "High (4x+)";
+      } else if (vote.odds >= 2) {
+        category = "Medium (2-4x)";
+      } else {
+        category = "Low (<2x)";
+      }
+
+      if (vote.status === "won") {
+        performance[category].wins++;
+        performance[category].earnings += vote.potential_winning;
+      } else if (vote.status === "lost") {
+        performance[category].losses++;
+      }
+    });
+
+    return performance;
+  })();
 
   if (loading || summaryLoading) {
     return (
