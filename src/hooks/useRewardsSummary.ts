@@ -126,18 +126,29 @@ export const useRewardsSummary = (): UseRewardsSummaryReturn => {
     };
   }, [user?.id, fetchSummary]);
 
-  // Refresh summary
+  // Refresh summary with debounce
   const refresh = useCallback(async () => {
     if (!user?.id) return;
 
-    try {
-      setError(null);
-      await userRewardsSummaryService.updateSummaryOnActivity(user.id);
-      await fetchSummary();
-    } catch (err) {
-      console.error("Error refreshing summary:", err);
-      setError(err instanceof Error ? err : new Error("Failed to refresh summary"));
+    // Clear previous timeout
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current);
     }
+
+    // Set new timeout for debounced refresh
+    refreshTimeoutRef.current = setTimeout(async () => {
+      try {
+        setError(null);
+        setIsRefreshing(true);
+        await userRewardsSummaryService.updateSummaryOnActivity(user.id);
+        await fetchSummary(true); // Skip cache on manual refresh
+      } catch (err) {
+        console.error("Error refreshing summary:", err);
+        setError(err instanceof Error ? err : new Error("Failed to refresh summary"));
+      } finally {
+        setIsRefreshing(false);
+      }
+    }, REFRESH_DEBOUNCE_MS);
   }, [user?.id, fetchSummary]);
 
   // Update trust score
