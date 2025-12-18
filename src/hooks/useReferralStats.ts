@@ -1,16 +1,24 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { referralTrackingService, ReferralStats, ReferralRecord, ReferralTierInfo } from "@/services/referralTrackingService";
+import { useToast } from "@/hooks/use-toast";
 
 interface UseReferralStatsReturn {
   stats: ReferralStats | null;
   referrals: ReferralRecord[];
   isLoading: boolean;
+  isRefreshing: boolean;
   error: Error | null;
   refresh: () => Promise<void>;
   loadMore: () => Promise<void>;
   hasMore: boolean;
   tierInfo: ReferralTierInfo | null;
+  nextTierInfo: ReferralTierInfo | null;
+  referralCode: string | null;
+  referralLink: string | null;
+  copyReferralCode: () => void;
+  generateNewCode: () => Promise<void>;
+  progressToNextTier: number;
 }
 
 const DEFAULT_LIMIT = 20;
