@@ -449,11 +449,6 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     [user?.id, toast]
   );
 
-  // Refresh data
-  const refresh = useCallback(async () => {
-    await fetchChallenges();
-  }, [fetchChallenges]);
-
   // Filter by status
   const filterByStatus = useCallback(
     (status: string): ChallengeWithProgress[] => {

@@ -1,7 +1,6 @@
 // @ts-nocheck
 import { Router } from 'express';
 import { supabase } from '../../src/integrations/supabase/client';
-import { enhancedEloitsService } from '../../src/services/enhancedEloitsService';
 import { isTier2Verified } from '../middleware/tierAccessControl.js';
 import { withdrawalFeeService } from '../../src/services/withdrawalFeeService.js';
 

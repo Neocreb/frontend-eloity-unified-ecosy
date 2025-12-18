@@ -3,7 +3,6 @@ import { authenticateToken } from '../middleware/auth.js';
 import { logger } from '../utils/logger.js';
 import { PostService } from '../../src/services/postService.js';
 import { supabase } from '../../src/integrations/supabase/client.js';
-import { enhancedEloitsService } from '../../src/services/enhancedEloitsService.js';
 
 const router = express.Router();
 
@@ -132,14 +131,15 @@ router.post('/', authenticateToken, async (req, res) => {
     }
 
     // Award points for creating a post
-    try {
-      await enhancedEloitsService.awardPoints(userId, 'create_post', {
-        postId: newPost.id,
-        type: type
-      });
-    } catch (rewardError) {
-      logger.error('Error awarding points for post creation:', rewardError);
-    }
+    // TODO: Implement rewards service integration
+    // try {
+    //   await enhancedEloitsService.awardPoints(userId, 'create_post', {
+    //     postId: newPost.id,
+    //     type: type
+    //   });
+    // } catch (rewardError) {
+    //   logger.error('Error awarding points for post creation:', rewardError);
+    // }
 
     logger.info('Post created', { postId: newPost.id, userId });
     res.status(201).json(newPost);
@@ -255,13 +255,14 @@ router.post('/:id/like', authenticateToken, async (req, res) => {
       };
 
       // Award points for liking a post
-      try {
-        await enhancedEloitsService.awardPoints(userId, 'like_post', {
-          postId: id
-        });
-      } catch (rewardError) {
-        logger.error('Error awarding points for post like:', rewardError);
-      }
+      // TODO: Implement rewards service integration
+      // try {
+      //   await enhancedEloitsService.awardPoints(userId, 'like_post', {
+      //     postId: id
+      //   });
+      // } catch (rewardError) {
+      //   logger.error('Error awarding points for post like:', rewardError);
+      // }
     }
 
     // Get updated likes count
@@ -324,14 +325,15 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
     }
 
     // Award points for commenting on a post
-    try {
-      await enhancedEloitsService.awardPoints(userId, 'comment_post', {
-        postId: id,
-        commentId: (newComment as any).id
-      });
-    } catch (rewardError) {
-      logger.error('Error awarding points for comment:', rewardError);
-    }
+    // TODO: Implement rewards service integration
+    // try {
+    //   await enhancedEloitsService.awardPoints(userId, 'comment_post', {
+    //     postId: id,
+    //     commentId: (newComment as any).id
+    //   });
+    // } catch (rewardError) {
+    //   logger.error('Error awarding points for comment:', rewardError);
+    // }
 
     logger.info('Comment added', { postId: id, commentId: (newComment as any).id, userId });
     res.status(201).json(newComment);
