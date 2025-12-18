@@ -54,7 +54,13 @@ const Invoices: React.FC = () => {
   // Load customization on mount
   useEffect(() => {
     if (user?.id) {
-      invoiceTemplateService.getInvoiceCustomization(user.id).then(setCustomization);
+      invoiceTemplateService
+        .getInvoiceCustomization(user.id)
+        .then(setCustomization)
+        .catch((error) => {
+          console.error('Failed to load invoice customization:', error);
+          setCustomization(null);
+        });
     }
   }, [user?.id]);
 
