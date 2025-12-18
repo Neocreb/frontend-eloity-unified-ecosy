@@ -7,7 +7,6 @@ import { freelance_projects as freelance_jobs, freelance_profiles as profiles } 
 import { freelance_proposals } from '../../shared/freelance-schema.js';
 import { eq, and, or, desc, asc, like, sql, count } from 'drizzle-orm';
 import { freelance_stats } from '../../shared/freelance-schema.js';
-import { enhancedEloitsService } from '../../src/services/enhancedEloitsService.js';
 
 const router = express.Router();
 
