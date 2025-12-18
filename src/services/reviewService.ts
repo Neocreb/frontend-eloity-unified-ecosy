@@ -76,10 +76,7 @@ export class ReviewService {
     try {
       const { data, error } = await supabase
         .from('product_reviews')
-        .select(`
-          *,
-          user:users(full_name, avatar_url)
-        `)
+        .select('*')
         .eq('id', reviewId)
         .single();
 
@@ -102,8 +99,8 @@ export class ReviewService {
         verifiedPurchase: data.verified_purchase || false,
         helpfulCount: data.helpful_count || 0,
         isFeatured: data.is_featured || false,
-        userName: data.user?.full_name || "Anonymous",
-        userAvatar: data.user?.avatar_url || "",
+        userName: "Anonymous",
+        userAvatar: "",
         createdAt: new Date(data.created_at).toISOString(),
         updatedAt: new Date(data.updated_at).toISOString()
       };
