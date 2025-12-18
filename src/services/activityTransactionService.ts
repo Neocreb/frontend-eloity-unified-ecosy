@@ -393,13 +393,35 @@ class ActivityTransactionService {
     onError?: (error: any) => void
   ) {
     const subscription = supabase
-      .from(`activity_transactions:user_id=eq.${userId}`)
-      .on("INSERT", (payload) => {
-        onUpdate(payload.new);
-      })
-      .on("UPDATE", (payload) => {
-        onUpdate(payload.new);
-      })
+      .channel(`realtime:activity_transactions:user_id=eq.${userId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "activity_transactions",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            onUpdate(payload.new);
+          }
+        }
+      )
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "activity_transactions",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          if (payload.new) {
+            onUpdate(payload.new);
+          }
+        }
+      )
       .subscribe((status, err) => {
         if (status === "SUBSCRIBED") {
           console.log("Subscribed to activity updates");
