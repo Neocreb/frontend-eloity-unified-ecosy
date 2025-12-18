@@ -31,7 +31,6 @@ import {
   getUserTradingHistory,
   getTradingStatistics
 } from '../services/cryptoDbService.js';
-import { enhancedEloitsService } from '../services/enhancedEloitsService.js';
 
 const router = express.Router();
 
