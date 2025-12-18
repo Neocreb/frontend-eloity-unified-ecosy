@@ -44,10 +44,19 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
   const [monthComparisonData, setMonthComparisonData] = useState<{ current: number; previous: number; percentChange: number }>({ current: 0, previous: 0, percentChange: 0 });
   const [achievements, setAchievements] = useState<Array<{ id: string; title: string; icon: string; unlockedAt?: string; progress: number }>>([]);
 
-  // Calculate earnings by category from activities
+  // Calculate earnings by category, sparkline data, month comparison, and achievements
   useEffect(() => {
     if (activities.length > 0) {
       const breakdown: Record<string, number> = {};
+      const dailyEarnings: Record<string, number> = {};
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+      const previousYear = currentMonth === 0 ? currentYear - 1 : currentYear;
+
+      let currentMonthEarnings = 0;
+      let previousMonthEarnings = 0;
 
       activities.forEach((activity) => {
         if (!breakdown[activity.category]) {
@@ -56,11 +65,99 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
         if (activity.amount_currency) {
           breakdown[activity.category] += activity.amount_currency;
         }
+
+        // Calculate daily earnings for sparkline
+        const actDate = new Date(activity.created_at);
+        const dayKey = actDate.toISOString().split("T")[0];
+        if (!dailyEarnings[dayKey]) {
+          dailyEarnings[dayKey] = 0;
+        }
+        dailyEarnings[dayKey] += activity.amount_currency || 0;
+
+        // Track current and previous month earnings
+        if (actDate.getMonth() === currentMonth && actDate.getFullYear() === currentYear) {
+          currentMonthEarnings += activity.amount_currency || 0;
+        } else if (actDate.getMonth() === previousMonth && actDate.getFullYear() === previousYear) {
+          previousMonthEarnings += activity.amount_currency || 0;
+        }
       });
 
       setEarningsByCategory(breakdown);
+
+      // Create sparkline data (last 30 days)
+      const sparklineArray: Array<{ day: string; earnings: number }> = [];
+      for (let i = 29; i >= 0; i--) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - i);
+        const dayKey = date.toISOString().split("T")[0];
+        const shortDay = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+        sparklineArray.push({
+          day: shortDay,
+          earnings: dailyEarnings[dayKey] || 0,
+        });
+      }
+      setSparklineData(sparklineArray);
+
+      // Calculate month comparison
+      const percentChange = previousMonthEarnings > 0
+        ? ((currentMonthEarnings - previousMonthEarnings) / previousMonthEarnings) * 100
+        : currentMonthEarnings > 0 ? 100 : 0;
+
+      setMonthComparisonData({
+        current: currentMonthEarnings,
+        previous: previousMonthEarnings,
+        percentChange,
+      });
+
+      // Calculate achievements based on summary
+      const newAchievements: typeof achievements = [];
+
+      if (summary) {
+        if (summary.total_activities >= 10) {
+          newAchievements.push({
+            id: "first-10",
+            title: "Getting Started",
+            icon: "🚀",
+            progress: Math.min((summary.total_activities / 10) * 100, 100),
+          });
+        }
+        if (summary.total_activities >= 50) {
+          newAchievements.push({
+            id: "milestone-50",
+            title: "Milestone Master",
+            icon: "⭐",
+            progress: Math.min((summary.total_activities / 50) * 100, 100),
+          });
+        }
+        if (summary.current_streak >= 7) {
+          newAchievements.push({
+            id: "streak-7",
+            title: "On Fire",
+            icon: "🔥",
+            progress: Math.min((summary.current_streak / 7) * 100, 100),
+          });
+        }
+        if (summary.trust_score >= 75) {
+          newAchievements.push({
+            id: "trusted",
+            title: "Trusted Member",
+            icon: "✅",
+            progress: summary.trust_score,
+          });
+        }
+        if (summary.level >= 5) {
+          newAchievements.push({
+            id: "high-level",
+            title: "Elite Performer",
+            icon: "👑",
+            progress: Math.min((summary.level / 6) * 100, 100),
+          });
+        }
+      }
+
+      setAchievements(newAchievements);
     }
-  }, [activities]);
+  }, [activities, summary]);
 
   const handleRefresh = async () => {
     try {
