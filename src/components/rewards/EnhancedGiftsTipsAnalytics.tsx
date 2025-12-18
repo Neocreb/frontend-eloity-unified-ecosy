@@ -474,6 +474,45 @@ const EnhancedGiftsTipsAnalytics = () => {
         </Card>
       )}
 
+      {/* Thank You Message Suggestions */}
+      <Card className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 border-pink-200 dark:border-pink-700">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-pink-900 dark:text-pink-100">
+            <Heart className="h-5 w-5 text-pink-600" />
+            Thank You Message Ideas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {[
+              "Thanks so much for all your amazing content! 🙏",
+              "Your creativity keeps me inspired every day! 💫",
+              "Supporting great creators like you! Keep it up! 🚀",
+              "Your work means the world to us! ❤️",
+              "Thank you for sharing your talent with us! 🎉",
+              "You're an amazing creator! Keep shining! ⭐",
+            ].map((message, idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  navigator.clipboard.writeText(message);
+                  toast({
+                    title: "Copied!",
+                    description: "Message copied to clipboard",
+                  });
+                }}
+                className="p-3 bg-white dark:bg-gray-900 border border-pink-200 dark:border-pink-700 rounded-lg hover:bg-pink-50 dark:hover:bg-pink-900/20 transition-colors text-left text-sm text-gray-700 dark:text-gray-300 hover:text-pink-700 dark:hover:text-pink-300 cursor-pointer"
+              >
+                {message}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-pink-700 dark:text-pink-300 mt-4">
+            💡 Click any message to copy it and include in your gift message
+          </p>
+        </CardContent>
+      </Card>
+
       {/* Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Gifts */}
