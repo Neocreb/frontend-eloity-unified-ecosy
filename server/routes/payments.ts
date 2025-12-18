@@ -25,6 +25,7 @@ import {
 } from '../services/paymentService.js';
 import { logger } from '../utils/logger.js';
 import crypto from 'crypto';
+import { supabase } from '../../src/integrations/supabase/client.js';
 
 const router = express.Router();
 
