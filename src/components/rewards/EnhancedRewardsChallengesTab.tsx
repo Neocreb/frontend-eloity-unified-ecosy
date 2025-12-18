@@ -42,9 +42,26 @@ const EnhancedRewardsChallengesTab = () => {
     { value: "challenge", label: "Challenge", icon: Trophy },
   ];
 
-  const filteredChallenges = selectedCategory === "all" 
-    ? challenges 
+  const filteredChallenges = selectedCategory === "all"
+    ? challenges
     : challenges.filter((c) => c.type === selectedCategory);
+
+  // Categorize challenges
+  const upcomingChallenges = filteredChallenges.filter(
+    (c) => !c.userProgress || c.userProgress.status === "not_started"
+  );
+  const activeChallenges = filteredChallenges.filter(
+    (c) => c.userProgress && c.userProgress.status === "active"
+  );
+  const completedChallenges = filteredChallenges.filter(
+    (c) => c.userProgress && c.userProgress.status === "completed"
+  );
+
+  // Discovery recommendations - suggest high-reward challenges not started
+  const discoveryRecommendations = challenges
+    .filter((c) => !c.userProgress || c.userProgress.status === "not_started")
+    .sort((a, b) => b.points_reward - a.points_reward)
+    .slice(0, 3);
 
   const getDifficultyColor = (difficulty?: string): string => {
     switch (difficulty) {
