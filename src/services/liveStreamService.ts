@@ -191,11 +191,24 @@ export const liveStreamService = {
 
   async getActiveBattles(): Promise<(LiveStream & { battle: Battle })[]> {
     try {
-      const { data: battles, error } = await supabase
-        .from('battles')
-        .select('*')
-        .in('status', ['pending', 'active'])
-        .order('created_at', { ascending: false });
+      let battles: any[] = [];
+      let error: any = null;
+
+      try {
+        const result = await supabase
+          .from('battles')
+          .select('*')
+          .in('status', ['pending', 'active'])
+          .order('created_at', { ascending: false });
+
+        battles = result.data || [];
+        error = result.error;
+      } catch (fetchErr) {
+        console.warn('Network error fetching battles, returning empty array:', {
+          message: fetchErr instanceof Error ? fetchErr.message : 'Unknown network error'
+        });
+        return [];
+      }
 
       if (error) {
         // Check if table doesn't exist
@@ -217,19 +230,23 @@ export const liveStreamService = {
       if (!battles || battles.length === 0) return [];
 
       const streamIds = battles.map((b: any) => b.live_stream_id);
+      if (!streamIds.length) return [];
+
       const { data: streams, error: streamsError } = await supabase
         .from('live_streams')
         .select('id, user_id, title, description, viewer_count, is_active, started_at, ended_at, category, stream_key')
         .in('id', streamIds);
 
       if (streamsError) {
-        console.error('Error fetching live streams for battles - Details:', {
-          message: streamsError?.message,
-          code: streamsError?.code,
-          hint: streamsError?.hint,
-          details: streamsError?.details,
-          fullError: JSON.stringify(streamsError)
-        });
+        // Only log network errors at debug level
+        if (streamsError?.message?.includes('Failed to fetch')) {
+          console.debug('Network unavailable for battle streams - will retry when available');
+        } else {
+          console.warn('Warning fetching live streams for battles:', {
+            message: streamsError?.message,
+            code: streamsError?.code
+          });
+        }
         // Return empty array as fallback
         return [];
       }
@@ -239,22 +256,34 @@ export const liveStreamService = {
       const userIds = Array.from(new Set(streams.map((s: any) => s.user_id)));
       let profiles = [];
 
-      try {
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('user_id, username, full_name, avatar_url, is_verified')
-          .in('user_id', userIds);
+      if (userIds.length > 0) {
+        try {
+          const { data: profilesData, error: profilesError } = await supabase
+            .from('profiles')
+            .select('user_id, username, full_name, avatar_url, is_verified')
+            .in('user_id', userIds);
 
-        if (profilesError) {
-          console.warn('Warning: Could not load profiles for battles:', {
-            message: profilesError?.message,
-            code: profilesError?.code
-          });
-        } else {
-          profiles = profilesData || [];
+          if (profilesError) {
+            // Only log network errors at debug level
+            if (profilesError?.message?.includes('Failed to fetch')) {
+              console.debug('Network unavailable for profiles - continuing without');
+            } else {
+              console.warn('Warning: Could not load profiles for battles:', {
+                message: profilesError?.message,
+                code: profilesError?.code
+              });
+            }
+          } else {
+            profiles = profilesData || [];
+          }
+        } catch (profileError) {
+          // Network errors are expected
+          if (profileError instanceof Error && profileError.message.includes('Failed to fetch')) {
+            console.debug('Network error loading profiles - continuing without');
+          } else {
+            console.warn('Exception while loading profiles for battles:', profileError instanceof Error ? profileError.message : 'Unknown');
+          }
         }
-      } catch (profileError) {
-        console.warn('Exception while loading profiles for battles:', profileError instanceof Error ? profileError.message : 'Unknown');
       }
 
       const profileMap = new Map(profiles.map((p: any) => [p.user_id, p]));

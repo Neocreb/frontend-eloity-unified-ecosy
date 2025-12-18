@@ -127,15 +127,25 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
           }
 
           // Get the last message for this conversation
-          const { data: lastMessageArray, error: lastMessageError } =
-            await supabase
-              .from("chat_messages")
-              .select("*")
-              .eq("conversation_id", conv.id)
-              .order("created_at", { ascending: false })
-              .limit(1);
+          let lastMessageData = null;
+          try {
+            const { data: lastMessageArray, error: lastMessageError } =
+              await supabase
+                .from("chat_messages")
+                .select("*")
+                .eq("conversation_id", conv.id)
+                .order("created_at", { ascending: false })
+                .limit(1);
 
-          const lastMessageData = lastMessageArray?.[0] || null;
+            if (lastMessageError) {
+              console.warn("Error fetching last message:", lastMessageError);
+            } else {
+              lastMessageData = lastMessageArray?.[0] || null;
+            }
+          } catch (messageError) {
+            console.warn("Exception fetching last message:", messageError instanceof Error ? messageError.message : 'Unknown');
+            lastMessageData = null;
+          }
 
           formattedConversations.push({
             id: conv.id,
@@ -164,9 +174,13 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
 
         setConversations(formattedConversations);
 
-        // Load messages for each conversation
+        // Load messages for each conversation (non-blocking)
+        // Don't await these to prevent blocking conversation list
         formattedConversations.forEach((conv) => {
-          loadMessages(conv.id);
+          loadMessages(conv.id).catch(() => {
+            // Silently fail - messages will be empty until available
+            // This prevents error logs from network issues
+          });
         });
       } catch (error) {
         console.error("Error in loadConversations:", error);
@@ -210,7 +224,17 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         .order("created_at", { ascending: true });
 
       if (error) {
-        console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
+        // Only log as debug - network errors are expected
+        if (error instanceof Error && error.message.includes('Failed to fetch')) {
+          console.debug("Network unavailable for messages - will retry when connection restored");
+        } else {
+          console.warn("Warning loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
+        }
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        setMessages([]);
         return;
       }
 
@@ -250,9 +274,17 @@ export const ChatProvider = ({ children }: { children: React.ReactNode }) => {
         };
       });
 
-      setMessages(formattedMessages);
+      setMessages(prev => ({
+        ...prev,
+        [conversationId]: formattedMessages
+      }));
     } catch (error) {
-      console.error("Error loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
+      // Network errors are expected - only log at debug level
+      if (error instanceof Error && error.message.includes('Failed to fetch')) {
+        console.debug("Network error loading messages - will retry when connection restored");
+      } else {
+        console.warn("Warning loading messages:", error instanceof Error ? error.message : JSON.stringify(error));
+      }
     }
   };
 

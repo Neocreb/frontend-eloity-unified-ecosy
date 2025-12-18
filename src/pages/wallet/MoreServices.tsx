@@ -60,7 +60,8 @@ const MoreServices = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [showComingSoon, setShowComingSoon] = useState(false);
   const [showTravelComingSoon, setShowTravelComingSoon] = useState(false);
-  const { isFavorited, toggleFavorite } = useServiceFavorites();
+  const [viewMode, setViewMode] = useState<"all" | "favorites">("all");
+  const { isFavorited, toggleFavorite, favorites } = useServiceFavorites();
 
   // All available services
   const allServices: Service[] = [
@@ -382,9 +383,20 @@ const MoreServices = () => {
   // Recently used (mock - in production, fetch from user activity)
   const recentlyUsed = allServices.slice(0, 3);
 
+  // Get current favorites (max 7)
+  const favoriteServiceIds = new Set(
+    favorites
+      .map(fav => fav.serviceId)
+      .filter(id => id !== 'more')
+      .slice(0, 7)
+  );
+
+  const currentFavorites = allServices.filter(s => favoriteServiceIds.has(s.id));
+  const availableServices = allServices.filter(s => !favoriteServiceIds.has(s.id));
+
   // Filter services based on search
   const filteredServices = useMemo(() => {
-    let filtered = allServices;
+    let filtered = viewMode === "favorites" ? availableServices : allServices;
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -396,12 +408,12 @@ const MoreServices = () => {
       );
     }
 
-    if (selectedCategory) {
+    if (selectedCategory && viewMode === "all") {
       filtered = filtered.filter((service) => service.category === selectedCategory);
     }
 
     return filtered;
-  }, [searchQuery, selectedCategory]);
+  }, [searchQuery, selectedCategory, viewMode, availableServices]);
 
   // Group services by category
   const groupedServices = useMemo(() => {
@@ -416,6 +428,18 @@ const MoreServices = () => {
   }, [filteredServices]);
 
   const categories = Array.from(new Set(allServices.map((s) => s.category)));
+
+  // Group current favorites by category
+  const groupedFavorites = useMemo(() => {
+    const grouped: Record<string, Service[]> = {};
+    currentFavorites.forEach((service) => {
+      if (!grouped[service.category]) {
+        grouped[service.category] = [];
+      }
+      grouped[service.category].push(service);
+    });
+    return grouped;
+  }, [currentFavorites]);
 
   const ServiceCard = ({ service }: { service: Service }) => {
     const isFav = isFavorited(service.id);
@@ -489,17 +513,91 @@ const MoreServices = () => {
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
-      <WalletActionHeader title="All Services" />
+      <WalletActionHeader
+        title={viewMode === "favorites" ? "Manage Favorites" : "All Services"}
+      />
 
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+          {/* View Mode Tabs */}
+          <div className="flex gap-2 mb-6">
+            <Button
+              variant={viewMode === "all" ? "default" : "outline"}
+              onClick={() => {
+                setViewMode("all");
+                setSearchQuery("");
+                setSelectedCategory(null);
+              }}
+              className="flex-1"
+            >
+              All Services
+            </Button>
+            <Button
+              variant={viewMode === "favorites" ? "default" : "outline"}
+              onClick={() => {
+                setViewMode("favorites");
+                setSearchQuery("");
+              }}
+              className="flex-1"
+            >
+              <Heart className="h-4 w-4 mr-2" />
+              Manage Favorites ({currentFavorites.length}/7)
+            </Button>
+          </div>
+
+          {/* Favorites Management View */}
+          {viewMode === "favorites" && (
+            <>
+              {/* Current Favorites Section */}
+              {currentFavorites.length > 0 && (
+                <div className="mb-8 p-4 bg-gradient-to-r from-red-50 to-pink-50 rounded-lg border border-red-200">
+                  <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-red-500 fill-red-500" />
+                    Your Quick Access Services ({currentFavorites.length}/7)
+                  </h3>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 sm:gap-4 mb-4">
+                    {currentFavorites.map((service) => (
+                      <div key={service.id} className="relative">
+                        <ServiceCard service={service} />
+                        <div className="absolute top-1 left-1 bg-red-500 text-white rounded-full p-1">
+                          <Heart className="h-3 w-3 fill-current" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-600 italic">
+                    These services appear in your wallet home screen. Click the heart icon below to replace any service.
+                  </p>
+                </div>
+              )}
+
+              {/* Info Box */}
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                  💡 How it works
+                </h4>
+                <ul className="text-xs text-blue-900 space-y-1">
+                  <li>✓ Your wallet home shows 7 quick-access services</li>
+                  <li>✓ Click the heart icon to add/remove services from your quick access</li>
+                  <li>✓ Maximum 7 services - add a new one to replace another</li>
+                  <li>✓ Changes appear instantly on your wallet home</li>
+                </ul>
+              </div>
+
+              {/* Available to Add Section */}
+              <h3 className="text-lg font-bold text-gray-800 mb-4">
+                Available Services to Add
+              </h3>
+            </>
+          )}
+
           {/* Search Bar */}
           <div className="mb-6">
             <div className="relative">
               <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search services..."
+                placeholder={viewMode === "favorites" ? "Search available services..." : "Search services..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 h-10 rounded-lg"
@@ -507,8 +605,8 @@ const MoreServices = () => {
             </div>
           </div>
 
-          {/* Category Filter */}
-          {!searchQuery && (
+          {/* Category Filter - Only show in "All Services" mode */}
+          {!searchQuery && viewMode === "all" && (
             <div className="mb-6">
               <div className="flex gap-2 overflow-x-auto pb-2 -mx-3 px-3 sm:mx-0 sm:px-0">
                 <Button
@@ -534,8 +632,8 @@ const MoreServices = () => {
             </div>
           )}
 
-          {/* Recently Used (only show when no search/filter) */}
-          {!searchQuery && !selectedCategory && (
+          {/* Recently Used (only show when no search/filter in "all" view) */}
+          {!searchQuery && !selectedCategory && viewMode === "all" && (
             <div className="mb-8">
               <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                 <Clock className="h-5 w-5" />
@@ -556,6 +654,11 @@ const MoreServices = () => {
                 <div key={category}>
                   <h2 className="text-lg font-bold text-gray-800 mb-4">
                     {category}
+                    {viewMode === "favorites" && services.length > 0 && (
+                      <span className="text-sm font-normal text-gray-600 ml-2">
+                        ({services.length} available)
+                      </span>
+                    )}
                   </h2>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 sm:gap-4">
                     {services.map((service) => (
@@ -567,22 +670,36 @@ const MoreServices = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 font-medium">No services found</p>
-              <p className="text-sm text-gray-400 mt-1">
-                Try adjusting your search or filters
-              </p>
+              {viewMode === "favorites" && currentFavorites.length === 7 ? (
+                <>
+                  <Heart className="h-12 w-12 text-red-300 mx-auto mb-3" />
+                  <p className="text-gray-500 font-medium">All 7 slots filled!</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Your wallet shows 7 quick-access services. Remove one to add another.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <Search className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                  <p className="text-gray-500 font-medium">No services found</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    Try adjusting your search or filters
+                  </p>
+                </>
+              )}
             </div>
           )}
 
-          {/* Coming Soon Section */}
-          <div className="mt-12 p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-            <h3 className="font-bold text-gray-800 mb-2">💡 Coming Soon</h3>
-            <p className="text-sm text-gray-600">
-              We're working on more exciting features like Insurance, Investment Products,
-              and International Remittance. Stay tuned!
-            </p>
-          </div>
+          {/* Coming Soon Section - Only in "all" view */}
+          {viewMode === "all" && (
+            <div className="mt-12 p-4 sm:p-6 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
+              <h3 className="font-bold text-gray-800 mb-2">💡 Coming Soon</h3>
+              <p className="text-sm text-gray-600">
+                We're working on more exciting features like Insurance, Investment Products,
+                and International Remittance. Stay tuned!
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
