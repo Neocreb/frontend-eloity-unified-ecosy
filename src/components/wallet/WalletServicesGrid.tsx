@@ -164,27 +164,33 @@ const WalletServicesGrid = () => {
   };
 
   // Get favorite services in order (excluding the "more" service)
-  const favoriteServiceIds = favorites
-    .map(fav => fav.serviceId)
-    .filter(id => id !== 'more');
+  const favoriteServiceIds = new Set(
+    favorites
+      .map(fav => fav.serviceId)
+      .filter(id => id !== 'more')
+  );
 
   // Row 1: Fixed transfer services (3 items)
   const row1Services = ['to-eloity', 'transfer', 'withdraw'].map(id => allServices[id]);
 
   // Rows 2-3: Favorite services (7 items max) + More button
-  const favoriteServices = favoriteServiceIds
-    .map(id => allServices[id])
-    .filter(Boolean);
+  const favoriteServices: Service[] = [];
+  const addedServiceIds = new Set<string>();
 
-  // Ensure we have exactly 7 favorites (pad with defaults if needed)
-  while (favoriteServices.length < 7) {
-    const nextDefault = DEFAULT_FAVORITES.find(
-      id => !favoriteServiceIds.includes(id)
-    );
-    if (nextDefault) {
-      favoriteServices.push(allServices[nextDefault]);
-    } else {
-      break;
+  // First, add all user favorites
+  for (const serviceId of favoriteServiceIds) {
+    if (allServices[serviceId] && !addedServiceIds.has(serviceId)) {
+      favoriteServices.push(allServices[serviceId]);
+      addedServiceIds.add(serviceId);
+    }
+  }
+
+  // Then, pad with defaults if needed
+  for (const defaultId of DEFAULT_FAVORITES) {
+    if (favoriteServices.length >= 7) break;
+    if (!addedServiceIds.has(defaultId) && allServices[defaultId]) {
+      favoriteServices.push(allServices[defaultId]);
+      addedServiceIds.add(defaultId);
     }
   }
 
