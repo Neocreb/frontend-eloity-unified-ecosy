@@ -503,23 +503,32 @@ const EnhancedRewardsBattleTab = () => {
       {/* Filter Buttons */}
       <Card>
         <CardContent className="p-4">
-          <div className="flex gap-2 items-center flex-wrap">
+          <div
+            className="flex gap-2 items-center flex-wrap"
+            role="group"
+            aria-label="Battle filter options"
+          >
             {[
               { value: "all", label: "All Battles", icon: Trophy },
               { value: "live", label: "Live Now", icon: Flame },
               { value: "upcoming", label: "Upcoming", icon: Clock },
-            ].map((option) => (
-              <Button
-                key={option.value}
-                variant={filter === option.value ? "default" : "outline"}
-                size="sm"
-                onClick={() => setFilter(option.value as any)}
-                className="flex items-center gap-2"
-              >
-                <option.icon className="h-4 w-4" />
-                {option.label}
-              </Button>
-            ))}
+            ].map((option) => {
+              const OptionIcon = option.icon;
+              return (
+                <Button
+                  key={option.value}
+                  variant={filter === option.value ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setFilter(option.value as any)}
+                  className="flex items-center gap-2"
+                  aria-pressed={filter === option.value}
+                  aria-label={`${option.label} ${filter === option.value ? "selected" : ""}`}
+                >
+                  <OptionIcon className="h-4 w-4" aria-hidden="true" />
+                  {option.label}
+                </Button>
+              );
+            })}
 
             <Button
               size="sm"
@@ -527,8 +536,10 @@ const EnhancedRewardsBattleTab = () => {
               onClick={handleRefresh}
               disabled={isRefreshing}
               className="ml-auto"
+              aria-label="Refresh battle data"
+              aria-busy={isRefreshing}
             >
-              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+              <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} aria-hidden="true" />
               Refresh
             </Button>
           </div>
