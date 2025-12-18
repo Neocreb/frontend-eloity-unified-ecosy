@@ -189,20 +189,6 @@ export const createAccessibleErrorMessage = (fieldName: string, error: string): 
 };
 
 /**
- * Skip to main content link (should be placed at top of layout)
- */
-export const createSkipToMainLink = (): JSX.Element => {
-  return (
-    <a
-      href="#main-content"
-      className="sr-only focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50 focus:p-4 focus:bg-blue-600 focus:text-white"
-    >
-      Skip to main content
-    </a>
-  );
-};
-
-/**
  * Get button/link aria-label from content
  */
 export const getInteractiveLabel = (content: string, action: string, context?: string): string => {
@@ -268,7 +254,6 @@ export default {
   formatNumberForScreenReader,
   formatCurrencyForScreenReader,
   createAccessibleErrorMessage,
-  createSkipToMainLink,
   getInteractiveLabel,
   formatTimeForAccessibility,
   getContrastSafeColors,
