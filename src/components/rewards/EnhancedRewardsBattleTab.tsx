@@ -69,6 +69,44 @@ const EnhancedRewardsBattleTab = () => {
         setError(null);
         const data = await rewardsBattlesService.getBattlesWithVotes(user.id);
         setBattlesWithVotes(data);
+
+        // Calculate battle history from completed battles
+        const completedBattles: any[] = [];
+        let wonCount = 0;
+        let lostCount = 0;
+        let totalEarned = 0;
+
+        data.forEach((battleWithVotes) => {
+          if (
+            battleWithVotes.battle.status === "ended" ||
+            battleWithVotes.battle.status === "completed"
+          ) {
+            battleWithVotes.userVotes.forEach((vote) => {
+              if (vote.status === "won") {
+                wonCount++;
+                totalEarned += vote.potential_winning;
+              } else if (vote.status === "lost") {
+                lostCount++;
+              }
+
+              completedBattles.push({
+                id: `${battleWithVotes.battle.id}-${vote.id}`,
+                battleTitle: battleWithVotes.battle.title,
+                amount: vote.amount,
+                potentialWinning: vote.potential_winning,
+                status: vote.status,
+                odds: vote.odds,
+                createdAt: vote.created_at,
+              });
+            });
+          }
+        });
+
+        setBattleHistory(
+          completedBattles.sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          )
+        );
       } catch (err) {
         console.error("Error fetching battles:", err);
         setError("Failed to load battles. Please try again.");
