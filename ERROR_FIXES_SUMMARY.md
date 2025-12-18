@@ -171,7 +171,12 @@ After running any of these, you need to:
 2. ✅ `src/home/TestimonialsSection.tsx` - Fixed AbortController cleanup
 3. ✅ `src/services/rewardsService.ts` - Improved error handling (2 methods)
 4. ✅ `src/services/reviewService.ts` - Improved error handling
-5. ✅ `scripts/apply-product-reviews-migration.js` - Created migration script
+5. ✅ `src/services/activityTransactionService.ts` - Fixed Supabase v2 real-time API
+6. ✅ `src/services/enhancedEloitsService.ts` - Improved error handling with RLS awareness
+7. ✅ `src/services/rewardsService.ts` - Added RLS permission error handling
+8. ✅ `scripts/apply-product-reviews-migration.js` - Created migration script
+9. ✅ `scripts/fix-reward-rules-rls.js` - Created RLS fix script
+10. ✅ `package.json` - Added npm scripts for migrations
 
 ---
 
