@@ -421,17 +421,24 @@ const EnhancedRewardsBattleTab = () => {
       )}
 
       {/* Battle Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div
+        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+        role="region"
+        aria-label="Battle Statistics Summary"
+      >
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Your Balance</p>
-                <p className="text-2xl font-bold mt-1">
+                <p
+                  className="text-2xl font-bold mt-1"
+                  aria-label={`Your balance: ${formatCurrency(userBalance, summary?.currency_code || "USD")}`}
+                >
                   {formatCurrency(userBalance, summary?.currency_code || "USD")}
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-green-500 opacity-20" />
+              <DollarSign className="h-8 w-8 text-green-500 opacity-20" aria-hidden="true" />
             </div>
             <p className="text-xs text-muted-foreground mt-2">Available to vote</p>
           </CardContent>
@@ -442,13 +449,18 @@ const EnhancedRewardsBattleTab = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Live Battles</p>
-                <p className="text-2xl font-bold mt-1">
+                <p
+                  className="text-2xl font-bold mt-1"
+                  aria-label={`${battlesWithVotes.filter(
+                    (b) => b.battle.status === "live" || b.battle.status === "active"
+                  ).length} live battles currently active`}
+                >
                   {battlesWithVotes.filter(
                     (b) => b.battle.status === "live" || b.battle.status === "active"
                   ).length}
                 </p>
               </div>
-              <Flame className="h-8 w-8 text-red-500 opacity-20" />
+              <Flame className="h-8 w-8 text-red-500 opacity-20" aria-hidden="true" />
             </div>
           </CardContent>
         </Card>
@@ -458,9 +470,14 @@ const EnhancedRewardsBattleTab = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Active Votes</p>
-                <p className="text-2xl font-bold mt-1">{activeVotes}</p>
+                <p
+                  className="text-2xl font-bold mt-1"
+                  aria-label={`You have ${activeVotes} active votes`}
+                >
+                  {activeVotes}
+                </p>
               </div>
-              <Target className="h-8 w-8 text-blue-500 opacity-20" />
+              <Target className="h-8 w-8 text-blue-500 opacity-20" aria-hidden="true" />
             </div>
           </CardContent>
         </Card>
@@ -470,11 +487,14 @@ const EnhancedRewardsBattleTab = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
-                <p className="text-2xl font-bold mt-1">
+                <p
+                  className="text-2xl font-bold mt-1"
+                  aria-label={`Total earnings: ${formatCurrency(totalEarnings, summary?.currency_code || "USD")}`}
+                >
                   {formatCurrency(totalEarnings, summary?.currency_code || "USD")}
                 </p>
               </div>
-              <Trophy className="h-8 w-8 text-yellow-500 opacity-20" />
+              <Trophy className="h-8 w-8 text-yellow-500 opacity-20" aria-hidden="true" />
             </div>
           </CardContent>
         </Card>
