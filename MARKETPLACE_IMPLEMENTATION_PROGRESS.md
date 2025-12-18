@@ -174,25 +174,24 @@
 **Complexity**: High
 **Estimated Hours**: 20
 
-**Tasks**:
-- [ ] Implement address form validation
-- [ ] Add shipping method selection with real rates
-- [ ] Implement payment method management
-- [ ] Add billing address option
-- [ ] Create order confirmation email
-- [ ] Implement order number generation
-- [ ] Add payment processing (Stripe integration)
-- [ ] Add error handling and retry logic
+**Tasks** (In Queue for Phase 2.3):
+- [ ] Create ShippingAddressForm.tsx component
+- [ ] Create ShippingMethodSelector.tsx component
+- [ ] Create PaymentMethodManager.tsx component
+- [ ] Create OrderReview.tsx component
+- [ ] Create orderCheckoutService.ts
+- [ ] Implement error handling and retry logic
 - [ ] Test complete checkout flow
 - [ ] Test on mobile
 
-**Files to Modify**:
-- `src/pages/marketplace/MarketplaceCheckout.tsx`
-- `src/components/marketplace/EnhancedCheckoutFlow.tsx`
-- `src/services/orderService.ts`
-- `src/services/paymentService.ts`
+**Files to Create**:
+- 📝 `src/components/marketplace/ShippingAddressForm.tsx`
+- 📝 `src/components/marketplace/ShippingMethodSelector.tsx`
+- 📝 `src/components/marketplace/PaymentMethodManager.tsx`
+- 📝 `src/components/marketplace/OrderReview.tsx`
+- 📝 `src/services/orderCheckoutService.ts`
 
-**Progress**: 0/10 tasks
+**Progress**: 0/8 tasks (Blocked on prior completion)
 
 ---
 
