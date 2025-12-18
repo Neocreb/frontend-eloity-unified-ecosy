@@ -34,6 +34,15 @@ export interface ReferralStats {
   autoShareTotal: number;
 }
 
+export interface ReferralTierInfo {
+  name: string;
+  tier: "bronze" | "silver" | "gold" | "platinum";
+  commissionPercentage: number;
+  minEarnings: number;
+  benefits: string[];
+  color?: string;
+}
+
 const TIER_COMMISSIONS = {
   bronze: 0.05, // 5%
   silver: 0.075, // 7.5%
