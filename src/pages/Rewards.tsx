@@ -249,31 +249,44 @@ const CreatorEconomy = () => {
         ></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-6 pb-12">
-          {/* Quick Stats Bar - Mobile Optimized */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 md:p-4">
-              <p className="text-xs text-gray-600 font-medium">Total Earned</p>
-              <p className="text-lg md:text-xl font-bold text-green-700 mt-1">
-                {formatCurrencyContext(revenueData?.totalEarnings || 0)}
-              </p>
+          {/* Quick Access Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">Quick Access</h2>
+              <button
+                onClick={() => navigate("/app/rewards/more")}
+                className="text-blue-600 text-sm font-medium hover:underline"
+              >
+                View All
+              </button>
             </div>
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-3 md:p-4">
-              <p className="text-xs text-gray-600 font-medium">Available</p>
-              <p className="text-lg md:text-xl font-bold text-blue-700 mt-1">
-                {formatCurrencyContext(revenueData?.availableToWithdraw || 0)}
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 md:p-4">
-              <p className="text-xs text-gray-600 font-medium">Level</p>
-              <p className="text-lg md:text-xl font-bold text-purple-700 mt-1">
-                <Badge className="bg-purple-600 text-white">Gold</Badge>
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-3 md:p-4">
-              <p className="text-xs text-gray-600 font-medium">Trust Score</p>
-              <p className="text-lg md:text-xl font-bold text-amber-700 mt-1">
-                85%
-              </p>
+
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2 md:gap-3">
+              {/* Quick Access Items */}
+              {[
+                { icon: "👥", label: "Invite Friends", path: "/app/rewards/more", badge: "Hot" },
+                { icon: "📊", label: "Analytics", path: "/app/rewards/analytics", badge: null },
+                { icon: "🏆", label: "Leaderboard", path: "/app/rewards/more", badge: null },
+                { icon: "⚡", label: "Challenges", path: "/app/rewards?tab=challenges", badge: "100%" },
+                { icon: "⭐", label: "Referrals", path: "/app/rewards?tab=referrals", badge: null },
+                { icon: "🎮", label: "Battles", path: "/app/rewards?tab=battles", badge: null },
+              ].map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => navigate(item.path)}
+                  className="flex flex-col items-center justify-center gap-2 p-3 md:p-4 bg-slate-900 text-white rounded-lg md:rounded-xl hover:bg-slate-800 transition-all active:scale-95 relative"
+                >
+                  {item.badge && (
+                    <span className="absolute -top-2 -right-2 bg-yellow-400 text-slate-900 text-2xs px-1.5 py-0.5 rounded-full font-bold">
+                      {item.badge}
+                    </span>
+                  )}
+                  <span className="text-2xl md:text-3xl">{item.icon}</span>
+                  <span className="text-2xs md:text-xs font-medium text-center leading-tight">
+                    {item.label}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 
