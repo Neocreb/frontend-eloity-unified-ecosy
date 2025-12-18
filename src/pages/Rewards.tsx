@@ -18,6 +18,7 @@ import {
   Sparkles,
   Award,
   Zap,
+  TrendingUp,
 } from "lucide-react";
 import CreatorEconomyHeader from "@/components/rewards/CreatorEconomyHeader";
 import EnhancedEarningsOverview from "@/components/rewards/EnhancedEarningsOverview";
