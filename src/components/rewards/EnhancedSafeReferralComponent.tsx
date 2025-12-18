@@ -619,23 +619,33 @@ const EnhancedSafeReferralComponent = () => {
         <CardContent className="p-8">
           <div className="space-y-5">
             {!referralLink ? (
-              <Button onClick={generateReferralCode} className="w-full" size="lg">
-                <Zap className="w-4 h-4 mr-2" />
+              <Button
+                onClick={generateReferralCode}
+                className="w-full"
+                size="lg"
+                aria-label="Generate your unique referral link"
+              >
+                <Zap className="w-4 h-4 mr-2" aria-hidden="true" />
                 Generate Your Referral Link
               </Button>
             ) : (
               <>
                 {/* Link Copy Section */}
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                  <label
+                    className="text-sm font-semibold text-gray-700 dark:text-gray-300"
+                    htmlFor="referral-link-input"
+                  >
                     Your Unique Referral Link
                   </label>
                   <div className="flex gap-2">
                     <div className="flex-1 relative">
                       <Input
+                        id="referral-link-input"
                         value={referralLink}
                         readOnly
                         className="pr-12 bg-white dark:bg-gray-900 text-sm font-mono"
+                        aria-label="Your referral link"
                       />
                     </div>
                     <Button
@@ -646,15 +656,17 @@ const EnhancedSafeReferralComponent = () => {
                           : "bg-purple-600 hover:bg-purple-700"
                       }`}
                       size="lg"
+                      aria-label={copiedLink ? "Referral link copied to clipboard" : "Copy referral link to clipboard"}
+                      aria-live="polite"
                     >
                       {copiedLink ? (
                         <>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
+                          <CheckCircle2 className="w-4 h-4 mr-2" aria-hidden="true" />
                           Copied!
                         </>
                       ) : (
                         <>
-                          <Copy className="w-4 h-4 mr-2" />
+                          <Copy className="w-4 h-4 mr-2" aria-hidden="true" />
                           Copy
                         </>
                       )}
@@ -670,14 +682,19 @@ const EnhancedSafeReferralComponent = () => {
                   <p className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
                     Share on Social Media
                   </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div
+                    className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+                    role="group"
+                    aria-label="Share referral link on social media platforms"
+                  >
                     <Button
                       variant="outline"
                       onClick={() => shareReferralLink("twitter")}
                       className="hover:bg-blue-50 hover:border-blue-300 dark:hover:bg-blue-900/20 transition-colors h-12"
                       size="lg"
+                      aria-label="Share referral link on Twitter - opens in new window"
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" />
+                      <ExternalLink className="w-4 h-4 mr-2" aria-hidden="true" />
                       Twitter
                     </Button>
                     <Button
@@ -685,8 +702,9 @@ const EnhancedSafeReferralComponent = () => {
                       onClick={() => shareReferralLink("facebook")}
                       className="hover:bg-blue-50 hover:border-blue-400 dark:hover:bg-blue-900/20 transition-colors h-12"
                       size="lg"
+                      aria-label="Share referral link on Facebook - opens in new window"
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" />
+                      <ExternalLink className="w-4 h-4 mr-2" aria-hidden="true" />
                       Facebook
                     </Button>
                     <Button
@@ -694,8 +712,9 @@ const EnhancedSafeReferralComponent = () => {
                       onClick={() => shareReferralLink("whatsapp")}
                       className="hover:bg-green-50 hover:border-green-300 dark:hover:bg-green-900/20 transition-colors h-12"
                       size="lg"
+                      aria-label="Share referral link on WhatsApp - opens in new window"
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" />
+                      <ExternalLink className="w-4 h-4 mr-2" aria-hidden="true" />
                       WhatsApp
                     </Button>
                   </div>
