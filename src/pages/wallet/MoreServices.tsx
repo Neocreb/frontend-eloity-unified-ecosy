@@ -429,6 +429,18 @@ const MoreServices = () => {
 
   const categories = Array.from(new Set(allServices.map((s) => s.category)));
 
+  // Group current favorites by category
+  const groupedFavorites = useMemo(() => {
+    const grouped: Record<string, Service[]> = {};
+    currentFavorites.forEach((service) => {
+      if (!grouped[service.category]) {
+        grouped[service.category] = [];
+      }
+      grouped[service.category].push(service);
+    });
+    return grouped;
+  }, [currentFavorites]);
+
   const ServiceCard = ({ service }: { service: Service }) => {
     const isFav = isFavorited(service.id);
 
