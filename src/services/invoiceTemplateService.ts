@@ -169,7 +169,8 @@ class InvoiceTemplateService {
       if (error && error.code !== 'PGRST116') throw error;
       return data ? this.mapPaymentLinkCustomization(data) : this.getDefaultPaymentLinkCustomization(userId);
     } catch (error) {
-      console.error('Error fetching payment link customization:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.warn(`Using default payment link customization (fetch failed: ${errorMessage})`);
       return this.getDefaultPaymentLinkCustomization(userId);
     }
   }
