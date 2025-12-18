@@ -32,51 +32,71 @@ export const useRewardsSummary = (): UseRewardsSummaryReturn => {
     timestamp: 0,
   });
 
-  // Fetch summary
-  const fetchSummary = useCallback(async () => {
-    if (!user?.id) {
-      setIsLoading(false);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      setError(null);
-
-      // Initialize summary if needed
-      await userRewardsSummaryService.initializeSummary(user.id);
-
-      // Fetch summary
-      const data = await userRewardsSummaryService.getSummary(user.id);
-
-      if (data) {
-        setSummary(data);
-      } else {
-        // Set default for new users
-        setSummary({
-          user_id: user.id,
-          total_earned: 0,
-          available_balance: 0,
-          total_withdrawn: 0,
-          current_streak: 0,
-          longest_streak: 0,
-          trust_score: 50,
-          level: 1,
-          next_level_threshold: 100,
-          currency_code: "USD",
-          total_activities: 0,
-          activities_this_month: 0,
-          last_activity_at: null,
-          updated_at: new Date().toISOString(),
-        });
+  // Fetch summary with cache management
+  const fetchSummary = useCallback(
+    async (skipCache = false) => {
+      if (!user?.id) {
+        setIsLoading(false);
+        return;
       }
-    } catch (err) {
-      console.error("Error fetching summary:", err);
-      setError(err instanceof Error ? err : new Error("Failed to fetch rewards summary"));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id]);
+
+      // Check cache validity
+      const now = Date.now();
+      const cacheAge = now - cacheRef.current.timestamp;
+      const cacheValid = !skipCache && cacheRef.current.data && cacheAge < CACHE_DURATION_MS;
+
+      if (cacheValid && cacheRef.current.data) {
+        setSummary(cacheRef.current.data);
+        setLastUpdated(new Date(cacheRef.current.timestamp));
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        setError(null);
+
+        // Initialize summary if needed
+        await userRewardsSummaryService.initializeSummary(user.id);
+
+        // Fetch summary
+        const data = await userRewardsSummaryService.getSummary(user.id);
+
+        if (data) {
+          setSummary(data);
+          cacheRef.current = { data, timestamp: now };
+        } else {
+          // Set default for new users
+          const defaultSummary: UserRewardsSummary = {
+            user_id: user.id,
+            total_earned: 0,
+            available_balance: 0,
+            total_withdrawn: 0,
+            current_streak: 0,
+            longest_streak: 0,
+            trust_score: 50,
+            level: 1,
+            next_level_threshold: 100,
+            currency_code: "USD",
+            total_activities: 0,
+            activities_this_month: 0,
+            last_activity_at: null,
+            updated_at: new Date().toISOString(),
+          };
+          setSummary(defaultSummary);
+          cacheRef.current = { data: defaultSummary, timestamp: now };
+        }
+
+        setLastUpdated(new Date(now));
+      } catch (err) {
+        console.error("Error fetching summary:", err);
+        setError(err instanceof Error ? err : new Error("Failed to fetch rewards summary"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id]
+  );
 
   // Initial fetch and real-time subscription
   useEffect(() => {
