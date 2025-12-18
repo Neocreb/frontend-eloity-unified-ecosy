@@ -204,18 +204,23 @@ export const rewardsService = {
 
   // Fetch reward rules
   async getRewardRules(): Promise<RewardRule[]> {
-    const { data, error } = await supabase
-      .from('reward_rules')
-      .select('*')
-      .eq('is_active', true)
-      .order('action_type');
+    try {
+      const { data, error } = await supabase
+        .from('reward_rules')
+        .select('*')
+        .eq('is_active', true)
+        .order('action_type');
 
-    if (error) {
-      console.error('Error fetching reward rules:', error);
+      if (error) {
+        console.error('Error fetching reward rules:', JSON.stringify(error, null, 2));
+        return [];
+      }
+
+      return data || [];
+    } catch (err) {
+      console.error('Exception fetching reward rules:', err instanceof Error ? err.message : JSON.stringify(err));
       return [];
     }
-
-    return data || [];
   },
 
   // Fetch daily action counts would need to come from a different source since there's no daily_action_counts table
