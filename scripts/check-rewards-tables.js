@@ -23,7 +23,10 @@ async function checkTables() {
       'referrals',
       'system_config',
       'daily_action_counts',
-      'spam_detection'
+      'spam_detection',
+      'referral_links',
+      'referral_events',
+      'trust_decay_log'
     ];
 
     console.log('Checking tables...');
