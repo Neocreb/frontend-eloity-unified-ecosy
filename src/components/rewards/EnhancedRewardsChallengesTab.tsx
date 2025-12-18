@@ -468,6 +468,63 @@ const EnhancedRewardsChallengesTab = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Challenge Discovery Section */}
+      {discoveryRecommendations.length > 0 && (
+        <Card className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-200 dark:border-amber-700">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2 text-amber-900 dark:text-amber-100">
+                <Sparkles className="h-5 w-5 text-amber-600" />
+                🎯 Recommended for You
+              </CardTitle>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setShowDiscovery(!showDiscovery)}
+                className="text-xs"
+              >
+                {showDiscovery ? "Hide" : "Show"}
+              </Button>
+            </div>
+            <p className="text-sm text-amber-800 dark:text-amber-200 mt-2">
+              Based on your interests, these high-reward challenges might be perfect for you
+            </p>
+          </CardHeader>
+
+          {showDiscovery && (
+            <CardContent className="space-y-3">
+              {discoveryRecommendations.map((challenge) => (
+                <div
+                  key={challenge.id}
+                  className="p-4 bg-white dark:bg-gray-900 rounded-lg border border-amber-200 dark:border-amber-700 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 dark:text-gray-100">
+                        {challenge.title}
+                      </h4>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {challenge.description}
+                      </p>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 ml-2">
+                      +{challenge.points_reward} pts
+                    </Badge>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => setSelectedCategory(challenge.type || "all")}
+                    className="mt-2 w-full bg-amber-600 hover:bg-amber-700 text-white"
+                  >
+                    Start Challenge
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          )}
+        </Card>
+      )}
     </div>
   );
 };
