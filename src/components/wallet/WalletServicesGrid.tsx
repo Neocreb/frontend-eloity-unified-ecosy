@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import {
   User,
   Building2,
@@ -10,7 +11,11 @@ import {
   Lightbulb,
   Gift,
   Plus,
+  Heart,
 } from "lucide-react";
+import { useServiceFavorites } from "@/hooks/useServiceFavorites";
+import { useAuth } from "@/contexts/AuthContext";
+import { serviceFavoritesService } from "@/services/serviceFavoritesService";
 
 interface Service {
   id: string;
@@ -25,12 +30,49 @@ interface Service {
   };
 }
 
+// Default 7 favorite services
+const DEFAULT_FAVORITES = [
+  "airtime",
+  "data",
+  "electricity",
+  "tv",
+  "safebox",
+  "deposit",
+  "pay-bills",
+];
+
 const WalletServicesGrid = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { favorites, isFavorited, toggleFavorite, refresh } = useServiceFavorites();
 
-  const mainServices: Service[] = [
-    // Row 1: Transfer Services (3 items)
-    {
+  // Initialize default favorites on first load
+  useEffect(() => {
+    const initializeDefaults = async () => {
+      if (user?.id && favorites.length === 0) {
+        try {
+          // Check if user has any favorites set
+          const existingFavorites = await serviceFavoritesService.getFavorites(user.id);
+
+          // If no favorites exist, add the default ones
+          if (existingFavorites.length === 0) {
+            for (const serviceId of DEFAULT_FAVORITES) {
+              await serviceFavoritesService.addFavorite(user.id, serviceId);
+            }
+            await refresh();
+          }
+        } catch (error) {
+          console.error("Error initializing default favorites:", error);
+        }
+      }
+    };
+
+    initializeDefaults();
+  }, [user?.id, favorites.length, refresh]);
+
+  // All available services
+  const allServices: Record<string, Service> = {
+    "to-eloity": {
       id: "to-eloity",
       label: "To Eloity",
       icon: <User className="h-6 w-6" />,
@@ -38,7 +80,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-teal-400 to-cyan-500",
       iconColor: "text-white",
     },
-    {
+    "transfer": {
       id: "transfer",
       label: "Transfer",
       icon: <Building2 className="h-6 w-6" />,
@@ -46,7 +88,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-green-400 to-emerald-500",
       iconColor: "text-white",
     },
-    {
+    "withdraw": {
       id: "withdraw",
       label: "Withdraw",
       icon: <ArrowUpRight className="h-6 w-6" />,
@@ -54,9 +96,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-purple-400 to-blue-500",
       iconColor: "text-white",
     },
-
-    // Row 2: Telecom & Entertainment (4 items)
-    {
+    "airtime": {
       id: "airtime",
       label: "Airtime",
       icon: <Phone className="h-6 w-6" />,
@@ -65,7 +105,7 @@ const WalletServicesGrid = () => {
       iconColor: "text-white",
       badge: { text: "Up to 6%", variant: "hot" },
     },
-    {
+    "data": {
       id: "data",
       label: "Data",
       icon: <Smartphone className="h-6 w-6" />,
@@ -73,7 +113,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-blue-400 to-indigo-500",
       iconColor: "text-white",
     },
-    {
+    "electricity": {
       id: "electricity",
       label: "Electricity",
       icon: <Lightbulb className="h-6 w-6" />,
@@ -81,7 +121,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-yellow-400 to-orange-500",
       iconColor: "text-white",
     },
-    {
+    "tv": {
       id: "tv",
       label: "TV",
       icon: <Tv className="h-6 w-6" />,
@@ -89,9 +129,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-purple-500 to-pink-500",
       iconColor: "text-white",
     },
-
-    // Row 3: Savings & Other Services (4 items)
-    {
+    "safebox": {
       id: "safebox",
       label: "Safebox",
       icon: <Lock className="h-6 w-6" />,
@@ -99,7 +137,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-teal-400 to-green-500",
       iconColor: "text-white",
     },
-    {
+    "deposit": {
       id: "deposit",
       label: "Deposit",
       icon: <Plus className="h-6 w-6" />,
@@ -107,7 +145,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-cyan-400 to-teal-500",
       iconColor: "text-white",
     },
-    {
+    "pay-bills": {
       id: "pay-bills",
       label: "Pay Bills",
       icon: <Lightbulb className="h-6 w-6" />,
@@ -115,7 +153,7 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-blue-400 to-purple-500",
       iconColor: "text-white",
     },
-    {
+    "more": {
       id: "more",
       label: "More",
       icon: <Gift className="h-6 w-6" />,
@@ -123,7 +161,35 @@ const WalletServicesGrid = () => {
       gradient: "bg-gradient-to-br from-gray-400 to-gray-500",
       iconColor: "text-white",
     },
-  ];
+  };
+
+  // Get favorite services in order (excluding the "more" service)
+  const favoriteServiceIds = favorites
+    .map(fav => fav.serviceId)
+    .filter(id => id !== 'more');
+
+  // Row 1: Fixed transfer services (3 items)
+  const row1Services = ['to-eloity', 'transfer', 'withdraw'].map(id => allServices[id]);
+
+  // Rows 2-3: Favorite services (7 items max) + More button
+  const favoriteServices = favoriteServiceIds
+    .map(id => allServices[id])
+    .filter(Boolean);
+
+  // Ensure we have exactly 7 favorites (pad with defaults if needed)
+  while (favoriteServices.length < 7) {
+    const nextDefault = DEFAULT_FAVORITES.find(
+      id => !favoriteServiceIds.includes(id)
+    );
+    if (nextDefault) {
+      favoriteServices.push(allServices[nextDefault]);
+    } else {
+      break;
+    }
+  }
+
+  // Add "More" button as the 8th item
+  const row2And3Services = [...favoriteServices.slice(0, 7), allServices['more']];
 
 
   const ServiceCard = ({ service }: { service: Service }) => (
