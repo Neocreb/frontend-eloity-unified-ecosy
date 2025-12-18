@@ -465,11 +465,11 @@ const DashboardInner = () => {
 
           {/* My Cards */}
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold text-gray-900">My Cards</h2>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">My Cards</h2>
               <button onClick={()=>navigate('/app/wallet/cards')} className="text-blue-600 text-sm font-medium hover:underline">Manage</button>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               {/* Visa Card */}
               <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl p-5 text-white shadow-lg">
                 <div className="flex items-center justify-between mb-6">
