@@ -47,9 +47,12 @@ interface UseChallengesProgressReturn {
 
 export const useChallengesProgress = (): UseChallengesProgressReturn => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [challenges, setChallenges] = useState<ChallengeWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const subscriptionRef = useRef<any>(null);
 
   // Fetch challenges and user progress
   const fetchChallenges = useCallback(async () => {
