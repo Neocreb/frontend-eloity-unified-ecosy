@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRewards } from "@/hooks/use-rewards";
 import { useToast } from "@/hooks/use-toast";
