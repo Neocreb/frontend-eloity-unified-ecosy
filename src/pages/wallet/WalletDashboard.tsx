@@ -348,9 +348,9 @@ const DashboardInner = () => {
           <div>
             <div className="flex items-center gap-2 mb-4">
               <div className="h-5 w-5 text-blue-500 flex items-center justify-center">👤</div>
-              <h2 className="text-lg font-bold text-gray-900">Frequent Recipients</h2>
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">Frequent Recipients</h2>
             </div>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {recipients.map(recipient => (
                 <div key={recipient.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
                   <div className="flex items-center gap-3">
