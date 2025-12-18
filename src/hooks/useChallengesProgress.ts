@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 export interface ChallengeProgress {
   id: string;
@@ -33,18 +34,25 @@ export interface ChallengeWithProgress extends Challenge {
 
 interface UseChallengesProgressReturn {
   challenges: ChallengeWithProgress[];
+  activeChallenges: ChallengeWithProgress[];
+  completedChallenges: ChallengeWithProgress[];
   isLoading: boolean;
   error: Error | null;
+  isUpdating: boolean;
   updateProgress: (challengeId: string, newProgress: number) => Promise<boolean>;
   claimReward: (challengeId: string) => Promise<boolean>;
   refresh: () => Promise<void>;
+  filterByStatus: (status: string) => ChallengeWithProgress[];
 }
 
 export const useChallengesProgress = (): UseChallengesProgressReturn => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [challenges, setChallenges] = useState<ChallengeWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const subscriptionRef = useRef<any>(null);
 
   // Fetch challenges and user progress
   const fetchChallenges = useCallback(async () => {
@@ -155,7 +163,7 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     fetchChallenges();
 
     // Subscribe to real-time updates
-    const subscription = supabase
+    subscriptionRef.current = supabase
       .from(`user_challenges:user_id=eq.${user.id}`)
       .on("INSERT", (payload) => {
         // Add new challenge progress
@@ -176,24 +184,38 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
               : c
           )
         );
+
+        // Show notification for completion
+        if (payload.new.status === "completed" && !payload.old?.completion_date) {
+          toast({
+            title: "Challenge Completed!",
+            description: "You've completed a challenge. Claim your reward!",
+          });
+        }
       })
       .subscribe((status, err) => {
         if (err) {
           console.error("Subscription error:", err);
+          setError(err instanceof Error ? err : new Error("Subscription failed"));
         }
       });
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
     };
-  }, [user?.id, fetchChallenges]);
+  }, [user?.id, fetchChallenges, toast]);
 
   // Update progress
   const updateProgress = useCallback(
     async (challengeId: string, newProgress: number): Promise<boolean> => {
       if (!user?.id) return false;
 
+      setIsUpdating(true);
       try {
+        setError(null);
+
         // Get or create challenge progress record
         const { data: existing, error: fetchError } = await supabase
           .from("user_challenges")
@@ -219,11 +241,15 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
 
           if (updateError) {
             console.error("Error updating progress:", updateError);
+            setError(updateError instanceof Error ? updateError : new Error("Failed to update progress"));
           }
         } else {
           // Create new record
           const challenge = challenges.find((c) => c.id === challengeId);
-          if (!challenge) return false;
+          if (!challenge) {
+            setError(new Error("Challenge not found"));
+            return false;
+          }
 
           const { error: insertError } = await supabase
             .from("user_challenges")
@@ -242,21 +268,35 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
 
           if (insertError) {
             console.error("Error creating progress:", insertError);
+            setError(insertError instanceof Error ? insertError : new Error("Failed to create progress"));
           }
         }
 
         if (success) {
           // Refresh challenges data
           await fetchChallenges();
+          toast({
+            title: "Progress Updated",
+            description: `Progress for ${challengeId} updated successfully`,
+          });
         }
 
         return success;
       } catch (err) {
         console.error("Exception updating progress:", err);
+        const errorMsg = err instanceof Error ? err.message : "Failed to update progress";
+        setError(new Error(errorMsg));
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
         return false;
+      } finally {
+        setIsUpdating(false);
       }
     },
-    [user?.id, challenges, fetchChallenges]
+    [user?.id, challenges, fetchChallenges, toast]
   );
 
   // Claim reward
@@ -264,7 +304,10 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     async (challengeId: string): Promise<boolean> => {
       if (!user?.id) return false;
 
+      setIsUpdating(true);
       try {
+        setError(null);
+
         const { data, error } = await supabase
           .from("user_challenges")
           .update({
@@ -278,6 +321,12 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
 
         if (error) {
           console.error("Error claiming reward:", error);
+          setError(error instanceof Error ? error : new Error("Failed to claim reward"));
+          toast({
+            title: "Error",
+            description: "Failed to claim reward",
+            variant: "destructive",
+          });
           return false;
         }
 
@@ -290,15 +339,29 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
                 : c
             )
           );
+
+          toast({
+            title: "Reward Claimed!",
+            description: "You've claimed your reward",
+          });
         }
 
         return !error;
       } catch (err) {
         console.error("Exception claiming reward:", err);
+        const errorMsg = err instanceof Error ? err.message : "Failed to claim reward";
+        setError(new Error(errorMsg));
+        toast({
+          title: "Error",
+          description: errorMsg,
+          variant: "destructive",
+        });
         return false;
+      } finally {
+        setIsUpdating(false);
       }
     },
-    [user?.id]
+    [user?.id, toast]
   );
 
   // Refresh data
@@ -306,12 +369,34 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     await fetchChallenges();
   }, [fetchChallenges]);
 
+  // Filter by status
+  const filterByStatus = useCallback((status: string): ChallengeWithProgress[] => {
+    return challenges.filter((c) => c.userProgress?.status === status || status === "all");
+  }, [challenges]);
+
+  // Get active and completed challenges
+  const activeChallenges = filterByStatus("active");
+  const completedChallenges = filterByStatus("completed");
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
+    };
+  }, []);
+
   return {
     challenges,
+    activeChallenges,
+    completedChallenges,
     isLoading,
+    isUpdating,
     error,
     updateProgress,
     claimReward,
     refresh,
+    filterByStatus,
   };
 };

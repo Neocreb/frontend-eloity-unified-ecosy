@@ -13,9 +13,9 @@ const Layout = ({ children }: LayoutProps) => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background dark:bg-background text-foreground dark:text-foreground">
+    <div className="min-h-screen flex flex-col bg-background dark:bg-background text-foreground dark:text-foreground relative">
       <Header />
-      <main className="flex-grow pt-16">{children}</main>
+      <main className="flex-grow pt-20 relative z-0">{children}</main>
       <Footer />
     </div>
   );
