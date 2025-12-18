@@ -407,15 +407,15 @@ const DashboardInner = () => {
 
           {/* Recent Activity */}
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <Star className="h-5 w-5 text-purple-600" />
-                <h2 className="text-lg font-bold text-gray-900">Recent Activity</h2>
+                <h2 className="text-lg md:text-xl font-bold text-gray-900">Recent Activity</h2>
               </div>
               <button onClick={()=>navigate('/app/wallet/transactions')} className="text-blue-600 text-sm font-medium hover:underline">See All</button>
             </div>
             {transactions && transactions.length > 0 ? (
-              <div className="space-y-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {transactions.slice(0, 3).map((tx, idx) => (
                   <div key={tx.id || idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div className="flex items-center gap-3 flex-1">
