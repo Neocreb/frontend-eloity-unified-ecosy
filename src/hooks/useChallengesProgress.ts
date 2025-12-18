@@ -163,7 +163,7 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
     fetchChallenges();
 
     // Subscribe to real-time updates
-    const subscription = supabase
+    subscriptionRef.current = supabase
       .from(`user_challenges:user_id=eq.${user.id}`)
       .on("INSERT", (payload) => {
         // Add new challenge progress
@@ -184,17 +184,28 @@ export const useChallengesProgress = (): UseChallengesProgressReturn => {
               : c
           )
         );
+
+        // Show notification for completion
+        if (payload.new.status === "completed" && !payload.old?.completion_date) {
+          toast({
+            title: "Challenge Completed!",
+            description: "You've completed a challenge. Claim your reward!",
+          });
+        }
       })
       .subscribe((status, err) => {
         if (err) {
           console.error("Subscription error:", err);
+          setError(err instanceof Error ? err : new Error("Subscription failed"));
         }
       });
 
     return () => {
-      subscription?.unsubscribe();
+      if (subscriptionRef.current) {
+        subscriptionRef.current.unsubscribe();
+      }
     };
-  }, [user?.id, fetchChallenges]);
+  }, [user?.id, fetchChallenges, toast]);
 
   // Update progress
   const updateProgress = useCallback(
