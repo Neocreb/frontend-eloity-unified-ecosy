@@ -125,8 +125,14 @@ export default function ReferralProgramSection() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalEarnings} ELO</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Lifetime</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{totalEarnings} ELO</div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Lifetime</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -136,8 +142,14 @@ export default function ReferralProgramSection() {
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.conversionRate}%</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Success rate</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{conversionRate}%</div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Success rate</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
