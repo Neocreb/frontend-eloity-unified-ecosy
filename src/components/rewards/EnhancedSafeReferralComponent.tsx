@@ -294,7 +294,7 @@ const EnhancedSafeReferralComponent = () => {
           <div
             className="rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
             role="article"
-            aria-label={`Auto Shared: ${formatCurrency(stats.totalAutoShared, currency)}. 0.5% of your earnings automatically shared`}
+            aria-label={`Auto Shared: ${formatCurrency(stats.totalAutoShared || 0, currency)}. 0.5% of your earnings automatically shared`}
           >
             <div className="flex items-center justify-between mb-4">
               <Heart className="w-5 h-5 opacity-80" aria-hidden="true" />
