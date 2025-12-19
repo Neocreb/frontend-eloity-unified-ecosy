@@ -2,6 +2,10 @@ import React, { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useToast } from "@/hooks/use-toast";
+import { usePartnershipStats } from "@/hooks/usePartnershipStats";
 import {
   Handshake,
   DollarSign,
@@ -10,87 +14,23 @@ import {
   CheckCircle,
   Clock,
   ExternalLink,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
-
-interface Partnership {
-  id: string;
-  name: string;
-  category: string;
-  status: "active" | "pending" | "available";
-  commissionRate: number;
-  earnings: number;
-  description: string;
-  icon: string;
-  url?: string;
-}
+import { formatCurrency } from "@/utils/formatters";
 
 export default function PartnershipsSection() {
+  const { toast } = useToast();
   const [selectedTab, setSelectedTab] = useState<"active" | "pending" | "available">("active");
-
-  const partnerships: Partnership[] = [
-    {
-      id: "1",
-      name: "Crypto Exchange",
-      category: "Finance",
-      status: "active",
-      commissionRate: 8,
-      earnings: 1250.5,
-      description: "Earn commission on successful referrals",
-      icon: "💱",
-      url: "https://crypto-exchange.example.com",
-    },
-    {
-      id: "2",
-      name: "Premium Subscription",
-      category: "SaaS",
-      status: "active",
-      commissionRate: 15,
-      earnings: 890.25,
-      description: "Promote premium features to earn recurring commissions",
-      icon: "⭐",
-      url: "https://premium.example.com",
-    },
-    {
-      id: "3",
-      name: "E-learning Platform",
-      category: "Education",
-      status: "pending",
-      commissionRate: 10,
-      earnings: 0,
-      description: "Waiting for approval to begin",
-      icon: "📚",
-    },
-    {
-      id: "4",
-      name: "Gaming Studio",
-      category: "Gaming",
-      status: "available",
-      commissionRate: 12,
-      earnings: 0,
-      description: "Join our affiliate program today",
-      icon: "🎮",
-      url: "https://gaming-studio.example.com",
-    },
-    {
-      id: "5",
-      name: "Web Hosting",
-      category: "Technology",
-      status: "available",
-      commissionRate: 20,
-      earnings: 0,
-      description: "High commission for web hosting referrals",
-      icon: "🌐",
-      url: "https://webhosting.example.com",
-    },
-  ];
-
-  const filteredPartnerships = partnerships.filter((p) => p.status === selectedTab);
-  const totalPartnershipEarnings = partnerships
-    .filter((p) => p.status === "active")
-    .reduce((sum, p) => sum + p.earnings, 0);
-  const activeCount = partnerships.filter((p) => p.status === "active").length;
-  const pendingCount = partnerships.filter((p) => p.status === "pending").length;
-  const availableCount = partnerships.filter((p) => p.status === "available").length;
+  const [isApplying, setIsApplying] = useState<string | null>(null);
+  const {
+    availablePartnerships,
+    userPartnerships,
+    stats,
+    isLoading,
+    error,
+    applyForPartnership,
+  } = usePartnershipStats();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
