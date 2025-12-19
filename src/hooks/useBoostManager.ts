@@ -153,7 +153,8 @@ export function useBoostManager(): UseBoostManagerReturn {
       await fetchData();
       return data as UserBoost;
     } catch (err) {
-      console.error("Error creating boost:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to create boost";
+      console.error("Error creating boost:", errorMessage);
       return null;
     }
   };
