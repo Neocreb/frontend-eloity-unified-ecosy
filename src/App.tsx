@@ -147,6 +147,7 @@ import RewardsSendGifts from "./pages/rewards/RewardsSendGifts";
 import RewardsAnalytics from "./pages/rewards/RewardsAnalytics";
 import RewardsPartnerships from "./pages/rewards/RewardsPartnerships";
 import RewardsBoostManager from "./pages/rewards/RewardsBoostManager";
+import GrowthHub from "./pages/growth/GrowthHub";
 // import Marketplace from "./pages/Marketplace";
 import EnhancedMarketplace from "./pages/EnhancedMarketplace";
 import MarketplaceCart from "./pages/marketplace/MarketplaceCart";
@@ -687,6 +688,7 @@ const AppRoutes = () => {
           <Route path="rewards/analytics" element={<RewardsAnalytics />} />
           <Route path="rewards/partnerships" element={<RewardsPartnerships />} />
           <Route path="rewards/boost-manager" element={<RewardsBoostManager />} />
+          <Route path="growth-hub" element={<GrowthHub />} />
 
           {/* Chat & Social Routes - Pending Full Page Implementation */}
           <Route path="chat/create-sticker" element={<StickerCreation />} />
