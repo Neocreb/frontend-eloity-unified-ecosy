@@ -240,15 +240,23 @@ export default function ReferralProgramSection() {
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                 This Month
               </p>
-              <p className="text-2xl font-bold text-green-600">
-                {stats.monthlyEarnings} ELO
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <p className="text-2xl font-bold text-green-600">
+                  {monthlyEarnings} ELO
+                </p>
+              )}
             </div>
             <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 rounded-lg">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                 Active Referrals
               </p>
-              <p className="text-2xl font-bold text-blue-600">{stats.activeReferrals}</p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <p className="text-2xl font-bold text-blue-600">{activeReferrals}</p>
+              )}
             </div>
           </div>
         </CardContent>
