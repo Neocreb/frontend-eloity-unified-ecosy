@@ -301,8 +301,8 @@ const EnhancedSafeReferralComponent = () => {
               <CheckCircle2 className="w-4 h-4 opacity-80" aria-hidden="true" />
             </div>
             <p className="text-sm opacity-90 mb-1">Auto Shared</p>
-            <p className="text-3xl font-bold" aria-label={`Auto shared: ${formatCurrency(stats.totalAutoShared, currency)}`}>
-              {formatCurrency(stats.totalAutoShared, currency)}
+            <p className="text-3xl font-bold" aria-label={`Auto shared: ${formatCurrency(stats.totalAutoShared || 0, currency)}`}>
+              {formatCurrency(stats.totalAutoShared || 0, currency)}
             </p>
             <p className="text-xs opacity-75 mt-2">0.5% of earnings shared</p>
           </div>
