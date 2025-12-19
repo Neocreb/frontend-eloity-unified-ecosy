@@ -64,7 +64,13 @@ export function useRewardsHistory(): UseRewardsHistoryReturn {
         .order("created_at", { ascending: false })
         .limit(100);
 
-      if (transactionError) throw transactionError;
+      if (transactionError) {
+        // Log with proper error message
+        console.warn("Rewards history table not found or inaccessible, using empty data:", transactionError.message);
+        setTransactions([]);
+      } else {
+        setTransactions((transactionData || []) as RewardTransaction[]);
+      }
 
       // Fetch monthly earnings
       const { data: monthlyData, error: monthlyError } = await supabase.rpc(
@@ -75,13 +81,18 @@ export function useRewardsHistory(): UseRewardsHistoryReturn {
         }
       );
 
-      if (monthlyError) throw monthlyError;
+      if (monthlyError) {
+        console.warn("Monthly earnings RPC not found or inaccessible, using empty data:", monthlyError.message);
+        setMonthlyEarnings([]);
+      } else {
+        setMonthlyEarnings((monthlyData || []) as MonthlyEarnings[]);
+      }
 
-      setTransactions((transactionData || []) as RewardTransaction[]);
-      setMonthlyEarnings((monthlyData || []) as MonthlyEarnings[]);
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch rewards history"));
-      console.error("Error fetching rewards history:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch rewards history";
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      console.error("Error fetching rewards history:", errorMessage);
     } finally {
       setIsLoading(false);
     }
