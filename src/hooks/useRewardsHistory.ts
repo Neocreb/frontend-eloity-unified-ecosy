@@ -154,18 +154,25 @@ export function useLeaderboard(type: string = "earnings"): UseLeaderboardReturn 
         .order("rank", { ascending: true })
         .limit(100);
 
-      if (leaderboardError) throw leaderboardError;
+      if (leaderboardError) {
+        console.warn("Leaderboard table not found or inaccessible:", leaderboardError.message);
+        setLeaderboard([]);
+        setUserRank(null);
+      } else {
+        setLeaderboard((leaderboardData || []) as LeaderboardEntry[]);
 
-      setLeaderboard((leaderboardData || []) as LeaderboardEntry[]);
-
-      // Find user's rank
-      if (user?.id) {
-        const userEntry = (leaderboardData || []).find((e: any) => e.user_id === user.id);
-        setUserRank(userEntry as LeaderboardEntry | null);
+        // Find user's rank
+        if (user?.id) {
+          const userEntry = (leaderboardData || []).find((e: any) => e.user_id === user.id);
+          setUserRank(userEntry as LeaderboardEntry | null);
+        }
       }
+
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch leaderboard"));
-      console.error("Error fetching leaderboard:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch leaderboard";
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      console.error("Error fetching leaderboard:", errorMessage);
     } finally {
       setIsLoading(false);
     }
