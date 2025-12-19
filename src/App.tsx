@@ -189,6 +189,7 @@ import LessonViewer from "./pages/LessonViewer";
 import ArticleViewer from "./pages/ArticleViewer";
 import NotFound from "./pages/NotFound";
 import Rewards from "./pages/Rewards";
+import Referral from "./pages/Referral";
 import EnhancedSettings from "./pages/EnhancedSettings";
 // import AdminDashboard from "./pages/admin/AdminDashboard";
 import ComprehensiveAdminDashboard from "./pages/admin/ComprehensiveAdminDashboard";
@@ -771,6 +772,7 @@ const AppRoutes = () => {
           <Route path="campaigns" element={<CampaignCenter />} />
           <Route path="campaigns/create" element={<CreateCampaignPage />} />
           <Route path="rewards" element={<Rewards />} />
+          <Route path="referral" element={<Referral />} />
           <Route path="videos" element={<VideosPage />} />
           <Route path="videos/:videoId" element={<VideoDetail />} />
           <Route path="live/:id" element={<LiveStreamPage />} />
