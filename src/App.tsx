@@ -141,6 +141,12 @@ import AddExternalWork from "./pages/profile/AddExternalWork";
 import EditProfile from "./pages/profile/EditProfile";
 // Phase 3 - Rewards Modal Conversions
 import WithdrawRewards from "./pages/rewards/WithdrawRewards";
+import RewardsMoreServices from "./pages/rewards/RewardsMoreServices";
+import RewardsWithdraw from "./pages/rewards/RewardsWithdraw";
+import RewardsSendGifts from "./pages/rewards/RewardsSendGifts";
+import RewardsAnalytics from "./pages/rewards/RewardsAnalytics";
+import RewardsPartnerships from "./pages/rewards/RewardsPartnerships";
+import RewardsBoostManager from "./pages/rewards/RewardsBoostManager";
 // import Marketplace from "./pages/Marketplace";
 import EnhancedMarketplace from "./pages/EnhancedMarketplace";
 import MarketplaceCart from "./pages/marketplace/MarketplaceCart";
@@ -671,7 +677,12 @@ const AppRoutes = () => {
           <Route path="profile/add-work" element={<AddExternalWork />} />
 
           {/* Rewards Routes - Full Page Implementation COMPLETE */}
-          <Route path="rewards/withdraw" element={<WithdrawRewards />} />
+          <Route path="rewards/more" element={<RewardsMoreServices />} />
+          <Route path="rewards/withdraw" element={<RewardsWithdraw />} />
+          <Route path="rewards/send-gifts" element={<RewardsSendGifts />} />
+          <Route path="rewards/analytics" element={<RewardsAnalytics />} />
+          <Route path="rewards/partnerships" element={<RewardsPartnerships />} />
+          <Route path="rewards/boost-manager" element={<RewardsBoostManager />} />
 
           {/* Chat & Social Routes - Pending Full Page Implementation */}
           <Route path="chat/create-sticker" element={<StickerCreation />} />

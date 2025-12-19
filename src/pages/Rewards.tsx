@@ -19,6 +19,8 @@ import {
   Award,
   Zap,
   TrendingUp,
+  MoreHorizontal,
+  BarChart3,
 } from "lucide-react";
 import CreatorEconomyHeader from "@/components/rewards/CreatorEconomyHeader";
 import EnhancedEarningsOverview from "@/components/rewards/EnhancedEarningsOverview";
@@ -162,113 +164,77 @@ const CreatorEconomy = () => {
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* Upper Zone - Full Bleed Gradient Hero Section */}
-      <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-purple-600 via-purple-500 to-blue-600 pt-8 pb-32">
+      <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-purple-600 via-purple-500 to-blue-600 dark:from-purple-900 dark:via-purple-800 dark:to-blue-900 pt-8 pb-20 sm:pb-24 md:pb-32">
         <AnimatedGradientWave />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
           {/* Welcome Greeting */}
-          <div className="text-white text-sm md:text-base font-medium mb-8 flex items-center justify-between">
-            <div>Welcome back, {firstName}! 👋</div>
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-white" />
-              </div>
-              <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                <Star className="w-3 h-3 mr-1" />
-                Creator Economy
-              </Badge>
-            </div>
+          <div className="text-white text-xs md:text-sm font-medium mb-6">
+            Welcome back, {firstName}! 👋
           </div>
 
           {/* Main Balance Display */}
-          <div className="space-y-4 mb-8">
-            <div>
-              <div className="text-white/80 text-xs md:text-sm font-medium mb-3">
-                Total Earnings
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="flex-1">
-                  <div className="text-white text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
-                    {showBalance
-                      ? formatCurrencyContext(
-                          revenueData?.totalEarnings || 0
-                        )
-                      : "••••••••"}
-                  </div>
-                  <div className="flex items-center gap-2 mt-2">
-                    <Badge className="bg-green-400/20 text-green-100 border-green-400/30 hover:bg-green-400/30">
-                      <TrendingUp className="w-3 h-3 mr-1" />
-                      +15.8% this month
-                    </Badge>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="text-white hover:bg-white/20 h-10 w-10 p-0"
-                  onClick={() => setShowBalance((v) => !v)}
-                >
-                  {showBalance ? (
-                    <Eye className="h-5 w-5" />
-                  ) : (
-                    <EyeOff className="h-5 w-5" />
-                  )}
-                </Button>
-              </div>
+          <div className="mb-8">
+            <div className="text-white/80 text-xs md:text-sm font-medium mb-2">
+              Total Assets (ELOITs)
             </div>
-
-            {/* Balance Breakdown */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-6">
-              <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20">
-                <p className="text-white/70 text-xs font-medium mb-1">Available</p>
-                <p className="text-white text-lg font-bold">
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <div className="text-white text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                   {showBalance
                     ? formatCurrencyContext(
-                        revenueData?.availableToWithdraw || 0
+                        revenueData?.totalEarnings || 0
                       )
-                    : "••••"}
-                </p>
+                    : "••••••••"}
+                </div>
               </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20">
-                <p className="text-white/70 text-xs font-medium mb-1">
-                  This Month
-                </p>
-                <p className="text-white text-lg font-bold">$456.78</p>
-              </div>
-              <div className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 col-span-2 md:col-span-1">
-                <p className="text-white/70 text-xs font-medium mb-1">
-                  Trust Score
-                </p>
-                <p className="text-white text-lg font-bold">85%</p>
-              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-white hover:bg-white/20 h-10 w-10 p-0"
+                onClick={() => setShowBalance((v) => !v)}
+              >
+                {showBalance ? (
+                  <Eye className="h-5 w-5" />
+                ) : (
+                  <EyeOff className="h-5 w-5" />
+                )}
+              </Button>
             </div>
           </div>
         </div>
 
         {/* Quick Action Buttons - Floating Section */}
-        <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mt-12 -mb-6">
-          <div className="flex gap-3 justify-center flex-wrap max-w-2xl mx-auto">
-            <Button
-              onClick={() => setActiveTab("withdraw")}
-              className="flex-1 min-w-32 md:min-w-40 bg-white text-purple-600 hover:bg-purple-50 rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-2 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+        <div className="relative z-20 max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12 -mb-4 md:-mb-6">
+          <div className="flex gap-1.5 sm:gap-2 md:gap-3 justify-center">
+            <button
+              onClick={() => navigate("/app/rewards/withdraw")}
+              className="flex-1 bg-white text-slate-900 rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
-              <ArrowUp className="h-5 w-5" />
-              <span>Withdraw</span>
-            </Button>
-            <Button
-              onClick={() => navigate("/app/send-gifts")}
-              className="flex-1 min-w-32 md:min-w-40 bg-white text-purple-600 hover:bg-purple-50 rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-2 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              <ArrowUp className="h-4 sm:h-5 w-4 sm:w-5" />
+              <span className="hidden sm:inline">Withdraw</span>
+            </button>
+            <button
+              onClick={() => navigate("/app/rewards/send-gifts")}
+              className="flex-1 bg-white text-slate-900 rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
-              <Gift className="h-5 w-5" />
-              <span>Send Gifts</span>
-            </Button>
-            <Button
-              onClick={() => setActiveTab("referrals")}
-              className="flex-1 min-w-32 md:min-w-40 bg-white text-purple-600 hover:bg-purple-50 rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-2 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              <Gift className="h-4 sm:h-5 w-4 sm:w-5" />
+              <span className="hidden sm:inline">Send Gifts</span>
+            </button>
+            <button
+              onClick={() => navigate("/app/rewards/analytics")}
+              className="flex-1 bg-white text-slate-900 rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
-              <UserPlus className="h-5 w-5" />
-              <span>Invite</span>
-            </Button>
+              <BarChart3 className="h-4 sm:h-5 w-4 sm:w-5" />
+              <span className="hidden sm:inline">Analytics</span>
+            </button>
+            <button
+              onClick={() => navigate("/app/rewards/more")}
+              className="flex-1 bg-white text-slate-900 rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+            >
+              <MoreHorizontal className="h-4 sm:h-5 w-4 sm:w-5" />
+              <span className="hidden sm:inline">More</span>
+            </button>
           </div>
         </div>
       </div>
@@ -285,31 +251,44 @@ const CreatorEconomy = () => {
         ></div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-6 pb-12">
-          {/* Quick Stats Bar - Mobile Optimized */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-lg p-3 md:p-4">
-              <p className="text-xs text-gray-600 font-medium">Total Earned</p>
-              <p className="text-lg md:text-xl font-bold text-green-700 mt-1">
-                {formatCurrencyContext(revenueData?.totalEarnings || 0)}
-              </p>
+          {/* Quick Access Section */}
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg md:text-xl font-bold text-gray-900">Quick Access</h2>
+              <button
+                onClick={() => navigate("/app/rewards/more")}
+                className="text-blue-600 text-sm font-medium hover:underline"
+              >
+                View All
+              </button>
             </div>
-            <div className="bg-gradient-to-br from-blue-50 to-cyan-50 border border-blue-200 rounded-lg p-3 md:p-4">
-              <p className="text-xs text-gray-600 font-medium">Available</p>
-              <p className="text-lg md:text-xl font-bold text-blue-700 mt-1">
-                {formatCurrencyContext(revenueData?.availableToWithdraw || 0)}
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-purple-50 to-pink-50 border border-purple-200 rounded-lg p-3 md:p-4">
-              <p className="text-xs text-gray-600 font-medium">Level</p>
-              <p className="text-lg md:text-xl font-bold text-purple-700 mt-1">
-                <Badge className="bg-purple-600 text-white">Gold</Badge>
-              </p>
-            </div>
-            <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-lg p-3 md:p-4">
-              <p className="text-xs text-gray-600 font-medium">Trust Score</p>
-              <p className="text-lg md:text-xl font-bold text-amber-700 mt-1">
-                85%
-              </p>
+
+            <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2 md:gap-3">
+              {/* Quick Access Items */}
+              {[
+                { icon: "👥", label: "Invite Friends", path: "/app/rewards/more", badge: "Hot" },
+                { icon: "📊", label: "Analytics", path: "/app/rewards/analytics", badge: null },
+                { icon: "🏆", label: "Leaderboard", path: "/app/rewards/more", badge: null },
+                { icon: "⚡", label: "Challenges", path: "/app/rewards?tab=challenges", badge: "100%" },
+                { icon: "⭐", label: "Referrals", path: "/app/rewards?tab=referrals", badge: null },
+                { icon: "🎮", label: "Battles", path: "/app/rewards?tab=battles", badge: null },
+              ].map((item, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => navigate(item.path)}
+                  className="flex flex-col items-center justify-center gap-2 p-3 md:p-4 bg-slate-900 text-white rounded-lg md:rounded-xl hover:bg-slate-800 transition-all active:scale-95 relative"
+                >
+                  {item.badge && (
+                    <span className="absolute -top-2 -right-2 bg-yellow-400 text-slate-900 text-2xs px-1.5 py-0.5 rounded-full font-bold">
+                      {item.badge}
+                    </span>
+                  )}
+                  <span className="text-2xl md:text-3xl">{item.icon}</span>
+                  <span className="text-2xs md:text-xs font-medium text-center leading-tight">
+                    {item.label}
+                  </span>
+                </button>
+              ))}
             </div>
           </div>
 

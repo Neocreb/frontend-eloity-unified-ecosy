@@ -170,7 +170,7 @@ const DashboardInner = () => {
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* Upper Zone - Full Bleed Gradient */}
-      <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-32">
+      <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-20 sm:pb-24 md:pb-32">
         <AnimatedWave />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -227,34 +227,34 @@ const DashboardInner = () => {
         </div>
 
         {/* Floating Action Buttons */}
-        <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mt-12 -mb-6">
-          <div className="flex gap-3 justify-center flex-wrap max-w-2xl">
+        <div className="relative z-20 max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12 -mb-4 md:-mb-6">
+          <div className="flex gap-1.5 sm:gap-2 md:gap-3 justify-center">
             <button
               onClick={()=>navigate('/app/wallet/deposit')}
-              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 bg-white text-[#8B5CF6] rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
-              <Plus className="h-5 w-5" />
-              <span>Deposit</span>
+              <Plus className="h-4 sm:h-5 w-4 sm:w-5" />
+              <span className="hidden sm:inline">Deposit</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/send-money')}
-              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 bg-white text-[#8B5CF6] rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
-              <Send className="h-5 w-5" />
-              <span>Send</span>
+              <Send className="h-4 sm:h-5 w-4 sm:w-5" />
+              <span className="hidden sm:inline">Send</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/withdraw')}
-              className="flex-1 min-w-32 md:min-w-40 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 bg-white text-[#8B5CF6] rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
             >
-              <ArrowUp className="h-5 w-5" />
-              <span>Withdraw</span>
+              <ArrowUp className="h-4 sm:h-5 w-4 sm:w-5" />
+              <span className="hidden sm:inline">Withdraw</span>
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex-1 bg-white text-[#8B5CF6] rounded-2xl py-3 px-4 font-semibold text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
-                  <MoreHorizontal className="h-5 w-5" />
-                  <span>More</span>
+                <button className="flex-1 bg-white text-[#8B5CF6] rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
+                  <MoreHorizontal className="h-4 sm:h-5 w-4 sm:w-5" />
+                  <span className="hidden sm:inline">More</span>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="center">
