@@ -381,7 +381,7 @@ const EnhancedSafeReferralComponent = () => {
                     <TrendingUp className="h-8 w-8 text-cyan-400" />
                   </div>
                   <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                    <p>📊 Based on current {stats.activeReferrals} active referrals</p>
+                    <p>📊 Based on current {stats.activeReferrals || 0} active referrals</p>
                     <p>💰 {formatCurrency(projections.tierCalcs.baseReward, currency)} per referral/month</p>
                   </div>
                 </div>
