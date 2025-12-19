@@ -18,6 +18,7 @@ import {
   RefreshCw,
   AlertCircle,
   Zap,
+  Star,
 } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
 import BattleVoting from "@/components/voting/BattleVoting";

@@ -841,7 +841,7 @@ const EnhancedSafeReferralComponent = () => {
                 color: "from-blue-500 to-purple-600",
               },
             ].map((tier) => {
-              const isCurrentTier = stats?.tier.toLowerCase() === tier.name.toLowerCase();
+              const isCurrentTier = stats?.tier?.toLowerCase() === tier.name.toLowerCase();
               return (
                 <div
                   key={tier.name}
