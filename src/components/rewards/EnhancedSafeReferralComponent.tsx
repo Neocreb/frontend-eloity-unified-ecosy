@@ -472,7 +472,7 @@ const EnhancedSafeReferralComponent = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium">Progress</span>
                     <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                      {stats.totalReferrals}/{projections.nextTierThreshold}
+                      {stats.totalReferrals || 0}/{projections.nextTierThreshold}
                     </span>
                   </div>
                   <Progress
