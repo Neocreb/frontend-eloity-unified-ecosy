@@ -166,8 +166,9 @@ export function usePartnershipStats(): UsePartnershipStatsReturn {
       await fetchData();
       return true;
     } catch (err) {
-      console.error("Error applying for partnership:", err);
-      setError(err instanceof Error ? err : new Error("Failed to apply for partnership"));
+      const errorMessage = err instanceof Error ? err.message : "Failed to apply for partnership";
+      console.error("Error applying for partnership:", errorMessage);
+      setError(err instanceof Error ? err : new Error(errorMessage));
       return false;
     }
   };
