@@ -355,7 +355,7 @@ const EnhancedSafeReferralComponent = () => {
                 <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800">
                   <p className="text-xs font-semibold text-muted-foreground mb-2">Total This Month</p>
                   <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                    {formatCurrency(stats.earningsThisMonth, currency)}
+                    {formatCurrency(stats.earningsThisMonth || 0, currency)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
                     All referral sources combined
