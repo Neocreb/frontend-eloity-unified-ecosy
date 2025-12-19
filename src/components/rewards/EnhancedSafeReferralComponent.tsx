@@ -276,7 +276,7 @@ const EnhancedSafeReferralComponent = () => {
           <div
             className="rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
             role="article"
-            aria-label={`Total Earnings: ${formatCurrency(stats.totalEarnings, currency)}. ${formatCurrency(stats.earningsThisMonth, currency)} this month`}
+            aria-label={`Total Earnings: ${formatCurrency(stats.totalEarnings || 0, currency)}. ${formatCurrency(stats.earningsThisMonth || 0, currency)} this month`}
           >
             <div className="flex items-center justify-between mb-4">
               <DollarSign className="w-5 h-5 opacity-80" aria-hidden="true" />
