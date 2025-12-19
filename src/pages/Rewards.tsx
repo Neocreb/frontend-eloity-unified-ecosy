@@ -128,32 +128,32 @@ const CreatorEconomy = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-white dark:bg-slate-950">
         {/* Header Skeleton */}
-        <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-purple-600 to-blue-600 pt-8 pb-32">
+        <div className="relative w-full bg-gradient-to-b from-purple-600 to-blue-600 dark:from-purple-900 dark:to-blue-800 pt-8 pb-32">
           <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
-            <Skeleton className="h-6 w-48 mb-8" />
-            <Skeleton className="h-12 w-64 mb-4" />
+            <Skeleton className="h-6 w-48 mb-8 bg-white/20" />
+            <Skeleton className="h-12 w-64 mb-4 bg-white/20" />
             <div className="flex gap-2 mt-8">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-12 w-28" />
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="h-12 w-32 bg-white/20" />
               ))}
             </div>
           </div>
-          <div className="relative z-20 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mt-12 -mb-6">
-            <div className="flex gap-3 justify-center flex-wrap">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="flex-1 min-w-32 h-16" />
+          <div className="relative z-20 max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 mt-12 -mb-6">
+            <div className="flex gap-2 sm:gap-2.5 md:gap-3 justify-center max-w-md mx-auto">
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="flex-1 h-20 rounded-lg bg-white/20" />
               ))}
             </div>
           </div>
         </div>
 
         {/* Content Skeleton */}
-        <div className="relative w-screen -ml-[50vw] left-1/2 bg-white pt-2 min-h-screen">
+        <div className="relative w-full bg-white dark:bg-slate-950 pt-2 min-h-screen">
           <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-6 pb-12">
             {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-48 rounded-xl" />
+              <Skeleton key={i} className="h-48 rounded-xl dark:bg-slate-800" />
             ))}
           </div>
         </div>
