@@ -250,12 +250,12 @@ const CreatorEconomy = () => {
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2 md:gap-3">
               {/* Quick Access Items */}
               {[
-                { icon: "👥", label: "Invite Friends", path: "/app/rewards?tab=referrals", badge: "Hot" },
+                { icon: "🚀", label: "Growth Hub", path: "/app/growth-hub", badge: "New" },
+                { icon: "👥", label: "Invite Friends", path: "/app/growth-hub", badge: "Hot" },
                 { icon: "📊", label: "Analytics", path: "/app/rewards/analytics", badge: null },
                 { icon: "🏆", label: "Leaderboard", path: "/app/rewards/more", badge: null },
                 { icon: "⚡", label: "Challenges", path: "/app/rewards?tab=challenges", badge: "100%" },
-                { icon: "⭐", label: "Referrals", path: "/app/rewards?tab=referrals", badge: null },
-                { icon: "🎮", label: "Battles", path: "/app/rewards?tab=battles", badge: null },
+                { icon: "⭐", label: "Referrals", path: "/app/growth-hub", badge: null },
               ].map((item, idx) => (
                 <button
                   key={idx}

@@ -343,12 +343,12 @@ const EnhancedSafeReferralComponent = () => {
                   <p className="text-xs font-semibold text-muted-foreground mb-2">Revenue Share</p>
                   <p className="text-3xl font-bold text-green-600 dark:text-green-400">
                     {formatCurrency(
-                      stats.earningsThisMonth * projections.tierCalcs.revenueShare,
+                      (stats?.earningsThisMonth || 0) * (projections?.tierCalcs?.revenueShare || 0.05),
                       currency
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {(projections.tierCalcs.revenueShare * 100).toFixed(1)}% of your earnings
+                    {((projections?.tierCalcs?.revenueShare || 0.05) * 100).toFixed(1)}% of your earnings
                   </p>
                 </div>
 
@@ -397,7 +397,7 @@ const EnhancedSafeReferralComponent = () => {
                     <Zap className="h-8 w-8 text-green-400" />
                   </div>
                   <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                    <p>🚀 Includes {(projections.tierCalcs.revenueShare * 100).toFixed(1)}% revenue share</p>
+                    <p>🚀 Includes {((projections?.tierCalcs?.revenueShare || 0.05) * 100).toFixed(1)}% revenue share</p>
                     <p>📈 If you maintain current activity level</p>
                   </div>
                 </div>

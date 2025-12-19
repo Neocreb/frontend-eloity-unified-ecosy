@@ -147,6 +147,7 @@ import RewardsSendGifts from "./pages/rewards/RewardsSendGifts";
 import RewardsAnalytics from "./pages/rewards/RewardsAnalytics";
 import RewardsPartnerships from "./pages/rewards/RewardsPartnerships";
 import RewardsBoostManager from "./pages/rewards/RewardsBoostManager";
+import GrowthHub from "./pages/growth/GrowthHub";
 // import Marketplace from "./pages/Marketplace";
 import EnhancedMarketplace from "./pages/EnhancedMarketplace";
 import MarketplaceCart from "./pages/marketplace/MarketplaceCart";
@@ -225,6 +226,9 @@ import AdminLandingWaitlist from "./pages/admin/AdminLandingWaitlist";
 import AdminReloadlyCommission from "./pages/admin/AdminReloadlyCommission";
 import AdminReloadlyTransactions from "./pages/admin/AdminReloadlyTransactions";
 import AdminReloadlyReports from "./pages/admin/AdminReloadlyReports";
+import AdminPartnerships from "./pages/admin/AdminPartnerships";
+import AdminChallenges from "./pages/admin/AdminChallenges";
+import AdminReferrals from "./pages/admin/AdminReferrals";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
@@ -684,6 +688,7 @@ const AppRoutes = () => {
           <Route path="rewards/analytics" element={<RewardsAnalytics />} />
           <Route path="rewards/partnerships" element={<RewardsPartnerships />} />
           <Route path="rewards/boost-manager" element={<RewardsBoostManager />} />
+          <Route path="growth-hub" element={<GrowthHub />} />
 
           {/* Chat & Social Routes - Pending Full Page Implementation */}
           <Route path="chat/create-sticker" element={<StickerCreation />} />
@@ -894,6 +899,9 @@ const AppRoutes = () => {
         <Route path="boosts" element={<AdminBoosts />} />
         <Route path="system" element={<AdminSystem />} />
         <Route path="ads" element={<AdminAdsManager />} />
+        <Route path="partnerships" element={<AdminPartnerships />} />
+        <Route path="challenges" element={<AdminChallenges />} />
+        <Route path="referrals" element={<AdminReferrals />} />
         <Route path="landing-overview" element={<AdminLandingOverview />} />
         <Route path="landing-testimonials" element={<AdminLandingTestimonials />} />
         <Route path="landing-faqs" element={<AdminLandingFAQs />} />
