@@ -686,6 +686,8 @@ const AppRoutes = () => {
 
           {/* Rewards Routes - Full Page Implementation COMPLETE */}
           <Route path="rewards/more" element={<RewardsMore />} />
+          <Route path="rewards/leaderboard" element={<RewardsLeaderboard />} />
+          <Route path="rewards/history" element={<RewardsHistoryPage />} />
           <Route path="rewards/withdraw" element={<RewardsWithdraw />} />
           <Route path="rewards/send-gifts" element={<RewardsSendGifts />} />
           <Route path="rewards/analytics" element={<RewardsAnalytics />} />
