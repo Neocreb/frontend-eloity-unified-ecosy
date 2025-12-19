@@ -143,6 +143,8 @@ import EditProfile from "./pages/profile/EditProfile";
 import WithdrawRewards from "./pages/rewards/WithdrawRewards";
 import RewardsMoreServices from "./pages/rewards/RewardsMoreServices";
 import RewardsMore from "./pages/rewards/RewardsMore";
+import RewardsLeaderboard from "./pages/rewards/RewardsLeaderboard";
+import RewardsHistoryPage from "./pages/rewards/RewardsHistory";
 import RewardsWithdraw from "./pages/rewards/RewardsWithdraw";
 import RewardsSendGifts from "./pages/rewards/RewardsSendGifts";
 import RewardsAnalytics from "./pages/rewards/RewardsAnalytics";
