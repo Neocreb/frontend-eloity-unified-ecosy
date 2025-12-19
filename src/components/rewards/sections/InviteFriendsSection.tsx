@@ -246,17 +246,61 @@ export default function InviteFriendsSection() {
         </CardContent>
       </Card>
 
+      {/* Send Invitation Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Send New Invitation</CardTitle>
+          <CardDescription>Invite friends via email to earn rewards</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSendInvitation} className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="friend@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSending}
+              className="flex-1"
+            />
+            <Button
+              type="submit"
+              disabled={isSending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending
+                </>
+              ) : (
+                "Send"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Invited Friends List */}
       <Card>
         <CardHeader>
           <CardTitle>Invited Friends</CardTitle>
           <CardDescription>
-            {pendingFriends > 0 && `${pendingFriends} pending, `}
-            {convertedFriends} joined
+            {stats && (
+              <>
+                {stats.pendingInvites > 0 && `${stats.pendingInvites} pending, `}
+                {stats.convertedInvites} joined
+              </>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {invitedFriends.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : invitations.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-600 dark:text-gray-400">No invites sent yet</p>
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
@@ -265,22 +309,22 @@ export default function InviteFriendsSection() {
             </div>
           ) : (
             <div className="space-y-3">
-              {invitedFriends.map((friend) => (
+              {invitations.map((invite) => (
                 <div
-                  key={friend.id}
+                  key={invite.id}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                 >
                   <div className="flex-1">
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {friend.name}
+                      {invite.referred_email}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {friend.email}
+                      Code: {invite.invitation_code}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {friend.status === "converted" && (
+                    {invite.status === "converted" && (
                       <>
                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                           <CheckCircle className="w-3 h-3 mr-1" />
@@ -288,21 +332,28 @@ export default function InviteFriendsSection() {
                         </Badge>
                         <div className="text-right">
                           <p className="font-bold text-green-600 dark:text-green-400">
-                            +{friend.reward} ELO
+                            +{formatCurrency(invite.reward_amount, invite.reward_currency)}
                           </p>
-                          {friend.joinDate && (
+                          {invite.conversion_date && (
                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {new Date(friend.joinDate).toLocaleDateString()}
+                              {new Date(invite.conversion_date).toLocaleDateString()}
                             </p>
                           )}
                         </div>
                       </>
                     )}
 
-                    {friend.status === "pending" && (
+                    {invite.status === "pending" && (
                       <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                         <Clock className="w-3 h-3 mr-1" />
                         Pending
+                      </Badge>
+                    )}
+
+                    {invite.status === "accepted" && (
+                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Accepted
                       </Badge>
                     )}
                   </div>
