@@ -2272,6 +2272,246 @@ export class AdminService {
     }
   }
 
+  // Partnership Management
+  static async getPartnerships() {
+    try {
+      const { data, error } = await supabase
+        .from('partnerships')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: {
+          partnerships: data || [],
+          metrics: {
+            totalPartnerships: data?.length || 0,
+            activePartnerships: data?.filter((p: any) => p.status === 'active').length || 0,
+            totalCommissionsPaid: data?.reduce((sum: number, p: any) => sum + p.total_earnings, 0) || 0,
+            totalUsers: data?.reduce((sum: number, p: any) => sum + p.active_users, 0) || 0,
+            pendingApplications: 0,
+            monthlyGrowth: 0,
+          }
+        }
+      };
+    } catch (error: any) {
+      console.error('Error fetching partnerships:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async createPartnership(data: any) {
+    try {
+      const { data: partnership, error } = await supabase
+        .from('partnerships')
+        .insert([data])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data: partnership };
+    } catch (error: any) {
+      console.error('Error creating partnership:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async updatePartnership(id: string, updates: any) {
+    try {
+      const { data, error } = await supabase
+        .from('partnerships')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error updating partnership:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async deletePartnership(id: string) {
+    try {
+      const { error } = await supabase
+        .from('partnerships')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error deleting partnership:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Challenge Management
+  static async getChallenges() {
+    try {
+      const { data, error } = await supabase
+        .from('challenges')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return {
+        success: true,
+        data: {
+          challenges: data || [],
+          metrics: {
+            totalChallenges: data?.length || 0,
+            activeChallenges: data?.filter((c: any) => c.status === 'active').length || 0,
+            totalParticipants: data?.reduce((sum: number, c: any) => sum + c.participant_count, 0) || 0,
+            totalRewardsPaid: data?.reduce((sum: number, c: any) => sum + c.reward_amount, 0) || 0,
+            avgCompletionRate: data?.length > 0 ? data.reduce((sum: number, c: any) => sum + c.completion_rate, 0) / data.length : 0,
+            engagementRate: 0,
+          }
+        }
+      };
+    } catch (error: any) {
+      console.error('Error fetching challenges:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async createChallenge(data: any) {
+    try {
+      const { data: challenge, error } = await supabase
+        .from('challenges')
+        .insert([data])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data: challenge };
+    } catch (error: any) {
+      console.error('Error creating challenge:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async updateChallenge(id: string, updates: any) {
+    try {
+      const { data, error } = await supabase
+        .from('challenges')
+        .update(updates)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error updating challenge:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async deleteChallenge(id: string) {
+    try {
+      const { error } = await supabase
+        .from('challenges')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('Error deleting challenge:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // Referral Management
+  static async getReferrals() {
+    try {
+      const { data, error } = await supabase
+        .from('referral_programs')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const referrals = data || [];
+      const converted = referrals.filter((r: any) => r.status === 'converted');
+      const pending = referrals.filter((r: any) => r.status === 'pending');
+
+      return {
+        success: true,
+        data: {
+          referrals: referrals.map((r: any) => ({
+            ...r,
+            referrerName: r.referrer_id || 'Unknown',
+            referredUsername: r.referred_user_id || 'Unknown',
+          })),
+          metrics: {
+            totalReferrals: referrals.length,
+            pendingReferrals: pending.length,
+            convertedReferrals: converted.length,
+            conversionRate: referrals.length > 0 ? (converted.length / referrals.length) * 100 : 0,
+            totalRewardsDistributed: converted.reduce((sum: number, r: any) => sum + (r.reward_amount || 0), 0),
+            avgRewardPerReferral: converted.length > 0 ? converted.reduce((sum: number, r: any) => sum + (r.reward_amount || 0), 0) / converted.length : 0,
+            topReferrers: [
+              { name: 'Top Referrer 1', referrals: 15, conversions: 12 },
+              { name: 'Top Referrer 2', referrals: 10, conversions: 8 },
+            ],
+          }
+        }
+      };
+    } catch (error: any) {
+      console.error('Error fetching referrals:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async approveReferral(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('referral_programs')
+        .update({ status: 'converted', conversion_date: new Date().toISOString() })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error approving referral:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async rejectReferral(id: string) {
+    try {
+      const { data, error } = await supabase
+        .from('referral_programs')
+        .update({ status: 'cancelled' })
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return { success: true, data };
+    } catch (error: any) {
+      console.error('Error rejecting referral:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
 }
 
 // Legacy export for backward compatibility
