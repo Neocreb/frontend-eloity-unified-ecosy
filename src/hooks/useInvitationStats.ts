@@ -61,31 +61,44 @@ export function useInvitationStats(): UseInvitationStatsReturn {
         .eq("referrer_user_id", user.id)
         .order("created_at", { ascending: false });
 
-      if (invitationsError) throw invitationsError;
+      if (invitationsError) {
+        console.warn("User invitations table not found or inaccessible:", invitationsError.message);
+        setInvitations([]);
+        setStats({
+          totalInvites: 0,
+          convertedInvites: 0,
+          pendingInvites: 0,
+          totalReward: 0,
+          conversionRate: 0,
+        });
+      } else {
+        const invites = (invitationsData || []) as Invitation[];
+        setInvitations(invites);
 
-      const invites = (invitationsData || []) as Invitation[];
-      setInvitations(invites);
+        // Calculate stats
+        const converted = invites.filter((i) => i.status === "converted").length;
+        const pending = invites.filter((i) => i.status === "pending").length;
+        const totalReward = invites
+          .filter((i) => i.status === "converted")
+          .reduce((sum, i) => sum + i.reward_amount, 0);
 
-      // Calculate stats
-      const converted = invites.filter((i) => i.status === "converted").length;
-      const pending = invites.filter((i) => i.status === "pending").length;
-      const totalReward = invites
-        .filter((i) => i.status === "converted")
-        .reduce((sum, i) => sum + i.reward_amount, 0);
+        const conversionRate =
+          invites.length > 0 ? Math.round((converted / invites.length) * 100) : 0;
 
-      const conversionRate =
-        invites.length > 0 ? Math.round((converted / invites.length) * 100) : 0;
+        setStats({
+          totalInvites: invites.length,
+          convertedInvites: converted,
+          pendingInvites: pending,
+          totalReward,
+          conversionRate,
+        });
+      }
 
-      setStats({
-        totalInvites: invites.length,
-        convertedInvites: converted,
-        pendingInvites: pending,
-        totalReward,
-        conversionRate,
-      });
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch invitation data"));
-      console.error("Error fetching invitation data:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch invitation data";
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      console.error("Error fetching invitation data:", errorMessage);
     } finally {
       setIsLoading(false);
     }
