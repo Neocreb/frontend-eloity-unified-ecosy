@@ -258,7 +258,7 @@ const EnhancedSafeReferralComponent = () => {
           <div
             className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
             role="article"
-            aria-label={`Total Referrals: ${stats.totalReferrals}. ${stats.activeReferrals} active with ${stats.conversionRate.toFixed(1)}% conversion rate`}
+            aria-label={`Total Referrals: ${stats.totalReferrals || 0}. ${stats.activeReferrals || 0} active with ${(stats.conversionRate || 0).toFixed(1)}% conversion rate`}
           >
             <div className="flex items-center justify-between mb-4">
               <Users className="w-5 h-5 opacity-80" aria-hidden="true" />
