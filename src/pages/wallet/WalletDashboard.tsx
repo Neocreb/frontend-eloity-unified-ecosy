@@ -168,9 +168,9 @@ const DashboardInner = () => {
   const firstName = userName.split(' ')[0];
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden">
+    <div className="min-h-screen bg-white">
       {/* Upper Zone - Full Bleed Gradient */}
-      <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-20 sm:pb-24 md:pb-32">
+      <div className="relative w-full bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-20 sm:pb-24 md:pb-32">
         <AnimatedWave />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -286,7 +286,7 @@ const DashboardInner = () => {
       </div>
 
       {/* Lower Zone - White Content Area with Curved Top */}
-      <div className="relative w-screen -ml-[50vw] left-1/2 bg-white pt-2 min-h-screen">
+      <div className="relative w-full bg-white pt-2 min-h-screen">
         {/* Curved divider */}
         <div className="absolute -top-12 left-0 right-0 h-24 bg-white" style={{
           borderRadius: '48px 48px 0 0',
