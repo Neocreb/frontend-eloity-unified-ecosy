@@ -1022,8 +1022,19 @@ export class MarketplaceService {
       const { data, error } = await supabase
         .from('product_reviews')
         .select(`
-          *,
-          user:users(full_name, avatar_url)
+          id,
+          product_id,
+          user_id,
+          order_id,
+          rating,
+          title,
+          content,
+          images,
+          verified_purchase,
+          helpful_count,
+          is_featured,
+          created_at,
+          updated_at
         `)
         .eq('product_id', productId)
         .order('created_at', { ascending: false });
@@ -1034,12 +1045,31 @@ export class MarketplaceService {
         return [];
       }
 
+      if (!data) return [];
+
+      // Fetch user data separately to avoid FK dependency
+      const userIds = [...new Set(data.map(r => r.user_id))];
+      const users: { [key: string]: any } = {};
+
+      if (userIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('profiles')
+          .select('id, full_name, avatar_url')
+          .in('id', userIds);
+
+        if (usersData) {
+          usersData.forEach((user: any) => {
+            users[user.id] = user;
+          });
+        }
+      }
+
       return data.map(review => ({
         id: review.id,
         productId: review.product_id,
         userId: review.user_id,
-        userName: review.user?.full_name || 'Anonymous User',
-        userAvatar: review.user?.avatar_url || '',
+        userName: users[review.user_id]?.full_name || 'Anonymous User',
+        userAvatar: users[review.user_id]?.avatar_url || '',
         rating: review.rating,
         title: review.title || '',
         comment: review.content || '',
