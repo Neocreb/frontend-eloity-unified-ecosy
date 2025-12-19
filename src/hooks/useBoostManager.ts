@@ -70,7 +70,12 @@ export function useBoostManager(): UseBoostManagerReturn {
         .select("*")
         .order("tier_level", { ascending: true });
 
-      if (packagesError) throw packagesError;
+      if (packagesError) {
+        console.warn("Boost packages table not found or inaccessible:", packagesError.message);
+        setPackages([]);
+      } else {
+        setPackages((packagesData || []) as BoostPackage[]);
+      }
 
       // Fetch active boosts for user
       const { data: boostsData, error: boostsError } = await supabase
@@ -80,7 +85,12 @@ export function useBoostManager(): UseBoostManagerReturn {
         .in("status", ["active", "paused"])
         .order("created_at", { ascending: false });
 
-      if (boostsError) throw boostsError;
+      if (boostsError) {
+        console.warn("User boosts table not found or inaccessible:", boostsError.message);
+        setActiveBoosts([]);
+      } else {
+        setActiveBoosts((boostsData || []) as UserBoost[]);
+      }
 
       // Fetch stats
       const { data: statsData, error: statsError } = await supabase.rpc(
@@ -88,12 +98,10 @@ export function useBoostManager(): UseBoostManagerReturn {
         { p_user_id: user.id }
       );
 
-      if (statsError) throw statsError;
-
-      setPackages((packagesData || []) as BoostPackage[]);
-      setActiveBoosts((boostsData || []) as UserBoost[]);
-
-      if (statsData && statsData.length > 0) {
+      if (statsError) {
+        console.warn("Boost stats RPC not found or inaccessible:", statsError.message);
+        setStats(null);
+      } else if (statsData && statsData.length > 0) {
         setStats({
           activeBoostsCount: statsData[0].active_boosts_count || 0,
           totalSpent: parseFloat(statsData[0].total_spent || 0),
@@ -101,9 +109,12 @@ export function useBoostManager(): UseBoostManagerReturn {
           totalEngagement: parseInt(statsData[0].total_engagement || 0),
         });
       }
+
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch boost data"));
-      console.error("Error fetching boost data:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch boost data";
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      console.error("Error fetching boost data:", errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +153,8 @@ export function useBoostManager(): UseBoostManagerReturn {
       await fetchData();
       return data as UserBoost;
     } catch (err) {
-      console.error("Error creating boost:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to create boost";
+      console.error("Error creating boost:", errorMessage);
       return null;
     }
   };
@@ -162,7 +174,8 @@ export function useBoostManager(): UseBoostManagerReturn {
       await fetchData();
       return true;
     } catch (err) {
-      console.error("Error updating boost:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to update boost";
+      console.error("Error updating boost:", errorMessage);
       return false;
     }
   };

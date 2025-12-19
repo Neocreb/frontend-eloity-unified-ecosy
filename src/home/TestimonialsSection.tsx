@@ -51,9 +51,7 @@ export const TestimonialsSection: React.FC = () => {
     const fetchTestimonials = async () => {
       try {
         timeoutId = setTimeout(() => {
-          if (!controller.signal.aborted) {
-            controller.abort();
-          }
+          controller.abort('Request timeout');
         }, 5000);
 
         const response = await fetch('/api/landing/testimonials?featured=true', {
@@ -81,7 +79,7 @@ export const TestimonialsSection: React.FC = () => {
       } catch (err) {
         // Only log non-abort errors
         if (err instanceof Error && err.name !== 'AbortError') {
-          console.error('Error fetching testimonials:', err);
+          console.error('Error fetching testimonials:', err.message);
         }
         // Use default testimonials on error, but only if component is still mounted
         if (isMounted) {
@@ -91,6 +89,9 @@ export const TestimonialsSection: React.FC = () => {
       } finally {
         if (isMounted) {
           setIsLoading(false);
+        }
+        if (timeoutId) {
+          clearTimeout(timeoutId);
         }
       }
     };
@@ -103,8 +104,10 @@ export const TestimonialsSection: React.FC = () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      if (!controller.signal.aborted) {
+      try {
         controller.abort();
+      } catch {
+        // Ignore abort errors during cleanup
       }
     };
   }, []);

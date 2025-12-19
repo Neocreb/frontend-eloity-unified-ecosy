@@ -142,6 +142,7 @@ import EditProfile from "./pages/profile/EditProfile";
 // Phase 3 - Rewards Modal Conversions
 import WithdrawRewards from "./pages/rewards/WithdrawRewards";
 import RewardsMoreServices from "./pages/rewards/RewardsMoreServices";
+import RewardsMore from "./pages/rewards/RewardsMore";
 import RewardsWithdraw from "./pages/rewards/RewardsWithdraw";
 import RewardsSendGifts from "./pages/rewards/RewardsSendGifts";
 import RewardsAnalytics from "./pages/rewards/RewardsAnalytics";
@@ -682,7 +683,7 @@ const AppRoutes = () => {
           <Route path="profile/add-work" element={<AddExternalWork />} />
 
           {/* Rewards Routes - Full Page Implementation COMPLETE */}
-          <Route path="rewards/more" element={<RewardsMoreServices />} />
+          <Route path="rewards/more" element={<RewardsMore />} />
           <Route path="rewards/withdraw" element={<RewardsWithdraw />} />
           <Route path="rewards/send-gifts" element={<RewardsSendGifts />} />
           <Route path="rewards/analytics" element={<RewardsAnalytics />} />

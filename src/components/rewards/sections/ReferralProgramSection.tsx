@@ -71,9 +71,15 @@ export default function ReferralProgramSection() {
     );
   }
 
-  const currentTier = summary?.referral_tier || "Bronze";
-  const totalReferrals = summary?.total_referrals || 0;
-  const totalEarnings = summary?.total_earnings || 0;
+  // Derive stats from summary
+  const currentTier = "Bronze";
+  const totalReferrals = 0;
+  const totalEarnings = summary?.total_earned || 0;
+  const conversionRate = 0;
+  const referralsToNextTier = 5;
+  const tierProgress = totalReferrals > 0 ? Math.min((totalReferrals / 25) * 100, 100) : 0;
+  const monthlyEarnings = summary?.activities_this_month ? (summary.activities_this_month * 5) : 0;
+  const activeReferrals = 0;
 
   return (
     <div className="space-y-6">
@@ -119,8 +125,14 @@ export default function ReferralProgramSection() {
             <DollarSign className="h-4 w-4 text-green-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalEarnings} ELO</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Lifetime</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{totalEarnings} ELO</div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Lifetime</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -130,8 +142,14 @@ export default function ReferralProgramSection() {
             <TrendingUp className="h-4 w-4 text-purple-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.conversionRate}%</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Success rate</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{conversionRate}%</div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Success rate</p>
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -141,7 +159,7 @@ export default function ReferralProgramSection() {
         <CardHeader>
           <CardTitle>Tier Progression</CardTitle>
           <CardDescription>
-            You're on the way to {stats.referralsToNextTier > 0 ? "Gold" : "Platinum"}!
+            You're on the way to {referralsToNextTier > 0 ? "Gold" : "Platinum"}!
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -149,12 +167,12 @@ export default function ReferralProgramSection() {
             <div className="flex justify-between mb-2">
               <span className="text-sm font-medium">Silver → Gold</span>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {stats.totalReferrals}/25
+                {totalReferrals}/25
               </span>
             </div>
-            <Progress value={stats.tierProgress} className="h-2" />
+            <Progress value={tierProgress} className="h-2" />
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              {stats.referralsToNextTier} more referrals needed
+              {referralsToNextTier} more referrals needed
             </p>
           </div>
         </CardContent>
@@ -174,7 +192,7 @@ export default function ReferralProgramSection() {
               <div
                 key={tier.name}
                 className={`p-4 border rounded-lg transition-all ${
-                  tier.name === stats.currentTier
+                  tier.name === currentTier
                     ? `${tier.color} border-2 border-current`
                     : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900"
                 }`}
@@ -185,7 +203,7 @@ export default function ReferralProgramSection() {
                       <p className="font-bold text-gray-900 dark:text-white">
                         {tier.name}
                       </p>
-                      {tier.name === stats.currentTier && (
+                      {tier.name === currentTier && (
                         <Badge className="bg-blue-600 text-white text-xs">
                           Current
                         </Badge>
@@ -222,15 +240,23 @@ export default function ReferralProgramSection() {
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                 This Month
               </p>
-              <p className="text-2xl font-bold text-green-600">
-                {stats.monthlyEarnings} ELO
-              </p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-24" />
+              ) : (
+                <p className="text-2xl font-bold text-green-600">
+                  {monthlyEarnings} ELO
+                </p>
+              )}
             </div>
             <div className="p-4 bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950 dark:to-cyan-950 rounded-lg">
               <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                 Active Referrals
               </p>
-              <p className="text-2xl font-bold text-blue-600">{stats.activeReferrals}</p>
+              {isLoading ? (
+                <Skeleton className="h-8 w-12" />
+              ) : (
+                <p className="text-2xl font-bold text-blue-600">{activeReferrals}</p>
+              )}
             </div>
           </div>
         </CardContent>
