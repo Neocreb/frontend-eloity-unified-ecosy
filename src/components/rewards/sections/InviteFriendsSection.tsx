@@ -106,6 +106,21 @@ export default function InviteFriendsSection() {
     }
   };
 
+  if (error) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 text-red-900">
+            <AlertCircle className="h-5 w-5" />
+            <div>
+              <p className="font-semibold">{error.message}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Summary Card */}
@@ -117,20 +132,28 @@ export default function InviteFriendsSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-2xl font-bold text-blue-600">{invitedFriends.length}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Total Invites Sent</p>
+          {isLoading ? (
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
             </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">{convertedFriends}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Joined</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-2xl font-bold text-blue-600">{stats?.totalInvites || 0}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Total Invites Sent</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-600">{stats?.convertedInvites || 0}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Joined</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats?.totalReward || 0, "USD")}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Earned</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-purple-600">{totalReward} ELO</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Earned</p>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
