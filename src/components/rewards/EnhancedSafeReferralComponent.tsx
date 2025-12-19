@@ -269,7 +269,7 @@ const EnhancedSafeReferralComponent = () => {
             <p className="text-sm opacity-90 mb-1">Total Referrals</p>
             <p className="text-3xl font-bold" aria-label={`${stats.totalReferrals} total referrals`}>{stats.totalReferrals}</p>
             <p className="text-xs opacity-75 mt-2">
-              {stats.activeReferrals} active • {stats.conversionRate.toFixed(1)}% conversion
+              {stats.activeReferrals} active • {(stats.conversionRate || 0).toFixed(1)}% conversion
             </p>
           </div>
 
