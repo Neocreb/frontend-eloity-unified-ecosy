@@ -192,7 +192,7 @@ export default function ReferralProgramSection() {
               <div
                 key={tier.name}
                 className={`p-4 border rounded-lg transition-all ${
-                  tier.name === stats.currentTier
+                  tier.name === currentTier
                     ? `${tier.color} border-2 border-current`
                     : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-900"
                 }`}
@@ -203,7 +203,7 @@ export default function ReferralProgramSection() {
                       <p className="font-bold text-gray-900 dark:text-white">
                         {tier.name}
                       </p>
-                      {tier.name === stats.currentTier && (
+                      {tier.name === currentTier && (
                         <Badge className="bg-blue-600 text-white text-xs">
                           Current
                         </Badge>
