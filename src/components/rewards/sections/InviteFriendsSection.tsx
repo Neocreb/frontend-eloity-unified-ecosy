@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useInvitationStats } from "@/hooks/useInvitationStats";
 import {
   Copy,
   Share2,
@@ -17,54 +19,17 @@ import {
   Facebook,
   Mail,
   MessageCircle,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
-
-interface InvitedFriend {
-  id: string;
-  name: string;
-  email: string;
-  status: "pending" | "converted" | "completed";
-  joinDate?: string;
-  reward?: number;
-}
+import { formatCurrency } from "@/utils/formatters";
 
 export default function InviteFriendsSection() {
   const { toast } = useToast();
-  const [referralCode] = useState("FRIEND2024");
-  const [referralLink] = useState(
-    `https://eloity.app/join?ref=${referralCode}`
-  );
+  const { invitations, stats, isLoading, error, sendInvitation } = useInvitationStats();
+  const [email, setEmail] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
-  const [invitedFriends] = useState<InvitedFriend[]>([
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john@example.com",
-      status: "converted",
-      joinDate: "2024-01-15",
-      reward: 50,
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      status: "pending",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      status: "converted",
-      joinDate: "2024-01-10",
-      reward: 50,
-    },
-  ]);
-
-  const convertedFriends = invitedFriends.filter((f) => f.status === "converted").length;
-  const pendingFriends = invitedFriends.filter((f) => f.status === "pending").length;
-  const totalReward = invitedFriends
-    .filter((f) => f.status === "converted")
-    .reduce((sum, f) => sum + (f.reward || 0), 0);
+  const [isSending, setIsSending] = useState(false);
 
   const copyReferralLink = async () => {
     try {
