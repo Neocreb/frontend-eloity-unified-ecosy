@@ -22,12 +22,17 @@ import {
   Sparkles,
   Award,
   ChevronRight,
+  BarChart3,
+  Clock,
+  Rocket,
 } from "lucide-react";
 import { formatCurrency, formatNumber } from "@/utils/formatters";
 import { useRewardsSummary } from "@/hooks/useRewardsSummary";
 import { useActivityFeed } from "@/hooks/useActivityFeed";
+import { useLevelProgression } from "@/hooks/useLevelProgression";
 import { activityTransactionService } from "@/services/activityTransactionService";
-import { LineChart, Line, ResponsiveContainer, Tooltip } from "recharts";
+import { LineChart, Line, ResponsiveContainer, Tooltip, AreaChart, Area, XAxis, YAxis } from "recharts";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface EnhancedEarningsOverviewProps {
   user: any;
@@ -38,6 +43,7 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
   const { toast } = useToast();
   const { summary, isLoading, error, refresh } = useRewardsSummary();
   const { activities } = useActivityFeed(100);
+  const { levelData, getAllLevels } = useLevelProgression();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [earningsByCategory, setEarningsByCategory] = useState<Record<string, number>>({});
   const [sparklineData, setSparklineData] = useState<Array<{ day: string; earnings: number }>>([]);
