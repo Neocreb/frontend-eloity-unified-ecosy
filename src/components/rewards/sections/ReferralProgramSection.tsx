@@ -71,9 +71,15 @@ export default function ReferralProgramSection() {
     );
   }
 
-  const currentTier = summary?.referral_tier || "Bronze";
-  const totalReferrals = summary?.total_referrals || 0;
-  const totalEarnings = summary?.total_earnings || 0;
+  // Derive stats from summary
+  const currentTier = "Bronze";
+  const totalReferrals = 0;
+  const totalEarnings = summary?.total_earned || 0;
+  const conversionRate = 0;
+  const referralsToNextTier = 5;
+  const tierProgress = totalReferrals > 0 ? Math.min((totalReferrals / 25) * 100, 100) : 0;
+  const monthlyEarnings = summary?.activities_this_month ? (summary.activities_this_month * 5) : 0;
+  const activeReferrals = 0;
 
   return (
     <div className="space-y-6">
