@@ -19,6 +19,7 @@ import {
   Calendar,
   AlertCircle,
   Lock,
+  Users,
 } from "lucide-react";
 import {
   Select,
@@ -228,6 +229,15 @@ const EnhancedGiftsTipsAnalytics = () => {
 
       const categoryArray = Object.entries(categories).map(([name, value]) => ({ name, value }));
       setCategoryData(categoryArray);
+
+      // Convert dailyTrends to array format for chart
+      const trendsArray = Object.entries(dailyTrends)
+        .map(([date, data]) => ({
+          date,
+          gifts: data.gifts,
+          tips: data.tips,
+        }))
+        .sort((a, b) => a.date.localeCompare(b.date));
 
       setTrendsData(trendsArray);
 
