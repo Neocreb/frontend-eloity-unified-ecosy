@@ -31,6 +31,39 @@ export default function InviteFriendsSection() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [isSending, setIsSending] = useState(false);
 
+  const handleSendInvitation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+    const code = await sendInvitation(email);
+    setIsSending(false);
+
+    if (code) {
+      toast({
+        title: "✓ Invitation Sent!",
+        description: `Invitation sent to ${email}`,
+      });
+      setEmail("");
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to send invitation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const referralCode = invitations[0]?.invitation_code || "REFER" + Math.random().toString(36).substring(2, 8).toUpperCase();
+  const referralLink = `https://eloity.app/join?ref=${referralCode}`;
+
   const copyReferralLink = async () => {
     try {
       await navigator.clipboard.writeText(referralLink);
