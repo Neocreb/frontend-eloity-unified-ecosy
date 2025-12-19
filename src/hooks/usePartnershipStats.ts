@@ -70,7 +70,12 @@ export function usePartnershipStats(): UsePartnershipStatsReturn {
         .eq("status", "active")
         .order("is_featured", { ascending: false });
 
-      if (availableError) throw availableError;
+      if (availableError) {
+        console.warn("Available partnerships table not found or inaccessible:", availableError.message);
+        setAvailablePartnerships([]);
+      } else {
+        setAvailablePartnerships((availableData || []) as Partnership[]);
+      }
 
       // Fetch user's partnerships with partner details
       const { data: userPartnershipsData, error: userPartnershipsError } = await supabase
@@ -82,7 +87,20 @@ export function usePartnershipStats(): UsePartnershipStatsReturn {
         .eq("user_id", user.id)
         .order("applied_at", { ascending: false });
 
-      if (userPartnershipsError) throw userPartnershipsError;
+      if (userPartnershipsError) {
+        console.warn("User partnerships table not found or inaccessible:", userPartnershipsError.message);
+        setUserPartnerships([]);
+      } else {
+        // Transform user partnerships to include partnership details
+        const transformedPartnerships = (userPartnershipsData || []).map((up: any) => ({
+          ...up,
+          partnership_name: up.partnership?.name,
+          partnership_icon: up.partnership?.icon,
+          partnership_category: up.partnership?.category,
+        })) as UserPartnership[];
+
+        setUserPartnerships(transformedPartnerships);
+      }
 
       // Fetch stats
       const { data: statsData, error: statsError } = await supabase.rpc(
@@ -90,20 +108,10 @@ export function usePartnershipStats(): UsePartnershipStatsReturn {
         { p_user_id: user.id }
       );
 
-      if (statsError) throw statsError;
-
-      // Transform user partnerships to include partnership details
-      const transformedPartnerships = (userPartnershipsData || []).map((up: any) => ({
-        ...up,
-        partnership_name: up.partnership?.name,
-        partnership_icon: up.partnership?.icon,
-        partnership_category: up.partnership?.category,
-      })) as UserPartnership[];
-
-      setAvailablePartnerships((availableData || []) as Partnership[]);
-      setUserPartnerships(transformedPartnerships);
-
-      if (statsData && statsData.length > 0) {
+      if (statsError) {
+        console.warn("Partnership stats RPC not found or inaccessible:", statsError.message);
+        setStats(null);
+      } else if (statsData && statsData.length > 0) {
         setStats({
           totalPartnerships: statsData[0].total_partnerships || 0,
           activePartnerships: statsData[0].active_partnerships || 0,
@@ -111,9 +119,12 @@ export function usePartnershipStats(): UsePartnershipStatsReturn {
           totalReferrals: statsData[0].total_referrals || 0,
         });
       }
+
+      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch partnership data"));
-      console.error("Error fetching partnership data:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch partnership data";
+      setError(err instanceof Error ? err : new Error(errorMessage));
+      console.error("Error fetching partnership data:", errorMessage);
     } finally {
       setIsLoading(false);
     }
