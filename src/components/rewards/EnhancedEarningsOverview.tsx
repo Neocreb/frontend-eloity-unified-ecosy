@@ -302,7 +302,10 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
   ];
 
   return (
-    <div
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
       className="space-y-6"
       role="main"
       aria-label="Earnings Overview Dashboard - Track your rewards and progress"
@@ -313,331 +316,516 @@ const EnhancedEarningsOverview = ({ user, setActiveTab }: EnhancedEarningsOvervi
         role="region"
         aria-label="Earnings Summary Cards"
       >
-        {earningsCards.map((card) => {
+        {earningsCards.map((card, idx) => {
           const Icon = card.icon;
           const cardValue = card.format === "currency"
             ? formatCurrency(card.value, summary.currency_code)
             : formatNumber(card.value);
           return (
-            <Card
+            <motion.div
               key={card.title}
-              className="hover:shadow-lg transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-500 overflow-hidden group"
-              role="article"
-              aria-label={`${card.title}: ${cardValue}. ${card.change}`}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: idx * 0.1 }}
             >
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-3">
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
-                    <p
-                      className="text-2xl font-bold mt-2"
-                      aria-label={`${card.title}: ${cardValue}`}
-                    >
-                      {cardValue}
-                    </p>
-                    <div className="flex items-center gap-1 mt-2">
-                      {card.changeType === "positive" ? (
-                        <ArrowUpRight className="h-4 w-4 text-green-600" />
-                      ) : (
-                        <ArrowDownRight className="h-4 w-4 text-red-600" />
-                      )}
-                      <p className={`text-xs font-medium ${
-                        card.changeType === "positive" ? "text-green-600" : "text-red-600"
-                      }`}>
-                        {card.change}
+              <Card
+                className="hover:shadow-lg transition-all duration-300 hover:border-purple-300 dark:hover:border-purple-500 overflow-hidden group h-full"
+                role="article"
+                aria-label={`${card.title}: ${cardValue}. ${card.change}`}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">{card.title}</p>
+                      <p
+                        className="text-2xl font-bold mt-2"
+                        aria-label={`${card.title}: ${cardValue}`}
+                      >
+                        {cardValue}
                       </p>
+                      <div className="flex items-center gap-1 mt-2">
+                        {card.changeType === "positive" ? (
+                          <ArrowUpRight className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <ArrowDownRight className="h-4 w-4 text-red-600" />
+                        )}
+                        <p className={`text-xs font-medium ${
+                          card.changeType === "positive" ? "text-green-600" : "text-red-600"
+                        }`}>
+                          {card.change}
+                        </p>
+                      </div>
+                    </div>
+                    <div className={`p-3 rounded-lg ${card.bgColor} group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className={`h-6 w-6 ${card.color}`} />
                     </div>
                   </div>
-                  <div className={`p-3 rounded-lg ${card.bgColor} group-hover:scale-110 transition-transform duration-300`}>
-                    <Icon className={`h-6 w-6 ${card.color}`} />
-                  </div>
-                </div>
 
-                {/* Sparkline for total earned card */}
-                {card.title === "Total Earned" && sparklineData.length > 0 && (
-                  <div className="mt-4 -mx-2 -mb-2 h-12 bg-gradient-to-t from-green-50 to-transparent dark:from-green-900/20 dark:to-transparent rounded-b-lg">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={sparklineData}>
-                        <Tooltip
-                          contentStyle={{ backgroundColor: "transparent", border: "none" }}
-                          cursor={{ stroke: "rgba(168, 85, 247, 0.1)" }}
-                        />
-                        <Line
-                          type="monotone"
-                          dataKey="earnings"
-                          stroke="#16a34a"
-                          strokeWidth={2}
-                          isAnimationActive={true}
-                          dot={false}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  {/* Sparkline for total earned card */}
+                  {card.title === "Total Earned" && sparklineData.length > 0 && (
+                    <div className="mt-4 -mx-2 -mb-2 h-12 bg-gradient-to-t from-green-50 to-transparent dark:from-green-900/20 dark:to-transparent rounded-b-lg">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={sparklineData}>
+                          <defs>
+                            <linearGradient id="colorEarnings" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#16a34a" stopOpacity={0.3}/>
+                              <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
+                            </linearGradient>
+                          </defs>
+                          <Tooltip
+                            contentStyle={{ backgroundColor: "rgba(255,255,255,0.9)", border: "none", borderRadius: "8px", boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)" }}
+                            cursor={{ stroke: "rgba(168, 85, 247, 0.1)" }}
+                          />
+                          <Area
+                            type="monotone"
+                            dataKey="earnings"
+                            stroke="#16a34a"
+                            fillOpacity={1}
+                            fill="url(#colorEarnings)"
+                            strokeWidth={2}
+                            isAnimationActive={true}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
           );
         })}
       </div>
 
-      {/* Month Comparison Card */}
-      <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-blue-600" />
-            Month-over-Month Growth
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">This Month</p>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {formatCurrency(monthComparisonData.current, summary.currency_code)}
-              </p>
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground mb-1">Previous Month</p>
-              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                {formatCurrency(monthComparisonData.previous, summary.currency_code)}
-              </p>
-            </div>
-            <div className="flex flex-col justify-center">
-              <p className="text-sm text-muted-foreground mb-1">Growth</p>
-              <div className="flex items-center gap-2">
-                {monthComparisonData.percentChange > 0 ? (
-                  <ArrowUpRight className="h-5 w-5 text-green-600" />
-                ) : (
-                  <ArrowDownRight className="h-5 w-5 text-red-600" />
-                )}
-                <p className={`text-2xl font-bold ${
-                  monthComparisonData.percentChange > 0 ? "text-green-600" : "text-red-600"
-                }`}>
-                  {Math.abs(monthComparisonData.percentChange).toFixed(1)}%
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Level Upgrade Path - NEW */}
+      {levelData && !levelData.isMaxLevel && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <Card className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white overflow-hidden relative border-0 shadow-xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-32 -mt-32 blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-white/10 rounded-full -ml-24 -mb-24 blur-3xl" />
+            <CardContent className="p-8 relative z-10">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex-1 text-center md:text-left">
+                  <div className="flex flex-col md:flex-row items-center gap-4 mb-4">
+                    <div className="p-3 bg-white/20 rounded-xl backdrop-blur-md shrink-0">
+                      <Rocket className="h-6 w-6 text-yellow-300" />
+                    </div>
+                    <div>
+                      <h2 className="text-2xl font-bold">Your Path to Level {levelData.nextLevel}</h2>
+                      <p className="text-white/80">Keep going! You're making great progress towards your next milestone.</p>
+                    </div>
+                  </div>
 
-      {/* Achievements Section */}
-      {achievements.length > 0 && (
-        <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-0">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Award className="h-5 w-5 text-purple-600" />
-              Your Achievements
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              {achievements.map((achievement) => (
-                <div
-                  key={achievement.id}
-                  className="relative p-4 rounded-xl border-2 border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-900 hover:shadow-md hover:border-purple-400 transition-all duration-300 group"
-                >
-                  <div className="text-center">
-                    <div className="text-3xl mb-2">{achievement.icon}</div>
-                    <p className="font-semibold text-sm text-gray-900 dark:text-gray-100 mb-2">
-                      {achievement.title}
-                    </p>
-                    <Progress value={achievement.progress} className="h-1.5" />
-                    <p className="text-xs text-muted-foreground mt-2">
-                      {Math.round(achievement.progress)}%
-                    </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
+                    <div className="p-4 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
+                      <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                        <Clock className="h-4 w-4 text-blue-200" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Estimated Time</span>
+                      </div>
+                      <p className="text-2xl font-black">{levelData.estimatedDaysToNextLevel === 999 ? "---" : `${levelData.estimatedDaysToNextLevel} Days`}</p>
+                      <p className="text-[10px] text-white/60 font-medium">To reach level {levelData.nextLevel}</p>
+                    </div>
+
+                    <div className="p-4 bg-white/10 rounded-xl backdrop-blur-md border border-white/20">
+                      <div className="flex items-center justify-center md:justify-start gap-2 mb-2">
+                        <Star className="h-4 w-4 text-yellow-300" />
+                        <span className="text-[10px] font-bold uppercase tracking-widest">Next Reward</span>
+                      </div>
+                      <p className="text-lg font-black truncate">
+                        {getAllLevels().find(l => l.level === levelData.nextLevel)?.benefits[0] || "New Perks"}
+                      </p>
+                      <p className="text-[10px] text-white/60 font-medium">Unlocked automatically</p>
+                    </div>
                   </div>
                 </div>
-              ))}
+
+                <div className="w-full md:w-auto flex flex-col items-center shrink-0">
+                  <div className="relative w-32 h-32 flex items-center justify-center">
+                    <svg className="w-full h-full transform -rotate-90">
+                      <circle
+                        cx="64"
+                        cy="64"
+                        r="58"
+                        stroke="rgba(255,255,255,0.1)"
+                        strokeWidth="8"
+                        fill="transparent"
+                      />
+                      <motion.circle
+                        cx="64"
+                        cy="64"
+                        r="58"
+                        stroke="white"
+                        strokeWidth="8"
+                        fill="transparent"
+                        strokeDasharray={364.4}
+                        initial={{ strokeDashoffset: 364.4 }}
+                        animate={{ strokeDashoffset: 364.4 - (364.4 * levelData.progressPercentage) / 100 }}
+                        transition={{ duration: 1.5, ease: "easeOut" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-3xl font-black">{levelData.progressPercentage}%</span>
+                      <span className="text-[10px] uppercase font-bold text-white/70">Progress</span>
+                    </div>
+                  </div>
+                  <Button
+                    className="mt-6 bg-white text-indigo-600 hover:bg-white/90 font-black px-8 shadow-xl active:scale-95 transition-transform"
+                    onClick={() => setActiveTab("earn")}
+                  >
+                    Earn Points Now
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
+
+      {/* Month Comparison Card */}
+      <motion.div
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ delay: 0.5 }}
+      >
+        <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-100 dark:border-blue-900 shadow-sm">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-blue-600" />
+              Month-over-Month Growth
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center md:text-left">
+              <div className="p-4 bg-white/50 dark:bg-black/20 rounded-xl border border-white/20 dark:border-white/5 shadow-sm">
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">This Month</p>
+                <p className="text-3xl font-black text-blue-600 dark:text-blue-400">
+                  {formatCurrency(monthComparisonData.current, summary.currency_code)}
+                </p>
+              </div>
+              <div className="p-4 bg-white/50 dark:bg-black/20 rounded-xl border border-white/20 dark:border-white/5 shadow-sm">
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Previous Month</p>
+                <p className="text-3xl font-black text-gray-600 dark:text-gray-400">
+                  {formatCurrency(monthComparisonData.previous, summary.currency_code)}
+                </p>
+              </div>
+              <div className="p-4 bg-white/50 dark:bg-black/20 rounded-xl border border-white/20 dark:border-white/5 shadow-sm flex flex-col justify-center items-center md:items-start">
+                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mb-1">Growth</p>
+                <div className="flex items-center gap-2">
+                  {monthComparisonData.percentChange > 0 ? (
+                    <div className="bg-green-100 dark:bg-green-900/30 p-1 rounded-full">
+                      <ArrowUpRight className="h-5 w-5 text-green-600" />
+                    </div>
+                  ) : (
+                    <div className="bg-red-100 dark:bg-red-900/30 p-1 rounded-full">
+                      <ArrowDownRight className="h-5 w-5 text-red-600" />
+                    </div>
+                  )}
+                  <p className={`text-3xl font-black ${
+                    monthComparisonData.percentChange > 0 ? "text-green-600" : "text-red-600"
+                  }`}>
+                    {Math.abs(monthComparisonData.percentChange).toFixed(1)}%
+                  </p>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
+      </motion.div>
+
+      {/* Achievements Section */}
+      {achievements.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6 }}
+        >
+          <Card className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 border-0 shadow-sm overflow-hidden group">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="h-5 w-5 text-purple-600" />
+                  Your Achievements
+                </CardTitle>
+                <Badge variant="outline" className="bg-white/50 dark:bg-black/20 text-purple-700 dark:text-purple-300 font-bold border-purple-200">
+                  {achievements.filter(a => a.progress >= 100).length} Unlocked
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {achievements.map((achievement) => (
+                  <div
+                    key={achievement.id}
+                    className={`relative p-4 rounded-xl border-2 transition-all duration-300 group/item ${
+                      achievement.progress >= 100
+                        ? "border-purple-200 dark:border-purple-700 bg-white dark:bg-gray-900 shadow-md"
+                        : "border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/50 grayscale opacity-60"
+                    } hover:scale-105`}
+                  >
+                    <div className="text-center">
+                      <div className="text-3xl mb-2 transform group-hover/item:scale-125 transition-transform duration-300">{achievement.icon}</div>
+                      <p className="font-bold text-xs text-gray-900 dark:text-gray-100 mb-2 truncate">
+                        {achievement.title}
+                      </p>
+                      <Progress value={achievement.progress} className="h-1.5" />
+                      <p className="text-[10px] font-bold text-muted-foreground mt-2">
+                        {achievement.progress >= 100 ? "UNLOCKED" : `${Math.round(achievement.progress)}%`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Level and Trust Score Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Level Progress */}
-        <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <Trophy className="h-5 w-5 text-yellow-600" />
-                Level & Progress
-              </CardTitle>
-              <Badge
-                className="text-white"
-                style={{ backgroundColor: currentLevelInfo.color }}
-              >
-                Level {summary.level} - {currentLevelInfo.title}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Progress to next level</span>
-                <span className="text-sm font-semibold text-purple-600">
-                  {Math.round(levelProgress)}%
-                </span>
+        <motion.div
+          initial={{ opacity: 0, x: -20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.7 }}
+        >
+          <Card className="bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-100 dark:border-purple-900 h-full shadow-sm">
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <Trophy className="h-5 w-5 text-yellow-600" />
+                  Level & Progress
+                </CardTitle>
+                <Badge
+                  className="text-white px-3 py-1 text-xs font-black shadow-md uppercase tracking-wider"
+                  style={{ backgroundColor: currentLevelInfo.color }}
+                >
+                  Level {summary.level} - {currentLevelInfo.title}
+                </Badge>
               </div>
-              <Progress value={levelProgress} className="h-2.5" />
-              <p className="text-xs text-muted-foreground mt-2">
-                {formatCurrency(summary.next_level_threshold - summary.total_earned)} needed for level {summary.level + 1}
-              </p>
-            </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-black text-gray-700 dark:text-gray-300">Next Milestone</span>
+                  <span className="text-sm font-black text-purple-600">
+                    {Math.round(levelProgress)}%
+                  </span>
+                </div>
+                <Progress value={levelProgress} className="h-3 rounded-full shadow-inner" />
+                <div className="flex justify-between items-center mt-3">
+                  <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">
+                    {formatCurrency(summary.total_earned, summary.currency_code)} Earned
+                  </p>
+                  <p className="text-[10px] uppercase font-black text-muted-foreground tracking-tighter">
+                    Level {summary.level + 1} at {formatCurrency(nextLevelThreshold, summary.currency_code)}
+                  </p>
+                </div>
+              </div>
 
-            {/* Level Benefits */}
-            <div className="mt-4 p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-              <p className="text-xs font-semibold text-muted-foreground mb-2">Current Benefits</p>
-              <ul className="text-xs space-y-1 text-muted-foreground">
-                <li>✓ {(1 + summary.level * 0.1).toFixed(1)}x earning multiplier</li>
-                <li>✓ {Math.min(50 + summary.level * 10, 100)} point withdrawal limit</li>
-                <li>✓ Priority support</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
+              {/* Level Benefits */}
+              <div className="p-4 bg-white/60 dark:bg-black/30 rounded-xl border border-white/20 dark:border-white/5">
+                <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-3 flex items-center gap-2">
+                  <Sparkles className="h-3 w-3 text-purple-500" />
+                  Current Tier Perks
+                </p>
+                <ul className="grid grid-cols-1 gap-2">
+                  <li className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+                    <div className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />
+                    {(1 + summary.level * 0.1).toFixed(1)}x earning multiplier
+                  </li>
+                  <li className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+                    <div className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />
+                    {Math.min(50 + summary.level * 10, 100)} point withdrawal limit
+                  </li>
+                  <li className="flex items-center gap-2 text-xs font-bold text-gray-700 dark:text-gray-300">
+                    <div className="h-1.5 w-1.5 rounded-full bg-purple-500 shrink-0" />
+                    Priority support & Verification
+                  </li>
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Trust Score */}
-        <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Target className="h-5 w-5 text-blue-600" />
-              Trust Score & Withdrawal
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <span className="text-sm font-medium">Trust Score</span>
-                <Badge variant="secondary">{summary.trust_score}%</Badge>
-              </div>
-              <Progress value={summary.trust_score} className="h-2.5" />
-              <p className="text-xs text-muted-foreground mt-2">
-                Higher trust score unlocks better earning rates and faster withdrawals
-              </p>
-            </div>
-
-            {/* Withdrawal Info */}
-            <div className="mt-4 p-3 bg-white/50 dark:bg-black/20 rounded-lg">
-              <div className="flex justify-between items-center mb-2">
-                <p className="text-xs font-semibold text-muted-foreground">Available to Withdraw</p>
-                <p className="font-bold text-lg text-green-600">
-                  {formatCurrency(summary.available_balance, summary.currency_code)}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <Card className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 border-blue-100 dark:border-blue-900 h-full shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5 text-blue-600" />
+                Trust Score & Withdrawal
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-black text-gray-700 dark:text-gray-300">Trust Score</span>
+                  <Badge className="bg-blue-600 text-white font-black">{summary.trust_score}%</Badge>
+                </div>
+                <Progress value={summary.trust_score} className="h-3 rounded-full bg-blue-100 dark:bg-blue-900 shadow-inner" />
+                <p className="text-[10px] font-bold text-muted-foreground mt-3 leading-relaxed uppercase tracking-wide">
+                  Maintain high trust to unlock faster payouts.
                 </p>
               </div>
-              <Button
-                size="sm"
-                className="w-full mt-2"
-                onClick={() => setActiveTab("withdraw")}
-              >
-                Withdraw Now
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+
+              {/* Withdrawal Info */}
+              <div className="p-4 bg-white/60 dark:bg-black/30 rounded-xl border border-white/20 dark:border-white/5">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest mb-1">Available Funds</p>
+                    <p className="font-black text-2xl text-green-600 dark:text-green-400">
+                      {formatCurrency(summary.available_balance, summary.currency_code)}
+                    </p>
+                  </div>
+                  <div className="h-12 w-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                    <DollarSign className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+                <Button
+                  size="lg"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black shadow-md transition-all active:scale-95"
+                  onClick={() => setActiveTab("withdraw")}
+                >
+                  Withdraw Now
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
       {/* Earnings Breakdown by Category */}
       {Object.keys(earningsByCategory).length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3Icon className="h-5 w-5" />
-                Earnings Breakdown
-              </CardTitle>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-              >
-                <RefreshCw
-                  className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
-                />
-                Refresh
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {Object.entries(earningsByCategory).map(([category, amount]) => {
-              const percentage =
-                summary.total_earned > 0 ? (amount / summary.total_earned) * 100 : 0;
-              const categoryColors: Record<string, string> = {
-                Content: "bg-blue-500",
-                Engagement: "bg-purple-500",
-                Challenges: "bg-pink-500",
-                Battles: "bg-red-500",
-                Gifts: "bg-green-500",
-                Referrals: "bg-yellow-500",
-                Marketplace: "bg-amber-500",
-                Freelance: "bg-indigo-500",
-                Crypto: "bg-orange-500",
-              };
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9 }}
+        >
+          <Card className="shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden">
+            <CardHeader className="border-b bg-gray-50/50 dark:bg-gray-900/50">
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-indigo-500" />
+                  Earnings Breakdown
+                </CardTitle>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={handleRefresh}
+                  disabled={isRefreshing}
+                  className="hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-indigo-600 font-bold"
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
+                  Sync
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-6 space-y-5">
+              {Object.entries(earningsByCategory).map(([category, amount], idx) => {
+                const percentage =
+                  summary.total_earned > 0 ? (amount / summary.total_earned) * 100 : 0;
+                const categoryColors: Record<string, string> = {
+                  Content: "bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]",
+                  Engagement: "bg-purple-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]",
+                  Challenges: "bg-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]",
+                  Battles: "bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]",
+                  Gifts: "bg-green-500 shadow-[0_0_10px_rgba(34,197,94,0.5)]",
+                  Referrals: "bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.5)]",
+                  Marketplace: "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]",
+                  Freelance: "bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]",
+                  Crypto: "bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.5)]",
+                };
 
-              return (
-                <div key={category} className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{category}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-muted-foreground">{percentage.toFixed(1)}%</span>
-                      <span className="font-semibold">
-                        {formatCurrency(amount, summary.currency_code)}
-                      </span>
+                return (
+                  <motion.div
+                    key={category}
+                    className="space-y-2"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 1 + idx * 0.05 }}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <div className={`h-2 w-2 rounded-full ${categoryColors[category]?.split(' ')[0]}`} />
+                        <span className="text-sm font-bold text-gray-700 dark:text-gray-300">{category}</span>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-[10px] font-black text-muted-foreground">{percentage.toFixed(1)}%</span>
+                        <span className="font-black text-sm">
+                          {formatCurrency(amount, summary.currency_code)}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        categoryColors[category] || "bg-gray-500"
-                      }`}
-                      style={{ width: `${percentage}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
+                    <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-2.5 overflow-hidden shadow-inner">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${percentage}%` }}
+                        transition={{ duration: 1.2, delay: 1 + idx * 0.05, ease: "circOut" }}
+                        className={`h-full rounded-full transition-all duration-300 ${
+                          categoryColors[category] || "bg-gray-500"
+                        }`}
+                      />
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        </motion.div>
       )}
 
       {/* Activity Stats */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Activity Overview
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <p className="text-2xl font-bold">{summary.total_activities}</p>
-              <p className="text-xs text-muted-foreground mt-1">Total Activities</p>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 1.1 }}
+      >
+        <Card className="shadow-sm border-gray-100 dark:border-gray-800 overflow-hidden">
+          <CardHeader className="border-b bg-gray-50/50 dark:bg-gray-900/50">
+            <CardTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-orange-500" />
+              Activity Performance Overview
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 bg-muted/30 dark:bg-muted/10 border border-muted-foreground/10 rounded-xl text-center group hover:bg-white dark:hover:bg-gray-900 transition-all duration-300 shadow-sm">
+                <p className="text-3xl font-black text-gray-900 dark:text-white group-hover:scale-110 transition-transform">{summary.total_activities}</p>
+                <p className="text-[10px] uppercase font-black text-muted-foreground mt-2 tracking-widest">Lifetime Acts</p>
+              </div>
+              <div className="p-4 bg-muted/30 dark:bg-muted/10 border border-muted-foreground/10 rounded-xl text-center group hover:bg-white dark:hover:bg-gray-900 transition-all duration-300 shadow-sm">
+                <p className="text-3xl font-black text-indigo-600 group-hover:scale-110 transition-transform">{summary.activities_this_month}</p>
+                <p className="text-[10px] uppercase font-black text-muted-foreground mt-2 tracking-widest">Active Month</p>
+              </div>
+              <div className="p-4 bg-muted/30 dark:bg-muted/10 border border-muted-foreground/10 rounded-xl text-center group hover:bg-white dark:hover:bg-gray-900 transition-all duration-300 shadow-sm">
+                <p className="text-3xl font-black text-green-600 group-hover:scale-110 transition-transform">
+                  {formatCurrency(summary.total_withdrawn, summary.currency_code).split('.')[0]}
+                </p>
+                <p className="text-[10px] uppercase font-black text-muted-foreground mt-2 tracking-widest">Withdrawn</p>
+              </div>
+              <div className="p-4 bg-muted/30 dark:bg-muted/10 border border-muted-foreground/10 rounded-xl text-center group hover:bg-white dark:hover:bg-gray-900 transition-all duration-300 shadow-sm">
+                <p className="text-xl font-black text-orange-600 group-hover:scale-110 transition-transform leading-[2.25rem]">
+                  {summary.last_activity_at
+                    ? new Date(summary.last_activity_at).toLocaleDateString()
+                    : "Never"}
+                </p>
+                <p className="text-[10px] uppercase font-black text-muted-foreground mt-2 tracking-widest">Last Activity</p>
+              </div>
             </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <p className="text-2xl font-bold">{summary.activities_this_month}</p>
-              <p className="text-xs text-muted-foreground mt-1">This Month</p>
-            </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <p className="text-2xl font-bold text-green-600">
-                {formatCurrency(summary.total_withdrawn, summary.currency_code)}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Total Withdrawn</p>
-            </div>
-            <div className="text-center p-4 bg-muted/50 rounded-lg">
-              <p className="text-2xl font-bold">
-                {summary.last_activity_at
-                  ? new Date(summary.last_activity_at).toLocaleDateString()
-                  : "Never"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">Last Activity</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    </motion.div>
   );
 };
 
