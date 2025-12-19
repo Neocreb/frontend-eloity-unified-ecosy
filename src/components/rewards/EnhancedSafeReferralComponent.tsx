@@ -283,11 +283,11 @@ const EnhancedSafeReferralComponent = () => {
               <TrendingUp className="w-4 h-4 opacity-80" aria-hidden="true" />
             </div>
             <p className="text-sm opacity-90 mb-1">Total Earnings</p>
-            <p className="text-3xl font-bold" aria-label={`Total earnings: ${formatCurrency(stats.totalEarnings, currency)}`}>
-              {formatCurrency(stats.totalEarnings, currency)}
+            <p className="text-3xl font-bold" aria-label={`Total earnings: ${formatCurrency(stats.totalEarnings || 0, currency)}`}>
+              {formatCurrency(stats.totalEarnings || 0, currency)}
             </p>
             <p className="text-xs opacity-75 mt-2">
-              {formatCurrency(stats.earningsThisMonth, currency)} this month
+              {formatCurrency(stats.earningsThisMonth || 0, currency)} this month
             </p>
           </div>
 
