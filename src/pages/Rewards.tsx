@@ -253,7 +253,8 @@ const CreatorEconomy = () => {
                 { icon: "🚀", label: "Growth Hub", path: "/app/growth-hub", badge: "New" },
                 { icon: "👥", label: "Invite Friends", path: "/app/growth-hub", badge: "Hot" },
                 { icon: "📊", label: "Analytics", path: "/app/rewards/analytics", badge: null },
-                { icon: "🏆", label: "Leaderboard", path: "/app/rewards/more", badge: null },
+                { icon: "🏆", label: "Leaderboard", path: "/app/rewards/leaderboard", badge: null },
+                { icon: "⏱️", label: "History", path: "/app/rewards/history", badge: null },
                 { icon: "⚡", label: "Challenges", path: "/app/rewards?tab=challenges", badge: "100%" },
                 { icon: "⭐", label: "Referrals", path: "/app/growth-hub", badge: null },
               ].map((item, idx) => (
