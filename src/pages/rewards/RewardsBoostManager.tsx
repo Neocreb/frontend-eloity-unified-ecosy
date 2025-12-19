@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCurrency } from "@/contexts/CurrencyContext";
+import { useBoostManager } from "@/hooks/useBoostManager";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChevronLeft,
   Flame,
@@ -14,94 +14,15 @@ import {
   Target,
   AlertCircle,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
-
-interface BoostPackage {
-  id: string;
-  name: string;
-  icon: string;
-  price: number;
-  duration: number;
-  reach: string;
-  features: string[];
-  popular?: boolean;
-}
-
-interface ActiveBoost {
-  id: string;
-  name: string;
-  icon: string;
-  startDate: string;
-  endDate: string;
-  spent: number;
-  reach: number;
-  engagement: number;
-}
-
-const BOOST_PACKAGES: BoostPackage[] = [
-  {
-    id: "starter",
-    name: "Starter Boost",
-    icon: "⚡",
-    price: 9.99,
-    duration: 7,
-    reach: "1-5K",
-    features: [
-      "Increase visibility",
-      "7 days duration",
-      "Basic analytics",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro Boost",
-    icon: "🚀",
-    price: 24.99,
-    duration: 14,
-    reach: "5-20K",
-    features: [
-      "Priority ranking",
-      "14 days duration",
-      "Advanced analytics",
-      "Custom targeting",
-    ],
-    popular: true,
-  },
-  {
-    id: "elite",
-    name: "Elite Boost",
-    icon: "👑",
-    price: 49.99,
-    duration: 30,
-    reach: "20-100K",
-    features: [
-      "Top ranking",
-      "30 days duration",
-      "Premium analytics",
-      "Dedicated support",
-      "Custom content placement",
-    ],
-  },
-];
-
-const ACTIVE_BOOSTS: ActiveBoost[] = [
-  {
-    id: "1",
-    name: "Pro Boost - Latest Video",
-    icon: "🚀",
-    startDate: "Dec 15, 2025",
-    endDate: "Dec 29, 2025",
-    spent: 24.99,
-    reach: 15420,
-    engagement: 2341,
-  },
-];
+import { formatCurrency } from "@/utils/formatters";
 
 export default function RewardsBoostManager() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { formatCurrency } = useCurrency();
+  const { packages, activeBoosts, stats, isLoading, error, createBoost } = useBoostManager();
   const [selectedBoost, setSelectedBoost] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -128,74 +49,126 @@ export default function RewardsBoostManager() {
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8 space-y-6">
-          {/* Active Boosts Section */}
-          {ACTIVE_BOOSTS.length > 0 && (
-            <div className="space-y-4">
-              <h2 className="text-lg font-bold text-gray-900">Active Boosts</h2>
-              {ACTIVE_BOOSTS.map((boost) => (
-                <Card key={boost.id} className="border-green-200 bg-green-50">
-                  <CardContent className="pt-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-3">
-                        <span className="text-3xl">{boost.icon}</span>
-                        <div>
-                          <h3 className="font-bold text-gray-900">
-                            {boost.name}
-                          </h3>
-                          <p className="text-xs text-gray-600">
-                            {boost.startDate} — {boost.endDate}
-                          </p>
+          {isLoading ? (
+            <>
+              <Skeleton className="h-32 w-full rounded-lg" />
+              <Skeleton className="h-32 w-full rounded-lg" />
+            </>
+          ) : error ? (
+            <Alert className="border-red-200 bg-red-50">
+              <AlertCircle className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-900">
+                {error.message}
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <>
+              {/* Stats Section */}
+              {stats && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-gray-600 font-medium">Active Boosts</p>
+                      <p className="text-2xl font-bold text-orange-600">{stats.activeBoostsCount}</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-gray-600 font-medium">Total Spent</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {formatCurrency(stats.totalSpent, "USD")}
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-gray-600 font-medium">Total Reach</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {(stats.totalReach / 1000).toFixed(1)}K
+                      </p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-xs text-gray-600 font-medium">Engagement</p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {stats.totalEngagement.toLocaleString()}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+
+              {/* Active Boosts Section */}
+              {activeBoosts.length > 0 && (
+                <div className="space-y-4">
+                  <h2 className="text-lg font-bold text-gray-900">Active Boosts</h2>
+                  {activeBoosts.map((boost) => (
+                    <Card key={boost.id} className="border-green-200 bg-green-50">
+                      <CardContent className="pt-6">
+                        <div className="flex items-start justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            <span className="text-3xl">🚀</span>
+                            <div>
+                              <h3 className="font-bold text-gray-900">
+                                {boost.boost_name}
+                              </h3>
+                              <p className="text-xs text-gray-600">
+                                {new Date(boost.start_date).toLocaleDateString()} — {new Date(boost.end_date).toLocaleDateString()}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge className="bg-green-200 text-green-800 hover:bg-green-200">
+                            {boost.status}
+                          </Badge>
                         </div>
-                      </div>
-                      <Badge className="bg-green-200 text-green-800 hover:bg-green-200">
-                        Active
-                      </Badge>
-                    </div>
 
-                    <div className="grid grid-cols-3 gap-3 mb-4">
-                      <div className="bg-white rounded-lg p-3 text-center">
-                        <p className="text-xs text-gray-600 font-medium">Spent</p>
-                        <p className="text-lg font-bold text-gray-900">
-                          ${boost.spent.toFixed(2)}
-                        </p>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 text-center">
-                        <p className="text-xs text-gray-600 font-medium">Reach</p>
-                        <p className="text-lg font-bold text-blue-600">
-                          {boost.reach.toLocaleString()}
-                        </p>
-                      </div>
-                      <div className="bg-white rounded-lg p-3 text-center">
-                        <p className="text-xs text-gray-600 font-medium">
-                          Engagement
-                        </p>
-                        <p className="text-lg font-bold text-purple-600">
-                          {boost.engagement.toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
+                        <div className="grid grid-cols-3 gap-3 mb-4">
+                          <div className="bg-white rounded-lg p-3 text-center">
+                            <p className="text-xs text-gray-600 font-medium">Spent</p>
+                            <p className="text-lg font-bold text-gray-900">
+                              {formatCurrency(boost.price_paid || 0, "USD")}
+                            </p>
+                          </div>
+                          <div className="bg-white rounded-lg p-3 text-center">
+                            <p className="text-xs text-gray-600 font-medium">Reach</p>
+                            <p className="text-lg font-bold text-blue-600">
+                              {boost.reach_achieved.toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="bg-white rounded-lg p-3 text-center">
+                            <p className="text-xs text-gray-600 font-medium">
+                              Engagement
+                            </p>
+                            <p className="text-lg font-bold text-purple-600">
+                              {boost.engagement_achieved.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
 
-                    <Button variant="outline" className="w-full h-9 text-sm">
-                      View Details
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        <Button variant="outline" className="w-full h-9 text-sm">
+                          View Details
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           {/* Boost Packages */}
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-gray-900">Available Boosts</h2>
             <div className="space-y-3">
-              {BOOST_PACKAGES.map((boost) => (
+              {packages.map((boost) => (
                 <Card
                   key={boost.id}
                   className={`cursor-pointer transition-all ${
                     selectedBoost === boost.id
                       ? "border-orange-500 bg-orange-50 shadow-md"
                       : "hover:shadow-md"
-                  } ${boost.popular ? "border-orange-200" : ""}`}
+                  } ${boost.is_popular ? "border-orange-200" : ""}`}
                   onClick={() => setSelectedBoost(boost.id)}
                 >
                   <CardContent className="pt-6">
@@ -207,15 +180,15 @@ export default function RewardsBoostManager() {
                             {boost.name}
                           </h3>
                           <p className="text-xs text-gray-600">
-                            {boost.duration} days
+                            {boost.duration_days} days
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-orange-600">
-                          ${boost.price.toFixed(2)}
+                          {formatCurrency(boost.price, "USD")}
                         </p>
-                        {boost.popular && (
+                        {boost.is_popular && (
                           <Badge className="mt-2 bg-orange-500 text-white hover:bg-orange-600">
                             Popular
                           </Badge>
@@ -227,13 +200,13 @@ export default function RewardsBoostManager() {
                       <div className="flex items-center gap-2">
                         <Target className="h-4 w-4 text-gray-600" />
                         <span className="text-sm text-gray-700">
-                          Estimated reach: {boost.reach}
+                          Estimated reach: {boost.estimated_reach}
                         </span>
                       </div>
                     </div>
 
                     <ul className="space-y-2 mb-4">
-                      {boost.features.map((feature, idx) => (
+                      {(boost.features || []).map((feature, idx) => (
                         <li
                           key={idx}
                           className="flex items-center gap-2 text-sm text-gray-700"
@@ -245,8 +218,23 @@ export default function RewardsBoostManager() {
                     </ul>
 
                     {selectedBoost === boost.id && (
-                      <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
-                        Purchase Boost
+                      <Button
+                        className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCreating(true);
+                          createBoost(boost.id).finally(() => setIsCreating(false));
+                        }}
+                        disabled={isCreating}
+                      >
+                        {isCreating ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          "Purchase Boost"
+                        )}
                       </Button>
                     )}
                   </CardContent>

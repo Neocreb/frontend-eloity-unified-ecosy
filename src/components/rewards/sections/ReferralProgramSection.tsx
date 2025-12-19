@@ -3,6 +3,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useRewardsSummary } from "@/hooks/useRewardsSummary";
 import {
   TrendingUp,
   DollarSign,
@@ -10,63 +12,68 @@ import {
   Target,
   Crown,
   ArrowUp,
+  AlertCircle,
 } from "lucide-react";
-
-interface ReferralTier {
-  name: string;
-  color: string;
-  baseReward: number;
-  revenueShare: number;
-  requirements: string;
-  totalReferrals: number;
-}
+import { formatCurrency } from "@/utils/formatters";
 
 export default function ReferralProgramSection() {
-  const referralTiers: ReferralTier[] = [
+  const { summary, isLoading, error } = useRewardsSummary();
+
+  const referralTiers = [
     {
       name: "Bronze",
-      color: "bg-amber-100 text-amber-900",
+      color: "from-amber-400 to-amber-600",
       baseReward: 10,
       revenueShare: 0.05,
       requirements: "0-5 referrals",
-      totalReferrals: 0,
+      min: 0,
+      max: 4,
     },
     {
       name: "Silver",
-      color: "bg-gray-200 text-gray-900",
+      color: "from-gray-400 to-gray-600",
       baseReward: 25,
       revenueShare: 0.075,
       requirements: "5-25 referrals",
-      totalReferrals: 8,
+      min: 5,
+      max: 24,
     },
     {
       name: "Gold",
-      color: "bg-yellow-100 text-yellow-900",
+      color: "from-yellow-400 to-yellow-600",
       baseReward: 50,
       revenueShare: 0.1,
       requirements: "25-100 referrals",
-      totalReferrals: 0,
+      min: 25,
+      max: 99,
     },
     {
       name: "Platinum",
-      color: "bg-blue-100 text-blue-900",
+      color: "from-blue-500 to-purple-600",
       baseReward: 100,
       revenueShare: 0.15,
       requirements: "100+ referrals",
-      totalReferrals: 0,
+      min: 100,
+      max: Infinity,
     },
   ];
 
-  const stats = {
-    currentTier: "Silver",
-    totalReferrals: 8,
-    activeReferrals: 6,
-    totalEarnings: 450,
-    monthlyEarnings: 120,
-    conversionRate: 75,
-    tierProgress: 40,
-    referralsToNextTier: 17,
-  };
+  if (error) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 text-red-900">
+            <AlertCircle className="h-5 w-5" />
+            <p>{error.message}</p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const currentTier = summary?.referral_tier || "Bronze";
+  const totalReferrals = summary?.total_referrals || 0;
+  const totalEarnings = summary?.total_earnings || 0;
 
   return (
     <div className="space-y-6">
@@ -78,8 +85,14 @@ export default function ReferralProgramSection() {
             <Crown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.currentTier}</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tier Badge</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-yellow-600">{currentTier}</div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tier Badge</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -89,8 +102,14 @@ export default function ReferralProgramSection() {
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalReferrals}</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">All time</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{totalReferrals}</div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">All time</p>
+              </>
+            )}
           </CardContent>
         </Card>
 

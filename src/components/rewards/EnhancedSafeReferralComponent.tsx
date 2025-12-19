@@ -258,7 +258,7 @@ const EnhancedSafeReferralComponent = () => {
           <div
             className="rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
             role="article"
-            aria-label={`Total Referrals: ${stats.totalReferrals}. ${stats.activeReferrals} active with ${stats.conversionRate.toFixed(1)}% conversion rate`}
+            aria-label={`Total Referrals: ${stats.totalReferrals || 0}. ${stats.activeReferrals || 0} active with ${(stats.conversionRate || 0).toFixed(1)}% conversion rate`}
           >
             <div className="flex items-center justify-between mb-4">
               <Users className="w-5 h-5 opacity-80" aria-hidden="true" />
@@ -267,42 +267,42 @@ const EnhancedSafeReferralComponent = () => {
               </span>
             </div>
             <p className="text-sm opacity-90 mb-1">Total Referrals</p>
-            <p className="text-3xl font-bold" aria-label={`${stats.totalReferrals} total referrals`}>{stats.totalReferrals}</p>
+            <p className="text-3xl font-bold" aria-label={`${stats.totalReferrals || 0} total referrals`}>{stats.totalReferrals || 0}</p>
             <p className="text-xs opacity-75 mt-2">
-              {stats.activeReferrals} active • {stats.conversionRate.toFixed(1)}% conversion
+              {stats.activeReferrals || 0} active • {(stats.conversionRate || 0).toFixed(1)}% conversion
             </p>
           </div>
 
           <div
             className="rounded-xl bg-gradient-to-br from-green-500 to-green-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
             role="article"
-            aria-label={`Total Earnings: ${formatCurrency(stats.totalEarnings, currency)}. ${formatCurrency(stats.earningsThisMonth, currency)} this month`}
+            aria-label={`Total Earnings: ${formatCurrency(stats.totalEarnings || 0, currency)}. ${formatCurrency(stats.earningsThisMonth || 0, currency)} this month`}
           >
             <div className="flex items-center justify-between mb-4">
               <DollarSign className="w-5 h-5 opacity-80" aria-hidden="true" />
               <TrendingUp className="w-4 h-4 opacity-80" aria-hidden="true" />
             </div>
             <p className="text-sm opacity-90 mb-1">Total Earnings</p>
-            <p className="text-3xl font-bold" aria-label={`Total earnings: ${formatCurrency(stats.totalEarnings, currency)}`}>
-              {formatCurrency(stats.totalEarnings, currency)}
+            <p className="text-3xl font-bold" aria-label={`Total earnings: ${formatCurrency(stats.totalEarnings || 0, currency)}`}>
+              {formatCurrency(stats.totalEarnings || 0, currency)}
             </p>
             <p className="text-xs opacity-75 mt-2">
-              {formatCurrency(stats.earningsThisMonth, currency)} this month
+              {formatCurrency(stats.earningsThisMonth || 0, currency)} this month
             </p>
           </div>
 
           <div
             className="rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 p-6 text-white shadow-lg hover:shadow-xl transition-shadow"
             role="article"
-            aria-label={`Auto Shared: ${formatCurrency(stats.totalAutoShared, currency)}. 0.5% of your earnings automatically shared`}
+            aria-label={`Auto Shared: ${formatCurrency(stats.totalAutoShared || 0, currency)}. 0.5% of your earnings automatically shared`}
           >
             <div className="flex items-center justify-between mb-4">
               <Heart className="w-5 h-5 opacity-80" aria-hidden="true" />
               <CheckCircle2 className="w-4 h-4 opacity-80" aria-hidden="true" />
             </div>
             <p className="text-sm opacity-90 mb-1">Auto Shared</p>
-            <p className="text-3xl font-bold" aria-label={`Auto shared: ${formatCurrency(stats.totalAutoShared, currency)}`}>
-              {formatCurrency(stats.totalAutoShared, currency)}
+            <p className="text-3xl font-bold" aria-label={`Auto shared: ${formatCurrency(stats.totalAutoShared || 0, currency)}`}>
+              {formatCurrency(stats.totalAutoShared || 0, currency)}
             </p>
             <p className="text-xs opacity-75 mt-2">0.5% of earnings shared</p>
           </div>
@@ -335,7 +335,7 @@ const EnhancedSafeReferralComponent = () => {
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {stats.activeReferrals} active referrals × {formatCurrency(projections.tierCalcs.baseReward, currency)}
+                    {stats.activeReferrals || 0} active referrals × {formatCurrency(projections.tierCalcs.baseReward, currency)}
                   </p>
                 </div>
 
@@ -355,7 +355,7 @@ const EnhancedSafeReferralComponent = () => {
                 <div className="p-4 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-900/30 rounded-xl border border-purple-200 dark:border-purple-800">
                   <p className="text-xs font-semibold text-muted-foreground mb-2">Total This Month</p>
                   <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">
-                    {formatCurrency(stats.earningsThisMonth, currency)}
+                    {formatCurrency(stats.earningsThisMonth || 0, currency)}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
                     All referral sources combined
@@ -381,7 +381,7 @@ const EnhancedSafeReferralComponent = () => {
                     <TrendingUp className="h-8 w-8 text-cyan-400" />
                   </div>
                   <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-                    <p>📊 Based on current {stats.activeReferrals} active referrals</p>
+                    <p>📊 Based on current {stats.activeReferrals || 0} active referrals</p>
                     <p>💰 {formatCurrency(projections.tierCalcs.baseReward, currency)} per referral/month</p>
                   </div>
                 </div>
@@ -423,11 +423,11 @@ const EnhancedSafeReferralComponent = () => {
                       </span>
                     </div>
                     <Progress
-                      value={Math.min((stats.earningsThisMonth / 30 / projections.tierCalcs.dailyLimit) * 100, 100)}
+                      value={Math.min((((stats.earningsThisMonth || 0) / 30 / projections.tierCalcs.dailyLimit) * 100), 100)}
                       className="h-2"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {((stats.earningsThisMonth / 30 / projections.tierCalcs.dailyLimit) * 100).toFixed(0)}% of daily limit used
+                      {(((stats.earningsThisMonth || 0) / 30 / projections.tierCalcs.dailyLimit) * 100).toFixed(0)}% of daily limit used
                     </p>
                   </div>
                 </div>
@@ -445,11 +445,11 @@ const EnhancedSafeReferralComponent = () => {
                       </span>
                     </div>
                     <Progress
-                      value={Math.min((stats.earningsThisMonth / projections.tierCalcs.monthlyLimit) * 100, 100)}
+                      value={Math.min((((stats.earningsThisMonth || 0) / projections.tierCalcs.monthlyLimit) * 100), 100)}
                       className="h-2"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {((stats.earningsThisMonth / projections.tierCalcs.monthlyLimit) * 100).toFixed(0)}% of monthly limit used
+                      {(((stats.earningsThisMonth || 0) / projections.tierCalcs.monthlyLimit) * 100).toFixed(0)}% of monthly limit used
                     </p>
                   </div>
                 </div>
@@ -472,7 +472,7 @@ const EnhancedSafeReferralComponent = () => {
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-sm font-medium">Progress</span>
                     <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                      {stats.totalReferrals}/{projections.nextTierThreshold}
+                      {stats.totalReferrals || 0}/{projections.nextTierThreshold}
                     </span>
                   </div>
                   <Progress
@@ -559,7 +559,7 @@ const EnhancedSafeReferralComponent = () => {
                       <span className="text-sm text-gray-700 dark:text-gray-300">Avg per Referral</span>
                       <span className="font-bold text-pink-600 dark:text-pink-400">
                         {formatCurrency(
-                          (stats.autoSharedThisMonth || 0) / Math.max(1, stats.activeReferrals),
+                          (stats.autoSharedThisMonth || 0) / Math.max(1, stats.activeReferrals || 1),
                           currency
                         )}
                       </span>
@@ -596,7 +596,7 @@ const EnhancedSafeReferralComponent = () => {
                 <div className="flex items-center gap-2 text-sm bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full mt-2 w-fit">
                   <CheckCircle2 className="w-4 h-4 text-blue-600" />
                   <span className="font-semibold text-blue-900 dark:text-blue-100">
-                    {formatCurrency(stats.autoSharedThisMonth, currency)} shared this month
+                    {formatCurrency(stats.autoSharedThisMonth || 0, currency)} shared this month
                   </span>
                 </div>
               )}

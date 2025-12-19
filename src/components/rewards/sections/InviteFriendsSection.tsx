@@ -3,7 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useInvitationStats } from "@/hooks/useInvitationStats";
 import {
   Copy,
   Share2,
@@ -17,54 +19,50 @@ import {
   Facebook,
   Mail,
   MessageCircle,
+  AlertCircle,
+  Loader2,
 } from "lucide-react";
-
-interface InvitedFriend {
-  id: string;
-  name: string;
-  email: string;
-  status: "pending" | "converted" | "completed";
-  joinDate?: string;
-  reward?: number;
-}
+import { formatCurrency } from "@/utils/formatters";
 
 export default function InviteFriendsSection() {
   const { toast } = useToast();
-  const [referralCode] = useState("FRIEND2024");
-  const [referralLink] = useState(
-    `https://eloity.app/join?ref=${referralCode}`
-  );
+  const { invitations, stats, isLoading, error, sendInvitation } = useInvitationStats();
+  const [email, setEmail] = useState("");
   const [copiedLink, setCopiedLink] = useState(false);
-  const [invitedFriends] = useState<InvitedFriend[]>([
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john@example.com",
-      status: "converted",
-      joinDate: "2024-01-15",
-      reward: 50,
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane@example.com",
-      status: "pending",
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike@example.com",
-      status: "converted",
-      joinDate: "2024-01-10",
-      reward: 50,
-    },
-  ]);
+  const [isSending, setIsSending] = useState(false);
 
-  const convertedFriends = invitedFriends.filter((f) => f.status === "converted").length;
-  const pendingFriends = invitedFriends.filter((f) => f.status === "pending").length;
-  const totalReward = invitedFriends
-    .filter((f) => f.status === "converted")
-    .reduce((sum, f) => sum + (f.reward || 0), 0);
+  const handleSendInvitation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter an email address",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSending(true);
+    const code = await sendInvitation(email);
+    setIsSending(false);
+
+    if (code) {
+      toast({
+        title: "✓ Invitation Sent!",
+        description: `Invitation sent to ${email}`,
+      });
+      setEmail("");
+    } else {
+      toast({
+        title: "Error",
+        description: "Failed to send invitation",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const referralCode = invitations[0]?.invitation_code || "REFER" + Math.random().toString(36).substring(2, 8).toUpperCase();
+  const referralLink = `https://eloity.app/join?ref=${referralCode}`;
 
   const copyReferralLink = async () => {
     try {
@@ -108,6 +106,21 @@ export default function InviteFriendsSection() {
     }
   };
 
+  if (error) {
+    return (
+      <Card className="border-red-200 bg-red-50">
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 text-red-900">
+            <AlertCircle className="h-5 w-5" />
+            <div>
+              <p className="font-semibold">{error.message}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Summary Card */}
@@ -119,20 +132,28 @@ export default function InviteFriendsSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            <div>
-              <p className="text-2xl font-bold text-blue-600">{invitedFriends.length}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Total Invites Sent</p>
+          {isLoading ? (
+            <div className="grid grid-cols-3 gap-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
             </div>
-            <div>
-              <p className="text-2xl font-bold text-green-600">{convertedFriends}</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Joined</p>
+          ) : (
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <p className="text-2xl font-bold text-blue-600">{stats?.totalInvites || 0}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Total Invites Sent</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-green-600">{stats?.convertedInvites || 0}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Joined</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats?.totalReward || 0, "USD")}</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Earned</p>
+              </div>
             </div>
-            <div>
-              <p className="text-2xl font-bold text-purple-600">{totalReward} ELO</p>
-              <p className="text-xs text-gray-600 dark:text-gray-400">Earned</p>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
 
@@ -225,17 +246,61 @@ export default function InviteFriendsSection() {
         </CardContent>
       </Card>
 
+      {/* Send Invitation Form */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Send New Invitation</CardTitle>
+          <CardDescription>Invite friends via email to earn rewards</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSendInvitation} className="flex gap-2">
+            <Input
+              type="email"
+              placeholder="friend@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              disabled={isSending}
+              className="flex-1"
+            />
+            <Button
+              type="submit"
+              disabled={isSending}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isSending ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Sending
+                </>
+              ) : (
+                "Send"
+              )}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
       {/* Invited Friends List */}
       <Card>
         <CardHeader>
           <CardTitle>Invited Friends</CardTitle>
           <CardDescription>
-            {pendingFriends > 0 && `${pendingFriends} pending, `}
-            {convertedFriends} joined
+            {stats && (
+              <>
+                {stats.pendingInvites > 0 && `${stats.pendingInvites} pending, `}
+                {stats.convertedInvites} joined
+              </>
+            )}
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {invitedFriends.length === 0 ? (
+          {isLoading ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : invitations.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-gray-600 dark:text-gray-400">No invites sent yet</p>
               <p className="text-sm text-gray-500 dark:text-gray-500 mt-1">
@@ -244,22 +309,22 @@ export default function InviteFriendsSection() {
             </div>
           ) : (
             <div className="space-y-3">
-              {invitedFriends.map((friend) => (
+              {invitations.map((invite) => (
                 <div
-                  key={friend.id}
+                  key={invite.id}
                   className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-900 transition-colors"
                 >
                   <div className="flex-1">
                     <p className="font-medium text-gray-900 dark:text-white">
-                      {friend.name}
+                      {invite.referred_email}
                     </p>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {friend.email}
+                      Code: {invite.invitation_code}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-3">
-                    {friend.status === "converted" && (
+                    {invite.status === "converted" && (
                       <>
                         <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                           <CheckCircle className="w-3 h-3 mr-1" />
@@ -267,21 +332,28 @@ export default function InviteFriendsSection() {
                         </Badge>
                         <div className="text-right">
                           <p className="font-bold text-green-600 dark:text-green-400">
-                            +{friend.reward} ELO
+                            +{formatCurrency(invite.reward_amount, invite.reward_currency)}
                           </p>
-                          {friend.joinDate && (
+                          {invite.conversion_date && (
                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {new Date(friend.joinDate).toLocaleDateString()}
+                              {new Date(invite.conversion_date).toLocaleDateString()}
                             </p>
                           )}
                         </div>
                       </>
                     )}
 
-                    {friend.status === "pending" && (
+                    {invite.status === "pending" && (
                       <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                         <Clock className="w-3 h-3 mr-1" />
                         Pending
+                      </Badge>
+                    )}
+
+                    {invite.status === "accepted" && (
+                      <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        Accepted
                       </Badge>
                     )}
                   </div>
