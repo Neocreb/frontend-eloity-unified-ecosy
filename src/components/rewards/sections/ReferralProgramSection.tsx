@@ -159,7 +159,7 @@ export default function ReferralProgramSection() {
         <CardHeader>
           <CardTitle>Tier Progression</CardTitle>
           <CardDescription>
-            You're on the way to {stats.referralsToNextTier > 0 ? "Gold" : "Platinum"}!
+            You're on the way to {referralsToNextTier > 0 ? "Gold" : "Platinum"}!
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -167,12 +167,12 @@ export default function ReferralProgramSection() {
             <div className="flex justify-between mb-2">
               <span className="text-sm font-medium">Silver → Gold</span>
               <span className="text-sm text-gray-600 dark:text-gray-400">
-                {stats.totalReferrals}/25
+                {totalReferrals}/25
               </span>
             </div>
-            <Progress value={stats.tierProgress} className="h-2" />
+            <Progress value={tierProgress} className="h-2" />
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              {stats.referralsToNextTier} more referrals needed
+              {referralsToNextTier} more referrals needed
             </p>
           </div>
         </CardContent>
