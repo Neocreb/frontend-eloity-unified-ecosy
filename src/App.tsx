@@ -142,7 +142,6 @@ import EditProfile from "./pages/profile/EditProfile";
 // Phase 3 - Rewards Modal Conversions
 import WithdrawRewards from "./pages/rewards/WithdrawRewards";
 import RewardsMoreServices from "./pages/rewards/RewardsMoreServices";
-import RewardsMoreServices from "./pages/rewards/RewardsMoreServices";
 import RewardsLeaderboard from "./pages/rewards/RewardsLeaderboard";
 import RewardsHistoryPage from "./pages/rewards/RewardsHistory";
 import RewardsWithdraw from "./pages/rewards/RewardsWithdraw";
