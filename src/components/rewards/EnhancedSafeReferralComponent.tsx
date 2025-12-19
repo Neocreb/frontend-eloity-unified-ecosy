@@ -596,7 +596,7 @@ const EnhancedSafeReferralComponent = () => {
                 <div className="flex items-center gap-2 text-sm bg-blue-100 dark:bg-blue-900/30 px-3 py-1 rounded-full mt-2 w-fit">
                   <CheckCircle2 className="w-4 h-4 text-blue-600" />
                   <span className="font-semibold text-blue-900 dark:text-blue-100">
-                    {formatCurrency(stats.autoSharedThisMonth, currency)} shared this month
+                    {formatCurrency(stats.autoSharedThisMonth || 0, currency)} shared this month
                   </span>
                 </div>
               )}
