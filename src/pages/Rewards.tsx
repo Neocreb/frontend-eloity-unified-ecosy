@@ -162,9 +162,9 @@ const CreatorEconomy = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-slate-950 overflow-hidden">
       {/* Upper Zone - Full Bleed Gradient Hero Section */}
-      <div className="relative w-screen -ml-[50vw] left-1/2 bg-gradient-to-b from-purple-600 via-purple-500 to-blue-600 dark:from-purple-900 dark:via-purple-800 dark:to-blue-900 pt-8 pb-20 sm:pb-24 md:pb-32">
+      <div className="relative w-full bg-gradient-to-b from-purple-600 via-purple-500 to-blue-600 dark:from-purple-900 dark:via-purple-800 dark:to-blue-900 pt-8 pb-20 sm:pb-24 md:pb-32">
         <AnimatedGradientWave />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -176,15 +176,13 @@ const CreatorEconomy = () => {
           {/* Main Balance Display */}
           <div className="mb-8">
             <div className="text-white/80 text-xs md:text-sm font-medium mb-2">
-              Total Assets (ELOITs)
+              ELO POINTS BALANCE
             </div>
             <div className="flex items-center gap-3">
               <div className="flex-1">
                 <div className="text-white text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight">
                   {showBalance
-                    ? formatCurrencyContext(
-                        revenueData?.totalEarnings || 0
-                      )
+                    ? `${(revenueData?.totalEarnings || 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} ELO`
                     : "••••••••"}
                 </div>
               </div>
@@ -206,41 +204,27 @@ const CreatorEconomy = () => {
 
         {/* Quick Action Buttons - Floating Section */}
         <div className="relative z-20 max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12 -mb-4 md:-mb-6">
-          <div className="flex gap-1.5 sm:gap-2 md:gap-3 justify-center">
+          <div className="flex gap-2 sm:gap-2.5 md:gap-3 justify-center max-w-md mx-auto">
             <button
               onClick={() => navigate("/app/rewards/withdraw")}
-              className="flex-1 bg-white text-slate-900 rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 bg-white text-purple-600 rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 dark:bg-slate-900 dark:text-purple-400"
             >
-              <ArrowUp className="h-4 sm:h-5 w-4 sm:w-5" />
-              <span className="hidden sm:inline">Withdraw</span>
+              <ArrowUp className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
+              <span>Withdraw</span>
             </button>
             <button
               onClick={() => navigate("/app/rewards/send-gifts")}
-              className="flex-1 bg-white text-slate-900 rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="flex-1 bg-white text-purple-600 rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 dark:bg-slate-900 dark:text-purple-400"
             >
-              <Gift className="h-4 sm:h-5 w-4 sm:w-5" />
-              <span className="hidden sm:inline">Send Gifts</span>
-            </button>
-            <button
-              onClick={() => navigate("/app/rewards/analytics")}
-              className="flex-1 bg-white text-slate-900 rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
-            >
-              <BarChart3 className="h-4 sm:h-5 w-4 sm:w-5" />
-              <span className="hidden sm:inline">Analytics</span>
-            </button>
-            <button
-              onClick={() => navigate("/app/rewards/more")}
-              className="flex-1 bg-white text-slate-900 rounded-xl md:rounded-2xl py-2.5 sm:py-3 px-1.5 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-0.5 md:gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
-            >
-              <MoreHorizontal className="h-4 sm:h-5 w-4 sm:w-5" />
-              <span className="hidden sm:inline">More</span>
+              <Gift className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
+              <span>Send Gifts</span>
             </button>
           </div>
         </div>
       </div>
 
       {/* Lower Zone - White Content Area with Curved Top */}
-      <div className="relative w-screen -ml-[50vw] left-1/2 bg-white pt-2 min-h-screen">
+      <div className="relative w-full bg-white dark:bg-slate-950 pt-2 min-h-screen">
         {/* Curved divider */}
         <div
           className="absolute -top-12 left-0 right-0 h-24 bg-white"
@@ -266,7 +250,7 @@ const CreatorEconomy = () => {
             <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-3 gap-2 md:gap-3">
               {/* Quick Access Items */}
               {[
-                { icon: "👥", label: "Invite Friends", path: "/app/rewards/more", badge: "Hot" },
+                { icon: "👥", label: "Invite Friends", path: "/app/rewards?tab=referrals", badge: "Hot" },
                 { icon: "📊", label: "Analytics", path: "/app/rewards/analytics", badge: null },
                 { icon: "🏆", label: "Leaderboard", path: "/app/rewards/more", badge: null },
                 { icon: "⚡", label: "Challenges", path: "/app/rewards?tab=challenges", badge: "100%" },
@@ -276,7 +260,7 @@ const CreatorEconomy = () => {
                 <button
                   key={idx}
                   onClick={() => navigate(item.path)}
-                  className="flex flex-col items-center justify-center gap-2 p-3 md:p-4 bg-slate-900 text-white rounded-lg md:rounded-xl hover:bg-slate-800 transition-all active:scale-95 relative"
+                  className="flex flex-col items-center justify-center gap-2 p-3 md:p-4 bg-gradient-to-br from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 dark:from-purple-700 dark:to-blue-800 dark:hover:from-purple-600 dark:hover:to-blue-700 text-white rounded-lg md:rounded-xl transition-all active:scale-95 relative"
                 >
                   {item.badge && (
                     <span className="absolute -top-2 -right-2 bg-yellow-400 text-slate-900 text-2xs px-1.5 py-0.5 rounded-full font-bold">
