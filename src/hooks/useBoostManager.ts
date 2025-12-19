@@ -174,7 +174,8 @@ export function useBoostManager(): UseBoostManagerReturn {
       await fetchData();
       return true;
     } catch (err) {
-      console.error("Error updating boost:", err);
+      const errorMessage = err instanceof Error ? err.message : "Failed to update boost";
+      console.error("Error updating boost:", errorMessage);
       return false;
     }
   };
