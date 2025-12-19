@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
-import { useCurrency } from "@/contexts/CurrencyContext";
+import { useBoostManager } from "@/hooks/useBoostManager";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ChevronLeft,
   Flame,
@@ -14,94 +14,15 @@ import {
   Target,
   AlertCircle,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
-
-interface BoostPackage {
-  id: string;
-  name: string;
-  icon: string;
-  price: number;
-  duration: number;
-  reach: string;
-  features: string[];
-  popular?: boolean;
-}
-
-interface ActiveBoost {
-  id: string;
-  name: string;
-  icon: string;
-  startDate: string;
-  endDate: string;
-  spent: number;
-  reach: number;
-  engagement: number;
-}
-
-const BOOST_PACKAGES: BoostPackage[] = [
-  {
-    id: "starter",
-    name: "Starter Boost",
-    icon: "⚡",
-    price: 9.99,
-    duration: 7,
-    reach: "1-5K",
-    features: [
-      "Increase visibility",
-      "7 days duration",
-      "Basic analytics",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro Boost",
-    icon: "🚀",
-    price: 24.99,
-    duration: 14,
-    reach: "5-20K",
-    features: [
-      "Priority ranking",
-      "14 days duration",
-      "Advanced analytics",
-      "Custom targeting",
-    ],
-    popular: true,
-  },
-  {
-    id: "elite",
-    name: "Elite Boost",
-    icon: "👑",
-    price: 49.99,
-    duration: 30,
-    reach: "20-100K",
-    features: [
-      "Top ranking",
-      "30 days duration",
-      "Premium analytics",
-      "Dedicated support",
-      "Custom content placement",
-    ],
-  },
-];
-
-const ACTIVE_BOOSTS: ActiveBoost[] = [
-  {
-    id: "1",
-    name: "Pro Boost - Latest Video",
-    icon: "🚀",
-    startDate: "Dec 15, 2025",
-    endDate: "Dec 29, 2025",
-    spent: 24.99,
-    reach: 15420,
-    engagement: 2341,
-  },
-];
+import { formatCurrency } from "@/utils/formatters";
 
 export default function RewardsBoostManager() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { formatCurrency } = useCurrency();
+  const { packages, activeBoosts, stats, isLoading, error, createBoost } = useBoostManager();
   const [selectedBoost, setSelectedBoost] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
