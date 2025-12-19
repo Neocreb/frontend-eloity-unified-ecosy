@@ -559,7 +559,7 @@ const EnhancedSafeReferralComponent = () => {
                       <span className="text-sm text-gray-700 dark:text-gray-300">Avg per Referral</span>
                       <span className="font-bold text-pink-600 dark:text-pink-400">
                         {formatCurrency(
-                          (stats.autoSharedThisMonth || 0) / Math.max(1, stats.activeReferrals),
+                          (stats.autoSharedThisMonth || 0) / Math.max(1, stats.activeReferrals || 1),
                           currency
                         )}
                       </span>
