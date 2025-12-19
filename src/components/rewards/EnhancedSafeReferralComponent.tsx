@@ -423,11 +423,11 @@ const EnhancedSafeReferralComponent = () => {
                       </span>
                     </div>
                     <Progress
-                      value={Math.min((stats.earningsThisMonth / 30 / projections.tierCalcs.dailyLimit) * 100, 100)}
+                      value={Math.min((((stats.earningsThisMonth || 0) / 30 / projections.tierCalcs.dailyLimit) * 100), 100)}
                       className="h-2"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {((stats.earningsThisMonth / 30 / projections.tierCalcs.dailyLimit) * 100).toFixed(0)}% of daily limit used
+                      {(((stats.earningsThisMonth || 0) / 30 / projections.tierCalcs.dailyLimit) * 100).toFixed(0)}% of daily limit used
                     </p>
                   </div>
                 </div>
@@ -445,11 +445,11 @@ const EnhancedSafeReferralComponent = () => {
                       </span>
                     </div>
                     <Progress
-                      value={Math.min((stats.earningsThisMonth / projections.tierCalcs.monthlyLimit) * 100, 100)}
+                      value={Math.min((((stats.earningsThisMonth || 0) / projections.tierCalcs.monthlyLimit) * 100), 100)}
                       className="h-2"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {((stats.earningsThisMonth / projections.tierCalcs.monthlyLimit) * 100).toFixed(0)}% of monthly limit used
+                      {(((stats.earningsThisMonth || 0) / projections.tierCalcs.monthlyLimit) * 100).toFixed(0)}% of monthly limit used
                     </p>
                   </div>
                 </div>
