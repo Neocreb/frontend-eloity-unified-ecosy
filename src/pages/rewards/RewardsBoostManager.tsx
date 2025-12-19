@@ -161,14 +161,14 @@ export default function RewardsBoostManager() {
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-gray-900">Available Boosts</h2>
             <div className="space-y-3">
-              {BOOST_PACKAGES.map((boost) => (
+              {packages.map((boost) => (
                 <Card
                   key={boost.id}
                   className={`cursor-pointer transition-all ${
                     selectedBoost === boost.id
                       ? "border-orange-500 bg-orange-50 shadow-md"
                       : "hover:shadow-md"
-                  } ${boost.popular ? "border-orange-200" : ""}`}
+                  } ${boost.is_popular ? "border-orange-200" : ""}`}
                   onClick={() => setSelectedBoost(boost.id)}
                 >
                   <CardContent className="pt-6">
@@ -180,15 +180,15 @@ export default function RewardsBoostManager() {
                             {boost.name}
                           </h3>
                           <p className="text-xs text-gray-600">
-                            {boost.duration} days
+                            {boost.duration_days} days
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-2xl font-bold text-orange-600">
-                          ${boost.price.toFixed(2)}
+                          {formatCurrency(boost.price, "USD")}
                         </p>
-                        {boost.popular && (
+                        {boost.is_popular && (
                           <Badge className="mt-2 bg-orange-500 text-white hover:bg-orange-600">
                             Popular
                           </Badge>
@@ -200,13 +200,13 @@ export default function RewardsBoostManager() {
                       <div className="flex items-center gap-2">
                         <Target className="h-4 w-4 text-gray-600" />
                         <span className="text-sm text-gray-700">
-                          Estimated reach: {boost.reach}
+                          Estimated reach: {boost.estimated_reach}
                         </span>
                       </div>
                     </div>
 
                     <ul className="space-y-2 mb-4">
-                      {boost.features.map((feature, idx) => (
+                      {(boost.features || []).map((feature, idx) => (
                         <li
                           key={idx}
                           className="flex items-center gap-2 text-sm text-gray-700"
@@ -218,8 +218,23 @@ export default function RewardsBoostManager() {
                     </ul>
 
                     {selectedBoost === boost.id && (
-                      <Button className="w-full bg-orange-600 hover:bg-orange-700 text-white">
-                        Purchase Boost
+                      <Button
+                        className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCreating(true);
+                          createBoost(boost.id).finally(() => setIsCreating(false));
+                        }}
+                        disabled={isCreating}
+                      >
+                        {isCreating ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Creating...
+                          </>
+                        ) : (
+                          "Purchase Boost"
+                        )}
                       </Button>
                     )}
                   </CardContent>
