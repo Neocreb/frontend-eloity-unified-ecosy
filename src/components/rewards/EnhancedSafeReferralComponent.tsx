@@ -335,7 +335,7 @@ const EnhancedSafeReferralComponent = () => {
                     )}
                   </p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {stats.activeReferrals} active referrals × {formatCurrency(projections.tierCalcs.baseReward, currency)}
+                    {stats.activeReferrals || 0} active referrals × {formatCurrency(projections.tierCalcs.baseReward, currency)}
                   </p>
                 </div>
 
