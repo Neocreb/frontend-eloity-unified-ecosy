@@ -36,6 +36,9 @@ import {
   Gift,
   BookOpen,
   Globe,
+  Handshake,
+  Trophy,
+  UserPlus,
 } from "lucide-react";
 
 interface AdminSidebarProps {
@@ -57,6 +60,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ className = "" }) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
     reloadly: false,
+    growth: false,
   });
   const navigate = useNavigate();
 
@@ -228,6 +232,30 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ className = "" }) => {
       icon: <Globe className="w-5 h-5" />,
       requiredPermission: "content.moderate",
       description: "Manage landing page content",
+    },
+  ];
+
+  const growthItems: NavItem[] = [
+    {
+      path: "/admin/referrals",
+      label: "Referrals",
+      icon: <UserPlus className="w-5 h-5" />,
+      requiredPermission: "content.moderate",
+      description: "Manage referral program",
+    },
+    {
+      path: "/admin/partnerships",
+      label: "Partnerships",
+      icon: <Handshake className="w-5 h-5" />,
+      requiredPermission: "content.moderate",
+      description: "Manage affiliate partnerships",
+    },
+    {
+      path: "/admin/challenges",
+      label: "Challenges",
+      icon: <Trophy className="w-5 h-5" />,
+      requiredPermission: "content.moderate",
+      description: "Create and manage challenges",
     },
   ];
 
@@ -503,6 +531,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ className = "" }) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-6">
         {renderSection("Core", navigationItems)}
         {renderSection("Features", featureItems)}
+        {renderCollapsibleGroup("growth", "Growth Management", growthItems)}
         {renderCollapsibleGroup("reloadly", "RELOADLY Management", reloadlyItems)}
         {renderSection("System", systemItems)}
       </div>
