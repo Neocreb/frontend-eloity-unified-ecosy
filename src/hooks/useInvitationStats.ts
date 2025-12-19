@@ -146,8 +146,9 @@ export function useInvitationStats(): UseInvitationStatsReturn {
       await fetchData();
       return code;
     } catch (err) {
-      console.error("Error sending invitation:", err);
-      setError(err instanceof Error ? err : new Error("Failed to send invitation"));
+      const errorMessage = err instanceof Error ? err.message : "Failed to send invitation";
+      console.error("Error sending invitation:", errorMessage);
+      setError(err instanceof Error ? err : new Error(errorMessage));
       return null;
     }
   };
