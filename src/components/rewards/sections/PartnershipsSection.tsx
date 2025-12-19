@@ -48,16 +48,53 @@ export default function PartnershipsSection() {
             Pending
           </Badge>
         );
-      case "available":
+      case "rejected":
         return (
-          <Badge className="bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">
-            Available
+          <Badge className="bg-red-100 text-red-900 dark:bg-red-900 dark:text-red-100">
+            Rejected
+          </Badge>
+        );
+      case "paused":
+        return (
+          <Badge className="bg-gray-100 text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+            Paused
           </Badge>
         );
       default:
         return <Badge>{status}</Badge>;
     }
   };
+
+  const handleApplyForPartnership = async (partnershipId: string) => {
+    setIsApplying(partnershipId);
+    const success = await applyForPartnership(partnershipId);
+    setIsApplying(null);
+
+    if (success) {
+      toast({
+        title: "✓ Application Submitted",
+        description: "Your partnership application has been submitted for review",
+      });
+    }
+  };
+
+  if (error) {
+    return (
+      <Alert className="border-red-200 bg-red-50">
+        <AlertCircle className="h-4 w-4 text-red-600" />
+        <AlertDescription className="text-red-900">
+          {error.message}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  const activePartnershipCount = userPartnerships.filter((p) => p.status === "active").length;
+  const pendingPartnershipCount = userPartnerships.filter((p) => p.status === "pending").length;
+  const availablePartnershipCount = availablePartnerships.length;
+
+  const filteredUserPartnerships = userPartnerships.filter((p) => p.status === selectedTab);
+  const filteredAvailablePartnerships = availablePartnerships.filter((p) => !userPartnerships.some((up) => up.partnership_id === p.id));
 
   return (
     <div className="space-y-6">
@@ -70,21 +107,27 @@ export default function PartnershipsSection() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-3xl font-bold text-purple-600 mb-2">
-            ${totalPartnershipEarnings.toFixed(2)} ELO
-          </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            From {activeCount} active partnership{activeCount !== 1 ? "s" : ""}
-          </p>
+          {isLoading ? (
+            <Skeleton className="h-8 w-32" />
+          ) : (
+            <>
+              <div className="text-3xl font-bold text-purple-600 mb-2">
+                {formatCurrency(stats?.totalEarned || 0, "USD")}
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                From {stats?.activePartnerships || 0} active partnership{(stats?.activePartnerships || 0) !== 1 ? "s" : ""}
+              </p>
+            </>
+          )}
         </CardContent>
       </Card>
 
       {/* Tab Navigation */}
       <div className="flex gap-2 border-b border-gray-200 dark:border-gray-800">
         {[
-          { value: "active" as const, label: "Active", count: activeCount },
-          { value: "pending" as const, label: "Pending", count: pendingCount },
-          { value: "available" as const, label: "Available", count: availableCount },
+          { value: "active" as const, label: "Active", count: activePartnershipCount },
+          { value: "pending" as const, label: "Pending", count: pendingPartnershipCount },
+          { value: "available" as const, label: "Available", count: availablePartnershipCount },
         ].map((tab) => (
           <button
             key={tab.value}
@@ -107,104 +150,166 @@ export default function PartnershipsSection() {
 
       {/* Partnership Cards */}
       <div className="space-y-3">
-        {filteredPartnerships.length === 0 ? (
-          <Card>
-            <CardContent className="py-8">
-              <div className="text-center">
-                <p className="text-gray-600 dark:text-gray-400 mb-2">
-                  {selectedTab === "active" && "No active partnerships yet"}
-                  {selectedTab === "pending" && "No pending applications"}
-                  {selectedTab === "available" && "All available partnerships are listed above"}
-                </p>
-                {selectedTab === "available" && (
+        {isLoading ? (
+          <>
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </>
+        ) : selectedTab === "available" ? (
+          filteredAvailablePartnerships.length === 0 ? (
+            <Card>
+              <CardContent className="py-8">
+                <div className="text-center">
+                  <p className="text-gray-600 dark:text-gray-400 mb-2">
+                    All available partnerships are listed
+                  </p>
                   <p className="text-sm text-gray-500 dark:text-gray-500">
                     Check back later for more opportunities!
                   </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredPartnerships.map((partnership) => (
-            <Card
-              key={partnership.id}
-              className={`transition-all hover:shadow-md ${
-                partnership.status === "available"
-                  ? "border-blue-200 dark:border-blue-800"
-                  : ""
-              }`}
-            >
-              <CardContent className="pt-6">
-                <div className="flex items-start gap-4">
-                  {/* Icon */}
-                  <div className="text-3xl flex-shrink-0">
-                    {partnership.icon}
-                  </div>
-
-                  {/* Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between mb-1">
-                      <div>
-                        <h3 className="font-bold text-gray-900 dark:text-white">
-                          {partnership.name}
-                        </h3>
-                        <p className="text-xs text-gray-600 dark:text-gray-400">
-                          {partnership.category}
-                        </p>
-                      </div>
-                      {getStatusBadge(partnership.status)}
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredAvailablePartnerships.map((partnership) => (
+              <Card
+                key={partnership.id}
+                className="transition-all hover:shadow-md border-blue-200 dark:border-blue-800"
+              >
+                <CardContent className="pt-6">
+                  <div className="flex items-start gap-4">
+                    <div className="text-3xl flex-shrink-0">
+                      {partnership.icon}
                     </div>
 
-                    <p className="text-sm text-gray-600 dark:text-gray-400 my-2">
-                      {partnership.description}
-                    </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between mb-1">
+                        <div>
+                          <h3 className="font-bold text-gray-900 dark:text-white">
+                            {partnership.name}
+                          </h3>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {partnership.category}
+                          </p>
+                        </div>
+                        <Badge className="bg-blue-100 text-blue-900 dark:bg-blue-900 dark:text-blue-100">
+                          Available
+                        </Badge>
+                      </div>
 
-                    {/* Stats */}
-                    {partnership.status === "active" && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 my-2">
+                        {partnership.description}
+                      </p>
+
                       <div className="flex gap-4 text-sm">
                         <div>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
                             Commission Rate
                           </p>
                           <p className="font-bold text-gray-900 dark:text-white">
-                            {partnership.commissionRate}%
+                            {partnership.commission_rate}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex-shrink-0">
+                      <Button
+                        size="sm"
+                        className="bg-blue-600 hover:bg-blue-700"
+                        onClick={() => handleApplyForPartnership(partnership.id)}
+                        disabled={isApplying === partnership.id}
+                      >
+                        {isApplying === partnership.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Applying...
+                          </>
+                        ) : (
+                          "Apply"
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )
+        ) : filteredUserPartnerships.length === 0 ? (
+          <Card>
+            <CardContent className="py-8">
+              <div className="text-center">
+                <p className="text-gray-600 dark:text-gray-400 mb-2">
+                  {selectedTab === "active" && "No active partnerships yet"}
+                  {selectedTab === "pending" && "No pending applications"}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          filteredUserPartnerships.map((userPartnership) => (
+            <Card
+              key={userPartnership.id}
+              className="transition-all hover:shadow-md"
+            >
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-4">
+                  <div className="text-3xl flex-shrink-0">
+                    {userPartnership.partnership_icon}
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between mb-1">
+                      <div>
+                        <h3 className="font-bold text-gray-900 dark:text-white">
+                          {userPartnership.partnership_name}
+                        </h3>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">
+                          {userPartnership.partnership_category}
+                        </p>
+                      </div>
+                      {getStatusBadge(userPartnership.status)}
+                    </div>
+
+                    {userPartnership.status === "active" && (
+                      <div className="flex gap-4 text-sm mt-2">
+                        <div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            Commission Rate
+                          </p>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            {userPartnership.commission_rate}%
                           </p>
                         </div>
                         <div>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
-                            Earnings
+                            Total Earned
                           </p>
                           <p className="font-bold text-green-600">
-                            ${partnership.earnings.toFixed(2)}
+                            {formatCurrency(userPartnership.total_earned, "USD")}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            Referrals
+                          </p>
+                          <p className="font-bold text-gray-900 dark:text-white">
+                            {userPartnership.successful_referrals}/{userPartnership.total_referrals}
                           </p>
                         </div>
                       </div>
                     )}
-                  </div>
 
-                  {/* Action Button */}
-                  <div className="flex-shrink-0">
-                    {partnership.status === "active" && partnership.url && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => window.open(partnership.url, "_blank")}
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </Button>
+                    {userPartnership.status === "pending" && (
+                      <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                        Applied on {new Date(userPartnership.applied_at).toLocaleDateString()}
+                      </p>
                     )}
-                    {partnership.status === "available" && (
-                      <Button
-                        size="sm"
-                        className="bg-blue-600 hover:bg-blue-700"
-                      >
-                        Apply
-                      </Button>
-                    )}
-                    {partnership.status === "pending" && (
-                      <Button size="sm" variant="outline" disabled>
-                        Pending
-                      </Button>
+
+                    {userPartnership.status === "rejected" && userPartnership.rejection_reason && (
+                      <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                        Reason: {userPartnership.rejection_reason}
+                      </p>
                     )}
                   </div>
                 </div>
