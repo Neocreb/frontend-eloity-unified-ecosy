@@ -85,8 +85,14 @@ export default function ReferralProgramSection() {
             <Crown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">{stats.currentTier}</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tier Badge</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold text-yellow-600">{currentTier}</div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">Tier Badge</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -96,8 +102,14 @@ export default function ReferralProgramSection() {
             <Users className="h-4 w-4 text-blue-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalReferrals}</div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">All time</p>
+            {isLoading ? (
+              <Skeleton className="h-8 w-20" />
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{totalReferrals}</div>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">All time</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
