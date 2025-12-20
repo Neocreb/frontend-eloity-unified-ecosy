@@ -34,6 +34,11 @@ import UniversalCryptoPaymentModal from "@/components/payments/UniversalCryptoPa
 import DeliveryProviderSelection from "@/components/delivery/DeliveryProviderSelection";
 import { type PaymentRequest } from "@/services/unifiedCryptoPaymentService";
 import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
+import { EmptyCartState } from "@/components/marketplace/EmptyStates";
+
+interface FormErrors {
+  [key: string]: string | undefined;
+}
 
 const MarketplaceCheckout = () => {
   const { cart, getCartTotal, checkout, clearCart } = useEnhancedMarketplace();
@@ -47,6 +52,7 @@ const MarketplaceCheckout = () => {
   const [selectedDeliveryProvider, setSelectedDeliveryProvider] = useState<any>(null);
   const [deliveryServiceType, setDeliveryServiceType] = useState<string>("standard");
   const [deliveryMethod, setDeliveryMethod] = useState("delivery"); // "pickup" or "delivery"
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [shippingInfo, setShippingInfo] = useState({
     name: user?.user_metadata?.name || "",
     email: user?.email || "",
@@ -58,11 +64,78 @@ const MarketplaceCheckout = () => {
     country: "United States"
   });
   
+  const validateEmail = (email: string): string | undefined => {
+    if (!email) return "Email address is required";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return "Please enter a valid email address";
+    return undefined;
+  };
+
+  const validatePhone = (phone: string): string | undefined => {
+    if (!phone) return "Phone number is required";
+    const phoneRegex = /^[\d\s\-\(\)]+$|^$/;
+    if (!phoneRegex.test(phone)) return "Please enter a valid phone number";
+    if (phone.replace(/\D/g, "").length < 10) return "Phone number must be at least 10 digits";
+    return undefined;
+  };
+
+  const validateZip = (zip: string): string | undefined => {
+    if (!zip) return "Zip code is required";
+    if (!/^\d{5}(-\d{4})?$/.test(zip) && !/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(zip)) {
+      return "Please enter a valid zip code";
+    }
+    return undefined;
+  };
+
+  const validateField = (name: string, value: string): string | undefined => {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      const fieldLabels: Record<string, string> = {
+        name: "Full name",
+        email: "Email address",
+        phone: "Phone number",
+        address: "Address",
+        city: "City",
+        state: "State",
+        zip: "Zip code",
+        country: "Country"
+      };
+      return `${fieldLabels[name] || name} is required`;
+    }
+
+    if (name === "email") return validateEmail(value);
+    if (name === "phone") return validatePhone(value);
+    if (name === "zip") return validateZip(value);
+    if (name === "name" && trimmedValue.length < 2) return "Please enter your full name";
+    if (name === "city" && trimmedValue.length < 2) return "Please enter a valid city";
+    if (name === "state" && trimmedValue.length < 2) return "Please enter a valid state";
+
+    return undefined;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setShippingInfo(prev => ({
       ...prev,
       [name]: value
+    }));
+
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: error
     }));
   };
 
@@ -98,15 +171,43 @@ const MarketplaceCheckout = () => {
       });
       return;
     }
-    
-    // Validate shipping info
-    const requiredFields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'country'];
-    const missingFields = requiredFields.filter(field => !shippingInfo[field as keyof typeof shippingInfo]);
 
-    if (missingFields.length > 0) {
+    if (deliveryMethod === "delivery" && !selectedDeliveryProvider) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required shipping information",
+        title: "Delivery Provider Required",
+        description: "Please select a delivery provider to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate all shipping info fields
+    const requiredFields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'country'];
+    const newErrors: FormErrors = {};
+
+    requiredFields.forEach(field => {
+      const error = validateField(field, shippingInfo[field as keyof typeof shippingInfo]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setFormErrors(newErrors);
+      const firstErrorField = Object.keys(newErrors)[0];
+      const fieldLabels: Record<string, string> = {
+        name: "Full name",
+        email: "Email address",
+        phone: "Phone number",
+        address: "Address",
+        city: "City",
+        state: "State",
+        zip: "Zip code",
+        country: "Country"
+      };
+      toast({
+        title: "Missing or Invalid Information",
+        description: `Please correct the errors in your form, starting with: ${fieldLabels[firstErrorField]}`,
         variant: "destructive"
       });
       return;
@@ -119,19 +220,37 @@ const MarketplaceCheckout = () => {
     }
 
     setIsProcessing(true);
-    
+
     try {
       const order = await checkout();
       clearCart();
       navigate('/app/marketplace');
       toast({
         title: "Order Placed Successfully",
-        description: "Thank you for your purchase!",
+        description: `Order #${order?.id || 'XXXX'} confirmed. You'll receive order updates via ${shippingInfo.email}`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      let errorTitle = "Order Processing Failed";
+      let errorDescription = "Unable to process your order. Please try again.";
+
+      if (error?.message?.includes("payment")) {
+        errorTitle = "Payment Processing Failed";
+        errorDescription = `Your payment could not be processed. Please verify your ${paymentMethod === 'card' ? 'card details' : 'payment method'} and try again.`;
+      } else if (error?.message?.includes("stock")) {
+        errorTitle = "Item Out of Stock";
+        errorDescription = "One or more items in your cart are no longer available. Please review your cart and try again.";
+      } else if (error?.message?.includes("inventory")) {
+        errorTitle = "Insufficient Inventory";
+        errorDescription = "The requested quantity for one or more items is not available. Please adjust your order quantities.";
+      } else if (error?.message?.includes("delivery")) {
+        errorTitle = "Delivery Service Unavailable";
+        errorDescription = "The selected delivery option is not available. Please select another delivery method.";
+      }
+
       toast({
-        title: "Checkout Failed",
-        description: "There was an error processing your order. Please try again.",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive"
       });
     } finally {
@@ -189,41 +308,28 @@ const MarketplaceCheckout = () => {
   };
   
   return (
-    <div className="container py-6">
+    <div className="container py-4 md:py-6 px-4 md:px-6">
       <MarketplaceBreadcrumb
         items={[
           { label: 'Marketplace', href: '/app/marketplace' },
           { label: 'Shopping Cart', href: '/app/marketplace/cart' },
           { label: 'Checkout' },
         ]}
-        className="mb-6"
+        className="mb-4 md:mb-6 hidden md:block"
       />
 
-      <div className="flex items-center gap-2 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/app/marketplace/cart")}>
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/app/marketplace/cart")} className="h-10 w-10 md:h-auto md:w-auto">
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-bold">Checkout</h1>
+        <h1 className="text-xl md:text-2xl font-bold">Checkout</h1>
       </div>
       
       {cart.length === 0 ? (
-        <Card className="bg-gray-50">
-          <CardContent className="pt-6 text-center">
-            <div className="py-12 space-y-4">
-              <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto" />
-              <h3 className="text-xl font-medium">Your Cart is Empty</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                You haven't added any products to your cart yet. Browse the marketplace to find products you love.
-              </p>
-              <Button
-                className="mt-4"
-                onClick={() => navigate('/app/marketplace')}
-              >
-                Browse Products
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyCartState
+          onContinueShopping={() => navigate('/app/marketplace')}
+          onViewWishlist={() => navigate('/app/marketplace/wishlist')}
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
@@ -276,24 +382,24 @@ const MarketplaceCheckout = () => {
 
                     {selectedDeliveryProvider ? (
                       <div className="bg-white p-3 rounded border">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{selectedDeliveryProvider.businessName}</span>
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium truncate">{selectedDeliveryProvider.businessName}</span>
                               {selectedDeliveryProvider.isVerified && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-xs flex-shrink-0">
                                   <Shield className="h-3 w-3 mr-1" />
                                   Verified
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mt-1">
                               <div className="flex items-center gap-1">
-                                <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                                <Star className="h-3 w-3 text-yellow-500 fill-current flex-shrink-0" />
                                 <span>{selectedDeliveryProvider.rating}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
+                                <Clock className="h-3 w-3 flex-shrink-0" />
                                 <span>~{selectedDeliveryProvider.estimatedDeliveryTime}h</span>
                               </div>
                               <Badge variant="outline" className="text-xs">
@@ -301,7 +407,7 @@ const MarketplaceCheckout = () => {
                               </Badge>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="md:text-right flex-shrink-0">
                             <div className="font-medium text-green-600">
                               ${calculateDeliveryFee().toFixed(2)}
                             </div>
@@ -343,43 +449,67 @@ const MarketplaceCheckout = () => {
               <CardContent className="pt-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input 
-                      id="name" 
-                      name="name" 
-                      placeholder="John Doe" 
+                    <Label htmlFor="name">Full Name *</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="John Doe"
                       value={shippingInfo.name}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.name ? "border-red-500" : ""}
                     />
+                    {formErrors.name && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.name}
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input 
-                      id="email" 
-                      name="email" 
-                      type="email" 
-                      placeholder="john@example.com" 
+                    <Label htmlFor="email">Email Address *</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="john@example.com"
                       value={shippingInfo.email}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.email ? "border-red-500" : ""}
                     />
+                    {formErrors.email && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.email}
+                      </p>
+                    )}
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input 
-                    id="phone" 
-                    name="phone" 
-                    placeholder="(123) 456-7890" 
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    placeholder="(123) 456-7890"
                     value={shippingInfo.phone}
                     onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    className={formErrors.phone ? "border-red-500" : ""}
                   />
+                  {formErrors.phone && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <Info className="h-4 w-4" />
+                      {formErrors.phone}
+                    </p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
                   <Label htmlFor="address">
-                    {deliveryMethod === "delivery" ? "Delivery Address" : "Contact Address"}
+                    {deliveryMethod === "delivery" ? "Delivery Address" : "Contact Address"} *
                   </Label>
                   <Textarea
                     id="address"
@@ -387,57 +517,97 @@ const MarketplaceCheckout = () => {
                     placeholder={deliveryMethod === "delivery" ? "123 Main St, Apt 4B" : "Your contact address"}
                     value={shippingInfo.address}
                     onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    className={formErrors.address ? "border-red-500" : ""}
                   />
+                  {formErrors.address && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <Info className="h-4 w-4" />
+                      {formErrors.address}
+                    </p>
+                  )}
                   {deliveryMethod === "pickup" && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 mt-2">
                       We'll notify you when your order is ready for pickup at the selected store location.
                     </p>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2 col-span-2 md:col-span-1">
-                    <Label htmlFor="city">City</Label>
-                    <Input 
-                      id="city" 
-                      name="city" 
-                      placeholder="New York" 
+                    <Label htmlFor="city">City *</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      placeholder="New York"
                       value={shippingInfo.city}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.city ? "border-red-500" : ""}
                     />
+                    {formErrors.city && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.city}
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input 
-                      id="state" 
-                      name="state" 
-                      placeholder="NY" 
+                    <Label htmlFor="state">State *</Label>
+                    <Input
+                      id="state"
+                      name="state"
+                      placeholder="NY"
                       value={shippingInfo.state}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.state ? "border-red-500" : ""}
                     />
+                    {formErrors.state && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.state}
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="zip">Zip Code</Label>
-                    <Input 
-                      id="zip" 
-                      name="zip" 
-                      placeholder="10001" 
+                    <Label htmlFor="zip">Zip Code *</Label>
+                    <Input
+                      id="zip"
+                      name="zip"
+                      placeholder="10001"
                       value={shippingInfo.zip}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.zip ? "border-red-500" : ""}
                     />
+                    {formErrors.zip && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.zip}
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2 col-span-2 md:col-span-1">
-                    <Label htmlFor="country">Country</Label>
-                    <Input 
-                      id="country" 
-                      name="country" 
-                      placeholder="United States" 
+                    <Label htmlFor="country">Country *</Label>
+                    <Input
+                      id="country"
+                      name="country"
+                      placeholder="United States"
                       value={shippingInfo.country}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.country ? "border-red-500" : ""}
                     />
+                    {formErrors.country && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.country}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -519,7 +689,7 @@ const MarketplaceCheckout = () => {
           </div>
           
           <div className="lg:col-span-1">
-            <Card className="sticky top-20">
+            <Card className="sticky top-20 max-h-screen overflow-y-auto">
               <CardHeader className="border-b">
                 <h2 className="text-lg font-medium">Order Summary</h2>
               </CardHeader>

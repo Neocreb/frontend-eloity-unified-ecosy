@@ -12,6 +12,8 @@ import { ReviewService } from '@/services/reviewService';
 import { QAService } from '@/services/qaService';
 import { useEnhancedMarketplace } from '@/contexts/EnhancedMarketplaceContext';
 import DigitalProductDetail from './DigitalProductDetail';
+import { ProductDetailSkeleton } from './MarketplaceSkeletons';
+import { AccessibleQuantitySelector, liveRegionAriaLabel, ScreenReaderOnly } from './AccessibilityUtils';
 
 interface ProductImage {
   id: string;
@@ -311,9 +313,7 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
   if (loading) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-        </div>
+        <ProductDetailSkeleton />
       </div>
     );
   }
@@ -413,10 +413,20 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
               )}
             </div>
             <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-            <div className="flex items-center gap-4 mb-4">
+            <div
+              className="flex items-center gap-4 mb-4"
+              role="group"
+              aria-label="Product rating and reviews"
+            >
               <div className="flex items-center gap-1">
-                {renderStars(product.rating)}
-                <span className="text-sm text-gray-600 ml-1">
+                <span
+                  role="img"
+                  aria-label={`Rated ${product.rating} out of 5 stars, ${product.reviewCount} reviews`}
+                  className="flex gap-0.5"
+                >
+                  {renderStars(product.rating)}
+                </span>
+                <span className="text-sm text-gray-600 ml-1" aria-hidden="true">
                   {product.rating} ({product.reviewCount} reviews)
                 </span>
               </div>
@@ -439,15 +449,20 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
           </div>
 
           {/* Stock Status */}
-          <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-2"
+            role="status"
+            aria-live="polite"
+            aria-label={product.inStock ? `In Stock - ${product.stockCount || 'Available'} available` : "Out of Stock"}
+          >
             {product.inStock ? (
               <>
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></div>
                 <span className="text-green-600">In Stock ({product.stockCount || 'Available'} available)</span>
               </>
             ) : (
               <>
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full" aria-hidden="true"></div>
                 <span className="text-red-600">Out of Stock</span>
               </>
             )}
@@ -490,39 +505,70 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
 
           {/* Quantity & Actions */}
           <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <label htmlFor="quantity" className="font-medium">Quantity:</label>
-              <Input
-                id="quantity"
-                type="number"
-                min="1"
-                max={product.stockCount}
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-20"
-              />
-            </div>
+            <AccessibleQuantitySelector
+              value={quantity}
+              onChange={setQuantity}
+              min={1}
+              max={product.stockCount || 999}
+              label="Product Quantity"
+            />
 
-            <div className="flex gap-3">
-              <Button onClick={handleAddToCart} className="flex-1">
-                <ShoppingCart className="w-4 h-4 mr-2" />
-                Add to Cart
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={handleAddToCart}
+                disabled={addingToCart || !product.inStock}
+                className="flex-1"
+                aria-label={`Add ${product.name} to cart with quantity ${quantity}`}
+              >
+                {addingToCart ? (
+                  <>
+                    <Package className="w-4 h-4 mr-2 animate-spin" />
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Add to Cart
+                  </>
+                )}
               </Button>
-              <Button onClick={handleBuyNow} variant="outline" className="flex-1">
+              <Button
+                onClick={handleBuyNow}
+                variant="outline"
+                disabled={addingToCart || !product.inStock}
+                className="flex-1"
+                aria-label={`Buy now ${product.name}`}
+              >
                 <Zap className="w-4 h-4 mr-2" />
                 Buy Now
               </Button>
             </div>
 
-            <div className="flex gap-2">
-              <Button variant="outline" onClick={handleWishlist} className="flex-1">
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                variant="outline"
+                onClick={handleWishlist}
+                className="flex-1"
+                aria-pressed={isWishlisted}
+                aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
+              >
                 <Heart className={`w-4 h-4 mr-2 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
                 {isWishlisted ? 'Wishlisted' : 'Add to Wishlist'}
               </Button>
-              <Button variant="outline" size="icon">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label={`Share ${product.name}`}
+              >
                 <Share2 className="w-4 h-4" />
               </Button>
-              <Button variant="outline" size="icon" onClick={() => setIsComparing(!isComparing)}>
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setIsComparing(!isComparing)}
+                aria-pressed={isComparing}
+                aria-label={isComparing ? 'Stop comparing' : `Compare ${product.name} with other products`}
+              >
                 <Eye className="w-4 h-4" />
               </Button>
             </div>
