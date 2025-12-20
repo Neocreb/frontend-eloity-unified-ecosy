@@ -449,15 +449,20 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
           </div>
 
           {/* Stock Status */}
-          <div className="flex items-center gap-2">
+          <div
+            className="flex items-center gap-2"
+            role="status"
+            aria-live="polite"
+            aria-label={product.inStock ? `In Stock - ${product.stockCount || 'Available'} available` : "Out of Stock"}
+          >
             {product.inStock ? (
               <>
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-green-500 rounded-full" aria-hidden="true"></div>
                 <span className="text-green-600">In Stock ({product.stockCount || 'Available'} available)</span>
               </>
             ) : (
               <>
-                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <div className="w-2 h-2 bg-red-500 rounded-full" aria-hidden="true"></div>
                 <span className="text-red-600">Out of Stock</span>
               </>
             )}
