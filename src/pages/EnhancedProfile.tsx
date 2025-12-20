@@ -2,8 +2,15 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWalletContext } from "@/contexts/WalletContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
 import { useToast } from "@/components/ui/use-toast";
+import { useRewards } from "@/hooks/use-rewards";
+import { useMarketplace } from "@/hooks/use-marketplace";
+import { useFreelance } from "@/hooks/use-freelance";
+import { useTrustScore } from "@/hooks/useTrustScore";
+import { useCryptoTransactions } from "@/hooks/useCryptoTransactions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
