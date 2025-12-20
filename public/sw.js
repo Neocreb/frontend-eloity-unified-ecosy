@@ -171,6 +171,78 @@ function isCacheableAPI(pathname) {
   return CACHEABLE_APIS.some((api) => pathname.startsWith(api));
 }
 
+/**
+ * Cache-first strategy: Check cache first, network as fallback
+ */
+async function cacheFirst(request, cacheName) {
+  try {
+    const cached = await caches.match(request);
+    if (cached) {
+      return cached;
+    }
+
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.log("SW: Cache-first failed for", request.url);
+    return new Response("Offline", { status: 503 });
+  }
+}
+
+/**
+ * Network-first strategy: Try network first, fallback to cache
+ */
+async function networkFirst(request, cacheName) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.log("SW: Network failed, checking cache for", request.url);
+    const cached = await caches.match(request);
+    if (cached) {
+      return cached;
+    }
+    return new Response(JSON.stringify({ error: "Offline" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+/**
+ * Stale-while-revalidate strategy: Return cache, update in background
+ */
+async function staleWhileRevalidate(request, cacheName) {
+  const cached = await caches.match(request);
+
+  const fetchPromise = fetch(request).then((response) => {
+    if (response.ok) {
+      const cache = caches.open(cacheName);
+      cache.then((c) => c.put(request, response.clone()));
+    }
+    return response;
+  }).catch(() => {
+    // Network failed, return cached or error
+    if (cached) {
+      return cached;
+    }
+    return new Response(JSON.stringify({ error: "Offline" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+
+  return cached || fetchPromise;
+}
+
 // Handle navigation requests with network-first strategy
 async function handleNavigationRequest(request) {
   try {
