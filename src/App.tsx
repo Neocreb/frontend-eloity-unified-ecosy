@@ -248,7 +248,6 @@ import CameraPermissionTest from "./components/debug/CameraPermissionTest";
 import FreelanceDashboardRouteTest from "./components/debug/FreelanceDashboardRouteTest";
 import RouteTest from "./components/debug/RouteTest";
 import DetailedJobPage from "./pages/DetailedJobPage";
-import DetailedProductPage from "./pages/DetailedProductPage";
 import DetailedEventPage from "./pages/DetailedEventPage";
 import CreatorStudio from "./pages/CreatorStudio";
 import EnhancedDashboardDemo from "./components/freelance/EnhancedDashboardDemo";
