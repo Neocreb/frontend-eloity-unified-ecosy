@@ -179,23 +179,30 @@ export const liveStreamService = {
     description?: string;
     category?: string;
   }): Promise<LiveStream> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-    const { data, error } = await supabase
-      .from('live_streams')
-      .insert({
-        user_id: user.id,
-        title: streamData.title,
-        description: streamData.description,
-        category: streamData.category,
-        // Let the database generate the ID and stream_key
-      })
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('live_streams')
+        .insert({
+          user_id: user.id,
+          title: streamData.title,
+          description: streamData.description,
+          category: streamData.category,
+          // Let the database generate the ID and stream_key
+        })
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating live stream:', {
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
   },
 
   async updateViewerCount(streamId: string, count: number): Promise<void> {
