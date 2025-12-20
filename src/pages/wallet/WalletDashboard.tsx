@@ -314,6 +314,79 @@ const DashboardInner = () => {
           {/* Wallet Services Grid with Customizable Favorites */}
           <WalletServicesGrid />
 
+          {/* Creator Rewards Section */}
+          <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border border-purple-200">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-100">
+                    <Award className="h-5 w-5 text-purple-600" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-lg">Creator Rewards</CardTitle>
+                    <p className="text-xs text-gray-600 mt-1">Earn from your content & activities</p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/app/rewards")}
+                  className="border-purple-300 text-purple-700 hover:bg-purple-100"
+                >
+                  View All
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-white rounded-lg p-3 border border-purple-100">
+                  <p className="text-xs text-gray-600 mb-1">ELO Points Balance</p>
+                  <p className="text-2xl font-bold text-purple-600">12,450</p>
+                  <p className="text-xs text-gray-500 mt-1">≈ ${(12450 * 0.05).toFixed(2)} USD</p>
+                </div>
+                <div className="bg-white rounded-lg p-3 border border-green-100">
+                  <p className="text-xs text-gray-600 mb-1">This Month</p>
+                  <p className="text-2xl font-bold text-green-600">+2,340</p>
+                  <p className="text-xs text-green-600 mt-1 flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" /> +18% growth
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-3 border border-purple-100">
+                <p className="text-xs text-gray-600 mb-2">Recent Earnings</p>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span>📝 Content Views</span>
+                    </div>
+                    <span className="font-semibold text-green-600">+450</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span>🎁 Tips Received</span>
+                    </div>
+                    <span className="font-semibold text-green-600">+320</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <div className="flex items-center gap-2">
+                      <span>👥 Referrals</span>
+                    </div>
+                    <span className="font-semibold text-green-600">+180</span>
+                  </div>
+                </div>
+              </div>
+
+              <Button
+                onClick={() => navigate("/app/rewards")}
+                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                <Star className="h-4 w-4 mr-2" />
+                View Complete Rewards Dashboard
+              </Button>
+            </CardContent>
+          </Card>
+
           {/* Gifts & Rewards Section */}
           <div>
             <div className="flex items-center gap-2 mb-4">
