@@ -130,13 +130,14 @@ const ProductCard = ({
       </div>
 
       <CardHeader className="p-3 pb-0">
-        {showSellerInfo && (
+        {showSellerInfo && product.sellerAvatar && (
           <div className="flex items-center gap-2 mb-2">
             <div className="flex-shrink-0 h-6 w-6 rounded-full overflow-hidden">
-              <img
+              <OptimizedImage
                 src={product.sellerAvatar}
                 alt={product.sellerName}
-                className="h-full w-full object-cover"
+                quality="medium"
+                containerClassName="h-full w-full rounded-full"
               />
             </div>
             <div className="flex items-center text-sm">
