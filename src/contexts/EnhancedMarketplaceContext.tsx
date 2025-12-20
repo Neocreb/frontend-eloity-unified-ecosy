@@ -37,6 +37,9 @@ import { PaymentMethodService } from "@/services/paymentMethodService";
 import { MarketplaceService } from "@/services/marketplaceService";
 import { WishlistService } from "@/services/wishlistService";
 import { AddressService } from "@/services/addressService";
+import { CartService } from "@/services/cartService";
+import { PromotionalCodeService } from "@/services/promotionalCodeService";
+import { ShippingService } from "@/services/shippingService";
 
 // Create the context
 const EnhancedMarketplaceContext = createContext<MarketplaceContextType>(
