@@ -238,6 +238,13 @@ export default function EnhancedSellerDashboard() {
 
   return (
     <div className="space-y-6 p-4">
+      <MarketplaceBreadcrumb
+        items={[
+          { label: "Marketplace", href: "/app/marketplace" },
+          { label: "Seller Dashboard" }
+        ]}
+      />
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h2 className="text-xl md:text-2xl font-semibold">Seller Dashboard</h2>
         <Button
