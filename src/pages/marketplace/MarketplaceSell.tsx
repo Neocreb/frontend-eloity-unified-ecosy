@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, ImageIcon, DollarSign, Package, Truck } from 'lucide-react';
 import { MarketplaceService } from '@/services/marketplaceService';
+import MarketplaceBreadcrumb from '@/components/marketplace/MarketplaceBreadcrumb';
 
 const MarketplaceSell: React.FC = () => {
   const [categories, setCategories] = useState<any[]>([]);
