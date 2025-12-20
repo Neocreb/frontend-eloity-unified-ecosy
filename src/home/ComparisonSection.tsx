@@ -83,7 +83,12 @@ export const ComparisonSection: React.FC = () => {
           }
         }
       } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
+        // Ignore abort errors from cleanup
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        // Log other errors
+        if (error instanceof Error) {
           console.error('Error fetching comparisons:', error);
         }
         // Use default comparisons on error
@@ -110,9 +115,8 @@ export const ComparisonSection: React.FC = () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      if (!controller.signal.aborted) {
-        controller.abort();
-      }
+      // Mark that component is unmounting to prevent any state updates
+      // Don't abort controller here - let it naturally clean up
     };
   }, []);
 

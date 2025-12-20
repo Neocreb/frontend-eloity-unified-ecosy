@@ -77,8 +77,12 @@ export const TestimonialsSection: React.FC = () => {
           setError(null);
         }
       } catch (err) {
-        // Only log non-abort errors
-        if (err instanceof Error && err.name !== 'AbortError') {
+        // Ignore abort errors from cleanup
+        if (err instanceof Error && err.name === 'AbortError') {
+          return;
+        }
+        // Log other errors
+        if (err instanceof Error) {
           console.error('Error fetching testimonials:', err.message);
         }
         // Use default testimonials on error, but only if component is still mounted
@@ -104,9 +108,8 @@ export const TestimonialsSection: React.FC = () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      if (!controller.signal.aborted) {
-        controller.abort();
-      }
+      // Mark that component is unmounting to prevent any state updates
+      // Don't abort controller here - let it naturally clean up
     };
   }, []);
 
