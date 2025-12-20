@@ -132,17 +132,21 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
         onTouchEnd={handleTouchEnd}
       >
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-          <img
-            ref={mainImageRef}
-            src={currentImage}
-            alt={`${productName} - Image ${selectedImageIndex + 1}`}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-300"
+          <div
+            className="w-full h-full transition-transform duration-300"
             style={{
               transform: `scale(${zoomLevel})`,
               cursor: zoomLevel > 1 ? 'grab' : 'zoom-in'
             }}
-          />
+          >
+            <OptimizedImage
+              src={currentImage}
+              alt={`${productName} - Image ${selectedImageIndex + 1}`}
+              quality="high"
+              priority={true}
+              containerClassName="w-full h-full rounded-lg"
+            />
+          </div>
         </div>
 
         {/* Image Counter */}
