@@ -161,6 +161,8 @@ import SellerDashboard from "./pages/marketplace/SellerDashboard";
 import MarketplaceWishlist from "./pages/marketplace/MarketplaceWishlist";
 import MarketplaceDashboard from "./pages/marketplace/MarketplaceDashboard";
 import MarketplaceOrders from "./pages/marketplace/MarketplaceOrders";
+import MarketplaceSell from "./pages/marketplace/MarketplaceSell";
+import DetailedProductPage from "./pages/marketplace/DetailedProductPage";
 
 // Delivery system imports
 // import DeliveryHub from "./pages/DeliveryHub";
@@ -246,7 +248,6 @@ import CameraPermissionTest from "./components/debug/CameraPermissionTest";
 import FreelanceDashboardRouteTest from "./components/debug/FreelanceDashboardRouteTest";
 import RouteTest from "./components/debug/RouteTest";
 import DetailedJobPage from "./pages/DetailedJobPage";
-import DetailedProductPage from "./pages/DetailedProductPage";
 import DetailedEventPage from "./pages/DetailedEventPage";
 import CreatorStudio from "./pages/CreatorStudio";
 import EnhancedDashboardDemo from "./components/freelance/EnhancedDashboardDemo";
@@ -327,7 +328,6 @@ import CampaignCenter from "./components/campaigns/CampaignCenter";
 import MemeGifTest from "./components/debug/MemeGifTest";
 
 // Import missing components
-import MarketplaceSell from "./pages/marketplace/MarketplaceSell";
 import VideoDetail from "./pages/VideoDetail";
 import LiveStreamPage from "./pages/LiveStreamPage";
 import BattlePage from "./pages/BattlePage";
