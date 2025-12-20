@@ -2,8 +2,15 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWalletContext } from "@/contexts/WalletContext";
+import { useCurrency } from "@/contexts/CurrencyContext";
 import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
 import { useToast } from "@/components/ui/use-toast";
+import { useRewards } from "@/hooks/use-rewards";
+import { useMarketplace } from "@/hooks/use-marketplace";
+import { useFreelance } from "@/hooks/use-freelance";
+import { useTrustScore } from "@/hooks/useTrustScore";
+import { useCryptoTransactions } from "@/hooks/useCryptoTransactions";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -134,6 +141,69 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
 
   // Mock user type states
   const [isDeliveryProvider, setIsDeliveryProvider] = useState(false); // This would come from user profile data
+
+  // Real data hooks
+  const { walletBalance } = useWalletContext();
+  const { formatCurrency } = useCurrency();
+  const { data: rewardsData } = useRewards();
+  const { products: marketplaceProducts } = useMarketplace();
+  const { projects: freelanceProjects } = useFreelance();
+  const { score: trustScore } = useTrustScore();
+  const { transactions: cryptoTransactions } = useCryptoTransactions();
+
+  // State for real data metrics
+  const [walletBalanceValue, setWalletBalanceValue] = useState("$0.00");
+  const [eloPointsValue, setEloPointsValue] = useState(0);
+  const [trustScoreValue, setTrustScoreValue] = useState("L1·0.0");
+  const [marketplaceSalesCount, setMarketplaceSalesCount] = useState(0);
+  const [freelanceProjectsCount, setFreelanceProjectsCount] = useState(0);
+  const [cryptoTradesCount, setCryptoTradesCount] = useState(0);
+
+  // Update real data values when hooks data changes
+  useEffect(() => {
+    if (isOwnProfile) {
+      // Wallet balance
+      if (walletBalance) {
+        setWalletBalanceValue(formatCurrency(walletBalance.total || 0));
+      }
+
+      // ELO Points from rewards
+      if (rewardsData?.calculatedUserRewards) {
+        setEloPointsValue(Math.round(rewardsData.calculatedUserRewards.total_earned || 0));
+      }
+
+      // Trust score
+      if (trustScore) {
+        const level = Math.floor(trustScore / 10) || 1;
+        const score = (trustScore % 10).toFixed(1);
+        setTrustScoreValue(`L${level}·${score}`);
+      }
+
+      // Marketplace sales count
+      if (marketplaceProducts && Array.isArray(marketplaceProducts)) {
+        setMarketplaceSalesCount(marketplaceProducts.length || 0);
+      }
+
+      // Freelance projects count
+      if (freelanceProjects && Array.isArray(freelanceProjects)) {
+        setFreelanceProjectsCount(freelanceProjects.length || 0);
+      }
+
+      // Crypto trades count
+      if (cryptoTransactions && Array.isArray(cryptoTransactions)) {
+        setCryptoTradesCount(cryptoTransactions.length || 0);
+      }
+    }
+  }, [
+    isOwnProfile,
+    walletBalance,
+    rewardsData,
+    marketplaceProducts,
+    freelanceProjects,
+    trustScore,
+    cryptoTransactions,
+    formatCurrency,
+  ]);
 
   const isOwnProfile =
     !targetUsername || (user && user.profile?.username === targetUsername);
@@ -1020,13 +1090,33 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 border-0 flex items-center justify-center hover:shadow-xl hover:scale-105 transition-all duration-300">
                             <div className="text-center">
                               <Wallet className="h-5 w-5 text-green-600 mx-auto mb-1" />
-                              <div className="text-lg sm:text-xl font-bold text-green-600">
-                                $2.5k
+                              <div className="text-lg sm:text-xl font-bold text-green-600 line-clamp-1">
+                                {walletBalanceValue}
                               </div>
                             </div>
                           </div>
                           <div className="text-sm font-medium text-gray-700 group-hover:text-green-600 transition-colors">
                             Balance
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Creator Earnings (Own Profile Only) */}
+                      {isOwnProfile && (
+                        <div
+                          className="flex-shrink-0 text-center cursor-pointer group"
+                          onClick={() => navigate("/app/rewards")}
+                        >
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-3xl bg-gradient-to-br from-purple-100 to-indigo-200 border-0 flex items-center justify-center hover:shadow-xl hover:scale-105 transition-all duration-300">
+                            <div className="text-center">
+                              <Award className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+                              <div className="text-lg sm:text-xl font-bold text-purple-600">
+                                {eloPointsValue > 999 ? `${(eloPointsValue / 1000).toFixed(1)}k` : eloPointsValue}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">
+                            ELO Points
                           </div>
                         </div>
                       )}
@@ -1043,7 +1133,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                               <Trophy className="h-3 w-3 text-amber-600" />
                             </div>
                             <div className="text-lg sm:text-xl font-bold text-amber-600">
-                              L8·9.2
+                              {trustScoreValue}
                             </div>
                           </div>
                         </div>
@@ -1061,7 +1151,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           <div className="text-center">
                             <Store className="h-5 w-5 text-orange-600 mx-auto mb-1" />
                             <div className="text-lg sm:text-xl font-bold text-orange-600">
-                              156
+                              {marketplaceSalesCount}
                             </div>
                           </div>
                         </div>
@@ -1079,7 +1169,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           <div className="text-center">
                             <Code className="h-5 w-5 text-cyan-600 mx-auto mb-1" />
                             <div className="text-lg sm:text-xl font-bold text-cyan-600">
-                              23
+                              {freelanceProjectsCount}
                             </div>
                           </div>
                         </div>
@@ -1097,7 +1187,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           <div className="text-center">
                             <Coins className="h-5 w-5 text-yellow-600 mx-auto mb-1" />
                             <div className="text-lg sm:text-xl font-bold text-yellow-600">
-                              89
+                              {cryptoTradesCount}
                             </div>
                           </div>
                         </div>

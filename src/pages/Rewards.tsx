@@ -251,12 +251,12 @@ const CreatorEconomy = () => {
               {/* Quick Access Items */}
               {[
                 { icon: "🚀", label: "Growth Hub", path: "/app/growth-hub", badge: "New" },
-                { icon: "👥", label: "Invite Friends", path: "/app/growth-hub", badge: "Hot" },
+                { icon: "🎁", label: "Send Gifts", path: "/app/rewards?tab=gifts", badge: null },
                 { icon: "📊", label: "Analytics", path: "/app/rewards/analytics", badge: null },
                 { icon: "🏆", label: "Leaderboard", path: "/app/rewards/leaderboard", badge: null },
                 { icon: "⏱️", label: "History", path: "/app/rewards/history", badge: null },
                 { icon: "⚡", label: "Challenges", path: "/app/rewards?tab=challenges", badge: "100%" },
-                { icon: "⭐", label: "Referrals", path: "/app/growth-hub", badge: null },
+                { icon: "📈", label: "Boosts", path: "/app/rewards?tab=boosts", badge: null },
               ].map((item, idx) => (
                 <button
                   key={idx}
