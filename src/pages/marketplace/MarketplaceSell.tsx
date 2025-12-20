@@ -46,6 +46,14 @@ const MarketplaceSell: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <MarketplaceBreadcrumb
+        items={[
+          { label: 'Marketplace', href: '/app/marketplace' },
+          { label: 'Sell Items' },
+        ]}
+        className="mb-6"
+      />
+
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">
