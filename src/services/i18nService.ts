@@ -936,14 +936,14 @@ class I18nService {
   }
 }
 
-// Lazy initialize i18nService to avoid circular dependencies and TDZ issues
-let _i18nServiceInstance: I18nService | null = null;
-
-export const i18nService: I18nService = new Proxy(new I18nService(), {
-  get(target, prop) {
-    if (_i18nServiceInstance === null) {
-      _i18nServiceInstance = target;
-    }
-    return (_i18nServiceInstance as any)[prop];
+// Create i18nService instance
+export const i18nService = (() => {
+  try {
+    return new I18nService();
+  } catch (error) {
+    console.error('Failed to initialize i18nService:', error);
+    // Return a minimal instance that won't crash
+    const fallback = new I18nService();
+    return fallback;
   }
-});
+})();
