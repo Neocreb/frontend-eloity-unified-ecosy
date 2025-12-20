@@ -1502,6 +1502,468 @@ export class MarketplaceService {
       return false;
     }
   }
+
+  // Advanced Search Methods
+
+  // Get all unique brands from products
+  static async getBrands(): Promise<{ name: string; count: number }[]> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('brand')
+        .not('brand', 'is', null);
+
+      if (error) {
+        console.error("Error fetching brands:", error);
+        return [];
+      }
+
+      const brandCounts = new Map<string, number>();
+      data.forEach(product => {
+        if (product.brand) {
+          brandCounts.set(product.brand, (brandCounts.get(product.brand) || 0) + 1);
+        }
+      });
+
+      return Array.from(brandCounts.entries())
+        .map(([name, count]) => ({ name, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 50); // Return top 50 brands
+    } catch (error) {
+      console.error("Error in getBrands:", error);
+      return [];
+    }
+  }
+
+  // Get all product conditions
+  static async getProductConditions(): Promise<{ condition: string; count: number }[]> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('condition');
+
+      if (error) {
+        console.error("Error fetching product conditions:", error);
+        return [];
+      }
+
+      const conditionCounts = new Map<string, number>();
+      data.forEach(product => {
+        if (product.condition) {
+          const condition = product.condition;
+          conditionCounts.set(condition, (conditionCounts.get(condition) || 0) + 1);
+        }
+      });
+
+      return Array.from(conditionCounts.entries())
+        .map(([condition, count]) => ({ condition, count }))
+        .sort((a, b) => b.count - a.count);
+    } catch (error) {
+      console.error("Error in getProductConditions:", error);
+      return [
+        { condition: "new", count: 0 },
+        { condition: "like_new", count: 0 },
+        { condition: "used", count: 0 },
+        { condition: "refurbished", count: 0 }
+      ];
+    }
+  }
+
+  // Get price statistics
+  static async getPriceStatistics(): Promise<{ min: number; max: number; avg: number }> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('price');
+
+      if (error || !data || data.length === 0) {
+        return { min: 0, max: 1000, avg: 500 };
+      }
+
+      const prices = data.map(p => p.price || 0).filter(p => p > 0);
+      if (prices.length === 0) {
+        return { min: 0, max: 1000, avg: 500 };
+      }
+
+      const min = Math.min(...prices);
+      const max = Math.max(...prices);
+      const avg = prices.reduce((a, b) => a + b, 0) / prices.length;
+
+      return { min, max, avg };
+    } catch (error) {
+      console.error("Error in getPriceStatistics:", error);
+      return { min: 0, max: 1000, avg: 500 };
+    }
+  }
+
+  // Get rating distribution for filtering
+  static async getRatingStatistics(): Promise<{ rating: number; count: number }[]> {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .select('rating');
+
+      if (error) {
+        console.error("Error fetching rating statistics:", error);
+        return [];
+      }
+
+      const ratingCounts = new Map<number, number>();
+      data.forEach(product => {
+        const rating = Math.ceil(product.rating || 0);
+        if (rating >= 1 && rating <= 5) {
+          ratingCounts.set(rating, (ratingCounts.get(rating) || 0) + 1);
+        }
+      });
+
+      return [5, 4, 3, 2, 1].map(rating => ({
+        rating,
+        count: ratingCounts.get(rating) || 0
+      }));
+    } catch (error) {
+      console.error("Error in getRatingStatistics:", error);
+      return [];
+    }
+  }
+
+  // Advanced search with faceted filters
+  static async advancedSearch(filters: {
+    searchQuery?: string;
+    categoryId?: string;
+    brands?: string[];
+    conditions?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+    tags?: string[];
+    sellerId?: string;
+    sortBy?: "relevance" | "price-low" | "price-high" | "rating" | "newest" | "popular";
+    limit?: number;
+    offset?: number;
+  }): Promise<Product[]> {
+    try {
+      let query = supabase
+        .from('products')
+        .select('*');
+
+      if (filters.searchQuery) {
+        query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
+      }
+
+      if (filters.categoryId) {
+        query = query.eq('category_id', filters.categoryId);
+      }
+
+      if (filters.brands && filters.brands.length > 0) {
+        query = query.in('brand', filters.brands);
+      }
+
+      if (filters.conditions && filters.conditions.length > 0) {
+        query = query.in('condition', filters.conditions);
+      }
+
+      if (filters.minPrice !== undefined) {
+        query = query.gte('price', filters.minPrice);
+      }
+
+      if (filters.maxPrice !== undefined) {
+        query = query.lte('price', filters.maxPrice);
+      }
+
+      if (filters.minRating !== undefined) {
+        query = query.gte('rating', filters.minRating);
+      }
+
+      if (filters.tags && filters.tags.length > 0) {
+        // Search for products that contain any of the specified tags
+        query = query.overlaps('tags', filters.tags);
+      }
+
+      if (filters.sellerId) {
+        query = query.eq('seller_id', filters.sellerId);
+      }
+
+      // Apply sorting
+      let orderBy: { column: string; ascending: boolean } | null = null;
+      switch (filters.sortBy) {
+        case "price-low":
+          orderBy = { column: "price", ascending: true };
+          break;
+        case "price-high":
+          orderBy = { column: "price", ascending: false };
+          break;
+        case "rating":
+          orderBy = { column: "rating", ascending: false };
+          break;
+        case "newest":
+          orderBy = { column: "created_at", ascending: false };
+          break;
+        case "popular":
+          orderBy = { column: "review_count", ascending: false };
+          break;
+        case "relevance":
+        default:
+          orderBy = { column: "created_at", ascending: false };
+      }
+
+      if (orderBy) {
+        query = query.order(orderBy.column, { ascending: orderBy.ascending });
+      }
+
+      const limit = filters.limit || 20;
+      const offset = filters.offset || 0;
+
+      const { data, error } = await query
+        .range(offset, offset + limit - 1);
+
+      if (error) {
+        console.error("Error in advanced search:", error);
+        return [];
+      }
+
+      return data.map(product => ({
+        id: product.id,
+        sellerId: product.seller_id,
+        name: product.name,
+        description: product.description || "",
+        price: product.price,
+        discountPrice: product.discount_price,
+        image: product.image_url || "",
+        images: product.image_url ? [product.image_url] : [],
+        category: product.category || "",
+        subcategory: product.subcategory || undefined,
+        rating: product.rating || 0,
+        reviewCount: product.review_count || 0,
+        inStock: product.in_stock || false,
+        stockQuantity: product.stock_quantity || 0,
+        isNew: product.is_new || false,
+        isFeatured: product.is_featured || false,
+        isSponsored: product.is_sponsored || false,
+        tags: product.tags || [],
+        sellerName: product.seller?.full_name || "Unknown Seller",
+        sellerAvatar: product.seller?.avatar_url || "",
+        sellerVerified: product.seller?.is_verified || false,
+        condition: product.condition || "new",
+        brand: product.brand || undefined,
+        model: product.model || undefined,
+        createdAt: new Date(product.created_at).toISOString(),
+        updatedAt: new Date(product.updated_at).toISOString()
+      }));
+    } catch (error) {
+      console.error("Error in advancedSearch:", error);
+      return [];
+    }
+  }
+
+  // Get search suggestions
+  static async getSearchSuggestions(query: string, limit: number = 10): Promise<{
+    products: string[];
+    brands: string[];
+    categories: string[];
+  }> {
+    try {
+      if (!query || query.length < 2) {
+        return { products: [], brands: [], categories: [] };
+      }
+
+      // Get product suggestions
+      const { data: productData } = await supabase
+        .from('products')
+        .select('name')
+        .ilike('name', `%${query}%`)
+        .limit(limit);
+
+      const products = (productData || [])
+        .map(p => p.name)
+        .filter((v, i, a) => a.indexOf(v) === i)
+        .slice(0, limit / 3);
+
+      // Get brand suggestions
+      const { data: brandData } = await supabase
+        .from('products')
+        .select('brand')
+        .not('brand', 'is', null)
+        .ilike('brand', `%${query}%`)
+        .limit(limit);
+
+      const brands = (brandData || [])
+        .map(p => p.brand)
+        .filter((v, i, a) => a.indexOf(v) === i && v)
+        .slice(0, limit / 3);
+
+      // Get category suggestions
+      const { data: categoryData } = await supabase
+        .from('categories')
+        .select('name')
+        .ilike('name', `%${query}%`)
+        .limit(limit / 3);
+
+      const categories = (categoryData || []).map(c => c.name);
+
+      return {
+        products: products as string[],
+        brands: brands as string[],
+        categories
+      };
+    } catch (error) {
+      console.error("Error in getSearchSuggestions:", error);
+      return { products: [], brands: [], categories: [] };
+    }
+  }
+
+  // Get faceted search results with aggregations
+  static async getFacetedSearch(filters: {
+    searchQuery?: string;
+    categoryId?: string;
+  }): Promise<{
+    brands: { name: string; count: number }[];
+    conditions: { condition: string; count: number }[];
+    priceRange: { min: number; max: number };
+    ratings: { rating: number; count: number }[];
+  }> {
+    try {
+      let query = supabase
+        .from('products')
+        .select('brand, condition, price, rating');
+
+      if (filters.searchQuery) {
+        query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
+      }
+
+      if (filters.categoryId) {
+        query = query.eq('category_id', filters.categoryId);
+      }
+
+      const { data, error } = await query;
+
+      if (error || !data) {
+        console.error("Error fetching faceted search:", error);
+        return {
+          brands: [],
+          conditions: [],
+          priceRange: { min: 0, max: 1000 },
+          ratings: []
+        };
+      }
+
+      // Calculate facets
+      const brands = new Map<string, number>();
+      const conditions = new Map<string, number>();
+      const ratings = new Map<number, number>();
+      let minPrice = Infinity;
+      let maxPrice = 0;
+
+      data.forEach(product => {
+        if (product.brand) {
+          brands.set(product.brand, (brands.get(product.brand) || 0) + 1);
+        }
+        if (product.condition) {
+          conditions.set(product.condition, (conditions.get(product.condition) || 0) + 1);
+        }
+        if (product.rating) {
+          const rating = Math.ceil(product.rating);
+          ratings.set(rating, (ratings.get(rating) || 0) + 1);
+        }
+        if (product.price) {
+          minPrice = Math.min(minPrice, product.price);
+          maxPrice = Math.max(maxPrice, product.price);
+        }
+      });
+
+      return {
+        brands: Array.from(brands.entries())
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 20),
+        conditions: Array.from(conditions.entries())
+          .map(([condition, count]) => ({ condition, count }))
+          .sort((a, b) => b.count - a.count),
+        priceRange: {
+          min: minPrice === Infinity ? 0 : minPrice,
+          max: maxPrice || 1000
+        },
+        ratings: [5, 4, 3, 2, 1].map(rating => ({
+          rating,
+          count: ratings.get(rating) || 0
+        }))
+      };
+    } catch (error) {
+      console.error("Error in getFacetedSearch:", error);
+      return {
+        brands: [],
+        conditions: [],
+        priceRange: { min: 0, max: 1000 },
+        ratings: []
+      };
+    }
+  }
+
+  // Count products matching filters (for pagination)
+  static async countProducts(filters: {
+    searchQuery?: string;
+    categoryId?: string;
+    brands?: string[];
+    conditions?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    minRating?: number;
+    tags?: string[];
+    sellerId?: string;
+  }): Promise<number> {
+    try {
+      let query = supabase
+        .from('products')
+        .select('id', { count: 'exact', head: true });
+
+      if (filters.searchQuery) {
+        query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`);
+      }
+
+      if (filters.categoryId) {
+        query = query.eq('category_id', filters.categoryId);
+      }
+
+      if (filters.brands && filters.brands.length > 0) {
+        query = query.in('brand', filters.brands);
+      }
+
+      if (filters.conditions && filters.conditions.length > 0) {
+        query = query.in('condition', filters.conditions);
+      }
+
+      if (filters.minPrice !== undefined) {
+        query = query.gte('price', filters.minPrice);
+      }
+
+      if (filters.maxPrice !== undefined) {
+        query = query.lte('price', filters.maxPrice);
+      }
+
+      if (filters.minRating !== undefined) {
+        query = query.gte('rating', filters.minRating);
+      }
+
+      if (filters.tags && filters.tags.length > 0) {
+        query = query.overlaps('tags', filters.tags);
+      }
+
+      if (filters.sellerId) {
+        query = query.eq('seller_id', filters.sellerId);
+      }
+
+      const { count, error } = await query;
+
+      if (error) {
+        console.error("Error counting products:", error);
+        return 0;
+      }
+
+      return count || 0;
+    } catch (error) {
+      console.error("Error in countProducts:", error);
+      return 0;
+    }
+  }
 }
 
 export const marketplaceService = new MarketplaceService();
