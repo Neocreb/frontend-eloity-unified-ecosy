@@ -59,8 +59,7 @@ const ProductCard = ({
     if (onViewProduct) {
       onViewProduct(product);
     } else {
-      // Navigate to product detail page once it exists
-      // navigate(`/marketplace/product/${product.id}`);
+      navigate(`/app/marketplace/product/${product.id}`);
     }
   };
 
