@@ -550,6 +550,93 @@ export const EnhancedMarketplaceProvider = ({
     return cart.reduce((total, item) => total + item.quantity, 0);
   };
 
+  // Get cart summary
+  const getCartSummary = async () => {
+    if (!user?.id) return null;
+    try {
+      return await CartService.getUserCart(user.id);
+    } catch (error) {
+      console.error("Error getting cart summary:", error);
+      return null;
+    }
+  };
+
+  // Validate cart items are still in stock
+  const validateCart = async () => {
+    try {
+      const validationResults = await Promise.all(
+        cart.map(async (item) => {
+          const product = getProduct(item.productId);
+          if (!product) {
+            return {
+              valid: false,
+              itemId: item.id,
+              issue: `${item.productName} is no longer available`,
+            };
+          }
+          if (!product.inStock) {
+            return {
+              valid: false,
+              itemId: item.id,
+              issue: `${item.productName} is out of stock`,
+            };
+          }
+          if (product.inventory !== undefined && item.quantity > product.inventory) {
+            return {
+              valid: false,
+              itemId: item.id,
+              issue: `Only ${product.inventory} of ${item.productName} available`,
+            };
+          }
+          return { valid: true, itemId: item.id };
+        })
+      );
+
+      const invalidItems = validationResults.filter((r) => !r.valid);
+      return {
+        valid: invalidItems.length === 0,
+        issues: invalidItems.map((r) => r.issue),
+        invalidItemIds: invalidItems.map((r) => r.itemId),
+      };
+    } catch (error) {
+      console.error("Error validating cart:", error);
+      return { valid: false, issues: ["Failed to validate cart"], invalidItemIds: [] };
+    }
+  };
+
+  // Save cart items for later
+  const saveForLater = async (cartItemId: string) => {
+    try {
+      const cartItem = cart.find((item) => item.id === cartItemId);
+      if (!cartItem || !user?.id) return;
+
+      // Move to wishlist
+      await moveToWishlist(cartItemId);
+
+      // Remove from cart
+      removeFromCart(cartItemId);
+
+      toast({
+        title: "Saved for Later",
+        description: `${cartItem.productName} moved to your wishlist`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save item for later",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Clear cart on user logout
+  const handleLogout = () => {
+    if (user?.id) {
+      CartService.syncCartToDatabase(user.id, []).catch(console.error);
+    }
+    setCart([]);
+  };
+
   // Placeholder implementations for remaining functions
   const searchProducts = async (query: string, filters?: ProductFilter): Promise<SearchResult> => {
     try {
