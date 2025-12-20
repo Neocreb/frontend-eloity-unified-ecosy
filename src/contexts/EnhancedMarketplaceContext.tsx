@@ -2893,6 +2893,9 @@ export const EnhancedMarketplaceProvider = ({
     clearCart,
     getCartTotal,
     getCartItemsCount,
+    getCartSummary,
+    saveForLater,
+    handleLogout,
     moveToWishlist,
 
     // Wishlist management
