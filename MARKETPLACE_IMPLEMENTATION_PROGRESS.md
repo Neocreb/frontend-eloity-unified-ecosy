@@ -680,21 +680,24 @@ In the previous session, we successfully completed **Phase 2.3 (Checkout Flow)**
 **Estimated Hours**: 12
 
 **Tasks**:
-- [ ] Create returns request management
-- [ ] Implement refund processing
-- [ ] Add return tracking
-- [ ] Create return request form
-- [ ] Implement quality issues reporting
-- [ ] Add return analytics
-- [ ] Create admin return management UI
-- [ ] Test refund flow
+- [ ] Create returns request management service with Supabase integration
+- [ ] Implement automated refund processing with policy evaluation
+- [ ] Add return tracking with timeline and status updates
+- [ ] Create return reason analysis and trending issues
+- [ ] Implement partial refund support
+- [ ] Add return label generation
+- [ ] Create return analytics dashboard
+- [ ] Implement seller appeal and dispute resolution workflow
 
-**Files to Modify**:
-- `src/services/orderService.ts`
-- Create: `src/services/returnsService.ts`
-- Create: `src/pages/admin/ReturnsManagement.tsx`
+**Files to Create/Modify**:
+- Create: `src/services/returnsManagementService.ts` - Returns management
+- Create: `src/pages/marketplace/seller/ReturnsDashboard.tsx` - Seller returns view
+- Create: `src/pages/admin/ReturnsManagement.tsx` - Admin management
+- Create: `src/components/marketplace/seller/ReturnAnalytics.tsx` - Analytics
+- Create: `src/components/marketplace/seller/RefundProcessor.tsx` - Refund processing
+- Modify: `src/services/returnsService.ts` - Enhance existing service
 
-**Progress**: 0/8 tasks
+**Progress**: 0/8 tasks ⏳
 
 ---
 
