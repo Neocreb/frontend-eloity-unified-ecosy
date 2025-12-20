@@ -14,6 +14,7 @@ import {
 import { Product } from "@/types/marketplace";
 import { cn } from "@/utils/utils";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import OptimizedImage from "./OptimizedImage";
 
 interface ProductCardProps {
   product: Product;
