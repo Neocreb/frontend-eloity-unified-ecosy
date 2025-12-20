@@ -576,31 +576,74 @@ In the previous session, we successfully completed **Phase 2.3 (Checkout Flow)**
 
 ---
 
-## 🎯 Phase 4: Seller Tools (Week 6)
+## 🎯 Phase 4: Seller Tools (Week 6) - 🔄 IN PROGRESS
+
+### Suggested Enhancements for Phase 4
+
+**Phase 4.1 - Enhanced Seller Dashboard**:
+- Real-time sales dashboard with live order updates via Supabase realtime
+- Key Performance Indicators (KPIs): Total Revenue, Conversion Rate, Average Order Value, Customer Lifetime Value
+- Inventory low-stock alerts with automated notifications
+- Sales trend analysis with weekly/monthly/yearly breakdowns
+- Top-performing products ranking
+- Customer satisfaction metrics (avg rating, review sentiment)
+- Seller performance badges (Top Rated, Fast Shipper, Reliable, etc.)
+- Refund rate and return rate tracking
+- Response time analytics (message reply, order fulfillment)
+- Tax and commission calculations
+
+**Phase 4.2 - Product Management**:
+- Bulk import with real-time validation and error reporting
+- CSV template download with sample data
+- SKU auto-generation based on product attributes
+- Variant hierarchy management (parent/child products)
+- SEO score calculation with recommendations
+- Product duplication feature for quick creation
+- Inventory sync across variants
+- Price history tracking
+- Bulk category/tag assignment
+- Image optimization and CDN integration suggestions
+
+**Phase 4.3 - Returns & Refunds**:
+- Return reason analysis and trending issues
+- Automated refund based on seller policies
+- Partial refund support
+- Return label generation
+- Customer communication templates
+- Return analytics dashboard
+- Dispute resolution workflow
+- Seller appeal process
+- Refund status timeline
+
+---
 
 ### 4.1 Enhanced Seller Dashboard
-**Status**: ⏳ Pending
+**Status**: 🔄 In Progress
 **Complexity**: High
 **Estimated Hours**: 20
 
 **Tasks**:
-- [ ] Complete sales analytics with real data
-- [ ] Implement revenue tracking
-- [ ] Add product performance metrics
-- [ ] Create inventory management UI
-- [ ] Implement bulk operations
-- [ ] Add order management features
-- [ ] Create analytics charts (using real backend data)
-- [ ] Implement seller verification status
-- [ ] Add badge tier management
-- [ ] Test all dashboard features
+- [ ] Create seller analytics service with Supabase queries
+- [ ] Implement real-time KPI dashboard (Revenue, Orders, Conversion Rate, AOV)
+- [ ] Add product performance metrics and top products ranking
+- [ ] Create inventory management UI with low-stock alerts
+- [ ] Implement Chart.js analytics charts (sales trends, top products, customer satisfaction)
+- [ ] Add seller verification status and badge tier system
+- [ ] Create order management features with filters
+- [ ] Implement response time analytics
+- [ ] Add refund rate and return rate tracking
+- [ ] Create seller performance dashboard with metrics
 
-**Files to Modify**:
-- `src/pages/marketplace/EnhancedSellerDashboard.tsx`
-- `src/services/marketplaceService.ts`
-- Create: `src/services/analyticsService.ts`
+**Files to Create/Modify**:
+- Create: `src/services/sellerAnalyticsService.ts` - Analytics queries
+- Create: `src/pages/marketplace/SellerAnalyticsDashboard.tsx` - Main dashboard
+- Create: `src/components/marketplace/seller/KPIDashboard.tsx` - KPI cards
+- Create: `src/components/marketplace/seller/SalesTrendChart.tsx` - Chart.js charts
+- Create: `src/components/marketplace/seller/InventoryAlerts.tsx` - Low stock alerts
+- Create: `src/components/marketplace/seller/PerformanceMetrics.tsx` - Performance tracking
+- Modify: `src/services/marketplaceService.ts` - Add analytics methods
 
-**Progress**: 0/10 tasks
+**Progress**: 0/10 tasks ⏳
 
 ---
 
