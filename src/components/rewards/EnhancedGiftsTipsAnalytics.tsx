@@ -82,7 +82,6 @@ const EnhancedGiftsTipsAnalytics = () => {
     recentTips: [],
   });
 
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
@@ -92,16 +91,39 @@ const EnhancedGiftsTipsAnalytics = () => {
   const [categoryData, setCategoryData] = useState<Array<{ name: string; value: number }>>([]);
   const [anonymousMode, setAnonymousMode] = useState(false);
 
+  // Use the real-time sync hook for gifts and tips
+  const {
+    giftsSent,
+    giftsReceived,
+    tipsReceived,
+    isLoading,
+    error: syncError,
+    refresh: refreshSync,
+    totalGiftsSent,
+    totalGiftsReceived,
+    totalTipsSent,
+    totalTipsReceived,
+  } = useGiftTransactionSync({
+    onNewTransaction: (update) => {
+      // Handle new transactions in real-time
+      toast({
+        title: "✨ New Activity",
+        description: `${update.type.replace(/_/g, ' ').toUpperCase()}`,
+        duration: 3000,
+      });
+    },
+    autoRefresh: true,
+    refreshInterval: 5000,
+  });
+
   const loadStats = async () => {
     if (!user?.id) return;
     setError(null);
 
     try {
-      setIsLoading(true);
-      const [giftHistory, tipHistory] = await Promise.all([
-        virtualGiftsService.getGiftHistory(user.id),
-        virtualGiftsService.getTipHistory(user.id),
-      ]);
+      // Use data from the sync hook
+      const giftHistory = giftsSent;
+      const tipHistory = tipsReceived;
 
       // Calculate date range based on filter
       const now = new Date();
