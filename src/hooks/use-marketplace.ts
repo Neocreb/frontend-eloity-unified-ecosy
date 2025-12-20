@@ -133,14 +133,21 @@ export function useMarketplace() {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
 
       try {
-        const searchResults = await marketplaceService.searchProducts(
+        // Combine search query with other filters
+        const mergedFilters = {
+          ...filters,
+          searchQuery: query,
+        };
+        const products = await marketplaceService.getProducts(mergedFilters);
+        const searchResults = {
+          products,
+          total: products.length,
           query,
-          filters,
-        );
+        };
         setState((prev) => ({
           ...prev,
           searchResults,
-          products: searchResults.products,
+          products,
           isLoading: false,
         }));
         return searchResults;
