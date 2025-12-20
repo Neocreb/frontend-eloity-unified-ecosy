@@ -88,7 +88,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Fetch event - serve from cache or network
+// Fetch event - serve from cache or network based on strategy
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -96,18 +96,8 @@ self.addEventListener("fetch", (event) => {
   // Skip non-HTTP requests
   if (!request.url.startsWith("http")) return;
 
-  // Skip API requests, Bybit requests, and other external API calls
-  if (
-    url.pathname.startsWith("/api/") || 
-    url.hostname.includes("bybit.com") ||
-    url.hostname.includes("coingecko.com") ||
-    url.hostname.includes("supabase.co") ||
-    request.headers.get('accept')?.includes('application/json') ||
-    request.headers.get('content-type')?.includes('application/json')
-  ) {
-    // For API requests, bypass cache and go directly to network
-    return;
-  }
+  // Determine cache strategy based on URL pattern
+  const strategy = getStrategyForUrl(url.pathname, url.hostname);
 
   // Handle navigation requests
   if (request.mode === "navigate") {
@@ -115,9 +105,71 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Handle static assets
+  // Handle API requests based on strategy
+  if (url.pathname.startsWith("/api/")) {
+    if (strategy === "stale-while-revalidate") {
+      event.respondWith(staleWhileRevalidate(request, MARKETPLACE_API_CACHE));
+    } else if (strategy === "network-first") {
+      event.respondWith(networkFirst(request, MARKETPLACE_API_CACHE));
+    } else {
+      // Skip external APIs and cache-requiring APIs
+      if (!isCacheableAPI(url.pathname)) {
+        return;
+      }
+      event.respondWith(cacheFirst(request, MARKETPLACE_API_CACHE));
+    }
+    return;
+  }
+
+  // Handle image requests with cache-first
+  if (request.destination === "image") {
+    event.respondWith(cacheFirst(request, MARKETPLACE_IMAGES_CACHE));
+    return;
+  }
+
+  // Handle other static assets
   event.respondWith(handleStaticRequest(request));
 });
+
+/**
+ * Determine cache strategy based on URL pattern
+ */
+function getStrategyForUrl(pathname, hostname) {
+  // Images always cache-first
+  if (pathname.includes("/images/") || pathname.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+    return "cache-first";
+  }
+
+  // Marketplace API uses stale-while-revalidate
+  if (pathname.includes("/api/marketplace/")) {
+    return "stale-while-revalidate";
+  }
+
+  // User-specific data is network-first
+  if (pathname.includes("/api/user/") || pathname.includes("/api/account/")) {
+    return "network-first";
+  }
+
+  // Notifications and rewards cache but check network
+  if (pathname.includes("/api/notifications/") || pathname.includes("/api/rewards/")) {
+    return "stale-while-revalidate";
+  }
+
+  // External APIs are not cached
+  if (hostname.includes("bybit.com") || hostname.includes("coingecko.com") || hostname.includes("supabase.co")) {
+    return "network-only";
+  }
+
+  // Default to cache-first for static assets
+  return "cache-first";
+}
+
+/**
+ * Check if API is cacheable
+ */
+function isCacheableAPI(pathname) {
+  return CACHEABLE_APIS.some((api) => pathname.startsWith(api));
+}
 
 // Handle navigation requests with network-first strategy
 async function handleNavigationRequest(request) {
