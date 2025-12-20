@@ -139,10 +139,10 @@ const EnhancedGiftsTipsAnalytics = () => {
 
       // Filter by date range
       const filteredGifts = giftHistory.filter(
-        (gift) => new Date(gift.createdAt) >= startDate
+        (gift) => new Date(gift.created_at || gift.createdAt) >= startDate
       );
       const filteredTips = tipHistory.filter(
-        (tip) => new Date(tip.createdAt) >= startDate
+        (tip) => new Date(tip.created_at || tip.createdAt) >= startDate
       );
 
       // Calculate gift statistics
