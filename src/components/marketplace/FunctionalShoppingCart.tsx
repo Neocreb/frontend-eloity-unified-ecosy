@@ -301,21 +301,10 @@ export const FunctionalShoppingCart: React.FC<FunctionalShoppingCartProps> = ({
           </div>
         </div>
 
-        <Card className="text-center py-16">
-          <CardContent>
-            <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Your cart is empty</h3>
-            <p className="text-gray-600 mb-6">
-              Add some amazing products to get started!
-            </p>
-            <Button
-              onClick={() => navigate("/app/marketplace")}
-              className="bg-black hover:bg-gray-800 text-white"
-            >
-              Continue Shopping
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyCartState
+          onContinueShopping={() => navigate("/app/marketplace")}
+          onViewWishlist={() => navigate("/app/marketplace/wishlist")}
+        />
       </div>
     );
   }
