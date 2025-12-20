@@ -307,21 +307,21 @@ const MarketplaceCheckout = () => {
   };
   
   return (
-    <div className="container py-6">
+    <div className="container py-4 md:py-6 px-4 md:px-6">
       <MarketplaceBreadcrumb
         items={[
           { label: 'Marketplace', href: '/app/marketplace' },
           { label: 'Shopping Cart', href: '/app/marketplace/cart' },
           { label: 'Checkout' },
         ]}
-        className="mb-6"
+        className="mb-4 md:mb-6 hidden md:block"
       />
 
-      <div className="flex items-center gap-2 mb-6">
-        <Button variant="ghost" size="icon" onClick={() => navigate("/app/marketplace/cart")}>
+      <div className="flex items-center gap-2 mb-4 md:mb-6">
+        <Button variant="ghost" size="icon" onClick={() => navigate("/app/marketplace/cart")} className="h-10 w-10 md:h-auto md:w-auto">
           <ChevronLeft className="h-5 w-5" />
         </Button>
-        <h1 className="text-2xl font-bold">Checkout</h1>
+        <h1 className="text-xl md:text-2xl font-bold">Checkout</h1>
       </div>
       
       {cart.length === 0 ? (
