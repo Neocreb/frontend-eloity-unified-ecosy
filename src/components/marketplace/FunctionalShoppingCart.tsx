@@ -314,6 +314,15 @@ export const FunctionalShoppingCart: React.FC<FunctionalShoppingCartProps> = ({
 
   return (
     <div className={cn("max-w-6xl mx-auto p-6", className)}>
+      {/* Breadcrumb Navigation */}
+      <MarketplaceBreadcrumb
+        items={[
+          { label: 'Marketplace', href: '/app/marketplace' },
+          { label: 'Shopping Cart' },
+        ]}
+        className="mb-6"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
