@@ -206,24 +206,54 @@ export const liveStreamService = {
   },
 
   async updateViewerCount(streamId: string, count: number): Promise<void> {
-    const { error } = await supabase
-      .from('live_streams')
-      .update({ viewer_count: count })
-      .eq('id', streamId);
+    try {
+      const { error } = await supabase
+        .from('live_streams')
+        .update({ viewer_count: count })
+        .eq('id', streamId);
 
-    if (error) throw error;
+      if (error) {
+        console.warn('Error updating viewer count:', {
+          message: error.message,
+          code: error.code,
+          streamId
+        });
+        // Don't throw - this is a non-critical update
+      }
+    } catch (error) {
+      console.warn('Exception updating viewer count:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        streamId
+      });
+      // Don't throw - silently fail for viewer count updates
+    }
   },
 
   async endLiveStream(streamId: string): Promise<void> {
-    const { error } = await supabase
-      .from('live_streams')
-      .update({ 
-        is_active: false,
-        ended_at: new Date().toISOString()
-      })
-      .eq('id', streamId);
+    try {
+      const { error } = await supabase
+        .from('live_streams')
+        .update({
+          is_active: false,
+          ended_at: new Date().toISOString()
+        })
+        .eq('id', streamId);
 
-    if (error) throw error;
+      if (error) {
+        console.error('Error ending live stream:', {
+          message: error.message,
+          code: error.code,
+          streamId
+        });
+        throw error;
+      }
+    } catch (error) {
+      console.error('Exception ending live stream:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        streamId
+      });
+      throw error;
+    }
   },
 
   async getActiveBattles(): Promise<(LiveStream & { battle: Battle })[]> {
