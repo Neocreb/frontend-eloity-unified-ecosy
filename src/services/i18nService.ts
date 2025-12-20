@@ -936,20 +936,14 @@ class I18nService {
   }
 }
 
-// Lazy initialize i18nService to avoid circular dependencies
-let i18nServiceInstance: I18nService | null = null;
+// Lazy initialize i18nService to avoid circular dependencies and TDZ issues
+let _i18nServiceInstance: I18nService | null = null;
 
-export function getI18nService(): I18nService {
-  if (!i18nServiceInstance) {
-    i18nServiceInstance = new I18nService();
+export const i18nService: I18nService = new Proxy(new I18nService(), {
+  get(target, prop) {
+    if (_i18nServiceInstance === null) {
+      _i18nServiceInstance = target;
+    }
+    return (_i18nServiceInstance as any)[prop];
   }
-  return i18nServiceInstance;
-}
-
-// For backward compatibility, create getter
-Object.defineProperty(exports, 'i18nService', {
-  get() {
-    return getI18nService();
-  },
-  configurable: true
 });
