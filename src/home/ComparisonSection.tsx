@@ -47,46 +47,74 @@ export const ComparisonSection: React.FC = () => {
   );
 
   useEffect(() => {
-    fetchComparisons();
-  }, []);
+    let isMounted = true;
+    const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | null = null;
 
-  const fetchComparisons = async () => {
-    try {
-      setIsLoading(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const fetchComparisons = async () => {
+      try {
+        setIsLoading(true);
+        timeoutId = setTimeout(() => {
+          controller.abort();
+        }, 10000);
 
-      const response = await fetch('/api/landing/comparison-matrix', {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+        const response = await fetch('/api/landing/comparison-matrix', {
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
-        console.warn('Failed to fetch comparisons, using defaults');
-        setComparisons(defaultComparisons);
-        if (defaultComparisons.length > 0) {
-          setSelectedCategory(defaultComparisons[0].category);
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!isMounted) return;
+
+        if (!response.ok) {
+          console.warn('Failed to fetch comparisons, using defaults');
+          setComparisons(defaultComparisons);
+          if (defaultComparisons.length > 0) {
+            setSelectedCategory(defaultComparisons[0].category);
+          }
+          return;
         }
-        return;
-      }
 
-      const data = await response.json();
-      const dataToUse = Array.isArray(data) && data.length > 0 ? data : defaultComparisons;
-      setComparisons(dataToUse);
-      if (dataToUse.length > 0) {
-        setSelectedCategory(dataToUse[0].category);
+        const data = await response.json();
+        if (isMounted) {
+          const dataToUse = Array.isArray(data) && data.length > 0 ? data : defaultComparisons;
+          setComparisons(dataToUse);
+          if (dataToUse.length > 0) {
+            setSelectedCategory(dataToUse[0].category);
+          }
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching comparisons:', error);
+        }
+        // Use default comparisons on error
+        if (isMounted) {
+          setComparisons(defaultComparisons);
+          if (defaultComparisons.length > 0) {
+            setSelectedCategory(defaultComparisons[0].category);
+          }
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
-    } catch (error) {
-      console.error('Error fetching comparisons:', error);
-      // Use default comparisons on error
-      setComparisons(defaultComparisons);
-      if (defaultComparisons.length > 0) {
-        setSelectedCategory(defaultComparisons[0].category);
+    };
+
+    fetchComparisons();
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      if (!controller.signal.aborted) {
+        controller.abort();
+      }
+    };
+  }, []);
 
   const categories = Array.from(new Set(comparisons.map((c) => c.category)));
   const filteredComparisons = comparisons.filter((c) => c.category === selectedCategory);
