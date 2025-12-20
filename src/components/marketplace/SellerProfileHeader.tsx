@@ -38,7 +38,7 @@ interface SellerProfileHeaderProps {
   isFollowing?: boolean;
   onFollowClick?: () => void;
   followerCount?: number;
-  averageResponse Time?: number;
+  averageResponseTime?: number;
 }
 
 const SellerProfileHeader: React.FC<SellerProfileHeaderProps> = ({
@@ -47,7 +47,7 @@ const SellerProfileHeader: React.FC<SellerProfileHeaderProps> = ({
   isFollowing = false,
   onFollowClick,
   followerCount = 0,
-  averageResponse Time = 4,
+  averageResponseTime = 4,
 }) => {
   const [showReportDialog, setShowReportDialog] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -204,7 +204,7 @@ const SellerProfileHeader: React.FC<SellerProfileHeaderProps> = ({
               <div className="flex items-center justify-center gap-1 mb-1">
                 <Clock className="h-4 w-4 text-orange-500" />
               </div>
-              <div className="font-bold text-lg">{averageResponse Time}h</div>
+              <div className="font-bold text-lg">{averageResponseTime}h</div>
               <p className="text-xs text-gray-600">Response time</p>
             </div>
           </div>
