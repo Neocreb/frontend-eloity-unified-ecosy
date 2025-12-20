@@ -561,49 +561,6 @@ export const EnhancedMarketplaceProvider = ({
     }
   };
 
-  // Validate cart items are still in stock
-  const validateCart = async () => {
-    try {
-      const validationResults = await Promise.all(
-        cart.map(async (item) => {
-          const product = getProduct(item.productId);
-          if (!product) {
-            return {
-              valid: false,
-              itemId: item.id,
-              issue: `${item.productName} is no longer available`,
-            };
-          }
-          if (!product.inStock) {
-            return {
-              valid: false,
-              itemId: item.id,
-              issue: `${item.productName} is out of stock`,
-            };
-          }
-          if (product.inventory !== undefined && item.quantity > product.inventory) {
-            return {
-              valid: false,
-              itemId: item.id,
-              issue: `Only ${product.inventory} of ${item.productName} available`,
-            };
-          }
-          return { valid: true, itemId: item.id };
-        })
-      );
-
-      const invalidItems = validationResults.filter((r) => !r.valid);
-      return {
-        valid: invalidItems.length === 0,
-        issues: invalidItems.map((r) => r.issue),
-        invalidItemIds: invalidItems.map((r) => r.itemId),
-      };
-    } catch (error) {
-      console.error("Error validating cart:", error);
-      return { valid: false, issues: ["Failed to validate cart"], invalidItemIds: [] };
-    }
-  };
-
   // Save cart items for later
   const saveForLater = async (cartItemId: string) => {
     try {
