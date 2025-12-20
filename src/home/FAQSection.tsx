@@ -71,7 +71,12 @@ export const FAQSection: React.FC = () => {
           setFAQs(Array.isArray(data) && data.length > 0 ? data : defaultFAQs);
         }
       } catch (error) {
-        if (error instanceof Error && error.name !== 'AbortError') {
+        // Ignore abort errors from cleanup
+        if (error instanceof Error && error.name === 'AbortError') {
+          return;
+        }
+        // Log other errors
+        if (error instanceof Error) {
           console.error('Error fetching FAQs:', error);
         }
         // Use default FAQs on error
@@ -95,8 +100,13 @@ export const FAQSection: React.FC = () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      if (!controller.signal.aborted) {
-        controller.abort();
+      // Abort the controller to cancel any pending requests
+      try {
+        if (!controller.signal.aborted) {
+          controller.abort();
+        }
+      } catch {
+        // Ignore any errors during abort
       }
     };
   }, []);
