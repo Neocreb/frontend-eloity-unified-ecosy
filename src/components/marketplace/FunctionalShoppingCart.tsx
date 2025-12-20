@@ -37,6 +37,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
 import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
+import { EmptyCartState } from "@/components/marketplace/EmptyStates";
 
 interface FunctionalShoppingCartProps {
   isOpen?: boolean;
