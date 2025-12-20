@@ -283,14 +283,20 @@ const EnhancedGiftsTipsAnalytics = () => {
         description: "Failed to load gift and tip data",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadStats();
-  }, [user?.id, dateFilter, sortBy]);
+    if (!isLoading) {
+      loadStats();
+    }
+  }, [giftsSent, tipsReceived, dateFilter, sortBy]);
+
+  useEffect(() => {
+    if (syncError) {
+      setError(syncError);
+    }
+  }, [syncError]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
