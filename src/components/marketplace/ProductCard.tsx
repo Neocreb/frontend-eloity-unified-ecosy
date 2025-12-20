@@ -100,12 +100,15 @@ const ProductCard = ({
       )}
 
       <div className="relative pt-[100%] overflow-hidden bg-muted">
-        <img
-          src={product.image}
-          alt={product.name}
-          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 ${isHovered ? "scale-110" : "scale-100"
-            }`}
-        />
+        <div className={`absolute inset-0 w-full h-full transition-transform duration-300 ${isHovered ? "scale-110" : "scale-100"}`}>
+          <OptimizedImage
+            src={product.image}
+            alt={product.name}
+            quality="high"
+            className="w-full h-full"
+            containerClassName="w-full h-full"
+          />
+        </div>
 
         {product.isNew && (
           <Badge className="absolute top-2 left-2 bg-blue-500">New</Badge>
