@@ -8,6 +8,44 @@ export interface Wishlist {
   createdAt: string;
 }
 
+export interface WishlistCollection {
+  id: string;
+  userId: string;
+  name: string;
+  description?: string;
+  isPublic: boolean;
+  createdAt: string;
+}
+
+export interface PriceAlert {
+  id: string;
+  userId: string;
+  productId: string;
+  targetPrice: number;
+  currentPrice: number;
+  isActive: boolean;
+  createdAt: string;
+  triggeredAt?: string;
+}
+
+export interface BackInStockAlert {
+  id: string;
+  userId: string;
+  productId: string;
+  isActive: boolean;
+  createdAt: string;
+  triggeredAt?: string;
+}
+
+export interface WishlistShare {
+  id: string;
+  collectionId: string;
+  sharedWith: string; // user email or id
+  shareToken?: string;
+  expiresAt?: string;
+  createdAt: string;
+}
+
 export class WishlistService {
   /**
    * Get all wishlist items for a user
