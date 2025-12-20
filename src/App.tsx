@@ -34,6 +34,7 @@ import {
 } from "./components/accessibility/AccessibilityFeatures";
 import { OnboardingTour } from "./components/onboarding/OnboardingTour";
 import { NotificationSystem } from "./components/notifications/NotificationSystem";
+import { GiftTipEventManager } from "./components/rewards/GiftTipEventManager";
 import {
   ConnectionStatus,
   PWAInstallPrompt,
