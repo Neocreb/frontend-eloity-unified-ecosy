@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRewardsSummary } from "@/hooks/useRewardsSummary";
+import { useGiftTransactionSync } from "@/hooks/useGiftTransactionSync";
 import {
   Gift,
   DollarSign,
@@ -29,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { virtualGiftsService } from "@/services/virtualGiftsService";
+import { giftTipNotificationService } from "@/services/giftTipNotificationService";
 import { formatCurrency } from "@/utils/formatters";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
@@ -80,7 +82,6 @@ const EnhancedGiftsTipsAnalytics = () => {
     recentTips: [],
   });
 
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [dateFilter, setDateFilter] = useState("all");
@@ -90,16 +91,39 @@ const EnhancedGiftsTipsAnalytics = () => {
   const [categoryData, setCategoryData] = useState<Array<{ name: string; value: number }>>([]);
   const [anonymousMode, setAnonymousMode] = useState(false);
 
+  // Use the real-time sync hook for gifts and tips
+  const {
+    giftsSent,
+    giftsReceived,
+    tipsReceived,
+    isLoading,
+    error: syncError,
+    refresh: refreshSync,
+    totalGiftsSent,
+    totalGiftsReceived,
+    totalTipsSent,
+    totalTipsReceived,
+  } = useGiftTransactionSync({
+    onNewTransaction: (update) => {
+      // Handle new transactions in real-time
+      toast({
+        title: "✨ New Activity",
+        description: `${update.type.replace(/_/g, ' ').toUpperCase()}`,
+        duration: 3000,
+      });
+    },
+    autoRefresh: true,
+    refreshInterval: 5000,
+  });
+
   const loadStats = async () => {
     if (!user?.id) return;
     setError(null);
 
     try {
-      setIsLoading(true);
-      const [giftHistory, tipHistory] = await Promise.all([
-        virtualGiftsService.getGiftHistory(user.id),
-        virtualGiftsService.getTipHistory(user.id),
-      ]);
+      // Use data from the sync hook
+      const giftHistory = giftsSent;
+      const tipHistory = tipsReceived;
 
       // Calculate date range based on filter
       const now = new Date();
@@ -115,10 +139,10 @@ const EnhancedGiftsTipsAnalytics = () => {
 
       // Filter by date range
       const filteredGifts = giftHistory.filter(
-        (gift) => new Date(gift.createdAt) >= startDate
+        (gift) => new Date(gift.created_at || gift.createdAt) >= startDate
       );
       const filteredTips = tipHistory.filter(
-        (tip) => new Date(tip.createdAt) >= startDate
+        (tip) => new Date(tip.created_at || tip.createdAt) >= startDate
       );
 
       // Calculate gift statistics
@@ -259,23 +283,40 @@ const EnhancedGiftsTipsAnalytics = () => {
         description: "Failed to load gift and tip data",
         variant: "destructive",
       });
-    } finally {
-      setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    loadStats();
-  }, [user?.id, dateFilter, sortBy]);
+    if (!isLoading) {
+      loadStats();
+    }
+  }, [giftsSent, tipsReceived, dateFilter, sortBy]);
+
+  useEffect(() => {
+    if (syncError) {
+      setError(syncError);
+    }
+  }, [syncError]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadStats();
-    toast({
-      title: "✓ Refreshed",
-      description: "Gift and tip statistics updated",
-    });
-    setIsRefreshing(false);
+    try {
+      await refreshSync();
+      await loadStats();
+      toast({
+        title: "✓ Refreshed",
+        description: "Gift and tip statistics updated",
+      });
+    } catch (err) {
+      console.error('Error refreshing:', err);
+      toast({
+        title: "Refresh failed",
+        description: "Could not refresh data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   if (isLoading) {

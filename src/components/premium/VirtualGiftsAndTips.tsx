@@ -42,6 +42,7 @@ import {
   TipTransaction,
   CreatorTipSettings,
 } from "@/services/virtualGiftsService";
+import { giftTipNotificationService } from "@/services/giftTipNotificationService";
 
 interface VirtualGiftsAndTipsProps {
   recipientId: string;
@@ -158,6 +159,20 @@ const VirtualGiftsAndTips: React.FC<VirtualGiftsAndTipsProps> = ({
       );
 
       if (transaction) {
+        // Trigger notification service
+        giftTipNotificationService.notifyGiftSent({
+          senderName: user.user_metadata?.username || 'User',
+          senderAvatar: user.user_metadata?.avatar_url,
+          recipientName: targetRecipientName,
+          amount: selectedGift.price * giftQuantity,
+          currency: selectedGift.currency,
+          giftEmoji: selectedGift.emoji,
+          giftName: selectedGift.name,
+          message: message || undefined,
+          isAnonymous,
+          timestamp: new Date().toISOString(),
+        });
+
         toast({
           title: "Gift sent! 🎁",
           description: `You sent ${giftQuantity}x ${selectedGift.name}`,
@@ -216,6 +231,18 @@ const VirtualGiftsAndTips: React.FC<VirtualGiftsAndTipsProps> = ({
       );
 
       if (transaction) {
+        // Trigger notification service
+        giftTipNotificationService.notifyTipSent({
+          senderName: user.user_metadata?.username || 'User',
+          senderAvatar: user.user_metadata?.avatar_url,
+          recipientName: recipientName,
+          amount: tipAmount,
+          currency: 'USD',
+          message: message || undefined,
+          isAnonymous,
+          timestamp: new Date().toISOString(),
+        });
+
         toast({
           title: "Tip sent! 💰",
           description: `You tipped $${tipAmount}`,
