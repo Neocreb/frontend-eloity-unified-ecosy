@@ -120,7 +120,7 @@ export function useMarketplace() {
       }));
 
       // Load orders from API (this would be a real API call)
-      const orders = await marketplaceService.getOrders(user.id);
+      const orders = await marketplaceService.getUserOrders(user.id);
       setState((prev) => ({ ...prev, orders }));
     } catch (error) {
       console.error("Failed to load user data:", error instanceof Error ? error.message : JSON.stringify(error));
