@@ -115,14 +115,8 @@ export const ComparisonSection: React.FC = () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      // Abort the controller to cancel any pending requests
-      try {
-        if (!controller.signal.aborted) {
-          controller.abort();
-        }
-      } catch {
-        // Ignore any errors during abort
-      }
+      // Mark that component is unmounting to prevent any state updates
+      // Don't abort controller here - let it naturally clean up
     };
   }, []);
 
