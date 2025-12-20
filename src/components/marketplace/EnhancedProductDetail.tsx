@@ -13,6 +13,7 @@ import { QAService } from '@/services/qaService';
 import { useEnhancedMarketplace } from '@/contexts/EnhancedMarketplaceContext';
 import DigitalProductDetail from './DigitalProductDetail';
 import { ProductDetailSkeleton } from './MarketplaceSkeletons';
+import { AccessibleQuantitySelector, liveRegionAriaLabel, ScreenReaderOnly } from './AccessibilityUtils';
 
 interface ProductImage {
   id: string;
