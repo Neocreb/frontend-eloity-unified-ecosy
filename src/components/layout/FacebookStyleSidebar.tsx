@@ -94,7 +94,9 @@ const FacebookStyleSidebar: React.FC<FacebookStyleSidebarProps> = ({
 }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const providerStatus = useDeliveryProvider();
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const isActive = (path: string) => location.pathname === path;
 
