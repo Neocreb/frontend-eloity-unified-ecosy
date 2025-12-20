@@ -79,7 +79,9 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
   const [newQuestion, setNewQuestion] = useState('');
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
   const { toast } = useToast();
+  const { addToCart } = useEnhancedMarketplace();
 
   useEffect(() => {
     loadProductData();
