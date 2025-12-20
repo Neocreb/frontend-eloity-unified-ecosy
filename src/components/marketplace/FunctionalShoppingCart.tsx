@@ -36,6 +36,7 @@ import { useEnhancedMarketplace } from "@/contexts/EnhancedMarketplaceContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 
 interface FunctionalShoppingCartProps {
   isOpen?: boolean;
