@@ -94,7 +94,14 @@ const MarketplaceSeller = () => {
   
   return (
     <div className="container py-6">
-      <Button variant="ghost" className="mb-4" onClick={() => navigate('/marketplace')}>
+      <MarketplaceBreadcrumb
+        items={[
+          { label: "Marketplace", href: "/app/marketplace" },
+          { label: `Store: ${seller.name}` }
+        ]}
+      />
+
+      <Button variant="ghost" className="mb-4 mt-4" onClick={() => navigate('/app/marketplace')}>
         <ChevronLeft className="h-4 w-4 mr-1" />
         Back to Marketplace
       </Button>
