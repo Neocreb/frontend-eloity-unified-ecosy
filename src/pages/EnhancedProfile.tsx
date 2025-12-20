@@ -158,6 +158,10 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
   const [freelanceProjectsCount, setFreelanceProjectsCount] = useState(0);
   const [cryptoTradesCount, setCryptoTradesCount] = useState(0);
 
+  // Determine if viewing own profile
+  const isOwnProfile =
+    !targetUsername || (user && user.profile?.username === targetUsername);
+
   // Update real data values when hooks data changes
   useEffect(() => {
     if (isOwnProfile) {
@@ -203,9 +207,6 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
     cryptoTransactions,
     formatCurrency,
   ]);
-
-  const isOwnProfile =
-    !targetUsername || (user && user.profile?.username === targetUsername);
 
   // Enhanced mock profile data
   const createMockProfile = (profile: UserProfile) => ({

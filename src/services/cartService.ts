@@ -38,7 +38,8 @@ export class CartService {
         .eq('user_id', userId);
 
       if (deleteError) {
-        console.error("Error clearing cart:", deleteError);
+        const errorMsg = deleteError instanceof Error ? deleteError.message : JSON.stringify(deleteError);
+        console.error("Error clearing cart:", errorMsg);
         return false;
       }
 
@@ -66,13 +67,15 @@ export class CartService {
         .insert(cartItems);
 
       if (insertError) {
-        console.error("Error syncing cart to database:", insertError);
+        const errorMsg = insertError instanceof Error ? insertError.message : JSON.stringify(insertError);
+        console.error("Error syncing cart to database:", errorMsg);
         return false;
       }
 
       return true;
     } catch (error) {
-      console.error("Error in syncCartToDatabase:", error);
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error in syncCartToDatabase:", errorMsg);
       return false;
     }
   }
@@ -91,7 +94,8 @@ export class CartService {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error("Error fetching user cart:", error);
+        const errorMsg = error instanceof Error ? error.message : (error?.message || JSON.stringify(error));
+        console.error("Error fetching user cart:", errorMsg);
         return [];
       }
 
@@ -109,7 +113,8 @@ export class CartService {
         total: item.price * item.quantity
       }));
     } catch (error) {
-      console.error("Error in getUserCart:", error);
+      const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
+      console.error("Error in getUserCart:", errorMsg);
       return [];
     }
   }
