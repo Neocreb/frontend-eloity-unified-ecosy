@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -366,7 +367,11 @@ const EnhancedRewardsActivitiesTab = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="space-y-6"
+    >
       {/* Analytics Overview */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
@@ -437,46 +442,62 @@ const EnhancedRewardsActivitiesTab = () => {
       </div>
 
       {/* Earnings Breakdown */}
-      {Object.keys(byCategory).length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <BarChart3 className="h-5 w-5" />
-              Earnings Breakdown by Category
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {Object.entries(byCategory)
-                .sort(([, a], [, b]) => b - a)
-                .map(([category, amount]) => {
-                  const percentage = totalEarnings > 0 ? (amount / totalEarnings) * 100 : 0;
-                  return (
-                    <div key={category} className="space-y-2">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm font-medium">{category}</span>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">
-                            {percentage.toFixed(1)}%
-                          </span>
-                          <span className="font-semibold">
-                            {formatCurrency(amount, summary?.currency_code || "USD")}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                        <div
-                          className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-300"
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <AnimatePresence>
+        {Object.keys(byCategory).length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4 }}
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  Earnings Breakdown by Category
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <motion.div
+                  className="space-y-4"
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="visible"
+                >
+                  {Object.entries(byCategory)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([category, amount]) => {
+                      const percentage = totalEarnings > 0 ? (amount / totalEarnings) * 100 : 0;
+                      return (
+                        <motion.div key={category} variants={itemVariants} className="space-y-2">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">{category}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">
+                                {percentage.toFixed(1)}%
+                              </span>
+                              <span className="font-semibold">
+                                {formatCurrency(amount, summary?.currency_code || "USD")}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 overflow-hidden">
+                            <motion.div
+                              className="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full"
+                              initial={{ width: 0 }}
+                              animate={{ width: `${percentage}%` }}
+                              transition={{ duration: 0.6, ease: "easeOut" }}
+                            />
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Filters and Search */}
       <Card>
@@ -639,108 +660,156 @@ const EnhancedRewardsActivitiesTab = () => {
                     </h3>
                   )}
 
-                  <div className="space-y-3">
-                    {groupActivities.map((activity) => (
-                      <div
-                        key={activity.id}
-                        className="border rounded-lg p-4 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-300 group"
-                        onClick={() =>
-                          setExpandedActivity(
-                            expandedActivity === activity.id ? null : activity.id
-                          )
-                        }
-                      >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-start gap-3 flex-1 cursor-pointer">
-                            <div className="mt-1">{getActivityIcon(activity.activity_type)}</div>
-                            <div className="flex-1">
-                              <p className="font-medium">{activity.description}</p>
-                              <div className="flex items-center gap-2 mt-1 flex-wrap">
-                                <Badge className={getCategoryColor(activity.category)}>
-                                  {activity.category}
-                                </Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(activity.created_at).toLocaleDateString()} at{" "}
-                                  {new Date(activity.created_at).toLocaleTimeString([], {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  })}
-                                </span>
-                                {activity.source_type && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {activity.source_type}
+                  <motion.div
+                    className="space-y-3"
+                    variants={containerVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <AnimatePresence mode="popLayout">
+                      {groupActivities.map((activity, index) => (
+                        <motion.div
+                          key={activity.id}
+                          variants={itemVariants}
+                          layout
+                          initial={{ opacity: 0, x: -20 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: 20 }}
+                          transition={{ duration: 0.3, delay: index * 0.05 }}
+                          className="border rounded-lg p-4 hover:shadow-md hover:border-purple-300 dark:hover:border-purple-700 transition-all duration-300 group cursor-pointer"
+                          onClick={() =>
+                            setExpandedActivity(
+                              expandedActivity === activity.id ? null : activity.id
+                            )
+                          }
+                        >
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="flex items-start gap-3 flex-1 cursor-pointer">
+                              <motion.div
+                                className="mt-1"
+                                whileHover={{ scale: 1.2 }}
+                                transition={{ duration: 0.2 }}
+                              >
+                                {getActivityIcon(activity.activity_type)}
+                              </motion.div>
+                              <div className="flex-1">
+                                <p className="font-medium">{activity.description}</p>
+                                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                                  <Badge className={getCategoryColor(activity.category)}>
+                                    {activity.category}
                                   </Badge>
-                                )}
+                                  <span className="text-xs text-muted-foreground">
+                                    {new Date(activity.created_at).toLocaleDateString()} at{" "}
+                                    {new Date(activity.created_at).toLocaleTimeString([], {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </span>
+                                  {activity.source_type && (
+                                    <Badge variant="secondary" className="text-xs">
+                                      {activity.source_type}
+                                    </Badge>
+                                  )}
+                                </div>
                               </div>
                             </div>
-                          </div>
-                          <div className="text-right ml-4 flex flex-col items-end gap-2">
-                            <p
-                              className={`font-bold text-lg ${
-                                activity.amount_currency && activity.amount_currency > 0
-                                  ? "text-green-600 dark:text-green-400"
-                                  : "text-gray-600"
-                              }`}
-                            >
-                              {activity.amount_currency && activity.amount_currency > 0
-                                ? "+"
-                                : ""}
-                              {formatCurrency(
-                                activity.amount_currency || 0,
-                                summary?.currency_code || "USD"
+                            <div className="text-right ml-4 flex flex-col items-end gap-2">
+                              <motion.p
+                                className={`font-bold text-lg ${
+                                  activity.amount_currency && activity.amount_currency > 0
+                                    ? "text-green-600 dark:text-green-400"
+                                    : "text-gray-600"
+                                }`}
+                                animate={{ scale: [1, 1.05, 1] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                              >
+                                {activity.amount_currency && activity.amount_currency > 0
+                                  ? "+"
+                                  : ""}
+                                {formatCurrency(
+                                  activity.amount_currency || 0,
+                                  summary?.currency_code || "USD"
+                                )}
+                              </motion.p>
+                              {activity.amount_eloits && (
+                                <p className="text-xs text-muted-foreground">
+                                  {formatNumber(activity.amount_eloits)} ELO
+                                </p>
                               )}
-                            </p>
-                            {activity.amount_eloits && (
-                              <p className="text-xs text-muted-foreground">
-                                {formatNumber(activity.amount_eloits)} ELO
-                              </p>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleShareActivity(activity);
-                              }}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity"
-                              title="Share this activity"
-                            >
-                              <Share2 className="h-4 w-4" />
-                            </Button>
+                              <motion.div
+                                whileHover={{ scale: 1.1 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleShareActivity(activity);
+                                  }}
+                                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                                  title="Share this activity"
+                                >
+                                  <Share2 className="h-4 w-4" />
+                                </Button>
+                              </motion.div>
+                            </div>
                           </div>
-                        </div>
 
-                        {/* Expanded Details */}
-                        {expandedActivity === activity.id && activity.metadata && (
-                          <div className="mt-3 pt-3 border-t bg-muted/30 dark:bg-muted/10 p-3 rounded text-sm space-y-1 animate-in fade-in-50 duration-300">
-                            <p className="font-semibold text-muted-foreground">Details:</p>
-                            {Object.entries(activity.metadata).map(([key, value]) => (
-                              <p key={key} className="text-xs text-muted-foreground">
-                                <span className="font-medium">{key}:</span>{" "}
-                                {typeof value === "object"
-                                  ? JSON.stringify(value)
-                                  : String(value)}
-                              </p>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                          {/* Expanded Details */}
+                          <AnimatePresence>
+                            {expandedActivity === activity.id && activity.metadata && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: "auto" }}
+                                exit={{ opacity: 0, height: 0 }}
+                                transition={{ duration: 0.3 }}
+                                className="mt-3 pt-3 border-t bg-muted/30 dark:bg-muted/10 p-3 rounded text-sm space-y-1 overflow-hidden"
+                              >
+                                <p className="font-semibold text-muted-foreground">Details:</p>
+                                {Object.entries(activity.metadata).map(([key, value]) => (
+                                  <p key={key} className="text-xs text-muted-foreground">
+                                    <span className="font-medium">{key}:</span>{" "}
+                                    {typeof value === "object"
+                                      ? JSON.stringify(value)
+                                      : String(value)}
+                                  </p>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </motion.div>
                 </div>
               ))}
 
               {/* Load More Button */}
-              {hasMore && (
-                <Button
-                  onClick={loadMore}
-                  variant="outline"
-                  className="w-full"
-                >
-                  <ChevronDown className="h-4 w-4 mr-2" />
-                  Load More Activities
-                </Button>
-              )}
+              <AnimatePresence>
+                {hasMore && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Button
+                        onClick={loadMore}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <ChevronDown className="h-4 w-4 mr-2" />
+                        Load More Activities
+                      </Button>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : (
             <div className="text-center py-8">
@@ -755,7 +824,7 @@ const EnhancedRewardsActivitiesTab = () => {
           )}
         </CardContent>
       </Card>
-    </div>
+    </motion.div>
   );
 };
 

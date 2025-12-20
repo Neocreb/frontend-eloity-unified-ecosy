@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -405,101 +406,141 @@ const EnhancedRewardsBattleTab = () => {
       aria-label="Battle Rewards Tab - View and manage your battle earnings"
     >
       {/* User Balance Alert */}
-      {userBalance <= 0 && (
-        <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-600" />
-              <div>
-                <p className="font-medium text-amber-900 dark:text-amber-100">No Balance Available</p>
-                <p className="text-sm text-amber-800 dark:text-amber-200">
-                  Earn rewards to get balance for battle voting
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <AnimatePresence>
+        {userBalance <= 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="border-amber-200 bg-amber-50 dark:bg-amber-900/20">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <AlertCircle className="h-5 w-5 text-amber-600" />
+                  <div>
+                    <p className="font-medium text-amber-900 dark:text-amber-100">No Balance Available</p>
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      Earn rewards to get balance for battle voting
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Battle Stats */}
-      <div
+      <motion.div
         className="grid grid-cols-1 md:grid-cols-4 gap-4"
         role="region"
         aria-label="Battle Statistics Summary"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
       >
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Your Balance</p>
-                <p
-                  className="text-2xl font-bold mt-1"
-                  aria-label={`Your balance: ${formatCurrency(userBalance, summary?.currency_code || "USD")}`}
+        <motion.div variants={itemVariants}>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Your Balance</p>
+                  <p
+                    className="text-2xl font-bold mt-1"
+                    aria-label={`Your balance: ${formatCurrency(userBalance, summary?.currency_code || "USD")}`}
+                  >
+                    {formatCurrency(userBalance, summary?.currency_code || "USD")}
+                  </p>
+                </div>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
                 >
-                  {formatCurrency(userBalance, summary?.currency_code || "USD")}
-                </p>
+                  <DollarSign className="h-8 w-8 text-green-500 opacity-20" aria-hidden="true" />
+                </motion.div>
               </div>
-              <DollarSign className="h-8 w-8 text-green-500 opacity-20" aria-hidden="true" />
-            </div>
-            <p className="text-xs text-muted-foreground mt-2">Available to vote</p>
-          </CardContent>
-        </Card>
+              <p className="text-xs text-muted-foreground mt-2">Available to vote</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Live Battles</p>
-                <p
-                  className="text-2xl font-bold mt-1"
-                  aria-label={`${battlesWithVotes.filter(
-                    (b) => b.battle.status === "live" || b.battle.status === "active"
-                  ).length} live battles currently active`}
+        <motion.div variants={itemVariants}>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Live Battles</p>
+                  <p
+                    className="text-2xl font-bold mt-1"
+                    aria-label={`${battlesWithVotes.filter(
+                      (b) => b.battle.status === "live" || b.battle.status === "active"
+                    ).length} live battles currently active`}
+                  >
+                    {battlesWithVotes.filter(
+                      (b) => b.battle.status === "live" || b.battle.status === "active"
+                    ).length}
+                  </p>
+                </div>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.2 }}
                 >
-                  {battlesWithVotes.filter(
-                    (b) => b.battle.status === "live" || b.battle.status === "active"
-                  ).length}
-                </p>
+                  <Flame className="h-8 w-8 text-red-500 opacity-20" aria-hidden="true" />
+                </motion.div>
               </div>
-              <Flame className="h-8 w-8 text-red-500 opacity-20" aria-hidden="true" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Active Votes</p>
-                <p
-                  className="text-2xl font-bold mt-1"
-                  aria-label={`You have ${activeVotes} active votes`}
+        <motion.div variants={itemVariants}>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Active Votes</p>
+                  <p
+                    className="text-2xl font-bold mt-1"
+                    aria-label={`You have ${activeVotes} active votes`}
+                  >
+                    {activeVotes}
+                  </p>
+                </div>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.4 }}
                 >
-                  {activeVotes}
-                </p>
+                  <Target className="h-8 w-8 text-blue-500 opacity-20" aria-hidden="true" />
+                </motion.div>
               </div>
-              <Target className="h-8 w-8 text-blue-500 opacity-20" aria-hidden="true" />
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
-                <p
-                  className="text-2xl font-bold mt-1"
-                  aria-label={`Total earnings: ${formatCurrency(totalEarnings, summary?.currency_code || "USD")}`}
+        <motion.div variants={itemVariants}>
+          <Card className="hover:shadow-lg transition-shadow">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Earnings</p>
+                  <p
+                    className="text-2xl font-bold mt-1"
+                    aria-label={`Total earnings: ${formatCurrency(totalEarnings, summary?.currency_code || "USD")}`}
+                  >
+                    {formatCurrency(totalEarnings, summary?.currency_code || "USD")}
+                  </p>
+                </div>
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: 0.6 }}
                 >
-                  {formatCurrency(totalEarnings, summary?.currency_code || "USD")}
-                </p>
+                  <Trophy className="h-8 w-8 text-yellow-500 opacity-20" aria-hidden="true" />
+                </motion.div>
               </div>
-              <Trophy className="h-8 w-8 text-yellow-500 opacity-20" aria-hidden="true" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      </motion.div>
 
       {/* Filter Buttons */}
       <Card>
