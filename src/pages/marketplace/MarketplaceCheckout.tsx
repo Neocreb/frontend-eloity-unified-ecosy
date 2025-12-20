@@ -326,23 +326,10 @@ const MarketplaceCheckout = () => {
       </div>
       
       {cart.length === 0 ? (
-        <Card className="bg-gray-50">
-          <CardContent className="pt-6 text-center">
-            <div className="py-12 space-y-4">
-              <ShoppingCart className="h-16 w-16 text-gray-300 mx-auto" />
-              <h3 className="text-xl font-medium">Your Cart is Empty</h3>
-              <p className="text-muted-foreground max-w-md mx-auto">
-                You haven't added any products to your cart yet. Browse the marketplace to find products you love.
-              </p>
-              <Button
-                className="mt-4"
-                onClick={() => navigate('/app/marketplace')}
-              >
-                Browse Products
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        <EmptyCartState
+          onContinueShopping={() => navigate('/app/marketplace')}
+          onViewWishlist={() => navigate('/app/marketplace/wishlist')}
+        />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
