@@ -461,38 +461,62 @@ const MarketplaceCheckout = () => {
               <CardContent className="pt-6 space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Full Name</Label>
-                    <Input 
-                      id="name" 
-                      name="name" 
-                      placeholder="John Doe" 
+                    <Label htmlFor="name">Full Name *</Label>
+                    <Input
+                      id="name"
+                      name="name"
+                      placeholder="John Doe"
                       value={shippingInfo.name}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.name ? "border-red-500" : ""}
                     />
+                    {formErrors.name && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.name}
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email Address</Label>
-                    <Input 
-                      id="email" 
-                      name="email" 
-                      type="email" 
-                      placeholder="john@example.com" 
+                    <Label htmlFor="email">Email Address *</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder="john@example.com"
                       value={shippingInfo.email}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.email ? "border-red-500" : ""}
                     />
+                    {formErrors.email && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.email}
+                      </p>
+                    )}
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input 
-                    id="phone" 
-                    name="phone" 
-                    placeholder="(123) 456-7890" 
+                  <Label htmlFor="phone">Phone Number *</Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    placeholder="(123) 456-7890"
                     value={shippingInfo.phone}
                     onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    className={formErrors.phone ? "border-red-500" : ""}
                   />
+                  {formErrors.phone && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <Info className="h-4 w-4" />
+                      {formErrors.phone}
+                    </p>
+                  )}
                 </div>
                 
                 <div className="space-y-2">
