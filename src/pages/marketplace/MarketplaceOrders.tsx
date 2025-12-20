@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 import { cn } from "@/lib/utils";
 import { OrderService } from "@/services/orderService";
 import type { Order } from "@/types/enhanced-marketplace";
