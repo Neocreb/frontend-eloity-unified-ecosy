@@ -300,12 +300,23 @@ const EnhancedGiftsTipsAnalytics = () => {
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await loadStats();
-    toast({
-      title: "✓ Refreshed",
-      description: "Gift and tip statistics updated",
-    });
-    setIsRefreshing(false);
+    try {
+      await refreshSync();
+      await loadStats();
+      toast({
+        title: "✓ Refreshed",
+        description: "Gift and tip statistics updated",
+      });
+    } catch (err) {
+      console.error('Error refreshing:', err);
+      toast({
+        title: "Refresh failed",
+        description: "Could not refresh data. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   if (isLoading) {
