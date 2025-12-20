@@ -42,36 +42,64 @@ export const FAQSection: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchFAQs();
-  }, []);
+    let isMounted = true;
+    const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | null = null;
 
-  const fetchFAQs = async () => {
-    try {
-      setIsLoading(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const fetchFAQs = async () => {
+      try {
+        setIsLoading(true);
+        timeoutId = setTimeout(() => {
+          controller.abort();
+        }, 10000);
 
-      const response = await fetch('/api/landing/faqs', {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+        const response = await fetch('/api/landing/faqs', {
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
-        console.warn('Failed to fetch FAQs, using defaults');
-        setFAQs(defaultFAQs);
-        return;
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!isMounted) return;
+
+        if (!response.ok) {
+          console.warn('Failed to fetch FAQs, using defaults');
+          setFAQs(defaultFAQs);
+          return;
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setFAQs(Array.isArray(data) && data.length > 0 ? data : defaultFAQs);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching FAQs:', error);
+        }
+        // Use default FAQs on error
+        if (isMounted) {
+          setFAQs(defaultFAQs);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
+    };
 
-      const data = await response.json();
-      setFAQs(Array.isArray(data) && data.length > 0 ? data : defaultFAQs);
-    } catch (error) {
-      console.error('Error fetching FAQs:', error);
-      // Use default FAQs on error
-      setFAQs(defaultFAQs);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    fetchFAQs();
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (!controller.signal.aborted) {
+        controller.abort();
+      }
+    };
+  }, []);
 
   const categories = Array.from(new Set(faqs.map((faq) => faq.category)));
   const filteredFAQs = selectedCategory
