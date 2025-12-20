@@ -208,9 +208,6 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
     formatCurrency,
   ]);
 
-  const isOwnProfile =
-    !targetUsername || (user && user.profile?.username === targetUsername);
-
   // Enhanced mock profile data
   const createMockProfile = (profile: UserProfile) => ({
     id: profile.id,
