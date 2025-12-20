@@ -33,6 +33,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import UniversalCryptoPaymentModal from "@/components/payments/UniversalCryptoPaymentModal";
 import DeliveryProviderSelection from "@/components/delivery/DeliveryProviderSelection";
 import { type PaymentRequest } from "@/services/unifiedCryptoPaymentService";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 
 const MarketplaceCheckout = () => {
   const { cart, getCartTotal, checkout, clearCart } = useEnhancedMarketplace();
