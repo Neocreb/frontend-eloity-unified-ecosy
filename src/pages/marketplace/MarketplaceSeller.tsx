@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import ProductCard from "@/components/marketplace/ProductCard";
 import { useToast } from "@/components/ui/use-toast";
 import { SellerProfile } from "@/types/marketplace";
 import { useAuth } from "@/contexts/AuthContext";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 
 const MarketplaceSeller = () => {
   const { username } = useParams<{ username: string }>();
