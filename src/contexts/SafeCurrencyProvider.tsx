@@ -100,12 +100,13 @@ class SafeCurrencyProvider extends Component<
     this.mounted = false;
   }
 
-  async loadCurrencyProvider() {
+  loadCurrencyProvider() {
     try {
       if (!this.state.CurrencyProvider && this.mounted) {
-        const module = await import("./CurrencyContext");
-        if (this.mounted) {
-          this.setState({ CurrencyProvider: module.CurrencyProvider });
+        // Use synchronous import instead of dynamic to avoid timing issues
+        const { CurrencyProvider: Provider } = require("./CurrencyContext");
+        if (this.mounted && Provider) {
+          this.setState({ CurrencyProvider: Provider });
         }
       }
     } catch (error) {
