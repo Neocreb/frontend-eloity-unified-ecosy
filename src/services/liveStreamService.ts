@@ -134,30 +134,44 @@ export const liveStreamService = {
   },
 
   async getLiveStreamById(id: string): Promise<LiveStream | null> {
-    const { data, error } = await supabase
-      .from('live_streams')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('live_streams')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    if (!data) return null;
+      if (error) {
+        // Handle missing data gracefully
+        if (error.code === 'PGRST116' || error.message?.includes('no rows')) {
+          return null;
+        }
+        throw error;
+      }
+      if (!data) return null;
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('username, full_name, avatar_url, is_verified')
-      .eq('user_id', data.user_id)
-      .single();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url, is_verified')
+        .eq('user_id', data.user_id)
+        .single();
 
-    return {
-      ...data,
-      user: profile ? {
-        username: (profile as Profile).username || 'unknown',
-        full_name: (profile as Profile).full_name || 'Unknown User',
-        avatar_url: (profile as Profile).avatar_url || '',
-        is_verified: (profile as Profile).is_verified || false
-      } : undefined
-    };
+      return {
+        ...data,
+        user: profile ? {
+          username: (profile as Profile).username || 'unknown',
+          full_name: (profile as Profile).full_name || 'Unknown User',
+          avatar_url: (profile as Profile).avatar_url || '',
+          is_verified: (profile as Profile).is_verified || false
+        } : undefined
+      };
+    } catch (error) {
+      console.warn('Error loading live stream by ID:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        id
+      });
+      return null;
+    }
   },
 
   async createLiveStream(streamData: {
