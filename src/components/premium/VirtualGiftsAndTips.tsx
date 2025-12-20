@@ -231,6 +231,18 @@ const VirtualGiftsAndTips: React.FC<VirtualGiftsAndTipsProps> = ({
       );
 
       if (transaction) {
+        // Trigger notification service
+        giftTipNotificationService.notifyTipSent({
+          senderName: user.user_metadata?.username || 'User',
+          senderAvatar: user.user_metadata?.avatar_url,
+          recipientName: recipientName,
+          amount: tipAmount,
+          currency: 'USD',
+          message: message || undefined,
+          isAnonymous,
+          timestamp: new Date().toISOString(),
+        });
+
         toast({
           title: "Tip sent! 💰",
           description: `You tipped $${tipAmount}`,
