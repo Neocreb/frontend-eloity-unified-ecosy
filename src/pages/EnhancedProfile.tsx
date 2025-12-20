@@ -1031,6 +1031,26 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                         </div>
                       )}
 
+                      {/* Creator Earnings (Own Profile Only) */}
+                      {isOwnProfile && (
+                        <div
+                          className="flex-shrink-0 text-center cursor-pointer group"
+                          onClick={() => navigate("/app/rewards")}
+                        >
+                          <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-3xl bg-gradient-to-br from-purple-100 to-indigo-200 border-0 flex items-center justify-center hover:shadow-xl hover:scale-105 transition-all duration-300">
+                            <div className="text-center">
+                              <Award className="h-5 w-5 text-purple-600 mx-auto mb-1" />
+                              <div className="text-lg sm:text-xl font-bold text-purple-600">
+                                12.4k
+                              </div>
+                            </div>
+                          </div>
+                          <div className="text-sm font-medium text-gray-700 group-hover:text-purple-600 transition-colors">
+                            ELO Points
+                          </div>
+                        </div>
+                      )}
+
                       {/* Trust Level */}
                       <div
                         className="flex-shrink-0 text-center cursor-pointer group"
