@@ -14,6 +14,7 @@ import {
 import { Product } from "@/types/marketplace";
 import { cn } from "@/utils/utils";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import OptimizedImage from "./OptimizedImage";
 
 interface ProductCardProps {
   product: Product;
@@ -99,12 +100,15 @@ const ProductCard = ({
       )}
 
       <div className="relative pt-[100%] overflow-hidden bg-muted">
-        <img
-          src={product.image}
-          alt={product.name}
-          className={`absolute inset-0 w-full h-full object-cover transition-transform duration-300 ${isHovered ? "scale-110" : "scale-100"
-            }`}
-        />
+        <div className={`absolute inset-0 w-full h-full transition-transform duration-300 ${isHovered ? "scale-110" : "scale-100"}`}>
+          <OptimizedImage
+            src={product.image}
+            alt={product.name}
+            quality="high"
+            className="w-full h-full"
+            containerClassName="w-full h-full"
+          />
+        </div>
 
         {product.isNew && (
           <Badge className="absolute top-2 left-2 bg-blue-500">New</Badge>
@@ -126,13 +130,14 @@ const ProductCard = ({
       </div>
 
       <CardHeader className="p-3 pb-0">
-        {showSellerInfo && (
+        {showSellerInfo && product.sellerAvatar && (
           <div className="flex items-center gap-2 mb-2">
             <div className="flex-shrink-0 h-6 w-6 rounded-full overflow-hidden">
-              <img
+              <OptimizedImage
                 src={product.sellerAvatar}
                 alt={product.sellerName}
-                className="h-full w-full object-cover"
+                quality="medium"
+                containerClassName="h-full w-full rounded-full"
               />
             </div>
             <div className="flex items-center text-sm">
