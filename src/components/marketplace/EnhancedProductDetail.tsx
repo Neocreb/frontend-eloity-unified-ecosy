@@ -12,6 +12,7 @@ import { ReviewService } from '@/services/reviewService';
 import { QAService } from '@/services/qaService';
 import { useEnhancedMarketplace } from '@/contexts/EnhancedMarketplaceContext';
 import DigitalProductDetail from './DigitalProductDetail';
+import { ProductDetailSkeleton } from './MarketplaceSkeletons';
 
 interface ProductImage {
   id: string;
