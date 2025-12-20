@@ -328,7 +328,6 @@ import CampaignCenter from "./components/campaigns/CampaignCenter";
 import MemeGifTest from "./components/debug/MemeGifTest";
 
 // Import missing components
-import MarketplaceSell from "./pages/marketplace/MarketplaceSell";
 import VideoDetail from "./pages/VideoDetail";
 import LiveStreamPage from "./pages/LiveStreamPage";
 import BattlePage from "./pages/BattlePage";
