@@ -86,7 +86,6 @@ export class MarketplaceService {
         .from('categories')
         .select('*')
         .order('name')
-        .timeout(5000); // 5 second timeout
 
       if (error) {
         const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);

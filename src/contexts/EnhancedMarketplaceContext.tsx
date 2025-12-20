@@ -1565,7 +1565,7 @@ export const EnhancedMarketplaceProvider = ({
     }
 
     try {
-      const wishlists = await WishlistService.getUserWishlists(user.id);
+      const wishlists = await WishlistService.getUserWishlist(user.id);
       return wishlists;
     } catch (error) {
       console.error("Error fetching wishlists:", error);

@@ -48,36 +48,64 @@ export const UseCasesSection: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchUseCases();
-  }, []);
+    let isMounted = true;
+    const controller = new AbortController();
+    let timeoutId: NodeJS.Timeout | null = null;
 
-  const fetchUseCases = async () => {
-    try {
-      setIsLoading(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
+    const fetchUseCases = async () => {
+      try {
+        setIsLoading(true);
+        timeoutId = setTimeout(() => {
+          controller.abort();
+        }, 10000);
 
-      const response = await fetch('/api/landing/use-cases?featured=true', {
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+        const response = await fetch('/api/landing/use-cases?featured=true', {
+          signal: controller.signal,
+        });
 
-      if (!response.ok) {
-        console.warn('Failed to fetch use cases, using defaults');
-        setUseCases(defaultUseCases);
-        return;
+        if (timeoutId) clearTimeout(timeoutId);
+        if (!isMounted) return;
+
+        if (!response.ok) {
+          console.warn('Failed to fetch use cases, using defaults');
+          setUseCases(defaultUseCases);
+          return;
+        }
+
+        const data = await response.json();
+        if (isMounted) {
+          setUseCases(Array.isArray(data) && data.length > 0 ? data : defaultUseCases);
+        }
+      } catch (error) {
+        if (error instanceof Error && error.name !== 'AbortError') {
+          console.error('Error fetching use cases:', error);
+        }
+        // Use default use cases on error
+        if (isMounted) {
+          setUseCases(defaultUseCases);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
+    };
 
-      const data = await response.json();
-      setUseCases(Array.isArray(data) && data.length > 0 ? data : defaultUseCases);
-    } catch (error) {
-      console.error('Error fetching use cases:', error);
-      // Use default use cases on error
-      setUseCases(defaultUseCases);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    fetchUseCases();
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      if (!controller.signal.aborted) {
+        controller.abort();
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (

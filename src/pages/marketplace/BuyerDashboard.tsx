@@ -132,10 +132,9 @@ export default function BuyerDashboard() {
         setOrders(userOrders);
         
         // Load wishlist
-        const userWishlists = await WishlistService.getUserWishlists(user.id);
+        const userWishlists = await WishlistService.getUserWishlist(user.id);
         if (userWishlists.length > 0) {
-          const wishlistItems = await WishlistService.getWishlistItems(userWishlists[0].id);
-          setWishlist(wishlistItems.map(item => ({
+          setWishlist(userWishlists.map(item => ({
             id: item.id,
             name: item.product?.name || "Unknown Product",
             image: item.product?.image || "",
