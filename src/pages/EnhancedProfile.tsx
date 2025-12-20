@@ -1169,7 +1169,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           <div className="text-center">
                             <Code className="h-5 w-5 text-cyan-600 mx-auto mb-1" />
                             <div className="text-lg sm:text-xl font-bold text-cyan-600">
-                              23
+                              {freelanceProjectsCount}
                             </div>
                           </div>
                         </div>
