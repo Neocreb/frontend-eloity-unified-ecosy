@@ -21,21 +21,35 @@ class SafeI18nProvider extends Component<
   SafeI18nProviderProps,
   SafeI18nProviderState
 > {
+  private mounted = false;
+
   constructor(props: SafeI18nProviderProps) {
     super(props);
     this.state = { hasError: false, I18nProvider: undefined };
+  }
+
+  componentDidMount() {
+    this.mounted = true;
     this.loadI18nProvider();
+  }
+
+  componentWillUnmount() {
+    this.mounted = false;
   }
 
   async loadI18nProvider() {
     try {
-      if (!this.state.I18nProvider) {
+      if (!this.state.I18nProvider && this.mounted) {
         const module = await import("./I18nContext");
-        this.setState({ I18nProvider: module.I18nProvider });
+        if (this.mounted) {
+          this.setState({ I18nProvider: module.I18nProvider });
+        }
       }
     } catch (error) {
       console.error("Failed to load I18nProvider:", error);
-      this.setState({ hasError: true, error: error as Error });
+      if (this.mounted) {
+        this.setState({ hasError: true, error: error as Error });
+      }
     }
   }
 
