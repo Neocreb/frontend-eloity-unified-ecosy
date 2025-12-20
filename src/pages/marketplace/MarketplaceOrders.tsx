@@ -213,11 +213,21 @@ const MarketplaceOrders: React.FC = () => {
 
       <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
         <div className="max-w-7xl mx-auto p-4 space-y-6">
+          {/* Breadcrumb Navigation */}
+          <div className="mb-4">
+            <MarketplaceBreadcrumb
+              items={[
+                { label: 'Marketplace', href: '/app/marketplace' },
+                { label: 'My Orders' },
+              ]}
+            />
+          </div>
+
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
-              <Button 
-                variant="ghost" 
+              <Button
+                variant="ghost"
                 size="sm"
                 onClick={() => navigate("/app/marketplace")}
                 className="p-2"
