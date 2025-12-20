@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useRewardsSummary } from "@/hooks/useRewardsSummary";
+import { useGiftTransactionSync } from "@/hooks/useGiftTransactionSync";
 import {
   Gift,
   DollarSign,
@@ -29,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { virtualGiftsService } from "@/services/virtualGiftsService";
+import { giftTipNotificationService } from "@/services/giftTipNotificationService";
 import { formatCurrency } from "@/utils/formatters";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell, PieChart, Pie } from "recharts";
 import { motion, AnimatePresence } from "framer-motion";
