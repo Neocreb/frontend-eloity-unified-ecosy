@@ -1111,7 +1111,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                             <div className="text-center">
                               <Award className="h-5 w-5 text-purple-600 mx-auto mb-1" />
                               <div className="text-lg sm:text-xl font-bold text-purple-600">
-                                12.4k
+                                {eloPointsValue > 999 ? `${(eloPointsValue / 1000).toFixed(1)}k` : eloPointsValue}
                               </div>
                             </div>
                           </div>
