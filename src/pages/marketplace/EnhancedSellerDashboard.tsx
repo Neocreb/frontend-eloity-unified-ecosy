@@ -81,6 +81,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { PageLoading } from "@/components/ui/loading-states";
 import { Progress } from "@/components/ui/progress";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 
 interface Analytics {
   totalSales: number;
