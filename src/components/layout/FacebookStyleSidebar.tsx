@@ -26,6 +26,8 @@ import {
   Target,
   Truck,
   Package,
+  Store,
+  Heart,
 } from "lucide-react";
 
 interface MenuItemProps {
