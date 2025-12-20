@@ -382,25 +382,78 @@ const FacebookStyleSidebar: React.FC<FacebookStyleSidebarProps> = ({
 
           {/* Main Menu Items */}
           <div className="grid grid-cols-2 gap-2">
-            {menuItems.map((item, index) => (
-              <div
-                key={index}
-                className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
-              >
-                <Link
-                  to={item.href}
-                  onClick={handleLinkClick}
-                  className={`flex flex-col items-start gap-2 ${
-                    isActive(item.href) ? "text-blue-600" : "text-gray-700"
-                  }`}
+            {menuItems.map((item, index) => {
+              const isExpanded = expandedMenu === item.label;
+
+              // Marketplace with submenu
+              if (item.submenu) {
+                return (
+                  <div
+                    key={index}
+                    className="col-span-1 space-y-1"
+                  >
+                    <button
+                      onClick={() => setExpandedMenu(isExpanded ? null : item.label)}
+                      className={`w-full bg-gray-50 hover:bg-gray-100 rounded-lg p-4 transition-colors flex flex-col items-start gap-2 ${
+                        isActive(item.href) ? "text-blue-600" : "text-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex-shrink-0">{item.icon}</div>
+                        <span className="text-gray-500 text-sm">{isExpanded ? "−" : "+"}</span>
+                      </div>
+                      <span className="font-medium text-sm leading-tight text-left">
+                        {item.label}
+                      </span>
+                    </button>
+
+                    {/* Submenu */}
+                    {isExpanded && (
+                      <div className="space-y-1 pl-2">
+                        {marketplaceSubmenu.map((subitem, subindex) => (
+                          <button
+                            key={subindex}
+                            onClick={() => {
+                              navigate(subitem.href);
+                              handleLinkClick();
+                            }}
+                            className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm font-medium transition-colors ${
+                              isActive(subitem.href)
+                                ? "bg-blue-100 text-blue-600"
+                                : "text-gray-600 hover:bg-gray-100"
+                            }`}
+                          >
+                            {subitem.icon}
+                            <span>{subitem.label}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
+
+              // Regular menu items
+              return (
+                <div
+                  key={index}
+                  className="bg-gray-50 rounded-lg p-4 hover:bg-gray-100 transition-colors"
                 >
-                  <div className="flex-shrink-0">{item.icon}</div>
-                  <span className="font-medium text-sm leading-tight">
-                    {item.label}
-                  </span>
-                </Link>
-              </div>
-            ))}
+                  <Link
+                    to={item.href}
+                    onClick={handleLinkClick}
+                    className={`flex flex-col items-start gap-2 ${
+                      isActive(item.href) ? "text-blue-600" : "text-gray-700"
+                    }`}
+                  >
+                    <div className="flex-shrink-0">{item.icon}</div>
+                    <span className="font-medium text-sm leading-tight">
+                      {item.label}
+                    </span>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
 
           {/* Privacy & Terms Footer */}
