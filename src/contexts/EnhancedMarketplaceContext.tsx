@@ -451,6 +451,9 @@ export const EnhancedMarketplaceProvider = ({
         return;
       }
 
+      // Get seller information
+      const seller = sellers.find((s) => s.id === product.sellerId);
+
       const cartItem: CartItem = {
         id: `cart-${Date.now()}`,
         cartId: `cart-${user?.id || "guest"}`,
@@ -458,10 +461,16 @@ export const EnhancedMarketplaceProvider = ({
         variantId,
         quantity,
         priceSnapshot: product.discountPrice || product.price,
+        price: product.discountPrice || product.price,
         customOptions,
         addedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         product,
+        // Fields for CartService
+        productName: product.name,
+        productImage: product.images?.[0] || product.image || "",
+        sellerId: product.sellerId,
+        sellerName: seller?.name || "Unknown Seller",
       };
 
       setCart([...cart, cartItem]);
