@@ -13,7 +13,6 @@ export class OrderService {
         `)
         .eq('buyer_id', userId)
         .order('created_at', { ascending: false })
-        .timeout(10000); // 10 second timeout
 
       if (error) {
         console.error("Error fetching user orders:", {
@@ -117,7 +116,6 @@ export class OrderService {
         `)
         .eq('seller_id', sellerId)
         .order('created_at', { ascending: false })
-        .timeout(10000); // 10 second timeout
 
       if (error) {
         console.error("Error fetching seller orders:", {
