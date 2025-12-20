@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useEnhancedMarketplace } from "@/contexts/EnhancedMarketplaceContext";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 import { EnhancedMarketplaceHeader } from "@/components/marketplace/EnhancedMarketplaceHeader";
 import { CampaignBanners } from "@/components/marketplace/CampaignBanners";
 import { OptimizedSmartRecommendations } from "@/components/marketplace/OptimizedSmartRecommendations";
