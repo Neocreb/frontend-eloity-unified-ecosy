@@ -33,6 +33,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import UniversalCryptoPaymentModal from "@/components/payments/UniversalCryptoPaymentModal";
 import DeliveryProviderSelection from "@/components/delivery/DeliveryProviderSelection";
 import { type PaymentRequest } from "@/services/unifiedCryptoPaymentService";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 
 const MarketplaceCheckout = () => {
   const { cart, getCartTotal, checkout, clearCart } = useEnhancedMarketplace();
@@ -189,6 +190,15 @@ const MarketplaceCheckout = () => {
   
   return (
     <div className="container py-6">
+      <MarketplaceBreadcrumb
+        items={[
+          { label: 'Marketplace', href: '/app/marketplace' },
+          { label: 'Shopping Cart', href: '/app/marketplace/cart' },
+          { label: 'Checkout' },
+        ]}
+        className="mb-6"
+      />
+
       <div className="flex items-center gap-2 mb-6">
         <Button variant="ghost" size="icon" onClick={() => navigate("/app/marketplace/cart")}>
           <ChevronLeft className="h-5 w-5" />

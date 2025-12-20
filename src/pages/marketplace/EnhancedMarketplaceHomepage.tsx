@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useEnhancedMarketplace } from "@/contexts/EnhancedMarketplaceContext";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 import { EnhancedMarketplaceHeader } from "@/components/marketplace/EnhancedMarketplaceHeader";
 import { CampaignBanners } from "@/components/marketplace/CampaignBanners";
 import { OptimizedSmartRecommendations } from "@/components/marketplace/OptimizedSmartRecommendations";
@@ -308,6 +309,16 @@ const EnhancedMarketplaceHomepage: React.FC = () => {
             <span>English</span>
             <ChevronDown className="w-4 h-4" />
           </div>
+        </div>
+      </div>
+
+      {/* Breadcrumb Navigation */}
+      <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto">
+          <MarketplaceBreadcrumb
+            items={[{ label: 'Marketplace' }]}
+            className="mb-0"
+          />
         </div>
       </div>
 
