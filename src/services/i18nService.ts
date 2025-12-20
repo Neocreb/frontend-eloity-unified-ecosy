@@ -936,4 +936,14 @@ class I18nService {
   }
 }
 
-export const i18nService = new I18nService();
+// Create i18nService instance
+export const i18nService = (() => {
+  try {
+    return new I18nService();
+  } catch (error) {
+    console.error('Failed to initialize i18nService:', error);
+    // Return a minimal instance that won't crash
+    const fallback = new I18nService();
+    return fallback;
+  }
+})();
