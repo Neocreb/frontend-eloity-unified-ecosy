@@ -1133,7 +1133,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                               <Trophy className="h-3 w-3 text-amber-600" />
                             </div>
                             <div className="text-lg sm:text-xl font-bold text-amber-600">
-                              L8·9.2
+                              {trustScoreValue}
                             </div>
                           </div>
                         </div>
