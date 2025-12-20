@@ -42,6 +42,7 @@ import {
   TipTransaction,
   CreatorTipSettings,
 } from "@/services/virtualGiftsService";
+import { giftTipNotificationService } from "@/services/giftTipNotificationService";
 
 interface VirtualGiftsAndTipsProps {
   recipientId: string;
