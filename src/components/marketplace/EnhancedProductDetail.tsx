@@ -413,10 +413,20 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
               )}
             </div>
             <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
-            <div className="flex items-center gap-4 mb-4">
+            <div
+              className="flex items-center gap-4 mb-4"
+              role="group"
+              aria-label="Product rating and reviews"
+            >
               <div className="flex items-center gap-1">
-                {renderStars(product.rating)}
-                <span className="text-sm text-gray-600 ml-1">
+                <span
+                  role="img"
+                  aria-label={`Rated ${product.rating} out of 5 stars, ${product.reviewCount} reviews`}
+                  className="flex gap-0.5"
+                >
+                  {renderStars(product.rating)}
+                </span>
+                <span className="text-sm text-gray-600 ml-1" aria-hidden="true">
                   {product.rating} ({product.reviewCount} reviews)
                 </span>
               </div>
