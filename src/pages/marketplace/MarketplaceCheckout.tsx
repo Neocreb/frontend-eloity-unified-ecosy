@@ -701,7 +701,7 @@ const MarketplaceCheckout = () => {
           </div>
           
           <div className="lg:col-span-1">
-            <Card className="sticky top-20">
+            <Card className="sticky top-20 max-h-screen overflow-y-auto">
               <CardHeader className="border-b">
                 <h2 className="text-lg font-medium">Order Summary</h2>
               </CardHeader>
