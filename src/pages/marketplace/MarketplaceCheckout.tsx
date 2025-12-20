@@ -35,6 +35,10 @@ import DeliveryProviderSelection from "@/components/delivery/DeliveryProviderSel
 import { type PaymentRequest } from "@/services/unifiedCryptoPaymentService";
 import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 
+interface FormErrors {
+  [key: string]: string | undefined;
+}
+
 const MarketplaceCheckout = () => {
   const { cart, getCartTotal, checkout, clearCart } = useEnhancedMarketplace();
   const { toast } = useToast();
@@ -47,6 +51,7 @@ const MarketplaceCheckout = () => {
   const [selectedDeliveryProvider, setSelectedDeliveryProvider] = useState<any>(null);
   const [deliveryServiceType, setDeliveryServiceType] = useState<string>("standard");
   const [deliveryMethod, setDeliveryMethod] = useState("delivery"); // "pickup" or "delivery"
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [shippingInfo, setShippingInfo] = useState({
     name: user?.user_metadata?.name || "",
     email: user?.email || "",
