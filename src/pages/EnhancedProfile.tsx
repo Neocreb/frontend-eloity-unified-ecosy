@@ -1090,8 +1090,8 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 rounded-3xl bg-gradient-to-br from-green-100 to-green-200 border-0 flex items-center justify-center hover:shadow-xl hover:scale-105 transition-all duration-300">
                             <div className="text-center">
                               <Wallet className="h-5 w-5 text-green-600 mx-auto mb-1" />
-                              <div className="text-lg sm:text-xl font-bold text-green-600">
-                                $2.5k
+                              <div className="text-lg sm:text-xl font-bold text-green-600 line-clamp-1">
+                                {walletBalanceValue}
                               </div>
                             </div>
                           </div>
