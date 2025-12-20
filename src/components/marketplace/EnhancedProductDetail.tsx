@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Star, Heart, Share2, ShoppingCart, Eye, MessageCircle, ChevronLeft, ChevronRight, Zap, Shield, Truck } from 'lucide-react';
+import { Star, Heart, Share2, ShoppingCart, Eye, MessageCircle, ChevronLeft, ChevronRight, Zap, Shield, Truck, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ProductService } from '@/services/productService';
 import { ReviewService } from '@/services/reviewService';
 import { QAService } from '@/services/qaService';
+import { useEnhancedMarketplace } from '@/contexts/EnhancedMarketplaceContext';
 import DigitalProductDetail from './DigitalProductDetail';
 
 interface ProductImage {
@@ -78,7 +79,9 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
   const [newQuestion, setNewQuestion] = useState('');
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [addingToCart, setAddingToCart] = useState(false);
   const { toast } = useToast();
+  const { addToCart } = useEnhancedMarketplace();
 
   useEffect(() => {
     loadProductData();
@@ -122,25 +125,131 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
     }
   };
 
-  const handleAddToCart = () => {
-    toast({
-      title: "Added to Cart",
-      description: `${quantity} ${product?.name} added to your cart`
-    });
+  const handleAddToCart = async () => {
+    if (!product) {
+      toast({
+        title: "Error",
+        description: "Product information not loaded",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (quantity < 1) {
+      toast({
+        title: "Invalid Quantity",
+        description: "Please select at least 1 item",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+
+      // Add to cart using the marketplace context
+      for (let i = 0; i < quantity; i++) {
+        await addToCart({
+          id: `${product.id}-${i}`,
+          productId: product.id,
+          variantId: selectedVariant || undefined,
+          productName: product.name,
+          productImage: product.image || product.images?.[0] || '',
+          price: product.price,
+          quantity: 1,
+          sellerId: product.sellerId,
+          sellerName: product.sellerName,
+        });
+      }
+
+      toast({
+        title: "Success",
+        description: `${quantity} ${quantity > 1 ? product.name + 's' : product.name} added to your cart`,
+        icon: <Check className="w-4 h-4" />
+      });
+
+      // Reset quantity after successful add
+      setQuantity(1);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
-  const handleBuyNow = () => {
-    toast({
-      title: "Quick Purchase",
-      description: "Redirecting to checkout..."
-    });
+  const handleBuyNow = async () => {
+    if (!product) {
+      toast({
+        title: "Error",
+        description: "Product information not loaded",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (quantity < 1) {
+      toast({
+        title: "Invalid Quantity",
+        description: "Please select at least 1 item",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+
+      // Add to cart first
+      for (let i = 0; i < quantity; i++) {
+        await addToCart({
+          id: `${product.id}-${i}`,
+          productId: product.id,
+          variantId: selectedVariant || undefined,
+          productName: product.name,
+          productImage: product.image || product.images?.[0] || '',
+          price: product.price,
+          quantity: 1,
+          sellerId: product.sellerId,
+          sellerName: product.sellerName,
+        });
+      }
+
+      toast({
+        title: "Quick Purchase",
+        description: "Redirecting to checkout...",
+        icon: <Check className="w-4 h-4" />
+      });
+
+      // Redirect to checkout after a short delay
+      setTimeout(() => {
+        window.location.href = '/app/marketplace/checkout';
+      }, 500);
+    } catch (error) {
+      console.error("Error with quick purchase:", error);
+      toast({
+        title: "Error",
+        description: "Failed to process quick purchase. Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   const handleWishlist = () => {
-    setIsWishlisted(!isWishlisted);
+    const newState = !isWishlisted;
+    setIsWishlisted(newState);
     toast({
-      title: isWishlisted ? "Removed from Wishlist" : "Added to Wishlist",
-      description: isWishlisted ? "Item removed from your wishlist" : "Item saved to your wishlist"
+      title: newState ? "Added to Wishlist" : "Removed from Wishlist",
+      description: newState
+        ? `"${product?.name}" saved to your wishlist`
+        : `"${product?.name}" removed from your wishlist`,
+      icon: newState ? <Heart className="w-4 h-4 fill-red-500 text-red-500" /> : undefined
     });
   };
 

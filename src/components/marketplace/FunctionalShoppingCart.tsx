@@ -102,7 +102,14 @@ export const FunctionalShoppingCart: React.FC<FunctionalShoppingCartProps> = ({
       return;
     }
 
-    updateCartItem(cartItemId, { quantity: newQuantity });
+    const cartItem = cart.find((item) => item.id === cartItemId);
+    if (cartItem) {
+      updateCartItem(cartItemId, { quantity: newQuantity });
+      toast({
+        title: "Quantity Updated",
+        description: `${cartItem.product?.name || "Product"} quantity updated to ${newQuantity}`,
+      });
+    }
   };
 
   const handleRemoveItem = (cartItemId: string) => {
