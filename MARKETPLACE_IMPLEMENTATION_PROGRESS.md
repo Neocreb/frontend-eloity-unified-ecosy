@@ -1321,6 +1321,12 @@ Total: 232 hours (4 developers × 8 weeks)
 **Total Implementation**: 226+ hours across 9 weeks
 **Last Modified**: December 20, 2024
 
+**Latest Update - December 20, 2024**:
+- ✅ Removed marketplace submenu from FacebookStyleSidebar
+- ✅ Reason: Marketplace features already accessible via profile dropdown in header
+- ✅ Simplified sidebar navigation to eliminate duplication
+- ✅ Single Marketplace link remains in sidebar grid for quick access
+
 ---
 
 ## 🎯 Phase 7: Navigation & UX Polish (Week 9) ✅ 100% COMPLETE
@@ -1334,10 +1340,11 @@ Phase 7 focuses on **improving discoverability and UX** of existing marketplace 
 **Hours Spent**: 4-5 ✓ Completed
 
 **Tasks Completed**:
-- ✅ FacebookStyleSidebar marketplace submenu - Already implemented
-  - Expandable marketplace menu with all sub-items
-  - Sub-items: Browse, Flash Sales, My Orders, Wishlist, Sell Items, Seller Dashboard
-  - Role-based visibility integrated
+- ✅ FacebookStyleSidebar marketplace submenu - Removed (Dec 20, 2024)
+  - Removed expandable marketplace submenu from sidebar
+  - Reason: Marketplace access already available in profile dropdown menu (header top right)
+  - Simplified sidebar UI to reduce duplication
+  - Single Marketplace link in sidebar grid now points to /app/marketplace
 
 - ✅ Breadcrumb navigation component created
   - `src/components/marketplace/MarketplaceBreadcrumb.tsx` - Complete auto-breadcrumb component
