@@ -653,21 +653,24 @@ In the previous session, we successfully completed **Phase 2.3 (Checkout Flow)**
 **Estimated Hours**: 14
 
 **Tasks**:
-- [ ] Implement bulk product upload (CSV)
-- [ ] Create product templates
-- [ ] Add bulk pricing updates
-- [ ] Implement SKU management
-- [ ] Add variant management UI
-- [ ] Create SEO optimization tools
-- [ ] Implement product performance analytics
-- [ ] Add product approval/moderation
+- [ ] Create bulk product upload service with CSV parsing and validation
+- [ ] Implement CSV template generator with sample data
+- [ ] Add real-time import validation with error reporting
+- [ ] Create SKU auto-generation with customizable patterns
+- [ ] Implement variant management UI with hierarchy support
+- [ ] Add SEO score calculator with improvement recommendations
+- [ ] Create product duplication feature
+- [ ] Implement bulk operations (pricing, categories, tags, status)
 
-**Files to Modify**:
-- `src/pages/marketplace/MarketplaceSell.tsx`
-- `src/components/marketplace/multi-step-form/`
-- Create: `src/services/bulkProductService.ts`
+**Files to Create/Modify**:
+- Create: `src/services/bulkProductService.ts` - CSV import/export
+- Create: `src/pages/marketplace/BulkProductImport.tsx` - Import page
+- Create: `src/pages/marketplace/ProductVariantManager.tsx` - Variant management
+- Create: `src/components/marketplace/seller/SEOOptimizer.tsx` - SEO tools
+- Create: `src/components/marketplace/seller/BulkPricingEditor.tsx` - Bulk pricing
+- Modify: `src/services/marketplaceService.ts` - Add bulk operations
 
-**Progress**: 0/8 tasks
+**Progress**: 0/8 tasks ⏳
 
 ---
 
