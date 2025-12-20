@@ -1187,7 +1187,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           <div className="text-center">
                             <Coins className="h-5 w-5 text-yellow-600 mx-auto mb-1" />
                             <div className="text-lg sm:text-xl font-bold text-yellow-600">
-                              89
+                              {cryptoTradesCount}
                             </div>
                           </div>
                         </div>
