@@ -167,6 +167,40 @@ export const EnhancedMarketplaceProvider = ({
     loadData();
   }, [toast]);
 
+  // Load cart from database on user login
+  useEffect(() => {
+    const loadCart = async () => {
+      if (user?.id) {
+        try {
+          const savedCart = await CartService.getUserCart(user.id);
+          if (savedCart && savedCart.length > 0) {
+            setCart(savedCart);
+          }
+        } catch (error) {
+          console.error("Error loading saved cart:", error);
+        }
+      }
+    };
+
+    loadCart();
+  }, [user?.id]);
+
+  // Sync cart to database whenever it changes
+  useEffect(() => {
+    const syncCart = async () => {
+      if (user?.id && cart.length > 0) {
+        try {
+          await CartService.syncCartToDatabase(user.id, cart);
+        } catch (error) {
+          console.error("Error syncing cart to database:", error);
+        }
+      }
+    };
+
+    const timer = setTimeout(syncCart, 500); // Debounce to avoid excessive updates
+    return () => clearTimeout(timer);
+  }, [cart, user?.id]);
+
   // Derived state
   const sponsoredProducts = products.filter((p) => p.isSponsored);
   const featuredProducts = products.filter((p) => p.isFeatured);
