@@ -25,6 +25,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { wishlistService, WishlistCollection, PriceAlert, BackInStockAlert } from "@/services/wishlistService";
 import ProductCard from "@/components/marketplace/ProductCard";
 import type { WishlistItem } from "@/types/enhanced-marketplace";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 
 const EnhancedWishlist: React.FC = () => {
   const { user } = useAuth();
