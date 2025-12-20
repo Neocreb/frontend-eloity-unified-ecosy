@@ -170,15 +170,43 @@ const MarketplaceCheckout = () => {
       });
       return;
     }
-    
-    // Validate shipping info
-    const requiredFields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'country'];
-    const missingFields = requiredFields.filter(field => !shippingInfo[field as keyof typeof shippingInfo]);
 
-    if (missingFields.length > 0) {
+    if (deliveryMethod === "delivery" && !selectedDeliveryProvider) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required shipping information",
+        title: "Delivery Provider Required",
+        description: "Please select a delivery provider to continue.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate all shipping info fields
+    const requiredFields = ['name', 'email', 'phone', 'address', 'city', 'state', 'zip', 'country'];
+    const newErrors: FormErrors = {};
+
+    requiredFields.forEach(field => {
+      const error = validateField(field, shippingInfo[field as keyof typeof shippingInfo]);
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setFormErrors(newErrors);
+      const firstErrorField = Object.keys(newErrors)[0];
+      const fieldLabels: Record<string, string> = {
+        name: "Full name",
+        email: "Email address",
+        phone: "Phone number",
+        address: "Address",
+        city: "City",
+        state: "State",
+        zip: "Zip code",
+        country: "Country"
+      };
+      toast({
+        title: "Missing or Invalid Information",
+        description: `Please correct the errors in your form, starting with: ${fieldLabels[firstErrorField]}`,
         variant: "destructive"
       });
       return;
@@ -191,19 +219,37 @@ const MarketplaceCheckout = () => {
     }
 
     setIsProcessing(true);
-    
+
     try {
       const order = await checkout();
       clearCart();
       navigate('/app/marketplace');
       toast({
         title: "Order Placed Successfully",
-        description: "Thank you for your purchase!",
+        description: `Order #${order?.id || 'XXXX'} confirmed. You'll receive order updates via ${shippingInfo.email}`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Checkout error:", error);
+      let errorTitle = "Order Processing Failed";
+      let errorDescription = "Unable to process your order. Please try again.";
+
+      if (error?.message?.includes("payment")) {
+        errorTitle = "Payment Processing Failed";
+        errorDescription = `Your payment could not be processed. Please verify your ${paymentMethod === 'card' ? 'card details' : 'payment method'} and try again.`;
+      } else if (error?.message?.includes("stock")) {
+        errorTitle = "Item Out of Stock";
+        errorDescription = "One or more items in your cart are no longer available. Please review your cart and try again.";
+      } else if (error?.message?.includes("inventory")) {
+        errorTitle = "Insufficient Inventory";
+        errorDescription = "The requested quantity for one or more items is not available. Please adjust your order quantities.";
+      } else if (error?.message?.includes("delivery")) {
+        errorTitle = "Delivery Service Unavailable";
+        errorDescription = "The selected delivery option is not available. Please select another delivery method.";
+      }
+
       toast({
-        title: "Checkout Failed",
-        description: "There was an error processing your order. Please try again.",
+        title: errorTitle,
+        description: errorDescription,
         variant: "destructive"
       });
     } finally {
