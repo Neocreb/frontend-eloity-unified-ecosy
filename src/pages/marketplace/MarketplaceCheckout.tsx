@@ -34,6 +34,7 @@ import UniversalCryptoPaymentModal from "@/components/payments/UniversalCryptoPa
 import DeliveryProviderSelection from "@/components/delivery/DeliveryProviderSelection";
 import { type PaymentRequest } from "@/services/unifiedCryptoPaymentService";
 import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
+import { EmptyCartState } from "@/components/marketplace/EmptyStates";
 
 interface FormErrors {
   [key: string]: string | undefined;
