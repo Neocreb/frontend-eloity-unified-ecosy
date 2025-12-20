@@ -125,11 +125,61 @@ const EnhancedProductDetail: React.FC<EnhancedProductDetailProps> = ({ productId
     }
   };
 
-  const handleAddToCart = () => {
-    toast({
-      title: "Added to Cart",
-      description: `${quantity} ${product?.name} added to your cart`
-    });
+  const handleAddToCart = async () => {
+    if (!product) {
+      toast({
+        title: "Error",
+        description: "Product information not loaded",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (quantity < 1) {
+      toast({
+        title: "Invalid Quantity",
+        description: "Please select at least 1 item",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      setAddingToCart(true);
+
+      // Add to cart using the marketplace context
+      for (let i = 0; i < quantity; i++) {
+        await addToCart({
+          id: `${product.id}-${i}`,
+          productId: product.id,
+          variantId: selectedVariant || undefined,
+          productName: product.name,
+          productImage: product.image || product.images?.[0] || '',
+          price: product.price,
+          quantity: 1,
+          sellerId: product.sellerId,
+          sellerName: product.sellerName,
+        });
+      }
+
+      toast({
+        title: "Success",
+        description: `${quantity} ${quantity > 1 ? product.name + 's' : product.name} added to your cart`,
+        icon: <Check className="w-4 h-4" />
+      });
+
+      // Reset quantity after successful add
+      setQuantity(1);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart. Please try again",
+        variant: "destructive"
+      });
+    } finally {
+      setAddingToCart(false);
+    }
   };
 
   const handleBuyNow = () => {
