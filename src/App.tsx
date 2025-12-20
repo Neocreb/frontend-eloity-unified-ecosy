@@ -232,6 +232,10 @@ import AdminReloadlyReports from "./pages/admin/AdminReloadlyReports";
 import AdminPartnerships from "./pages/admin/AdminPartnerships";
 import AdminChallenges from "./pages/admin/AdminChallenges";
 import AdminReferrals from "./pages/admin/AdminReferrals";
+import FlashSalesManagement from "./pages/admin/FlashSalesManagement";
+import PromotionalCodesManagement from "./pages/admin/PromotionalCodesManagement";
+import MarketplaceAnalytics from "./pages/admin/MarketplaceAnalytics";
+import ReviewModeration from "./pages/admin/ReviewModeration";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
@@ -886,6 +890,10 @@ const AppRoutes = () => {
         <Route path="settings" element={<PlatformSettings />} />
         <Route path="moderation" element={<ContentModeration />} />
         <Route path="marketplace" element={<AdminMarketplace />} />
+        <Route path="marketplace/flash-sales" element={<FlashSalesManagement />} />
+        <Route path="marketplace/promotional-codes" element={<PromotionalCodesManagement />} />
+        <Route path="marketplace/analytics" element={<MarketplaceAnalytics />} />
+        <Route path="marketplace/reviews" element={<ReviewModeration />} />
         <Route path="delivery" element={<DeliveryProvidersAdmin />} />
         <Route path="delivery/tracking" element={<DeliveryTrackingAdmin />} />
         <Route path="crypto" element={<AdminCrypto />} />
