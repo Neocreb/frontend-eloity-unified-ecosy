@@ -936,4 +936,20 @@ class I18nService {
   }
 }
 
-export const i18nService = new I18nService();
+// Lazy initialize i18nService to avoid circular dependencies
+let i18nServiceInstance: I18nService | null = null;
+
+export function getI18nService(): I18nService {
+  if (!i18nServiceInstance) {
+    i18nServiceInstance = new I18nService();
+  }
+  return i18nServiceInstance;
+}
+
+// For backward compatibility, create getter
+Object.defineProperty(exports, 'i18nService', {
+  get() {
+    return getI18nService();
+  },
+  configurable: true
+});
