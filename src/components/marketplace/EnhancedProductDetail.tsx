@@ -5,11 +5,12 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Star, Heart, Share2, ShoppingCart, Eye, MessageCircle, ChevronLeft, ChevronRight, Zap, Shield, Truck } from 'lucide-react';
+import { Star, Heart, Share2, ShoppingCart, Eye, MessageCircle, ChevronLeft, ChevronRight, Zap, Shield, Truck, Check } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ProductService } from '@/services/productService';
 import { ReviewService } from '@/services/reviewService';
 import { QAService } from '@/services/qaService';
+import { useEnhancedMarketplace } from '@/contexts/EnhancedMarketplaceContext';
 import DigitalProductDetail from './DigitalProductDetail';
 
 interface ProductImage {
