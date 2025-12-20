@@ -104,10 +104,8 @@ export const TestimonialsSection: React.FC = () => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-      try {
+      if (!controller.signal.aborted) {
         controller.abort();
-      } catch {
-        // Ignore abort errors during cleanup
       }
     };
   }, []);
