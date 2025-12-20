@@ -26,6 +26,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/hooks/use-notification';
 import { UnifiedActivityService } from '@/services/unifiedActivityService';
+import MarketplaceBreadcrumb from '@/components/marketplace/MarketplaceBreadcrumb';
 
 interface ProductDetails {
   id: string;
