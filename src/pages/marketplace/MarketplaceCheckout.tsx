@@ -394,24 +394,24 @@ const MarketplaceCheckout = () => {
 
                     {selectedDeliveryProvider ? (
                       <div className="bg-white p-3 rounded border">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium">{selectedDeliveryProvider.businessName}</span>
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-medium truncate">{selectedDeliveryProvider.businessName}</span>
                               {selectedDeliveryProvider.isVerified && (
-                                <Badge variant="secondary" className="text-xs">
+                                <Badge variant="secondary" className="text-xs flex-shrink-0">
                                   <Shield className="h-3 w-3 mr-1" />
                                   Verified
                                 </Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-3 text-sm text-gray-600 mt-1">
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600 mt-1">
                               <div className="flex items-center gap-1">
-                                <Star className="h-3 w-3 text-yellow-500 fill-current" />
+                                <Star className="h-3 w-3 text-yellow-500 fill-current flex-shrink-0" />
                                 <span>{selectedDeliveryProvider.rating}</span>
                               </div>
                               <div className="flex items-center gap-1">
-                                <Clock className="h-3 w-3" />
+                                <Clock className="h-3 w-3 flex-shrink-0" />
                                 <span>~{selectedDeliveryProvider.estimatedDeliveryTime}h</span>
                               </div>
                               <Badge variant="outline" className="text-xs">
@@ -419,7 +419,7 @@ const MarketplaceCheckout = () => {
                               </Badge>
                             </div>
                           </div>
-                          <div className="text-right">
+                          <div className="md:text-right flex-shrink-0">
                             <div className="font-medium text-green-600">
                               ${calculateDeliveryFee().toFixed(2)}
                             </div>
