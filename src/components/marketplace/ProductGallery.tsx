@@ -247,11 +247,11 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
                   }}
                   title={`View image ${index + 1}`}
                 >
-                  <img
+                  <OptimizedImage
                     src={image}
                     alt={`Thumbnail ${index + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
+                    quality="medium"
+                    containerClassName="w-full h-full"
                   />
                 </button>
               ))}
