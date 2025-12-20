@@ -521,7 +521,7 @@ const MarketplaceCheckout = () => {
                 
                 <div className="space-y-2">
                   <Label htmlFor="address">
-                    {deliveryMethod === "delivery" ? "Delivery Address" : "Contact Address"}
+                    {deliveryMethod === "delivery" ? "Delivery Address" : "Contact Address"} *
                   </Label>
                   <Textarea
                     id="address"
@@ -529,57 +529,97 @@ const MarketplaceCheckout = () => {
                     placeholder={deliveryMethod === "delivery" ? "123 Main St, Apt 4B" : "Your contact address"}
                     value={shippingInfo.address}
                     onChange={handleInputChange}
+                    onBlur={handleInputBlur}
+                    className={formErrors.address ? "border-red-500" : ""}
                   />
+                  {formErrors.address && (
+                    <p className="text-sm text-red-500 flex items-center gap-1">
+                      <Info className="h-4 w-4" />
+                      {formErrors.address}
+                    </p>
+                  )}
                   {deliveryMethod === "pickup" && (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 mt-2">
                       We'll notify you when your order is ready for pickup at the selected store location.
                     </p>
                   )}
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="space-y-2 col-span-2 md:col-span-1">
-                    <Label htmlFor="city">City</Label>
-                    <Input 
-                      id="city" 
-                      name="city" 
-                      placeholder="New York" 
+                    <Label htmlFor="city">City *</Label>
+                    <Input
+                      id="city"
+                      name="city"
+                      placeholder="New York"
                       value={shippingInfo.city}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.city ? "border-red-500" : ""}
                     />
+                    {formErrors.city && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.city}
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="state">State</Label>
-                    <Input 
-                      id="state" 
-                      name="state" 
-                      placeholder="NY" 
+                    <Label htmlFor="state">State *</Label>
+                    <Input
+                      id="state"
+                      name="state"
+                      placeholder="NY"
                       value={shippingInfo.state}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.state ? "border-red-500" : ""}
                     />
+                    {formErrors.state && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.state}
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="zip">Zip Code</Label>
-                    <Input 
-                      id="zip" 
-                      name="zip" 
-                      placeholder="10001" 
+                    <Label htmlFor="zip">Zip Code *</Label>
+                    <Input
+                      id="zip"
+                      name="zip"
+                      placeholder="10001"
                       value={shippingInfo.zip}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.zip ? "border-red-500" : ""}
                     />
+                    {formErrors.zip && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.zip}
+                      </p>
+                    )}
                   </div>
-                  
+
                   <div className="space-y-2 col-span-2 md:col-span-1">
-                    <Label htmlFor="country">Country</Label>
-                    <Input 
-                      id="country" 
-                      name="country" 
-                      placeholder="United States" 
+                    <Label htmlFor="country">Country *</Label>
+                    <Input
+                      id="country"
+                      name="country"
+                      placeholder="United States"
                       value={shippingInfo.country}
                       onChange={handleInputChange}
+                      onBlur={handleInputBlur}
+                      className={formErrors.country ? "border-red-500" : ""}
                     />
+                    {formErrors.country && (
+                      <p className="text-sm text-red-500 flex items-center gap-1">
+                        <Info className="h-4 w-4" />
+                        {formErrors.country}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
