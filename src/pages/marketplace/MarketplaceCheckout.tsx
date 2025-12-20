@@ -63,11 +63,78 @@ const MarketplaceCheckout = () => {
     country: "United States"
   });
   
+  const validateEmail = (email: string): string | undefined => {
+    if (!email) return "Email address is required";
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return "Please enter a valid email address";
+    return undefined;
+  };
+
+  const validatePhone = (phone: string): string | undefined => {
+    if (!phone) return "Phone number is required";
+    const phoneRegex = /^[\d\s\-\(\)]+$|^$/;
+    if (!phoneRegex.test(phone)) return "Please enter a valid phone number";
+    if (phone.replace(/\D/g, "").length < 10) return "Phone number must be at least 10 digits";
+    return undefined;
+  };
+
+  const validateZip = (zip: string): string | undefined => {
+    if (!zip) return "Zip code is required";
+    if (!/^\d{5}(-\d{4})?$/.test(zip) && !/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(zip)) {
+      return "Please enter a valid zip code";
+    }
+    return undefined;
+  };
+
+  const validateField = (name: string, value: string): string | undefined => {
+    const trimmedValue = value.trim();
+
+    if (!trimmedValue) {
+      const fieldLabels: Record<string, string> = {
+        name: "Full name",
+        email: "Email address",
+        phone: "Phone number",
+        address: "Address",
+        city: "City",
+        state: "State",
+        zip: "Zip code",
+        country: "Country"
+      };
+      return `${fieldLabels[name] || name} is required`;
+    }
+
+    if (name === "email") return validateEmail(value);
+    if (name === "phone") return validatePhone(value);
+    if (name === "zip") return validateZip(value);
+    if (name === "name" && trimmedValue.length < 2) return "Please enter your full name";
+    if (name === "city" && trimmedValue.length < 2) return "Please enter a valid city";
+    if (name === "state" && trimmedValue.length < 2) return "Please enter a valid state";
+
+    return undefined;
+  };
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setShippingInfo(prev => ({
       ...prev,
       [name]: value
+    }));
+
+    // Clear error for this field when user starts typing
+    if (formErrors[name]) {
+      setFormErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
+  const handleInputBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    const error = validateField(name, value);
+    setFormErrors(prev => ({
+      ...prev,
+      [name]: error
     }));
   };
 
