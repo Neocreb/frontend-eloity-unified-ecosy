@@ -33,7 +33,7 @@ export class CartService {
 
       // Clear existing cart for this user
       const { error: deleteError } = await supabase
-        .from('shopping_cart')
+        .from('shopping_carts')
         .delete()
         .eq('user_id', userId);
 
@@ -63,7 +63,7 @@ export class CartService {
       }));
 
       const { error: insertError } = await supabase
-        .from('shopping_cart')
+        .from('shopping_carts')
         .insert(cartItems);
 
       if (insertError) {
@@ -88,7 +88,7 @@ export class CartService {
       if (!userId) return [];
 
       const { data, error } = await supabase
-        .from('shopping_cart')
+        .from('shopping_carts')
         .select('*')
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -140,7 +140,7 @@ export class CartService {
 
       // Check if item already exists in cart
       const { data: existing } = await supabase
-        .from('shopping_cart')
+        .from('shopping_carts')
         .select('id, quantity')
         .eq('user_id', userId)
         .eq('product_id', productId)
@@ -179,7 +179,7 @@ export class CartService {
       }
 
       const { error } = await supabase
-        .from('shopping_cart')
+        .from('shopping_carts')
         .insert({
           user_id: userId,
           product_id: productId,
@@ -212,7 +212,7 @@ export class CartService {
   static async removeFromCartDatabase(cartItemId: string): Promise<boolean> {
     try {
       const { error } = await supabase
-        .from('shopping_cart')
+        .from('shopping_carts')
         .delete()
         .eq('id', cartItemId);
 
@@ -238,7 +238,7 @@ export class CartService {
       }
 
       const { error } = await supabase
-        .from('shopping_cart')
+        .from('shopping_carts')
         .update({
           quantity,
           updated_at: new Date().toISOString()
@@ -263,7 +263,7 @@ export class CartService {
   static async clearCartDatabase(userId: string): Promise<boolean> {
     try {
       const { error } = await supabase
-        .from('shopping_cart')
+        .from('shopping_carts')
         .delete()
         .eq('user_id', userId);
 
