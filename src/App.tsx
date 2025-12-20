@@ -162,7 +162,7 @@ import MarketplaceWishlist from "./pages/marketplace/MarketplaceWishlist";
 import MarketplaceDashboard from "./pages/marketplace/MarketplaceDashboard";
 import MarketplaceOrders from "./pages/marketplace/MarketplaceOrders";
 import MarketplaceSell from "./pages/marketplace/MarketplaceSell";
-import EnhancedProductDetail from "./components/marketplace/EnhancedProductDetail";
+import DetailedProductPage from "./pages/marketplace/DetailedProductPage";
 
 // Delivery system imports
 // import DeliveryHub from "./pages/DeliveryHub";
