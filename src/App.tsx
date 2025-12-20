@@ -890,6 +890,10 @@ const AppRoutes = () => {
         <Route path="settings" element={<PlatformSettings />} />
         <Route path="moderation" element={<ContentModeration />} />
         <Route path="marketplace" element={<AdminMarketplace />} />
+        <Route path="marketplace/flash-sales" element={<FlashSalesManagement />} />
+        <Route path="marketplace/promotional-codes" element={<PromotionalCodesManagement />} />
+        <Route path="marketplace/analytics" element={<MarketplaceAnalytics />} />
+        <Route path="marketplace/reviews" element={<ReviewModeration />} />
         <Route path="delivery" element={<DeliveryProvidersAdmin />} />
         <Route path="delivery/tracking" element={<DeliveryTrackingAdmin />} />
         <Route path="crypto" element={<AdminCrypto />} />
