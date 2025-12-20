@@ -142,6 +142,69 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
   // Mock user type states
   const [isDeliveryProvider, setIsDeliveryProvider] = useState(false); // This would come from user profile data
 
+  // Real data hooks
+  const { walletBalance } = useWalletContext();
+  const { formatCurrency } = useCurrency();
+  const { data: rewardsData } = useRewards();
+  const { products: marketplaceProducts } = useMarketplace();
+  const { projects: freelanceProjects } = useFreelance();
+  const { score: trustScore } = useTrustScore();
+  const { transactions: cryptoTransactions } = useCryptoTransactions();
+
+  // State for real data metrics
+  const [walletBalanceValue, setWalletBalanceValue] = useState("$0.00");
+  const [eloPointsValue, setEloPointsValue] = useState(0);
+  const [trustScoreValue, setTrustScoreValue] = useState("L1·0.0");
+  const [marketplaceSalesCount, setMarketplaceSalesCount] = useState(0);
+  const [freelanceProjectsCount, setFreelanceProjectsCount] = useState(0);
+  const [cryptoTradesCount, setCryptoTradesCount] = useState(0);
+
+  // Update real data values when hooks data changes
+  useEffect(() => {
+    if (isOwnProfile) {
+      // Wallet balance
+      if (walletBalance) {
+        setWalletBalanceValue(formatCurrency(walletBalance.total || 0));
+      }
+
+      // ELO Points from rewards
+      if (rewardsData?.calculatedUserRewards) {
+        setEloPointsValue(Math.round(rewardsData.calculatedUserRewards.total_earned || 0));
+      }
+
+      // Trust score
+      if (trustScore) {
+        const level = Math.floor(trustScore / 10) || 1;
+        const score = (trustScore % 10).toFixed(1);
+        setTrustScoreValue(`L${level}·${score}`);
+      }
+
+      // Marketplace sales count
+      if (marketplaceProducts && Array.isArray(marketplaceProducts)) {
+        setMarketplaceSalesCount(marketplaceProducts.length || 0);
+      }
+
+      // Freelance projects count
+      if (freelanceProjects && Array.isArray(freelanceProjects)) {
+        setFreelanceProjectsCount(freelanceProjects.length || 0);
+      }
+
+      // Crypto trades count
+      if (cryptoTransactions && Array.isArray(cryptoTransactions)) {
+        setCryptoTradesCount(cryptoTransactions.length || 0);
+      }
+    }
+  }, [
+    isOwnProfile,
+    walletBalance,
+    rewardsData,
+    marketplaceProducts,
+    freelanceProjects,
+    trustScore,
+    cryptoTransactions,
+    formatCurrency,
+  ]);
+
   const isOwnProfile =
     !targetUsername || (user && user.profile?.username === targetUsername);
 
