@@ -335,15 +335,21 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
             className="relative flex items-center justify-center max-w-4xl max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={currentImage}
-              alt={`${productName} - Fullscreen`}
-              className="max-w-full max-h-full object-contain"
+            <div
+              className="w-full h-full flex items-center justify-center"
               style={{
                 transform: `scale(${zoomLevel})`,
                 cursor: zoomLevel > 1 ? 'grab' : 'default'
               }}
-            />
+            >
+              <OptimizedImage
+                src={currentImage}
+                alt={`${productName} - Fullscreen`}
+                quality="high"
+                priority={true}
+                containerClassName="max-w-full max-h-full"
+              />
+            </div>
           </div>
 
           {/* Lightbox Controls */}
