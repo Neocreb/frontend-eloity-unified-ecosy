@@ -295,6 +295,211 @@ export class ReviewService {
       return false;
     }
   }
+
+  /**
+   * Approve a review (for moderation)
+   */
+  static async approveReview(reviewId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('product_reviews')
+        .update({
+          is_featured: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reviewId);
+
+      if (error) {
+        console.error("Error approving review:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in approveReview:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Reject/flag a review (for moderation)
+   */
+  static async rejectReview(reviewId: string, reason?: string): Promise<boolean> {
+    try {
+      const updateData: any = {
+        is_featured: false,
+        updated_at: new Date().toISOString()
+      };
+
+      if (reason) {
+        updateData.moderation_status = 'rejected';
+        updateData.moderation_reason = reason;
+      }
+
+      const { error } = await supabase
+        .from('product_reviews')
+        .update(updateData)
+        .eq('id', reviewId);
+
+      if (error) {
+        console.error("Error rejecting review:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in rejectReview:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Add seller response to a review
+   */
+  static async addSellerResponse(
+    reviewId: string,
+    sellerId: string,
+    response: string
+  ): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('product_reviews')
+        .update({
+          seller_response: response,
+          seller_id: sellerId,
+          seller_response_date: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', reviewId);
+
+      if (error) {
+        console.error("Error adding seller response:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error in addSellerResponse:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Get reviews for moderation (pending reviews)
+   */
+  static async getPendingReviews(limit = 50): Promise<Review[]> {
+    try {
+      const { data, error } = await supabase
+        .from('product_reviews')
+        .select('*')
+        .eq('is_featured', false)
+        .order('created_at', { ascending: true })
+        .limit(limit);
+
+      if (error) {
+        console.error("Error fetching pending reviews:", error);
+        return [];
+      }
+
+      if (!data) return [];
+
+      return data.map((review: any) => ({
+        id: review.id,
+        productId: review.product_id,
+        userId: review.user_id,
+        orderId: review.order_id,
+        rating: review.rating,
+        title: review.title || "",
+        content: review.content || "",
+        images: review.images || [],
+        verifiedPurchase: review.verified_purchase || false,
+        helpfulCount: review.helpful_count || 0,
+        isFeatured: review.is_featured || false,
+        userName: "Anonymous",
+        userAvatar: "",
+        createdAt: new Date(review.created_at).toISOString(),
+        updatedAt: new Date(review.updated_at).toISOString()
+      }));
+    } catch (error) {
+      console.error("Error in getPendingReviews:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get review rating categories (for analytics)
+   */
+  static async getReviewCategories(productId: string): Promise<any[]> {
+    try {
+      const reviews = await this.getProductReviews(productId);
+
+      if (reviews.length === 0) return [];
+
+      // Calculate category ratings based on review content keywords
+      const categories = [
+        { id: 'quality', name: 'Quality', keyword: 'quality' },
+        { id: 'shipping', name: 'Shipping', keyword: 'shipping|delivery|arrived' },
+        { id: 'service', name: 'Service', keyword: 'service|support|help' },
+        { id: 'value', name: 'Value', keyword: 'value|price|worth' },
+        { id: 'packaging', name: 'Packaging', keyword: 'packaging|packaging' }
+      ];
+
+      return categories.map(category => {
+        const reviewsInCategory = reviews.filter(r =>
+          new RegExp(category.keyword, 'i').test(r.content || '')
+        );
+
+        const avgRating = reviewsInCategory.length > 0
+          ? reviewsInCategory.reduce((sum, r) => sum + r.rating, 0) / reviewsInCategory.length
+          : 0;
+
+        return {
+          ...category,
+          averageRating: Math.round(avgRating * 10) / 10,
+          reviewCount: reviewsInCategory.length
+        };
+      });
+    } catch (error) {
+      console.error("Error in getReviewCategories:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get review sentiment analysis
+   */
+  static async getReviewSentiment(productId: string): Promise<{
+    positive: number;
+    neutral: number;
+    negative: number;
+  }> {
+    try {
+      const reviews = await this.getProductReviews(productId);
+
+      let positive = 0;
+      let neutral = 0;
+      let negative = 0;
+
+      reviews.forEach(review => {
+        if (review.rating >= 4) {
+          positive++;
+        } else if (review.rating === 3) {
+          neutral++;
+        } else {
+          negative++;
+        }
+      });
+
+      return {
+        positive,
+        neutral,
+        negative
+      };
+    } catch (error) {
+      console.error("Error in getReviewSentiment:", error);
+      return { positive: 0, neutral: 0, negative: 0 };
+    }
+  }
 }
 
 export const reviewService = new ReviewService();

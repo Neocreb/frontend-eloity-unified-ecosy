@@ -37,6 +37,9 @@ import { PaymentMethodService } from "@/services/paymentMethodService";
 import { MarketplaceService } from "@/services/marketplaceService";
 import { WishlistService } from "@/services/wishlistService";
 import { AddressService } from "@/services/addressService";
+import { CartService } from "@/services/cartService";
+import { PromotionalCodeService } from "@/services/promotionalCodeService";
+import { ShippingService } from "@/services/shippingService";
 
 // Create the context
 const EnhancedMarketplaceContext = createContext<MarketplaceContextType>(
@@ -163,6 +166,40 @@ export const EnhancedMarketplaceProvider = ({
 
     loadData();
   }, [toast]);
+
+  // Load cart from database on user login
+  useEffect(() => {
+    const loadCart = async () => {
+      if (user?.id) {
+        try {
+          const savedCart = await CartService.getUserCart(user.id);
+          if (savedCart && savedCart.length > 0) {
+            setCart(savedCart);
+          }
+        } catch (error) {
+          console.error("Error loading saved cart:", error);
+        }
+      }
+    };
+
+    loadCart();
+  }, [user?.id]);
+
+  // Sync cart to database whenever it changes
+  useEffect(() => {
+    const syncCart = async () => {
+      if (user?.id && cart.length > 0) {
+        try {
+          await CartService.syncCartToDatabase(user.id, cart);
+        } catch (error) {
+          console.error("Error syncing cart to database:", error);
+        }
+      }
+    };
+
+    const timer = setTimeout(syncCart, 500); // Debounce to avoid excessive updates
+    return () => clearTimeout(timer);
+  }, [cart, user?.id]);
 
   // Derived state
   const sponsoredProducts = products.filter((p) => p.isSponsored);
@@ -414,6 +451,9 @@ export const EnhancedMarketplaceProvider = ({
         return;
       }
 
+      // Get seller information
+      const seller = sellers.find((s) => s.id === product.sellerId);
+
       const cartItem: CartItem = {
         id: `cart-${Date.now()}`,
         cartId: `cart-${user?.id || "guest"}`,
@@ -421,10 +461,16 @@ export const EnhancedMarketplaceProvider = ({
         variantId,
         quantity,
         priceSnapshot: product.discountPrice || product.price,
+        price: product.discountPrice || product.price,
         customOptions,
         addedAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         product,
+        // Fields for CartService
+        productName: product.name,
+        productImage: product.images?.[0] || product.image || "",
+        sellerId: product.sellerId,
+        sellerName: seller?.name || "Unknown Seller",
       };
 
       setCart([...cart, cartItem]);
@@ -502,6 +548,50 @@ export const EnhancedMarketplaceProvider = ({
 
   const getCartItemsCount = () => {
     return cart.reduce((total, item) => total + item.quantity, 0);
+  };
+
+  // Get cart summary
+  const getCartSummary = async () => {
+    if (!user?.id) return null;
+    try {
+      return await CartService.getUserCart(user.id);
+    } catch (error) {
+      console.error("Error getting cart summary:", error);
+      return null;
+    }
+  };
+
+  // Save cart items for later
+  const saveForLater = async (cartItemId: string) => {
+    try {
+      const cartItem = cart.find((item) => item.id === cartItemId);
+      if (!cartItem || !user?.id) return;
+
+      // Move to wishlist
+      await moveToWishlist(cartItemId);
+
+      // Remove from cart
+      removeFromCart(cartItemId);
+
+      toast({
+        title: "Saved for Later",
+        description: `${cartItem.productName} moved to your wishlist`,
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save item for later",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Clear cart on user logout
+  const handleLogout = () => {
+    if (user?.id) {
+      CartService.syncCartToDatabase(user.id, []).catch(console.error);
+    }
+    setCart([]);
   };
 
   // Placeholder implementations for remaining functions
@@ -2803,6 +2893,9 @@ export const EnhancedMarketplaceProvider = ({
     clearCart,
     getCartTotal,
     getCartItemsCount,
+    getCartSummary,
+    saveForLater,
+    handleLogout,
     moveToWishlist,
 
     // Wishlist management

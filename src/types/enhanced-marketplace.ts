@@ -914,6 +914,9 @@ export type MarketplaceContextType = {
   clearCart: () => void;
   getCartTotal: () => number;
   getCartItemsCount: () => number;
+  getCartSummary: () => Promise<CartItem[] | null>;
+  saveForLater: (cartItemId: string) => Promise<void>;
+  handleLogout: () => void;
   moveToWishlist: (cartItemId: string, wishlistId?: string) => Promise<boolean>;
 
   // Wishlist management
