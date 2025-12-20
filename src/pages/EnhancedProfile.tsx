@@ -1151,7 +1151,7 @@ const EnhancedProfile: React.FC<EnhancedProfileProps> = ({
                           <div className="text-center">
                             <Store className="h-5 w-5 text-orange-600 mx-auto mb-1" />
                             <div className="text-lg sm:text-xl font-bold text-orange-600">
-                              156
+                              {marketplaceSalesCount}
                             </div>
                           </div>
                         </div>
