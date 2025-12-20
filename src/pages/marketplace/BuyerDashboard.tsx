@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 import { useEnhancedMarketplace } from "@/contexts/EnhancedMarketplaceContext";
 import type { Order as EnhancedOrder } from "@/types/enhanced-marketplace";
 import { OrderService } from "@/services/orderService";
