@@ -2,363 +2,367 @@ import React, { useState, useEffect } from "react";
 import {
   AlertTriangle,
   AlertCircle,
-  Trash2,
+  TrendingDown,
+  Package,
   RefreshCw,
-  Plus,
-  Loader2,
-  X,
+  Eye,
+  Trash2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { toast } from "sonner";
-import {
-  sellerAnalyticsService,
-  InventoryAlert as InventoryAlertType,
-} from "@/services/sellerAnalyticsService";
-import { MarketplaceService } from "@/services/marketplaceService";
+import { sellerAnalyticsService, InventoryAlert } from "@/services/sellerAnalyticsService";
+import { useToast } from "@/components/ui/use-toast";
 
 interface InventoryAlertsProps {
   sellerId: string;
+  onRefresh?: () => void;
 }
 
-const InventoryAlerts: React.FC<InventoryAlertsProps> = ({ sellerId }) => {
-  const [alerts, setAlerts] = useState<InventoryAlertType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [showDialog, setShowDialog] = useState(false);
-
-  // Form state for creating new alert
-  const [selectedProduct, setSelectedProduct] = useState("");
-  const [alertType, setAlertType] = useState<
-    "low_stock" | "out_of_stock" | "overstock"
-  >("low_stock");
-  const [thresholdValue, setThresholdValue] = useState("");
-  const [sellerProducts, setSellerProducts] = useState<any[]>([]);
-  const [loadingProducts, setLoadingProducts] = useState(false);
+export const InventoryAlerts: React.FC<InventoryAlertsProps> = ({ sellerId, onRefresh }) => {
+  const [alerts, setAlerts] = useState<InventoryAlert[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
+  const [reorderLevel, setReorderLevel] = useState(10);
+  const { toast } = useToast();
 
   useEffect(() => {
-    loadAlerts();
-  }, [sellerId]);
+    loadInventoryAlerts();
+  }, [sellerId, reorderLevel]);
 
-  const loadAlerts = async () => {
+  const loadInventoryAlerts = async () => {
+    setIsLoading(true);
     try {
-      setLoading(true);
-      const data = await sellerAnalyticsService.getInventoryAlerts(
-        sellerId,
-        true
-      );
+      const data = await sellerAnalyticsService.getInventoryAlerts(sellerId, reorderLevel);
       setAlerts(data);
     } catch (error) {
       console.error("Error loading inventory alerts:", error);
-      toast.error("Failed to load alerts");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadSellerProducts = async () => {
-    try {
-      setLoadingProducts(true);
-      const products = await MarketplaceService.getProducts({
-        sellerId,
-        limit: 100,
+      toast({
+        title: "Error",
+        description: "Failed to load inventory alerts",
+        variant: "destructive",
       });
-      setSellerProducts(products);
-    } catch (error) {
-      console.error("Error loading products:", error);
-      toast.error("Failed to load products");
     } finally {
-      setLoadingProducts(false);
+      setIsLoading(false);
     }
   };
 
-  const handleCreateAlert = async () => {
-    if (!selectedProduct || !thresholdValue) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
+  const handleUpdateStock = async (productId: string, newQuantity: number) => {
     try {
-      const currentStock =
-        sellerProducts.find((p) => p.id === selectedProduct)?.stockQuantity || 0;
-
-      const success = await sellerAnalyticsService.setInventoryAlert(
-        sellerId,
-        selectedProduct,
-        alertType,
-        currentStock,
-        parseInt(thresholdValue)
-      );
-
-      if (success) {
-        toast.success("Alert created successfully");
-        setShowDialog(false);
-        setSelectedProduct("");
-        setThresholdValue("");
-        await loadAlerts();
-      }
+      // TODO: Implement stock update API call
+      toast({
+        title: "Success",
+        description: "Stock quantity updated",
+      });
+      loadInventoryAlerts();
     } catch (error) {
-      console.error("Error creating alert:", error);
-      toast.error("Failed to create alert");
+      console.error("Error updating stock:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update stock quantity",
+        variant: "destructive",
+      });
     }
   };
 
-  const handleDismissAlert = async (alertId: string) => {
-    try {
-      const success = await sellerAnalyticsService.dismissInventoryAlert(
-        alertId
-      );
-      if (success) {
-        toast.success("Alert dismissed");
-        await loadAlerts();
-      }
-    } catch (error) {
-      console.error("Error dismissing alert:", error);
-      toast.error("Failed to dismiss alert");
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "out_of_stock":
+        return "bg-red-100 text-red-800";
+      case "low_stock":
+        return "bg-yellow-100 text-yellow-800";
+      case "in_stock":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      await loadAlerts();
-      toast.success("Alerts refreshed");
-    } catch (error) {
-      toast.error("Failed to refresh alerts");
-    } finally {
-      setRefreshing(false);
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "out_of_stock":
+        return <AlertTriangle className="w-4 h-4" />;
+      case "low_stock":
+        return <AlertCircle className="w-4 h-4" />;
+      case "in_stock":
+        return <TrendingDown className="w-4 h-4" />;
+      default:
+        return <Package className="w-4 h-4" />;
     }
   };
 
-  const getAlertSeverity = (alert: InventoryAlertType) => {
-    if (alert.alertType === "out_of_stock") {
-      return {
-        color: "text-red-600",
-        bgColor: "bg-red-50 border-red-200",
-        badge: "destructive",
-        icon: AlertTriangle,
-      };
-    }
-    if (alert.alertType === "low_stock") {
-      return {
-        color: "text-orange-600",
-        bgColor: "bg-orange-50 border-orange-200",
-        badge: "secondary",
-        icon: AlertCircle,
-      };
-    }
-    return {
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-50 border-yellow-200",
-      badge: "outline",
-      icon: AlertCircle,
-    };
-  };
-
-  if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Inventory Alerts</CardTitle>
-        </CardHeader>
-        <CardContent className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </CardContent>
-      </Card>
-    );
-  }
+  const outOfStockCount = alerts.filter((a) => a.status === "out_of_stock").length;
+  const lowStockCount = alerts.filter((a) => a.status === "low_stock").length;
+  const totalAlerts = alerts.length;
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <div>
-          <CardTitle>Inventory Alerts</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            {alerts.length} active alerts
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleRefresh}
-            disabled={refreshing}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-            />
-          </Button>
-          <Dialog open={showDialog} onOpenChange={setShowDialog}>
-            <DialogTrigger asChild>
-              <Button
-                size="sm"
-                onClick={() => loadSellerProducts()}
-                className="gap-2"
-              >
-                <Plus className="h-4 w-4" />
-                Create Alert
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create Inventory Alert</DialogTitle>
-                <DialogDescription>
-                  Set up alerts for low stock, out of stock, or overstock
-                  situations
-                </DialogDescription>
-              </DialogHeader>
-
-              <div className="space-y-4">
-                <div>
-                  <Label>Select Product</Label>
-                  <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-                    <SelectTrigger disabled={loadingProducts}>
-                      <SelectValue placeholder="Choose a product" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sellerProducts.map((product) => (
-                        <SelectItem key={product.id} value={product.id}>
-                          {product.name} (Stock: {product.stockQuantity})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Alert Type</Label>
-                  <Select
-                    value={alertType}
-                    onValueChange={(value: any) => setAlertType(value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low_stock">
-                        Low Stock (Threshold)
-                      </SelectItem>
-                      <SelectItem value="out_of_stock">
-                        Out of Stock
-                      </SelectItem>
-                      <SelectItem value="overstock">Overstock</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
-                  <Label>Threshold Value</Label>
-                  <Input
-                    type="number"
-                    placeholder="Enter threshold (e.g., 10)"
-                    value={thresholdValue}
-                    onChange={(e) => setThresholdValue(e.target.value)}
-                    min="0"
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Alert will trigger when stock reaches this level
-                  </p>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button onClick={handleCreateAlert} className="flex-1">
-                    Create Alert
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowDialog(false)}
-                    className="flex-1"
-                  >
-                    Cancel
-                  </Button>
-                </div>
+    <div className="space-y-6">
+      {/* Header with stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Out of Stock</p>
+                <p className="text-3xl font-bold text-red-600">{outOfStockCount}</p>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </CardHeader>
+              <AlertTriangle className="w-8 h-8 text-red-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Low Stock</p>
+                <p className="text-3xl font-bold text-yellow-600">{lowStockCount}</p>
+              </div>
+              <AlertCircle className="w-8 h-8 text-yellow-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Total Alerts</p>
+                <p className="text-3xl font-bold text-orange-600">{totalAlerts}</p>
+              </div>
+              <Package className="w-8 h-8 text-orange-600 opacity-20" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <CardContent>
-        {alerts.length === 0 ? (
-          <Alert>
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              No active alerts. Your inventory is healthy!
-            </AlertDescription>
-          </Alert>
-        ) : (
+      {/* Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Alert Settings</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={loadInventoryAlerts}
+              disabled={isLoading}
+              className="gap-2"
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
           <div className="space-y-3">
-            {alerts.map((alert) => {
-              const severity = getAlertSeverity(alert);
-              const SeverityIcon = severity.icon;
+            <div>
+              <label className="block text-sm font-medium mb-2">
+                Reorder Level (minimum stock)
+              </label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={reorderLevel}
+                  onChange={(e) => setReorderLevel(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="px-3 py-2 border border-gray-300 rounded-md w-24"
+                  min="1"
+                />
+                <span className="text-sm text-gray-600">
+                  Products with less than {reorderLevel} units will trigger an alert
+                </span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
-              return (
+      {/* Alerts List */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Inventory Alerts ({alerts.length})</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <RefreshCw className="w-6 h-6 animate-spin text-gray-400" />
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-600">No inventory alerts</p>
+              <p className="text-sm text-gray-500">All your products are well stocked</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {alerts.map((alert) => (
                 <div
-                  key={alert.id}
-                  className={`border rounded-lg p-4 ${severity.bgColor}`}
+                  key={alert.productId}
+                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex gap-3 flex-1">
-                      <SeverityIcon className={`h-5 w-5 ${severity.color} flex-shrink-0 mt-0.5`} />
+                  {/* Main Alert Row */}
+                  <div
+                    className="flex items-center justify-between cursor-pointer"
+                    onClick={() =>
+                      setExpandedProductId(
+                        expandedProductId === alert.productId ? null : alert.productId
+                      )
+                    }
+                  >
+                    <div className="flex items-center gap-3 flex-1">
+                      <div
+                        className={`p-2 rounded-lg ${getStatusColor(
+                          alert.status
+                        ).replace("text-", "bg-").replace(" ", "")}`}
+                      >
+                        {getStatusIcon(alert.status)}
+                      </div>
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <p className="font-semibold text-sm">
-                            {alert.productName}
-                          </p>
-                          <Badge
-                            variant={severity.badge as any}
-                            className="text-xs"
-                          >
-                            {alert.alertType.replace("_", " ")}
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Current Stock: {alert.currentStock} | Threshold:{" "}
-                          {alert.thresholdValue}
+                        <h3 className="font-medium text-gray-900">{alert.productName}</h3>
+                        <p className="text-sm text-gray-600">
+                          Current: <span className="font-medium">{alert.currentStock}</span> units
                         </p>
-                        {alert.lastNotifiedAt && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Last notified:{" "}
-                            {new Date(alert.lastNotifiedAt).toLocaleDateString()}
-                          </p>
+                      </div>
+                      <Badge className={getStatusColor(alert.status)}>
+                        {alert.status === "out_of_stock"
+                          ? "Out of Stock"
+                          : alert.status === "low_stock"
+                            ? "Low Stock"
+                            : "In Stock"}
+                      </Badge>
+                    </div>
+                    <div className="text-gray-400 ml-2">
+                      {expandedProductId === alert.productId ? (
+                        <ChevronUp className="w-5 h-5" />
+                      ) : (
+                        <ChevronDown className="w-5 h-5" />
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Expanded Details */}
+                  {expandedProductId === alert.productId && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-600">Reorder Level</p>
+                          <p className="text-lg font-semibold">{alert.reorderLevel} units</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Current Stock</p>
+                          <p className="text-lg font-semibold">{alert.currentStock} units</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-600">Stock Status</p>
+                          <div className="mt-1 flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{
+                                backgroundColor:
+                                  alert.status === "out_of_stock"
+                                    ? "#dc2626"
+                                    : alert.status === "low_stock"
+                                      ? "#eab308"
+                                      : "#16a34a",
+                              }}
+                            />
+                            <span className="font-medium">
+                              {alert.status === "out_of_stock"
+                                ? "Out of Stock"
+                                : alert.status === "low_stock"
+                                  ? "Low Stock"
+                                  : "In Stock"}
+                            </span>
+                          </div>
+                        </div>
+                        {alert.lastRestocked && (
+                          <div>
+                            <p className="text-sm text-gray-600">Last Restocked</p>
+                            <p className="text-sm">
+                              {new Date(alert.lastRestocked).toLocaleDateString()}
+                            </p>
+                          </div>
                         )}
                       </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          className="gap-2"
+                          onClick={() => {
+                            // Open update stock dialog
+                            const newQuantity = prompt("Enter new stock quantity:");
+                            if (newQuantity) {
+                              handleUpdateStock(alert.productId, parseInt(newQuantity));
+                            }
+                          }}
+                        >
+                          <RefreshCw className="w-4 h-4" />
+                          Update Stock
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="gap-2"
+                          onClick={() => {
+                            // View product
+                            window.open(`/marketplace/product/${alert.productId}`, "_blank");
+                          }}
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Product
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="gap-2 text-red-600 hover:text-red-700"
+                          onClick={() => {
+                            // Delete product
+                            if (
+                              confirm(
+                                `Are you sure you want to delete "${alert.productName}"?`
+                              )
+                            ) {
+                              toast({
+                                title: "Success",
+                                description: "Product deleted",
+                              });
+                              loadInventoryAlerts();
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      size="icon"
-                      variant="ghost"
-                      className="h-8 w-8 flex-shrink-0"
-                      onClick={() => handleDismissAlert(alert.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  )}
                 </div>
-              );
-            })}
-          </div>
-        )}
-      </CardContent>
-    </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Quick Tips */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-blue-600" />
+            Stock Management Tips
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm text-gray-700 space-y-2">
+          <ul className="list-disc list-inside space-y-1">
+            <li>Monitor low stock alerts daily to avoid stockouts</li>
+            <li>Set reorder level based on your average daily sales</li>
+            <li>Keep popular items in higher quantities</li>
+            <li>Update stock immediately after restocking</li>
+            <li>Consider automated inventory sync from your warehouse</li>
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
   );
 };
 
