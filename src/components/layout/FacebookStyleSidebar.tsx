@@ -210,6 +210,15 @@ const FacebookStyleSidebar: React.FC<FacebookStyleSidebarProps> = ({
     shortcuts.splice(-1, 0, deliveryProviderShortcut); // Insert before campaigns
   }
 
+  // Marketplace submenu items
+  const marketplaceSubmenu = [
+    { label: "Browse", href: "/app/marketplace", icon: <ShoppingCart className="w-4 h-4" /> },
+    { label: "My Orders", href: "/app/marketplace/orders", icon: <Package className="w-4 h-4" /> },
+    { label: "Wishlist", href: "/app/marketplace/wishlist", icon: <Heart className="w-4 h-4" /> },
+    { label: "My Dashboard", href: "/app/marketplace/my", icon: <BarChart3 className="w-4 h-4" /> },
+    { label: "Sell Items", href: "/app/marketplace/sell", icon: <Store className="w-4 h-4" /> },
+  ];
+
   const menuItems = [
     {
       icon: <Rss className="w-6 h-6 text-blue-600" />,
@@ -255,6 +264,7 @@ const FacebookStyleSidebar: React.FC<FacebookStyleSidebarProps> = ({
       icon: <ShoppingCart className="w-6 h-6 text-blue-600" />,
       label: "Marketplace",
       href: "/app/marketplace",
+      submenu: true,
     },
     {
       icon: <TrendingUp className="w-6 h-6 text-green-600" />,
