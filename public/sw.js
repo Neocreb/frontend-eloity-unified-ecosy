@@ -1,6 +1,9 @@
 const CACHE_NAME = "eloity-v1.0.0";
 const STATIC_CACHE = "eloity-static-v1.0.0";
 const DYNAMIC_CACHE = "eloity-dynamic-v1.0.0";
+const MARKETPLACE_CACHE = "marketplace-static-v1.0.0";
+const MARKETPLACE_IMAGES_CACHE = "marketplace-images-v1.0.0";
+const MARKETPLACE_API_CACHE = "marketplace-api-v1.0.0";
 
 // Files to cache for offline use
 const STATIC_FILES = [
@@ -13,7 +16,13 @@ const STATIC_FILES = [
   "/rewards",
   "/offline.html",
   "/manifest.json",
-  // Add critical CSS and JS files here
+];
+
+// Marketplace-specific static files
+const MARKETPLACE_STATIC_FILES = [
+  "/marketplace",
+  "/images/placeholder-product.svg",
+  "/images/placeholder-store.svg",
 ];
 
 // API endpoints that can work offline
@@ -21,7 +30,18 @@ const CACHEABLE_APIS = [
   "/api/user/profile",
   "/api/notifications",
   "/api/rewards",
+  "/api/marketplace/products",
+  "/api/marketplace/categories",
+  "/api/marketplace/sellers",
 ];
+
+// Cache strategies for different URL patterns
+const CACHE_STRATEGIES = {
+  images: "cache-first",
+  static: "cache-first",
+  api: "stale-while-revalidate",
+  marketplace: "stale-while-revalidate",
+};
 
 // Install event - cache static files
 self.addEventListener("install", (event) => {
