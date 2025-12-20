@@ -43,12 +43,28 @@ interface Profile {
 export const liveStreamService = {
   async getActiveLiveStreams(): Promise<LiveStream[]> {
     try {
-      const { data, error } = await supabase
-        .from('live_streams')
-        .select('id, user_id, title, description, viewer_count, is_active, started_at, ended_at, category, stream_key')
-        .eq('is_active', true)
-        .order('viewer_count', { ascending: false })
-        .limit(20);
+      let data: any[] = [];
+      let error: any = null;
+
+      // Wrap the query in try-catch to handle network errors
+      try {
+        const result = await supabase
+          .from('live_streams')
+          .select('id, user_id, title, description, viewer_count, is_active, started_at, ended_at, category, stream_key')
+          .eq('is_active', true)
+          .order('viewer_count', { ascending: false })
+          .limit(20);
+
+        data = result.data || [];
+        error = result.error;
+      } catch (fetchErr) {
+        // Network error occurred - log and return empty array
+        console.warn('Network error fetching live streams, returning empty array:', {
+          message: fetchErr instanceof Error ? fetchErr.message : 'Unknown network error',
+          type: fetchErr instanceof Error ? fetchErr.constructor.name : typeof fetchErr
+        });
+        return [];
+      }
 
       if (error) {
         // Check if table doesn't exist (PGRST116 or similar error codes)
