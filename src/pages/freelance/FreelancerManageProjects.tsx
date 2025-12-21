@@ -474,6 +474,22 @@ const FreelancerManageProjects: React.FC = () => {
                 </Card>
               </div>
 
+              {/* Project Messages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Client Communication</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FreelanceProjectChat
+                    projectId={selectedProject.id}
+                    projectTitle={selectedProject.job.title}
+                    otherUserName={selectedProject.client.name}
+                    otherUserAvatar={selectedProject.client.avatar}
+                    className="border-0"
+                  />
+                </CardContent>
+              </Card>
+
               {/* Quick Actions */}
               <div className="flex gap-2 pt-4 border-t">
                 <Button onClick={() => setShowUpdateModal(true)}>
