@@ -105,13 +105,64 @@ const FindFreelancers: React.FC = () => {
   const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
 
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        setFreelancersLoading(true);
+        const freelancersData = await searchFreelancers({
+          limit: 50,
+          offset: 0,
+          sortBy: "rating",
+          order: "desc"
+        });
+
+        if (freelancersData && Array.isArray(freelancersData)) {
+          const formattedFreelancers = freelancersData.map((freelancer: any) => ({
+            id: freelancer.id,
+            name: freelancer.name || "Unknown",
+            title: freelancer.title || "Freelancer",
+            avatar: freelancer.avatar || "",
+            bio: freelancer.bio || "",
+            location: freelancer.location || "Remote",
+            hourlyRate: freelancer.hourly_rate || 50,
+            rating: freelancer.rating || 4.5,
+            totalReviews: freelancer.total_reviews || 0,
+            completedJobs: freelancer.completed_jobs || 0,
+            successRate: freelancer.success_rate || 95,
+            responseTime: freelancer.response_time || "< 24 hours",
+            availability: freelancer.availability || "available",
+            skills: freelancer.skills || [],
+            languages: freelancer.languages || ["English"],
+            experience: freelancer.experience_years || 1,
+            level: freelancer.level || "rising-talent",
+            badges: freelancer.badges || [],
+            portfolio: freelancer.portfolio || [],
+            categories: freelancer.categories || [],
+            lastActive: freelancer.last_active ? new Date(freelancer.last_active) : new Date(),
+            totalEarnings: freelancer.total_earnings || 0,
+            featured: freelancer.is_featured || false,
+            isOnline: freelancer.is_online || false,
+            verified: freelancer.is_verified || false,
+            saved: false,
+          }));
+          setFreelancers(formattedFreelancers);
+        }
+      } catch (error) {
+        console.error("Error loading freelancers:", error);
+        toast.error("Failed to load freelancers");
+      } finally {
+        setFreelancersLoading(false);
+      }
+    };
+
     // Load saved freelancers from localStorage
     const saved = localStorage.getItem("savedFreelancers");
     const contacted = localStorage.getItem("contactedFreelancers");
-    
+
     if (saved) setSavedFreelancers(new Set(JSON.parse(saved)));
     if (contacted) setContactedFreelancers(new Set(JSON.parse(contacted)));
-  }, []);
+
+    loadData();
+  }, [searchFreelancers]);
 
   const filteredFreelancers = freelancers.filter(freelancer => {
     const matchesSearch = freelancer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
