@@ -79,6 +79,7 @@ import ReviewForm from "@/components/freelance/ReviewForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UnifiedCampaignManager } from "@/components/campaigns/UnifiedCampaignManager";
 import { walletService, WalletBalance } from "@/services/walletService";
+import { FreelanceNotifications } from "@/components/freelance/FreelanceNotifications";
 import { cn } from "@/lib/utils";
 
 // Navigation items for the tabs
@@ -660,6 +661,9 @@ export const FreelanceDashboard: React.FC = () => {
 
               {/* Sidebar */}
               <div className="space-y-6">
+                {/* Notifications */}
+                <FreelanceNotifications maxHeight="h-[400px]" maxNotifications={5} showHeader={true} />
+
                 {/* Urgent Tasks */}
                 <Card>
                   <CardHeader>

@@ -77,6 +77,7 @@ import { KeyboardShortcuts, AccessibilitySettings, SkipToContent } from "@/compo
 import { PerformanceMonitor, DashboardSkeleton, MemeizedCard } from "@/components/freelance/PerformanceOptimizations";
 import ClientProposals from "@/components/freelance/ClientProposals";
 import { walletService, WalletBalance } from "@/services/walletService";
+import { FreelanceNotifications } from "@/components/freelance/FreelanceNotifications";
 import { cn } from "@/lib/utils";
 
 interface ClientStats {
@@ -662,6 +663,9 @@ export const ClientDashboard: React.FC = () => {
 
               {/* Sidebar */}
               <div className="space-y-6">
+                {/* Notifications */}
+                <FreelanceNotifications maxHeight="h-[400px]" maxNotifications={5} showHeader={true} />
+
                 {/* Quick Actions */}
                 <Card>
                   <CardHeader>
