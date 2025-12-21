@@ -146,7 +146,7 @@ export const FreelanceDashboard: React.FC = () => {
     return localStorage.getItem('freelance-tour-completed') === 'true';
   });
 
-  const { getProjects, getFreelanceStats, loading } = useFreelance();
+  const { getProjects, getFreelanceStats, getActivityLog, loading } = useFreelance();
   const { getUserEscrows } = useEscrow();
   const { formatCurrency } = useCurrency();
   const { user } = useAuth();
