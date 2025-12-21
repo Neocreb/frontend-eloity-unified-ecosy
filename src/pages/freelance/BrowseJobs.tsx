@@ -112,13 +112,61 @@ const BrowseJobs: React.FC = () => {
   });
 
   useEffect(() => {
-    // Load saved and applied jobs from localStorage or API
+    const loadData = async () => {
+      try {
+        setJobsLoading(true);
+        const jobsData = await searchJobs({
+          limit: 50,
+          offset: 0,
+          status: "open"
+        });
+
+        if (jobsData && Array.isArray(jobsData)) {
+          const formattedJobs = jobsData.map((job: any) => ({
+            id: job.id,
+            title: job.title,
+            description: job.description,
+            budget: job.budget || { type: "fixed", amount: 0, currency: "USD" },
+            duration: job.duration || "Not specified",
+            postedDate: new Date(job.created_at),
+            deadline: job.deadline ? new Date(job.deadline) : undefined,
+            client: {
+              id: job.client?.id || "",
+              name: job.client?.name || "Unknown Client",
+              avatar: job.client?.avatar || "",
+              rating: job.client?.rating || 4.5,
+              jobsPosted: job.client?.jobs_posted || 0,
+              paymentVerified: job.client?.payment_verified || false,
+              location: job.client?.location || "Remote",
+            },
+            skills: job.required_skills || [],
+            category: job.category || "General",
+            experienceLevel: job.experience_level || "intermediate",
+            proposals: job.proposal_count || 0,
+            status: job.status || "open",
+            featured: job.is_featured || false,
+            urgent: job.is_urgent || false,
+            savedByUser: false,
+          }));
+          setJobs(formattedJobs);
+        }
+      } catch (error) {
+        console.error("Error loading jobs:", error);
+        toast.error("Failed to load jobs");
+      } finally {
+        setJobsLoading(false);
+      }
+    };
+
+    // Load saved and applied jobs from localStorage
     const saved = localStorage.getItem("savedJobs");
     const applied = localStorage.getItem("appliedJobs");
-    
+
     if (saved) setSavedJobs(new Set(JSON.parse(saved)));
     if (applied) setAppliedJobs(new Set(JSON.parse(applied)));
-  }, []);
+
+    loadData();
+  }, [searchJobs]);
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
