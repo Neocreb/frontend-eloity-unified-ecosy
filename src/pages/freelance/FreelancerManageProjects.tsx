@@ -48,6 +48,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFreelance } from "@/hooks/use-freelance";
 import { Project } from "@/types/freelance";
 import { toast } from "sonner";
+import { FreelanceProjectChat } from "@/components/freelance/FreelanceProjectChat";
 
 const FreelancerManageProjects: React.FC = () => {
   const navigate = useNavigate();
