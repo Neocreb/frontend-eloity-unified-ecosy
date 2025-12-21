@@ -429,27 +429,37 @@ export const EnhancedFreelanceHub: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {trendingCategories.map((category, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {category.name}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {category.jobs} jobs
-                      </p>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-green-100 text-green-800"
+                {statsLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                  ))
+                ) : trendingCategories.length > 0 ? (
+                  trendingCategories.map((category, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                     >
-                      {category.growth}
-                    </Badge>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {category.name}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {category.jobs} jobs
+                        </p>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                      >
+                        {category.growth}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <p>No trending categories available</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
 
