@@ -650,26 +650,39 @@ export const FreelanceDashboard: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {urgentTasks.map((task) => (
-                        <div key={task.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <p className="font-medium text-sm mb-1 text-gray-900 dark:text-white">
-                            {task.title}
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                            {task.project}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <Badge variant={task.priority === "high" ? "destructive" : "secondary"}>
-                              {task.priority}
-                            </Badge>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Due: {new Date(task.dueDate).toLocaleDateString()}
+                    {activitiesLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                          <Skeleton key={i} className="h-20 w-full" />
+                        ))}
+                      </div>
+                    ) : urgentTasks.length > 0 ? (
+                      <div className="space-y-3">
+                        {urgentTasks.map((task) => (
+                          <div key={task.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <p className="font-medium text-sm mb-1 text-gray-900 dark:text-white">
+                              {task.title}
                             </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              {task.project}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <Badge variant={task.priority === "high" ? "destructive" : "secondary"}>
+                                {task.priority}
+                              </Badge>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Due: {new Date(task.dueDate || new Date()).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                        <p className="text-gray-600 dark:text-gray-400">All tasks completed!</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
