@@ -536,6 +536,13 @@ export const FreelanceDashboard: React.FC = () => {
                   color="bg-gradient-to-br from-green-500 to-emerald-600"
                 />
                 <StatCard
+                  title="Wallet Balance"
+                  value={walletBalance ? formatCurrency(walletBalance.freelance) : formatCurrency(0)}
+                  change="Available for withdrawal"
+                  icon={<Wallet className="w-6 h-6 text-white" />}
+                  color="bg-gradient-to-br from-emerald-500 to-teal-600"
+                />
+                <StatCard
                   title="Active Projects"
                   value={stats.totalProjects - stats.completedProjects}
                   icon={<Briefcase className="w-6 h-6 text-white" />}
