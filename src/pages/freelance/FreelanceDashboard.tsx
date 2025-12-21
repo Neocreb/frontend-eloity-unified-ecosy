@@ -168,13 +168,22 @@ export const FreelanceDashboard: React.FC = () => {
     const loadData = async () => {
       if (!user) return;
 
-      const [projectsData, statsData] = await Promise.all([
-        getProjects(user.id, "freelancer"),
-        getFreelanceStats(user.id),
-      ]);
+      try {
+        setWalletLoading(true);
+        const [projectsData, statsData, walletData] = await Promise.all([
+          getProjects(user.id, "freelancer"),
+          getFreelanceStats(user.id),
+          walletService.getWalletBalance(),
+        ]);
 
-      if (projectsData) setActiveProjects(projectsData);
-      if (statsData) setStats(statsData);
+        if (projectsData) setActiveProjects(projectsData);
+        if (statsData) setStats(statsData);
+        if (walletData) setWalletBalance(walletData);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setWalletLoading(false);
+      }
     };
 
     loadData();
