@@ -135,7 +135,7 @@ export const FreelanceNotifications: React.FC<FreelanceNotificationsProps> = ({
               <DropdownMenuContent align="end">
                 {unreadCount > 0 && (
                   <DropdownMenuItem onClick={markAllAsRead}>
-                    <CheckAll className="h-4 w-4 mr-2" />
+                    <Check className="h-4 w-4 mr-2" />
                     Mark all as read
                   </DropdownMenuItem>
                 )}
