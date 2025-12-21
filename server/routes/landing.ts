@@ -38,7 +38,7 @@ router.get('/testimonials', async (req: Request, res: Response) => {
         featured: featured === 'true',
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 8000)
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
       ),
     ]) as any[];
 
@@ -50,7 +50,7 @@ router.get('/testimonials', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching testimonials:', error);
     // Return empty array as fallback instead of error
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
@@ -72,7 +72,7 @@ router.get('/faqs', async (req: Request, res: Response) => {
         active: true,
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 8000)
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
       ),
     ]) as any[];
 
@@ -84,7 +84,7 @@ router.get('/faqs', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching FAQs:', error);
     // Return empty array as fallback instead of error
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
@@ -106,7 +106,7 @@ router.get('/use-cases', async (req: Request, res: Response) => {
         featured: featured === 'true',
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 8000)
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
       ),
     ]) as any[];
 
@@ -118,7 +118,7 @@ router.get('/use-cases', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching use cases:', error);
     // Return empty array as fallback instead of error
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
@@ -189,7 +189,7 @@ router.get('/comparison-matrix', async (req: Request, res: Response) => {
         active: true,
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 5000)
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
       ),
     ]) as any[];
 
@@ -201,7 +201,7 @@ router.get('/comparison-matrix', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching comparisons:', error);
     // Return empty array as fallback instead of error
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
