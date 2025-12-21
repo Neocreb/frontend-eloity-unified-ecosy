@@ -400,6 +400,8 @@ router.post('/messages', async (req: Request, res: Response) => {
 // Mark message as read
 router.post('/messages/:messageId/read', async (req: Request, res: Response) => {
   try {
+    if (!checkSupabaseAvailable(res)) return;
+
     const { messageId } = req.params;
     const userId = req.user?.id;
 
@@ -452,6 +454,8 @@ router.post('/messages/:messageId/read', async (req: Request, res: Response) => 
 // Mark all messages as read
 router.post('/conversations/:conversationId/read', async (req: Request, res: Response) => {
   try {
+    if (!checkSupabaseAvailable(res)) return;
+
     const { conversationId } = req.params;
     const userId = req.user?.id;
 
