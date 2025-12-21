@@ -418,3 +418,28 @@ export const freelanceStatsRelations = relations(freelance_stats, ({ one }) => (
     references: [users.id],
   }),
 }));
+
+// Relations for freelance_notifications
+export const freelanceNotificationsRelations = relations(freelance_notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [freelance_notifications.user_id],
+    references: [users.id],
+  }),
+  project: one(freelance_projects, {
+    fields: [freelance_notifications.project_id],
+    references: [freelance_projects.id],
+  }),
+  proposal: one(freelance_proposals, {
+    fields: [freelance_notifications.proposal_id],
+    references: [freelance_proposals.id],
+  }),
+  contract: one(freelance_contracts, {
+    fields: [freelance_notifications.contract_id],
+    references: [freelance_contracts.id],
+  }),
+  actor: one(users, {
+    fields: [freelance_notifications.actor_id],
+    references: [users.id],
+    relationName: 'notificationActors',
+  }),
+}));
