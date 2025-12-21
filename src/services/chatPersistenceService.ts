@@ -157,6 +157,14 @@ class ChatPersistenceService {
     metadata?: Record<string, unknown>;
   }): Promise<ChatMessage | null> {
     try {
+      if (!content || !content.trim()) {
+        throw new Error('Message content cannot be empty');
+      }
+
+      if (!conversationId) {
+        throw new Error('Conversation ID is required');
+      }
+
       const payload = {
         conversationId,
         content,
@@ -166,6 +174,8 @@ class ChatPersistenceService {
         metadata: options?.metadata,
       };
 
+      console.log('[ChatPersistenceService] Sending message to API:', { conversationId, messageType: payload.messageType });
+
       const message = await this.request<any>('/messages', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -173,7 +183,13 @@ class ChatPersistenceService {
 
       return this.transformMessageToChat(message);
     } catch (error) {
-      console.error('Error sending message:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[ChatPersistenceService] Error sending message:', errorMessage);
+
+      if (errorMessage.includes('Chat service is not available')) {
+        throw new Error('Chat service is temporarily unavailable. Please try again later.');
+      }
+
       throw error;
     }
   }
