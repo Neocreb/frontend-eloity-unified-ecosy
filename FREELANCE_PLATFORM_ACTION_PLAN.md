@@ -1220,6 +1220,323 @@ The freelance platform is now **fully integrated** with core Eloity features:
 
 ---
 
+## 🚀 PHASE 5: UNIFIED INTEGRATION & ADVANCED FEATURES
+
+**Status**: PLANNED
+**Target Duration**: 8-10 hours
+**Priority**: HIGH - UX Improvements & Stability
+
+### 5.1 Unified Chat Integration (Priority 1 - UX Critical)
+
+**Objective**: Merge freelance project chats into the unified chat system instead of separate components
+
+**Why This Matters**:
+- Keeps all user conversations in one place
+- Reduces app complexity
+- Better notification management
+- Consistent chat experience across all features
+- Users see all chats in one Inbox tab
+
+**Implementation Plan**:
+
+1. **Remove Separate Chat Component**
+   - [ ] Delete `FreelanceProjectChat.tsx` (was in project modals)
+   - [ ] Delete `use-freelance-chat.ts` hook
+   - [ ] Remove chat from `ManageProjects.tsx` modal
+   - [ ] Remove chat from `FreelancerManageProjects.tsx` modal
+
+2. **Update Chat System**
+   - [ ] Update `Inbox.tsx` to include "Freelance" tab (if not already there)
+   - [ ] Ensure freelance chat type filters correctly
+   - [ ] Link freelance_messages table to unified chat_threads table
+   - [ ] Map projectId → referenceId in chat system
+   - [ ] Update ChatContextData to include projectId, freelancer name, client name
+
+3. **Add "Open Chat" Buttons to Project Views**
+   - [ ] In project details modal, add "Open Chat" button
+   - [ ] Button navigates to `/app/chat?type=freelance&reference={projectId}`
+   - [ ] Displays freelancer/client name and avatar in chat header
+   - [ ] Shows project context (jobTitle, budget, status)
+
+4. **Benefits Achieved**:
+   - ✅ Single source of truth for all chats
+   - ✅ Unified notification system
+   - ✅ Better message search across all chat types
+   - ✅ Consistent UI/UX
+
+**Files to Modify**:
+- `src/types/chat.ts` - Add projectId to ChatContextData
+- `src/chat/Inbox.tsx` - Verify freelance tab displays correctly
+- `src/pages/freelance/ManageProjects.tsx` - Add "Open Chat" button
+- `src/pages/freelance/FreelancerManageProjects.tsx` - Add "Open Chat" button
+- Supabase schema - Link freelance_messages to chat_threads
+
+---
+
+### 5.2 Database Schema Fixes (Priority 1 - Stability)
+
+**Objective**: Fix missing tables and relationship issues
+
+**Current Issues**:
+- ❌ `user_engagement` table missing
+- ❌ `profiles` → `posts` relationship broken
+- ❌ Potential missing freelance_notifications table
+
+**Implementation Plan**:
+
+1. **Create Missing Tables**
+   - [ ] Create `user_engagement` table for activity tracking
+   - [ ] Create proper foreign keys for profiles → posts
+   - [ ] Verify `freelance_notifications` table exists
+   - [ ] Add RLS policies to all new tables
+
+2. **Run Migrations**
+   ```bash
+   npm run migrate:apply
+   ```
+   - [ ] Verify all tables created successfully
+   - [ ] Test relationships work correctly
+   - [ ] Check RLS policies active
+
+3. **Update Type Definitions**
+   - [ ] Sync TypeScript types with database schema
+   - [ ] Update API queries to use correct table names
+   - [ ] Add proper relationships in queries
+
+**Files to Create/Modify**:
+- `scripts/database/fix-schema-relationships.sql` - Migration script
+- `src/services/*.ts` - Update queries to use correct table names
+
+---
+
+### 5.3 Advanced Freelance Features (Priority 2)
+
+**Objective**: Implement premium features for better project management
+
+#### 5.3.1 Dispute Resolution System
+- [ ] Create disputes table
+- [ ] Add dispute filing interface
+- [ ] Implement arbiter review process
+- [ ] Add automated resolution timelines
+- [ ] Send notifications on dispute status changes
+
+#### 5.3.2 Smart Job Matching
+- [ ] Analyze freelancer skills vs job requirements
+- [ ] Show match percentage
+- [ ] Recommend jobs to freelancers
+- [ ] Recommend freelancers to clients
+- [ ] Track match success rate
+
+#### 5.3.3 Advanced Analytics Dashboard
+- [ ] Earnings trends (weekly/monthly/yearly)
+- [ ] Job completion rate
+- [ ] Average project duration
+- [ ] Client feedback trends
+- [ ] Income projections
+- [ ] Export analytics to PDF/CSV
+
+#### 5.3.4 Automated Deadline Reminders
+- [ ] Send reminders 3 days before milestone due
+- [ ] Send reminders 1 day before milestone due
+- [ ] Send reminders 2 hours before deadline
+- [ ] Include project context in notification
+- [ ] Allow snooze/reschedule
+
+#### 5.3.5 Enhanced Escrow Management
+- [ ] Show escrow timeline
+- [ ] Display when funds will be released
+- [ ] Allow early release agreements
+- [ ] Partial release support
+- [ ] Refund tracking
+
+---
+
+### 5.4 Performance Optimization (Priority 2)
+
+**Objective**: Ensure app performs well under load
+
+1. **Database Query Optimization**
+   - [ ] Add indexes to frequently queried columns
+   - [ ] Optimize N+1 query problems
+   - [ ] Use pagination for large result sets
+   - [ ] Cache frequently accessed data
+
+2. **Frontend Performance**
+   - [ ] Code splitting for lazy loading
+   - [ ] Image optimization
+   - [ ] CSS minification
+   - [ ] JavaScript bundling
+   - [ ] Reduce re-renders with React.memo
+
+3. **Real-time Performance**
+   - [ ] Limit Supabase subscriptions
+   - [ ] Debounce updates
+   - [ ] Use connection pooling
+   - [ ] Monitor WebSocket connections
+
+---
+
+### 5.5 Testing & Quality Assurance (Priority 2)
+
+**Objective**: Ensure platform is production-ready
+
+1. **Unit Tests**
+   - [ ] Test freelance service methods
+   - [ ] Test payment calculations
+   - [ ] Test chat message handling
+   - [ ] Test notification system
+
+2. **Integration Tests**
+   - [ ] Test payment → wallet flow
+   - [ ] Test milestone approval → payment release
+   - [ ] Test chat → notification sync
+   - [ ] Test RLS policies enforcement
+
+3. **E2E Tests** (Use FREELANCE_E2E_TESTING_GUIDE.md)
+   - [ ] Run full freelancer workflow
+   - [ ] Run full client workflow
+   - [ ] Test payment cycle
+   - [ ] Test chat integration
+   - [ ] Test notification system
+
+4. **Performance Tests**
+   - [ ] Load test with 100+ concurrent users
+   - [ ] Test message sending under load
+   - [ ] Test notification delivery speed
+   - [ ] Monitor database performance
+
+---
+
+### 5.6 Security Hardening (Priority 1)
+
+**Objective**: Ensure platform is secure
+
+1. **Row Level Security (RLS)**
+   - [ ] Verify all tables have RLS enabled
+   - [ ] Test that users can only access own data
+   - [ ] Verify admin access policies
+   - [ ] Test data isolation
+
+2. **Input Validation**
+   - [ ] Validate all form inputs
+   - [ ] Sanitize user content
+   - [ ] Prevent SQL injection
+   - [ ] Prevent XSS attacks
+
+3. **API Security**
+   - [ ] Rate limiting on endpoints
+   - [ ] CORS properly configured
+   - [ ] JWT validation
+   - [ ] HTTPS enforced
+
+4. **Sensitive Data**
+   - [ ] Encrypt payment information
+   - [ ] Never log sensitive data
+   - [ ] Secure session management
+   - [ ] PII protection
+
+---
+
+### 5.7 User Documentation & Training (Priority 3)
+
+**Objective**: Help users understand freelance features
+
+1. **User Guides**
+   - [ ] How to post a job
+   - [ ] How to find and apply for jobs
+   - [ ] How to manage projects
+   - [ ] How to handle payments
+   - [ ] How to resolve disputes
+
+2. **Video Tutorials**
+   - [ ] Quick start guide (30 seconds)
+   - [ ] Full walkthrough (5 minutes)
+   - [ ] Common issues guide
+   - [ ] FAQ video
+
+3. **In-App Help**
+   - [ ] Contextual help tooltips
+   - [ ] Help modal on first visit
+   - [ ] FAQ section in app
+   - [ ] Contact support button
+
+---
+
+### 5.8 Phase 5 Timeline & Effort Estimate
+
+```
+Week 1 (40 hours):
+├── Days 1-2: Unified Chat Integration (8 hours)
+├── Days 2-3: Database Schema Fixes (6 hours)
+├── Days 3-4: Dispute Resolution System (8 hours)
+├── Days 4-5: Smart Job Matching (8 hours)
+└── Days 5: Testing & Bug Fixes (10 hours)
+
+Week 2 (40 hours):
+├── Days 6-7: Advanced Analytics (8 hours)
+├── Days 7-8: Deadline Reminders (6 hours)
+├── Days 8-9: Performance Optimization (8 hours)
+├── Days 9-10: Security Hardening (8 hours)
+└── Days 10: Documentation & Testing (10 hours)
+
+Total: ~80 hours (2 weeks)
+```
+
+---
+
+### 5.9 Success Criteria for Phase 5
+
+✅ **Unified Chat**
+- All freelance chats appear in unified Inbox
+- Notifications work across unified system
+- No separate chat components
+
+✅ **Database**
+- All missing tables created
+- All relationships working
+- No 404/400 errors from schema issues
+
+✅ **Advanced Features**
+- Dispute resolution functional
+- Job matching showing match percentages
+- Advanced analytics dashboard complete
+- Deadline reminders sending correctly
+
+✅ **Performance**
+- Page load time < 2 seconds
+- Chat message delivery < 1 second
+- Database queries < 100ms
+- No memory leaks
+
+✅ **Security**
+- RLS policies enforced
+- No unauthorized data access
+- All inputs validated
+- Sensitive data protected
+
+✅ **Quality**
+- All E2E tests passing
+- No critical bugs
+- Performance benchmarks met
+- Security audit passed
+
+---
+
+### 5.10 Phase 5 Kick-off Checklist
+
+Before starting Phase 5:
+
+- [ ] Phase 4 E2E tests completed
+- [ ] No critical bugs in Phase 4
+- [ ] Database backup created
+- [ ] Feature branch created (`feature/phase-5`)
+- [ ] Team notified of changes
+- [ ] Design assets prepared (if any)
+- [ ] API endpoints documented
+- [ ] Database schema documented
+
+---
+
 **Status**: PHASE 4 COMPLETE ✅ | READY FOR PHASE 5
 **Created**: December 20, 2024
 **Phase 3 Completed**: December 21, 2024
