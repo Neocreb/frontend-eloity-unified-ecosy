@@ -77,6 +77,7 @@ import { KeyboardShortcuts, AccessibilitySettings, SkipToContent } from "@/compo
 import { PerformanceMonitor, DashboardSkeleton, MemeizedCard } from "@/components/freelance/PerformanceOptimizations";
 import ClientProposals from "@/components/freelance/ClientProposals";
 import { walletService, WalletBalance } from "@/services/walletService";
+import { FreelanceNotifications } from "@/components/freelance/FreelanceNotifications";
 import { cn } from "@/lib/utils";
 
 interface ClientStats {
