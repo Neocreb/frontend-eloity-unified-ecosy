@@ -146,6 +146,8 @@ export const FreelanceDashboard: React.FC = () => {
   const [hasSeenTour, setHasSeenTour] = useState(() => {
     return localStorage.getItem('freelance-tour-completed') === 'true';
   });
+  const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
 
   const { getProjects, getFreelanceStats, getActivityLog, loading } = useFreelance();
   const { getUserEscrows } = useEscrow();
