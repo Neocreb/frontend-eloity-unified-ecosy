@@ -2,8 +2,19 @@ import { Router, Request, Response } from 'express';
 import { supabaseServer as supabase } from '../supabaseServer.js';
 import { authenticateToken } from '../middleware/auth.js';
 import { z } from 'zod';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
+
+// Helper function to check Supabase availability
+const checkSupabaseAvailable = (res: Response) => {
+  if (!supabase) {
+    logger.error('[Chat] Supabase is not configured');
+    res.status(503).json({ error: 'Chat service is not available. Supabase is not configured.' });
+    return false;
+  }
+  return true;
+};
 
 // Validation schemas
 const sendMessageSchema = z.object({
@@ -39,9 +50,11 @@ router.use(authenticateToken);
 // Get all conversations for current user
 router.get('/conversations', async (req: Request, res: Response) => {
   try {
+    if (!checkSupabaseAvailable(res)) return;
+
     const userId = (req as any).user?.id || (req as any).userId;
     if (!userId) {
-      console.error('[Chat] No user ID found in request', {
+      logger.error('[Chat] No user ID found in request', {
         hasUser: !!(req as any).user,
         hasUserId: !!(req as any).userId,
         headers: Object.keys(req.headers)
@@ -106,6 +119,8 @@ router.get('/conversations', async (req: Request, res: Response) => {
 // Get specific conversation with messages
 router.get('/conversations/:conversationId', async (req: Request, res: Response) => {
   try {
+    if (!checkSupabaseAvailable(res)) return;
+
     const { conversationId } = req.params;
     const userId = req.user?.id;
 
@@ -143,6 +158,8 @@ router.get('/conversations/:conversationId', async (req: Request, res: Response)
 // Get messages for a conversation with pagination
 router.get('/conversations/:conversationId/messages', async (req: Request, res: Response) => {
   try {
+    if (!checkSupabaseAvailable(res)) return;
+
     const { conversationId } = req.params;
     const userId = req.user?.id;
     const limit = Math.min(parseInt(req.query.limit as string) || 50, 100);
@@ -191,6 +208,8 @@ router.get('/conversations/:conversationId/messages', async (req: Request, res: 
 // Get typing indicators for a conversation
 router.get('/conversations/:conversationId/typing', async (req: Request, res: Response) => {
   try {
+    if (!checkSupabaseAvailable(res)) return;
+
     const { conversationId } = req.params;
 
     const { data: typingUsers, error } = await supabase
@@ -218,6 +237,8 @@ router.get('/conversations/:conversationId/typing', async (req: Request, res: Re
 // Create new conversation
 router.post('/conversations', async (req: Request, res: Response) => {
   try {
+    if (!checkSupabaseAvailable(res)) return;
+
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ error: 'Unauthorized' });
@@ -286,12 +307,26 @@ router.post('/conversations', async (req: Request, res: Response) => {
 // Send message
 router.post('/messages', async (req: Request, res: Response) => {
   try {
+    if (!checkSupabaseAvailable(res)) return;
+
     const userId = req.user?.id;
     if (!userId) {
+      logger.warn('[Chat] Send message: No user ID in request');
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const validated = sendMessageSchema.parse(req.body);
+    logger.info('[Chat] Sending message', { userId, conversationId: req.body.conversationId });
+
+    let validated;
+    try {
+      validated = sendMessageSchema.parse(req.body);
+    } catch (validationError: any) {
+      logger.error('[Chat] Validation error for sendMessage', {
+        error: validationError.errors,
+        body: req.body
+      });
+      return res.status(400).json({ error: 'Invalid request format', details: validationError.errors });
+    }
 
     // Verify user is a participant
     const { data: participant, error: partError } = await supabase
