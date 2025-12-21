@@ -61,7 +61,11 @@ export const useFreelanceNotifications = (): UseFreelanceNotificationsResult => 
         const unread = transformedNotifications.filter(n => !n.read).length;
         setUnreadCount(unread);
       } catch (err) {
-        console.error('Error loading notifications:', err);
+        const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+        console.error('Error loading notifications:', errorMessage);
+        // Gracefully handle missing table - return empty notifications
+        setNotifications([]);
+        setUnreadCount(0);
       }
     };
 
