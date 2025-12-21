@@ -62,6 +62,7 @@ import TalentProfile from "./TalentProfile";
 import { useFreelance } from "@/hooks/use-freelance";
 import { useAuth } from "@/contexts/AuthContext";
 import CompactFreelanceFilters from "./CompactFreelanceFilters";
+import FreelanceAnalyticsService from "@/services/freelanceAnalyticsService";
 
 export const EnhancedFreelanceHub: React.FC = () => {
   const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
@@ -73,6 +74,51 @@ export const EnhancedFreelanceHub: React.FC = () => {
   const [filters, setFilters] = useState({});
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // State for real data
+  const [stats, setStats] = useState<{
+    activeJobs: { value: number; change: number; trend: string };
+    newToday: { value: number; change: number; trend: string };
+    avgBudget: { value: number; change: number; trend: string };
+    successRate: { value: number; change: number; trend: string };
+  } | null>(null);
+  const [trendingCategories, setTrendingCategories] = useState<Array<{ name: string; jobs: number; growth: string }>>([]);
+  const [recentActivity, setRecentActivity] = useState<Array<{ type: 'application' | 'message' | 'job'; title: string; time: string; status: string }>>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Load real data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setStatsLoading(true);
+
+        // Load platform stats
+        const platformStats = await FreelanceAnalyticsService.getPlatformStats();
+        if (platformStats) {
+          setStats({
+            activeJobs: { value: platformStats.activeJobs, change: platformStats.changes.activeJobs, trend: "up" },
+            newToday: { value: platformStats.newToday, change: platformStats.changes.newToday, trend: "up" },
+            avgBudget: { value: platformStats.avgBudget, change: platformStats.changes.avgBudget, trend: "up" },
+            successRate: { value: platformStats.successRate, change: platformStats.changes.successRate, trend: "up" },
+          });
+        }
+
+        // Load trending categories
+        const categories = await FreelanceAnalyticsService.getTrendingCategories(5);
+        setTrendingCategories(categories);
+
+        // Load recent activity
+        const activities = await FreelanceAnalyticsService.getRecentActivity(user?.id);
+        setRecentActivity(activities);
+      } catch (error) {
+        console.error('Error loading hub data:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.id]);
 
   const handleJobSelect = (job: JobPosting) => {
     setSelectedJob(job);
@@ -95,44 +141,6 @@ export const EnhancedFreelanceHub: React.FC = () => {
   const handleHire = (talentId: string) => {
     setSelectedTalent(null);
   };
-
-  // Enhanced stats with trending indicators
-  const stats = {
-    activeJobs: { value: 1247, change: +12, trend: "up" },
-    newToday: { value: 23, change: +3, trend: "up" },
-    avgBudget: { value: 2850, change: +150, trend: "up" },
-    successRate: { value: 94, change: +2, trend: "up" },
-  };
-
-
-  const trendingCategories = [
-    { name: "AI/ML Development", jobs: 234, growth: "+23%" },
-    { name: "Mobile Apps", jobs: 189, growth: "+18%" },
-    { name: "Web Design", jobs: 156, growth: "+15%" },
-    { name: "Content Writing", jobs: 143, growth: "+12%" },
-    { name: "Data Analysis", jobs: 98, growth: "+28%" },
-  ];
-
-  const recentActivity = [
-    {
-      type: "application",
-      title: "Applied to React Developer position",
-      time: "2 hours ago",
-      status: "pending",
-    },
-    {
-      type: "message",
-      title: "New message from TechCorp Inc.",
-      time: "4 hours ago",
-      status: "unread",
-    },
-    {
-      type: "job",
-      title: "New job matches your profile",
-      time: "6 hours ago",
-      status: "new",
-    },
-  ];
 
   const RenderTabs = () => (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
