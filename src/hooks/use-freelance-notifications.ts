@@ -135,7 +135,8 @@ export const useFreelanceNotifications = (): UseFreelanceNotificationsResult => 
 
         setUnreadCount(prev => Math.max(0, prev - 1));
       } catch (err) {
-        console.error('Error marking notification as read:', err);
+        const errorMessage = err instanceof Error ? err.message : JSON.stringify(err);
+        console.error('Error marking notification as read:', errorMessage);
       }
     },
     []
