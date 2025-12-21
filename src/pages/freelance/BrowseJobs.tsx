@@ -504,7 +504,23 @@ const BrowseJobs: React.FC = () => {
 
       {/* Job Listings */}
       <div className="space-y-4">
-        {sortedJobs.length > 0 ? (
+        {jobsLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="pt-6 space-y-4">
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="flex gap-2">
+                    <div className="h-8 bg-gray-200 rounded w-20"></div>
+                    <div className="h-8 bg-gray-200 rounded w-20"></div>
+                  </div>
+                  <div className="h-10 bg-gray-200 rounded w-full"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : sortedJobs.length > 0 ? (
           sortedJobs.map((job) => (
             <JobCard key={job.id} job={job} />
           ))
