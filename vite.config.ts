@@ -47,14 +47,11 @@ export default defineConfig(({ mode }) => ({
           if (
             id.includes("node_modules/react") ||
             id.includes("node_modules/react-dom") ||
-            id.includes("node_modules/react-router-dom")
+            id.includes("node_modules/react-router-dom") ||
+            id.includes("@radix-ui") ||
+            id.includes("lucide-react")
           ) {
-            return "react-vendor"; // Separate stable chunk for React libraries
-          }
-
-          // Keep UI frameworks together
-          if (id.includes("@radix-ui") || id.includes("lucide-react")) {
-            return "ui-vendor";
+            return "react-vendor";
           }
 
           // Optional splitting for large vendor libraries
