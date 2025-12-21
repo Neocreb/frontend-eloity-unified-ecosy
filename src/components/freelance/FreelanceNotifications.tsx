@@ -12,7 +12,7 @@ import {
   DollarSign,
   Award,
   Trash2,
-  CheckAll,
+  Check,
 } from 'lucide-react';
 import { useFreelanceNotifications, FreelanceNotification } from '@/hooks/use-freelance-notifications';
 import { formatDistanceToNow } from 'date-fns';
