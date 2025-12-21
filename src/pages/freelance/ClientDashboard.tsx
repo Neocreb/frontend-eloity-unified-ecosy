@@ -663,6 +663,9 @@ export const ClientDashboard: React.FC = () => {
 
               {/* Sidebar */}
               <div className="space-y-6">
+                {/* Notifications */}
+                <FreelanceNotifications maxHeight="h-[400px]" maxNotifications={5} showHeader={true} />
+
                 {/* Quick Actions */}
                 <Card>
                   <CardHeader>
