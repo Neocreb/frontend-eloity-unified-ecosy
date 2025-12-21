@@ -25,31 +25,19 @@ export const JobDetailPage: React.FC = () => {
 
       setLoading(true);
       try {
-        // Try to fetch from API first
         const fetchedJob = await getJob(jobId);
         if (fetchedJob) {
           setJob(fetchedJob);
         } else {
-          // Fallback to mock data for sponsored jobs
-          const mockJob = mockJobs.find(j => j.id === jobId);
-          if (mockJob) {
-            setJob(mockJob);
-          } else {
-            // Job not found
-            navigate("/app/freelance");
-            return;
-          }
-        }
-      } catch (error) {
-        console.error("Error loading job:", error);
-        // Try fallback to mock data
-        const mockJob = mockJobs.find(j => j.id === jobId);
-        if (mockJob) {
-          setJob(mockJob);
-        } else {
+          // Job not found - navigate back
           navigate("/app/freelance");
           return;
         }
+      } catch (error) {
+        console.error("Error loading job:", error);
+        // Navigate back on error
+        navigate("/app/freelance");
+        return;
       } finally {
         setLoading(false);
       }
