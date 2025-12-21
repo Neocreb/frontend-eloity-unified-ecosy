@@ -900,6 +900,22 @@ const ManageProjects: React.FC = () => {
                 </CardContent>
               </Card>
 
+              {/* Project Messages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Project Discussion</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FreelanceProjectChat
+                    projectId={selectedProject.id}
+                    projectTitle={selectedProject.title}
+                    otherUserName={selectedProject.freelancer.name}
+                    otherUserAvatar={selectedProject.freelancer.avatar}
+                    className="border-0"
+                  />
+                </CardContent>
+              </Card>
+
               {/* Project Actions */}
               <div className="flex gap-2 pt-4 border-t">
                 {selectedProject.status === "active" && (
