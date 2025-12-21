@@ -599,28 +599,42 @@ export const FreelanceDashboard: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {recentActivities.map((activity) => (
-                        <div key={activity.id} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-                            {activity.type === "message" && <MessageCircle className="w-4 h-4 text-blue-600" />}
-                            {activity.type === "payment" && <DollarSign className="w-4 h-4 text-green-600" />}
-                            {activity.type === "milestone" && <Target className="w-4 h-4 text-purple-600" />}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-sm text-gray-900 dark:text-white">
-                              {activity.title}
+                    {activitiesLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-16 w-full" />
+                        ))}
+                      </div>
+                    ) : recentActivities.length > 0 ? (
+                      <div className="space-y-3">
+                        {recentActivities.map((activity) => (
+                          <div key={activity.id} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+                              {activity.activity_type === "message" && <MessageCircle className="w-4 h-4 text-blue-600" />}
+                              {activity.activity_type === "payment" && <DollarSign className="w-4 h-4 text-green-600" />}
+                              {activity.activity_type === "milestone" && <Target className="w-4 h-4 text-purple-600" />}
+                              {!activity.activity_type && <Activity className="w-4 h-4 text-gray-600" />}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-sm text-gray-900 dark:text-white">
+                                {activity.description || activity.title}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {activity.project_title || activity.project || "Activity"}
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {activity.created_at ? new Date(activity.created_at).toLocaleDateString() : "Recent"}
                             </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {activity.project}
-                            </p>
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {activity.timestamp}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Activity className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-600 dark:text-gray-400">No recent activity</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
