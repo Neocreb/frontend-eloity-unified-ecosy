@@ -214,51 +214,51 @@ export const ClientDashboard: React.FC = () => {
     }
   };
 
-  const getMockFreelancers = () => [
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      title: "Frontend Developer",
-      rating: 4.9,
-      completedJobs: 47,
-      hourlyRate: 65,
-      avatar: "/api/placeholder/40/40",
-      skills: ["React", "TypeScript", "Tailwind CSS"],
-      availability: "Available now",
-    },
-    {
-      id: "2", 
-      name: "Marcus Chen",
-      title: "Full Stack Developer",
-      rating: 4.8,
-      completedJobs: 32,
-      hourlyRate: 75,
-      avatar: "/api/placeholder/40/40",
-      skills: ["Node.js", "React", "PostgreSQL"],
-      availability: "Available in 2 weeks",
-    },
-  ];
+  // Fetch real proposals and freelancers
+  const [proposals, setProposals] = useState<any[]>([]);
+  const [topFreelancers, setTopFreelancers] = useState<any[]>([]);
+  const [proposalsLoading, setProposalsLoading] = useState(false);
+  const [freelancersLoading, setFreelancersLoading] = useState(false);
 
-  const getMockProposals = () => [
-    {
-      id: "1",
-      freelancer: "Alice Thompson",
-      jobTitle: "E-commerce Website Design",
-      budget: 2500,
-      timeframe: "3 weeks",
-      rating: 4.9,
-      submittedAt: "2024-01-15",
-    },
-    {
-      id: "2",
-      freelancer: "David Rodriguez",
-      jobTitle: "Mobile App Development",
-      budget: 4000,
-      timeframe: "6 weeks", 
-      rating: 4.7,
-      submittedAt: "2024-01-14",
-    },
-  ];
+  const { searchFreelancers, getProposals: getClientProposals } = useFreelance();
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) return;
+
+      // Load proposals
+      setProposalsLoading(true);
+      try {
+        const proposalsData = await getClientProposals(user.id);
+        if (proposalsData) {
+          setProposals(proposalsData);
+        }
+      } catch (error) {
+        console.error("Error loading proposals:", error);
+      } finally {
+        setProposalsLoading(false);
+      }
+
+      // Load top freelancers
+      setFreelancersLoading(true);
+      try {
+        const freelancersData = await searchFreelancers({
+          limit: 5,
+          sortBy: "rating",
+          order: "desc"
+        });
+        if (freelancersData) {
+          setTopFreelancers(freelancersData.slice(0, 5));
+        }
+      } catch (error) {
+        console.error("Error loading freelancers:", error);
+      } finally {
+        setFreelancersLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, searchFreelancers, getClientProposals]);
 
   const ClientProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
