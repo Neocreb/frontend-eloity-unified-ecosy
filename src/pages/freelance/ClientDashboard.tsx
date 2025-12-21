@@ -74,8 +74,9 @@ import { FreelanceNavigationTabs, TabItem } from "@/components/freelance/Freelan
 import { ActivityIndicator } from "@/components/freelance/RealTimeNotifications";
 import { OnboardingTour, HelpCenter, ContextualHelp, EmptyStateGuidance } from "@/components/freelance/OnboardingTour";
 import { KeyboardShortcuts, AccessibilitySettings, SkipToContent } from "@/components/freelance/KeyboardShortcuts";
-import { PerformanceMonitor, DashboardSkeleton, MemoizedCard } from "@/components/freelance/PerformanceOptimizations";
+import { PerformanceMonitor, DashboardSkeleton, MemeizedCard } from "@/components/freelance/PerformanceOptimizations";
 import ClientProposals from "@/components/freelance/ClientProposals";
+import { walletService, WalletBalance } from "@/services/walletService";
 import { cn } from "@/lib/utils";
 
 interface ClientStats {

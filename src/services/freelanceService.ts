@@ -10,6 +10,7 @@ import {
   FreelanceStats,
   Milestone,
 } from "@/types/freelance";
+import { rewardsService } from "./rewardsService";
 
 export class FreelanceService {
   // ============================================================================

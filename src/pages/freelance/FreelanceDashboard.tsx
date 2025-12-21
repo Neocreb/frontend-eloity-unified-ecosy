@@ -78,6 +78,7 @@ import NegotiationChat from "@/components/freelance/NegotiationChat";
 import ReviewForm from "@/components/freelance/ReviewForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UnifiedCampaignManager } from "@/components/campaigns/UnifiedCampaignManager";
+import { walletService, WalletBalance } from "@/services/walletService";
 import { cn } from "@/lib/utils";
 
 // Navigation items for the tabs
@@ -145,6 +146,8 @@ export const FreelanceDashboard: React.FC = () => {
   const [hasSeenTour, setHasSeenTour] = useState(() => {
     return localStorage.getItem('freelance-tour-completed') === 'true';
   });
+  const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
 
   const { getProjects, getFreelanceStats, getActivityLog, loading } = useFreelance();
   const { getUserEscrows } = useEscrow();
@@ -165,13 +168,22 @@ export const FreelanceDashboard: React.FC = () => {
     const loadData = async () => {
       if (!user) return;
 
-      const [projectsData, statsData] = await Promise.all([
-        getProjects(user.id, "freelancer"),
-        getFreelanceStats(user.id),
-      ]);
+      try {
+        setWalletLoading(true);
+        const [projectsData, statsData, walletData] = await Promise.all([
+          getProjects(user.id, "freelancer"),
+          getFreelanceStats(user.id),
+          walletService.getWalletBalance(),
+        ]);
 
-      if (projectsData) setActiveProjects(projectsData);
-      if (statsData) setStats(statsData);
+        if (projectsData) setActiveProjects(projectsData);
+        if (statsData) setStats(statsData);
+        if (walletData) setWalletBalance(walletData);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setWalletLoading(false);
+      }
     };
 
     loadData();
@@ -522,6 +534,13 @@ export const FreelanceDashboard: React.FC = () => {
                   change="+12% this month"
                   icon={<DollarSign className="w-6 h-6 text-white" />}
                   color="bg-gradient-to-br from-green-500 to-emerald-600"
+                />
+                <StatCard
+                  title="Wallet Balance"
+                  value={walletBalance ? formatCurrency(walletBalance.freelance) : formatCurrency(0)}
+                  change="Available for withdrawal"
+                  icon={<Wallet className="w-6 h-6 text-white" />}
+                  color="bg-gradient-to-br from-emerald-500 to-teal-600"
                 />
                 <StatCard
                   title="Active Projects"
