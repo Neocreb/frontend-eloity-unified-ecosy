@@ -205,56 +205,49 @@ export const FreelanceDashboard: React.FC = () => {
     }
   };
 
-  const getUrgentTasks = () => {
-    // TODO: Fetch real urgent tasks from the backend
-    return [
-      {
-        id: "1",
-        title: "Submit wireframes for review",
-        project: "E-commerce Platform",
-        dueDate: "2024-01-18",
-        priority: "high",
-      },
-      {
-        id: "2",
-        title: "Client feedback response needed",
-        project: "Mobile App Design",
-        dueDate: "2024-01-19",
-        priority: "medium",
-      },
-    ];
-  };
+  const [urgentTasks, setUrgentTasks] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
 
-  const getRecentActivities = () => {
-    // TODO: Fetch real recent activities from the backend
-    return [
-      {
-        id: "1",
-        type: "message",
-        title: "New message from Alice Johnson",
-        project: "E-commerce Platform",
-        timestamp: "2 hours ago",
-      },
-      {
-        id: "2",
-        type: "payment",
-        title: "Payment received: $1,500",
-        project: "Mobile App Design",
-        timestamp: "1 day ago",
-      },
-      {
-        id: "3",
-        type: "milestone",
-        title: "Milestone approved",
-        project: "Website Redesign",
-        timestamp: "2 days ago",
-      },
-    ];
-  };
+  // Load urgent tasks and recent activities from backend
+  useEffect(() => {
+    const loadActivities = async () => {
+      if (!user) return;
 
-  // Local derived values from helper functions to avoid ReferenceError
-  const recentActivities = getRecentActivities();
-  const urgentTasks = getUrgentTasks();
+      setActivitiesLoading(true);
+      try {
+        // Load activity log
+        const activityData = await getActivityLog(user.id);
+        if (activityData && activityData.length > 0) {
+          setRecentActivities(activityData.slice(0, 5));
+
+          // Extract urgent tasks from projects with upcoming deadlines
+          const urgentList = activeProjects
+            .filter((p: Project) => {
+              const deadline = new Date(p.deadline || '');
+              const today = new Date();
+              const daysUntil = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              return daysUntil > 0 && daysUntil <= 7;
+            })
+            .map((p: Project) => ({
+              id: p.id,
+              title: `Complete "${p.job.title}"`,
+              project: p.job.title,
+              dueDate: p.deadline,
+              priority: Math.ceil((new Date(p.deadline || '').getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 3 ? 'high' : 'medium',
+            }));
+
+          setUrgentTasks(urgentList);
+        }
+      } catch (error) {
+        console.error("Error loading activities:", error);
+      } finally {
+        setActivitiesLoading(false);
+      }
+    };
+
+    loadActivities();
+  }, [user, activeProjects]);
 
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
