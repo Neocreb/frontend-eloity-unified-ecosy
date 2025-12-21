@@ -9,13 +9,22 @@ export class WebSocketService {
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
-  private eventHandlers: SocketEventHandlers = {};
+  private eventHandlers: Map<string, Set<(...args: any[]) => void>> = new Map();
+  private connectPromise: Promise<void> | null = null;
+  private connectResolve: (() => void) | null = null;
 
   constructor(private serverUrl: string = 'ws://localhost:3001') {}
 
   connect(userId?: string, token?: string): Promise<void> {
-    return new Promise((resolve, reject) => {
+    // Return existing connection promise if already connecting
+    if (this.connectPromise) {
+      return this.connectPromise;
+    }
+
+    this.connectPromise = new Promise((resolve, reject) => {
       try {
+        this.connectResolve = resolve;
+
         this.socket = io(this.serverUrl, {
           auth: {
             userId,
@@ -28,11 +37,25 @@ export class WebSocketService {
           reconnectionDelay: this.reconnectDelay
         });
 
-        this.socket.on('connect', () => {
+        const handleConnect = () => {
           console.log('✅ WebSocket connected');
           this.reconnectAttempts = 0;
-          resolve();
-        });
+
+          // Re-register all event handlers after reconnection (only once)
+          this.eventHandlers.forEach((handlers, event) => {
+            handlers.forEach((handler) => {
+              this.socket?.on(event, handler);
+            });
+          });
+
+          // Resolve the promise only on first connection
+          if (this.connectResolve) {
+            this.connectResolve();
+            this.connectResolve = null;
+          }
+        };
+
+        this.socket.on('connect', handleConnect);
 
         this.socket.on('disconnect', (reason) => {
           console.log('❌ WebSocket disconnected:', reason);
@@ -55,17 +78,12 @@ export class WebSocketService {
           console.error('💀 Failed to reconnect after maximum attempts');
         });
 
-        // Re-register all event handlers after reconnection
-        this.socket.on('connect', () => {
-          Object.entries(this.eventHandlers).forEach(([event, handler]) => {
-            this.socket?.on(event, handler);
-          });
-        });
-
       } catch (error) {
         reject(error);
       }
     });
+
+    return this.connectPromise;
   }
 
   disconnect(): void {
@@ -84,16 +102,37 @@ export class WebSocketService {
   }
 
   on(event: string, handler: (...args: any[]) => void): void {
-    this.eventHandlers[event] = handler;
+    // Store handler in map
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, new Set());
+    }
+    this.eventHandlers.get(event)?.add(handler);
+
+    // Register immediately if socket is connected
     if (this.socket?.connected) {
       this.socket.on(event, handler);
     }
   }
 
-  off(event: string): void {
-    delete this.eventHandlers[event];
-    if (this.socket) {
-      this.socket.off(event);
+  off(event: string, handler?: (...args: any[]) => void): void {
+    if (!handler) {
+      // Remove all handlers for this event
+      this.eventHandlers.delete(event);
+      if (this.socket) {
+        this.socket.off(event);
+      }
+    } else {
+      // Remove specific handler
+      const handlers = this.eventHandlers.get(event);
+      if (handlers) {
+        handlers.delete(handler);
+        if (handlers.size === 0) {
+          this.eventHandlers.delete(event);
+        }
+      }
+      if (this.socket) {
+        this.socket.off(event, handler);
+      }
     }
   }
 
@@ -205,4 +244,3 @@ export interface WebSocketEvents {
   escrow_update: { transactionId: string; transaction: any };
   escrow_timeout_warning: { transactionId: string; timeRemaining: number };
 }
-
