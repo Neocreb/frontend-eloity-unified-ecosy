@@ -694,33 +694,46 @@ export const ClientDashboard: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {getMockFreelancers().map((freelancer) => (
-                        <div key={freelancer.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage src={freelancer.avatar} />
-                              <AvatarFallback>{freelancer.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                                {freelancer.name}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                {freelancer.title}
-                              </p>
+                    {freelancersLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-16 w-full" />
+                        ))}
+                      </div>
+                    ) : topFreelancers.length > 0 ? (
+                      <div className="space-y-3">
+                        {topFreelancers.map((freelancer) => (
+                          <div key={freelancer.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Avatar className="w-10 h-10">
+                                <AvatarImage src={freelancer.avatar} />
+                                <AvatarFallback>{freelancer.name?.[0] || "F"}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                                  {freelancer.name}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                  {freelancer.title || "Freelancer"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <span>{freelancer.rating || "N/A"}</span>
+                              </div>
+                              <span>${freelancer.hourly_rate || "N/A"}/hr</span>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span>{freelancer.rating}</span>
-                            </div>
-                            <span>${freelancer.hourlyRate}/hr</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-600 dark:text-gray-400">No freelancers found</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
