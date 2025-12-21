@@ -472,38 +472,48 @@ export const EnhancedFreelanceHub: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
-                  >
+                {statsLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-12 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                  ))
+                ) : recentActivity.length > 0 ? (
+                  recentActivity.map((activity, index) => (
                     <div
-                      className={`p-1 rounded-full ${
-                        activity.type === "application"
-                          ? "bg-blue-100"
-                          : activity.type === "message"
-                            ? "bg-green-100"
-                            : "bg-yellow-100"
-                      }`}
+                      key={index}
+                      className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                     >
-                      {activity.type === "application" && (
-                        <FileText className="w-3 h-3 text-blue-600" />
-                      )}
-                      {activity.type === "message" && (
-                        <MessageSquare className="w-3 h-3 text-green-600" />
-                      )}
-                      {activity.type === "job" && (
-                        <Briefcase className="w-3 h-3 text-yellow-600" />
-                      )}
+                      <div
+                        className={`p-1 rounded-full flex-shrink-0 ${
+                          activity.type === "application"
+                            ? "bg-blue-100 dark:bg-blue-900/30"
+                            : activity.type === "message"
+                              ? "bg-green-100 dark:bg-green-900/30"
+                              : "bg-yellow-100 dark:bg-yellow-900/30"
+                        }`}
+                      >
+                        {activity.type === "application" && (
+                          <FileText className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                        )}
+                        {activity.type === "message" && (
+                          <MessageSquare className="w-3 h-3 text-green-600 dark:text-green-400" />
+                        )}
+                        {activity.type === "job" && (
+                          <Briefcase className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{activity.time}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {activity.title}
-                      </p>
-                      <p className="text-xs text-gray-600">{activity.time}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                    <p>No recent activity</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
 
