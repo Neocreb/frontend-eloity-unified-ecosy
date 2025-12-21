@@ -79,6 +79,7 @@ import ReviewForm from "@/components/freelance/ReviewForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UnifiedCampaignManager } from "@/components/campaigns/UnifiedCampaignManager";
 import { walletService, WalletBalance } from "@/services/walletService";
+import { FreelanceNotifications } from "@/components/freelance/FreelanceNotifications";
 import { cn } from "@/lib/utils";
 
 // Navigation items for the tabs
