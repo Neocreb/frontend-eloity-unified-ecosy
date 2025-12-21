@@ -608,38 +608,53 @@ export const ClientDashboard: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {getMockProposals().map((proposal) => (
-                        <div key={proposal.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm text-gray-900 dark:text-white">
-                              {proposal.freelancer}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                              {proposal.jobTitle}
-                            </p>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              <span>${proposal.budget.toLocaleString()}</span>
-                              <span>{proposal.timeframe}</span>
-                              <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                <span>{proposal.rating}</span>
+                    {proposalsLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                          <Skeleton key={i} className="h-20 w-full" />
+                        ))}
+                      </div>
+                    ) : proposals.length > 0 ? (
+                      <div className="space-y-3">
+                        {proposals.slice(0, 5).map((proposal) => (
+                          <div key={proposal.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm text-gray-900 dark:text-white">
+                                {proposal.freelancer?.name || "Unknown"}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                {proposal.job?.title || "Job"}
+                              </p>
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <span>${proposal.proposed_budget?.toLocaleString() || "0"}</span>
+                                {proposal.submitted_date && (
+                                  <span>{new Date(proposal.submitted_date).toLocaleDateString()}</span>
+                                )}
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span>{proposal.freelancer?.rating || "N/A"}</span>
+                                </div>
                               </div>
                             </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline">
+                                <Eye className="w-3 h-3 mr-1" />
+                                View
+                              </Button>
+                              <Button size="sm">
+                                <ThumbsUp className="w-3 h-3 mr-1" />
+                                Accept
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-3 h-3 mr-1" />
-                              View
-                            </Button>
-                            <Button size="sm">
-                              <ThumbsUp className="w-3 h-3 mr-1" />
-                              Accept
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <FileText className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-600 dark:text-gray-400">No proposals yet</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
