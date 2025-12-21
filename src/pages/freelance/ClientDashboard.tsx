@@ -822,11 +822,11 @@ export const ClientDashboard: React.FC = () => {
                   </Button>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-                      <p className="text-2xl font-bold text-blue-600">3</p>
+                      <p className="text-2xl font-bold text-blue-600">{clientStats?.activeProjects || 0}</p>
                       <p className="text-gray-600 dark:text-gray-400">Active Jobs</p>
                     </div>
                     <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                      <p className="text-2xl font-bold text-green-600">24</p>
+                      <p className="text-2xl font-bold text-green-600">{proposals.length}</p>
                       <p className="text-gray-600 dark:text-gray-400">Proposals</p>
                     </div>
                   </div>
