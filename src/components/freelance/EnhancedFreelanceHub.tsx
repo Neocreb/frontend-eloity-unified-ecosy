@@ -53,6 +53,7 @@ import {
   Shield,
   Globe,
   Coffee,
+  Loader2,
 } from "lucide-react";
 import { JobPosting } from "@/types/freelance";
 import JobList from "./JobList";
