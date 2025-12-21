@@ -42,6 +42,7 @@ import {
   Filter as FilterIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFreelance } from "@/hooks/use-freelance";
 import { toast } from "sonner";
 
 interface Job {
