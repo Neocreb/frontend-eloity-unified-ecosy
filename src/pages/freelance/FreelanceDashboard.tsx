@@ -661,6 +661,9 @@ export const FreelanceDashboard: React.FC = () => {
 
               {/* Sidebar */}
               <div className="space-y-6">
+                {/* Notifications */}
+                <FreelanceNotifications maxHeight="h-[400px]" maxNotifications={5} showHeader={true} />
+
                 {/* Urgent Tasks */}
                 <Card>
                   <CardHeader>
