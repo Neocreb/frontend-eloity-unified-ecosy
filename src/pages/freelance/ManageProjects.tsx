@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { FreelanceProjectChat } from "@/components/freelance/FreelanceProjectChat";
 
 interface Project {
   id: string;
