@@ -753,19 +753,29 @@ export const ClientDashboard: React.FC = () => {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Jobs Posted</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">3</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {activeProjects.filter(p => p.status === "active").length}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Proposals Received</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">24</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {proposals.length}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Avg Response Time</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">&lt; 4 hours</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        &lt; 24 hours
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Project Success Rate</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">96%</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {clientStats && activeProjects.length > 0
+                          ? Math.round((clientStats.completedProjects / activeProjects.length) * 100)
+                          : 0}%
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
