@@ -840,36 +840,46 @@ export const ClientDashboard: React.FC = () => {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" onClick={() => navigate('/app/freelance/find-freelancers')}>
                     <Search className="w-4 h-4 mr-2" />
                     Browse Freelancers
                   </Button>
                   <div className="space-y-3">
-                    {getMockFreelancers().slice(0, 2).map((freelancer) => (
-                      <div key={freelancer.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={freelancer.avatar} />
-                            <AvatarFallback>{freelancer.name[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                              {freelancer.name}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {freelancer.title}
-                            </p>
-                            <div className="flex items-center justify-between mt-1">
-                              <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs">{freelancer.rating}</span>
+                    {freelancersLoading ? (
+                      Array.from({ length: 2 }).map((_, i) => (
+                        <Skeleton key={i} className="h-20 w-full" />
+                      ))
+                    ) : topFreelancers.length > 0 ? (
+                      topFreelancers.slice(0, 2).map((freelancer) => (
+                        <div key={freelancer.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={freelancer.avatar} />
+                              <AvatarFallback>{freelancer.name?.[0] || "F"}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                                {freelancer.name}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {freelancer.title || "Freelancer"}
+                              </p>
+                              <div className="flex items-center justify-between mt-1">
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-xs">{freelancer.rating || "N/A"}</span>
+                                </div>
+                                <span className="text-xs text-gray-500">${freelancer.hourly_rate || "N/A"}/hr</span>
                               </div>
-                              <span className="text-xs text-gray-500">${freelancer.hourlyRate}/hr</span>
                             </div>
                           </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">No freelancers available</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>
