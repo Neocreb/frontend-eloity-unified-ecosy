@@ -486,10 +486,19 @@ export const realtimeService = {
             filter: `conversation_id=eq.${conversationId}`,
           },
           (payload: any) => {
-            const message = chatPersistenceService.transformMessageToChat(
-              payload.new
-            );
-            callback(message);
+            try {
+              if (!payload || !payload.new) {
+                console.warn('[Chat] Received invalid message payload', payload);
+                return;
+              }
+              const message = chatPersistenceService.transformMessageToChat(
+                payload.new
+              );
+              callback(message);
+            } catch (error) {
+              console.error('[Chat] Error processing new message:', error);
+              if (onError) onError(error as Error);
+            }
           }
         )
         .on(
@@ -501,10 +510,19 @@ export const realtimeService = {
             filter: `conversation_id=eq.${conversationId}`,
           },
           (payload: any) => {
-            const message = chatPersistenceService.transformMessageToChat(
-              payload.new
-            );
-            callback(message);
+            try {
+              if (!payload || !payload.new) {
+                console.warn('[Chat] Received invalid message update payload', payload);
+                return;
+              }
+              const message = chatPersistenceService.transformMessageToChat(
+                payload.new
+              );
+              callback(message);
+            } catch (error) {
+              console.error('[Chat] Error processing message update:', error);
+              if (onError) onError(error as Error);
+            }
           }
         )
         .subscribe((status: any) => {
@@ -543,11 +561,16 @@ export const realtimeService = {
             filter: `conversation_id=eq.${conversationId}`,
           },
           async (payload: any) => {
-            // Fetch fresh typing indicators
-            const indicators = await chatPersistenceService.getTypingIndicators(
-              conversationId
-            );
-            callback(indicators);
+            try {
+              // Fetch fresh typing indicators
+              const indicators = await chatPersistenceService.getTypingIndicators(
+                conversationId
+              );
+              callback(indicators);
+            } catch (error) {
+              console.error('[Chat] Error processing typing indicators:', error);
+              if (onError) onError(error as Error);
+            }
           }
         )
         .subscribe((status: any) => {
