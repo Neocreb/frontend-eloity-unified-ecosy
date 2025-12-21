@@ -313,81 +313,96 @@ export const EnhancedFreelanceHub: React.FC = () => {
           <div className="lg:col-span-3 space-y-6">
             {/* Stats Overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Active Jobs</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {stats.activeJobs.value.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        +{stats.activeJobs.change}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {statsLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <Card key={i} className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : stats ? (
+                <>
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Active Jobs</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {stats.activeJobs.value.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${stats.activeJobs.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stats.activeJobs.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          <span className="text-sm font-medium">
+                            {stats.activeJobs.change >= 0 ? '+' : ''}{stats.activeJobs.change}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">New Today</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {stats.newToday.value}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        +{stats.newToday.change}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">New Today</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {stats.newToday.value}
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${stats.newToday.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stats.newToday.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          <span className="text-sm font-medium">
+                            {stats.newToday.change >= 0 ? '+' : ''}{stats.newToday.change}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Avg Budget</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        ${stats.avgBudget.value.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        +${stats.avgBudget.change}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Avg Budget</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            ${stats.avgBudget.value.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${stats.avgBudget.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stats.avgBudget.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          <span className="text-sm font-medium">
+                            {stats.avgBudget.change >= 0 ? '+' : ''}${stats.avgBudget.change}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Success Rate</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {stats.successRate.value}%
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        +{stats.successRate.change}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Success Rate</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {stats.successRate.value}%
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${stats.successRate.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stats.successRate.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          <span className="text-sm font-medium">
+                            {stats.successRate.change >= 0 ? '+' : ''}{stats.successRate.change}%
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              ) : null}
             </div>
 
             {/* Compact Advanced Filters */}
