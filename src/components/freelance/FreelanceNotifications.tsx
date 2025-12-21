@@ -88,6 +88,7 @@ export const FreelanceNotifications: React.FC<FreelanceNotificationsProps> = ({
 
   const displayedNotifications = notifications.slice(0, maxNotifications);
 
+  // Empty state - no notifications
   if (notifications.length === 0) {
     return (
       <Card>
@@ -105,7 +106,7 @@ export const FreelanceNotifications: React.FC<FreelanceNotificationsProps> = ({
           <Bell className="h-12 w-12 text-muted-foreground mb-2 opacity-50" />
           <p className="text-muted-foreground">No notifications yet</p>
           <p className="text-xs text-muted-foreground mt-1">
-            You'll receive notifications when important events happen
+            You'll receive notifications when important events happen (proposals, milestones, messages, etc.)
           </p>
         </CardContent>
       </Card>
