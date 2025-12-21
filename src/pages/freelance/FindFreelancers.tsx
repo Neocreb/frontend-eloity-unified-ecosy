@@ -99,6 +99,8 @@ const FindFreelancers: React.FC = () => {
   
   const [sortBy, setSortBy] = useState("relevance");
   const [message, setMessage] = useState("");
+  const { searchFreelancers } = useFreelance();
+  const [freelancersLoading, setFreelancersLoading] = useState(true);
 
   const [freelancers, setFreelancers] = useState<Freelancer[]>([
     {
