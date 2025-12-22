@@ -829,6 +829,14 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
           )}
         </Tabs>
       </div>
+
+      {/* Cover Photo Editor Modal */}
+      <CoverPhotoEditor
+        isOpen={isCoverEditorOpen}
+        onClose={() => setIsCoverEditorOpen(false)}
+        onSave={handleSaveCoverPhoto}
+        currentImage={profile.banner_url}
+      />
     </div>
   );
 };
