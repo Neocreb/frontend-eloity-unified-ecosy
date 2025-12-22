@@ -1,12 +1,4 @@
-import React, { useState, useEffect } from "react";
-import {
-  Carousel,
-  CarouselContent,
-  CarouselItem,
-  CarouselNext,
-  CarouselPrevious,
-  type CarouselApi,
-} from "@/components/ui/carousel";
+import React, { useState, useEffect, useRef } from "react";
 import { StatsCard } from "./StatsCard";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +10,10 @@ import {
   TrendingUp,
   Heart,
   Share2,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types/user";
 import { useProfileStats } from "@/hooks/useProfileStats";
 
