@@ -78,7 +78,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     };
   }, [api]);
 
-  const stats: StatItem[] = [
+  const statsItems: StatItem[] = [
     {
       id: "posts",
       label: "Posts",
@@ -92,7 +92,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       id: "followers",
       label: "Followers",
       icon: <Users className="h-6 w-6" />,
-      value: followerCount || 0,
+      value: followerCount,
       description: "People following",
       gradient: "bg-gradient-to-br from-purple-500 to-purple-600",
       onClick: "followers",
@@ -101,7 +101,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       id: "following",
       label: "Following",
       icon: <UserPlus className="h-6 w-6" />,
-      value: followingCount || 0,
+      value: followingCount,
       description: "People you follow",
       gradient: "bg-gradient-to-br from-pink-500 to-pink-600",
       onClick: "following",
@@ -110,7 +110,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       id: "views",
       label: "Profile Views",
       icon: <Eye className="h-6 w-6" />,
-      value: profile?.profile_views || 0,
+      value: stats.profileViews,
       description: "Times viewed",
       gradient: "bg-gradient-to-br from-emerald-500 to-emerald-600",
       onClick: "views",
@@ -119,7 +119,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       id: "sales",
       label: "Marketplace Sales",
       icon: <ShoppingBag className="h-6 w-6" />,
-      value: profile?.marketplace_sales || 0,
+      value: stats.marketplaceSales,
       description: "Items sold",
       gradient: "bg-gradient-to-br from-amber-500 to-amber-600",
       onClick: "sales",
@@ -128,7 +128,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       id: "trades",
       label: "P2P Trades",
       icon: <TrendingUp className="h-6 w-6" />,
-      value: profile?.crypto_trades || 0,
+      value: stats.cryptoTrades,
       description: "Successful trades",
       gradient: "bg-gradient-to-br from-cyan-500 to-cyan-600",
       onClick: "trades",
@@ -137,7 +137,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       id: "likes",
       label: "Total Likes",
       icon: <Heart className="h-6 w-6" />,
-      value: profile?.likes_count || 0,
+      value: stats.likesCount,
       description: "Content appreciation",
       gradient: "bg-gradient-to-br from-rose-500 to-rose-600",
       onClick: "likes",
@@ -146,7 +146,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       id: "shares",
       label: "Shares",
       icon: <Share2 className="h-6 w-6" />,
-      value: profile?.shares_count || 0,
+      value: stats.sharesCount,
       description: "Shared by others",
       gradient: "bg-gradient-to-br from-slate-500 to-slate-600",
       onClick: "shares",
