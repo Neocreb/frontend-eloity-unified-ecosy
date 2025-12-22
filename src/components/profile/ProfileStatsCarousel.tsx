@@ -183,6 +183,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
           description: "Total balance",
           gradient: "bg-gradient-to-br from-green-500 to-green-600",
           onClick: "wallet",
+          isPrivate: true,
         },
         {
           id: "elopoints",
@@ -192,6 +193,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
           description: "Reward points",
           gradient: "bg-gradient-to-br from-violet-500 to-violet-600",
           onClick: "elopoints",
+          isPrivate: true,
         },
       ]
     : [];
