@@ -90,7 +90,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     {
       id: "posts",
       label: "Posts",
-      icon: <MessageSquare className="h-6 w-6" />,
+      icon: <MessageSquare className="h-6 w-6" aria-hidden="true" />,
       value: profile?.posts_count || 0,
       description: "Content shared",
       gradient: "bg-gradient-to-br from-blue-500 to-blue-600",
@@ -99,7 +99,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     {
       id: "followers",
       label: "Followers",
-      icon: <Users className="h-6 w-6" />,
+      icon: <Users className="h-6 w-6" aria-hidden="true" />,
       value: followerCount,
       description: "People following",
       gradient: "bg-gradient-to-br from-purple-500 to-purple-600",
@@ -108,7 +108,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     {
       id: "following",
       label: "Following",
-      icon: <UserPlus className="h-6 w-6" />,
+      icon: <UserPlus className="h-6 w-6" aria-hidden="true" />,
       value: followingCount,
       description: "People you follow",
       gradient: "bg-gradient-to-br from-pink-500 to-pink-600",
@@ -117,7 +117,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     {
       id: "views",
       label: "Profile Views",
-      icon: <Eye className="h-6 w-6" />,
+      icon: <Eye className="h-6 w-6" aria-hidden="true" />,
       value: stats.profileViews,
       description: "Times viewed",
       gradient: "bg-gradient-to-br from-emerald-500 to-emerald-600",
@@ -126,7 +126,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     {
       id: "sales",
       label: "Marketplace Sales",
-      icon: <ShoppingBag className="h-6 w-6" />,
+      icon: <ShoppingBag className="h-6 w-6" aria-hidden="true" />,
       value: stats.marketplaceSales,
       description: "Items sold",
       gradient: "bg-gradient-to-br from-amber-500 to-amber-600",
@@ -135,7 +135,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     {
       id: "trades",
       label: "P2P Trades",
-      icon: <TrendingUp className="h-6 w-6" />,
+      icon: <TrendingUp className="h-6 w-6" aria-hidden="true" />,
       value: stats.cryptoTrades,
       description: "Successful trades",
       gradient: "bg-gradient-to-br from-cyan-500 to-cyan-600",
@@ -144,7 +144,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     {
       id: "likes",
       label: "Total Likes",
-      icon: <Heart className="h-6 w-6" />,
+      icon: <Heart className="h-6 w-6" aria-hidden="true" />,
       value: stats.likesCount,
       description: "Content appreciation",
       gradient: "bg-gradient-to-br from-rose-500 to-rose-600",
@@ -153,7 +153,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     {
       id: "shares",
       label: "Shares",
-      icon: <Share2 className="h-6 w-6" />,
+      icon: <Share2 className="h-6 w-6" aria-hidden="true" />,
       value: stats.sharesCount,
       description: "Shared by others",
       gradient: "bg-gradient-to-br from-slate-500 to-slate-600",
