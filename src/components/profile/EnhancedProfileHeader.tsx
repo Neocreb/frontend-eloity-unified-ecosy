@@ -156,7 +156,7 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
       </div>
 
       {/* Profile Information Section */}
-      <div className="px-4 md:px-6">
+      <div className="px-4 md:px-6 bg-white">
         <div className="relative -mt-12 sm:-mt-16 md:-mt-20">
           {/* Avatar */}
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-6">
