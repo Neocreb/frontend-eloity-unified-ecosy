@@ -198,6 +198,9 @@ export default function EditProfile() {
     setSaving(true);
     try {
       let avatar_url: string | null = null;
+      let banner_url: string | null = null;
+
+      // Upload avatar if selected
       if (avatarFile) {
         const bucket = 'avatars';
         const path = `${user.id}/${Date.now()}-${avatarFile.name}`;
@@ -211,6 +214,23 @@ export default function EditProfile() {
         avatar_url = data.publicUrl;
       }
 
+      // Upload banner if selected or removed
+      if (bannerFile) {
+        const bucket = 'banners';
+        const path = `${user.id}/${Date.now()}-${bannerFile.name}`;
+        const { error: uploadError } = await supabase.storage.from(bucket).upload(path, bannerFile, {
+          upsert: false,
+          cacheControl: '3600',
+          contentType: bannerFile.type,
+        });
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+        banner_url = data.publicUrl;
+      } else if (bannerPreview === '' && profile.banner) {
+        // User intentionally removed banner
+        banner_url = null;
+      }
+
       const updates: any = {
         full_name: formData.displayName,
         username: formData.username,
@@ -221,6 +241,7 @@ export default function EditProfile() {
         education: formData.education,
       };
       if (avatar_url) updates.avatar_url = avatar_url;
+      if (banner_url !== null) updates.banner_url = banner_url;
 
       const { error } = await supabase
         .from('profiles')
