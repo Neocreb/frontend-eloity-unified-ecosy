@@ -611,19 +611,21 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 </div>
 
                 {/* Enhanced Stats Carousel */}
-                <div className="mt-8 py-6 border-t">
-                  <h3 className="text-lg font-semibold mb-4">Platform Statistics</h3>
-                  <ProfileStatsCarousel
-                    profile={profileUser!}
-                    followerCount={followerCount}
-                    followingCount={followingCount}
-                    enableRealData={true}
-                    onStatClick={(statType) => {
-                      // Handle stat click navigation
-                      console.log("Stat clicked:", statType);
-                    }}
-                  />
-                </div>
+                {profileUser && (
+                  <div className="mt-8 py-6 border-t">
+                    <h3 className="text-lg font-semibold mb-4">Platform Statistics</h3>
+                    <ProfileStatsCarousel
+                      profile={profileUser}
+                      followerCount={followerCount}
+                      followingCount={followingCount}
+                      enableRealData={true}
+                      onStatClick={(statType) => {
+                        // Handle stat click navigation
+                        console.log("Stat clicked:", statType);
+                      }}
+                    />
+                  </div>
+                )}
               </CardContent>
             </div>
           </Card>
