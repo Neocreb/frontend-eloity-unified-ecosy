@@ -307,6 +307,73 @@ export default function EditProfile() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8">
           <div className="space-y-6 sm:space-y-8">
+            {/* Cover Photo Section */}
+            <Card className="border-purple-200 bg-purple-50/50 dark:bg-purple-900/20 dark:border-purple-900/50 overflow-hidden">
+              <CardContent className="p-0">
+                <div className="space-y-4">
+                  {/* Banner Preview */}
+                  <div className="relative h-40 sm:h-48 md:h-56 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                    {bannerPreview ? (
+                      <>
+                        <img
+                          src={bannerPreview}
+                          alt="Cover preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg"
+                          onClick={removeBanner}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-muted-foreground text-sm">No cover photo</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Banner Upload Area */}
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id="banner-input"
+                      onChange={handleBannerSelect}
+                    />
+                    <div
+                      onDragOver={handleBannerDragOver}
+                      onDragLeave={handleBannerDragLeave}
+                      onDrop={handleBannerDrop}
+                      onClick={() => document.getElementById('banner-input')?.click()}
+                      className={cn(
+                        "relative border-2 border-dashed rounded-lg p-6 sm:p-8 cursor-pointer transition-all duration-200",
+                        dragOverBanner
+                          ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/20"
+                          : "border-gray-300 dark:border-gray-700 hover:border-purple-400 hover:bg-purple-50/30 dark:hover:bg-purple-900/10"
+                      )}
+                    >
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <div className="text-center">
+                          <p className="font-semibold text-sm sm:text-base">Drag and drop your cover photo</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                            or click to select. Recommended: 1500 × 500px, under 10MB
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Profile Picture Section */}
             <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-900/50">
               <CardContent className="p-4 sm:p-6">
