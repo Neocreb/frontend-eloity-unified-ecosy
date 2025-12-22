@@ -185,8 +185,8 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
 
         {/* Mobile Navigation - Visible only on small screens */}
         <div className="flex lg:hidden justify-center gap-2 mt-4">
-          <CarouselPrevious className="static h-8 w-8 bg-gray-100 hover:bg-gray-200 border-0 shadow-none" />
-          <CarouselNext className="static h-8 w-8 bg-gray-100 hover:bg-gray-200 border-0 shadow-none" />
+          <CarouselPrevious className={cn("static h-8 w-8 bg-gray-100 hover:bg-gray-200 border-0 shadow-none")} />
+          <CarouselNext className={cn("static h-8 w-8 bg-gray-100 hover:bg-gray-200 border-0 shadow-none")} />
         </div>
       </Carousel>
 
