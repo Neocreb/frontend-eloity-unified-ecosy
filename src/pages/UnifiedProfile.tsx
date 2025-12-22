@@ -113,9 +113,15 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { walletBalance, transactions, isLoading: walletLoading } = useWalletContext();
+  const { data: rewardsData } = useRewards();
   const { toast } = useToast();
 
   const targetUsername = propUsername || paramUsername;
+
+  // Calculate total wallet balance (sum of all portfolio types)
+  const totalWalletBalance = walletBalance?.total || 0;
+  // Extract ELO points from rewards data
+  const eloPoints = rewardsData?.calculatedUserRewards?.total_earned || 0;
 
   // State management
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
