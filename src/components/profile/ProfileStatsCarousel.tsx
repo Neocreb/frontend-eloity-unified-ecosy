@@ -156,8 +156,8 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       >
         {/* Navigation Buttons - Desktop only */}
         <div className="hidden lg:block">
-          <CarouselPrevious className="left-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white border border-gray-200 shadow-md" />
-          <CarouselNext className="right-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white border border-gray-200 shadow-md" />
+          <CarouselPrevious className={cn("left-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white border border-gray-200 shadow-md")} />
+          <CarouselNext className={cn("right-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white border border-gray-200 shadow-md")} />
         </div>
 
         <CarouselContent className="pl-4 sm:pl-6">
