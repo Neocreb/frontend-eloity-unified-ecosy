@@ -58,8 +58,11 @@ export default function EditProfile() {
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>(profile.avatar);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string>(profile.banner);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dragOverBanner, setDragOverBanner] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
