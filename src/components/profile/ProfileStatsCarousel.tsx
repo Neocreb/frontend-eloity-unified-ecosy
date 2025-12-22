@@ -244,18 +244,21 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
         </div>
       </Carousel>
 
-      {/* Dots Indicator - Enhanced styling */}
-      <div className="flex justify-center gap-1.5 mt-4 sm:mt-6 px-4">
-        {statsItems.map((_, index) => (
+      {/* Dots Indicator - Enhanced styling and accessibility */}
+      <div className="flex justify-center gap-1.5 mt-4 sm:mt-6 px-4" role="tablist" aria-label="Statistics carousel pages">
+        {statsItems.map((stat, index) => (
           <button
             key={index}
             onClick={() => api?.scrollSnapList()[index] && api?.scrollSnapList()[index]}
             className={cn(
               "h-2 transition-all duration-300 rounded-full",
-              "hover:bg-gray-500 cursor-pointer",
+              "hover:bg-gray-500 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
               index === 0 ? "bg-blue-500 w-4" : "bg-gray-300 w-2 hover:w-3"
             )}
-            aria-label={`Go to slide ${index + 1}`}
+            role="tab"
+            aria-label={`Go to ${stat.label} statistics (slide ${index + 1})`}
+            aria-selected={index === 0}
+            aria-controls={`stats-carousel-${index}`}
           />
         ))}
       </div>
