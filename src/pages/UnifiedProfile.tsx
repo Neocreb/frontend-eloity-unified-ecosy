@@ -610,37 +610,19 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                   )}
                 </div>
 
-                {/* Enhanced Stats with Wallet Integration */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mt-6 py-4 border-t">
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{mockProfile.posts}</div>
-                    <div className="text-xs text-muted-foreground">Posts</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{followerCount.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Followers</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{followingCount.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Following</div>
-                  </div>
-                  {isOwnProfile && (
-                    <>
-                      <div className="text-center cursor-pointer" onClick={() => navigate("/app/wallet")}>
-                        <div className="text-lg sm:text-xl font-bold text-green-600">${mockProfile.walletBalance}</div>
-                        <div className="text-xs text-muted-foreground">Balance</div>
-                      </div>
-                      <div className="text-center cursor-pointer" onClick={() => navigate("/app/notifications")}>
-                        <div className="text-lg sm:text-xl font-bold text-blue-600 relative">
-                          {mockProfile.unreadNotifications}
-                          {mockProfile.unreadNotifications > 0 && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Notifications</div>
-                      </div>
-                    </>
-                  )}
+                {/* Enhanced Stats Carousel */}
+                <div className="mt-8 py-6 border-t">
+                  <h3 className="text-lg font-semibold mb-4">Platform Statistics</h3>
+                  <ProfileStatsCarousel
+                    profile={profileUser!}
+                    followerCount={followerCount}
+                    followingCount={followingCount}
+                    enableRealData={true}
+                    onStatClick={(statType) => {
+                      // Handle stat click navigation
+                      console.log("Stat clicked:", statType);
+                    }}
+                  />
                 </div>
               </CardContent>
             </div>
