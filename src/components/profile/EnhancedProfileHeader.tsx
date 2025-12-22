@@ -315,8 +315,25 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
         </div>
       </div>
 
+      {/* Profile Stats Carousel */}
+      <div className="px-4 md:px-6 mt-8 sm:mt-10">
+        <div className="mb-2">
+          <h3 className="text-lg sm:text-xl font-bold">Your Activity</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">Comprehensive overview of your platform statistics</p>
+        </div>
+        <ProfileStatsCarousel
+          profile={profile}
+          followerCount={followerCount}
+          followingCount={followingCount}
+          onStatClick={(statType) => {
+            // TODO: Handle stat click navigation
+            console.log("Stat clicked:", statType);
+          }}
+        />
+      </div>
+
       {/* Enhanced Info Tabs */}
-      <div className="px-4 md:px-6 mt-6">
+      <div className="px-4 md:px-6 mt-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 sm:grid-cols-6">
             <TabsTrigger value="overview">Overview</TabsTrigger>
