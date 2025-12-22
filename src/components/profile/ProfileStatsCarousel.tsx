@@ -12,6 +12,9 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
+  Wallet,
+  Coins,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types/user";
@@ -24,6 +27,9 @@ interface ProfileStatsCarouselProps {
   loading?: boolean;
   onStatClick?: (statType: string) => void;
   enableRealData?: boolean;
+  isOwnProfile?: boolean;
+  walletBalance?: number;
+  eloPoints?: number;
 }
 
 interface StatItem {
