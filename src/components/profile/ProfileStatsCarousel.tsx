@@ -92,7 +92,8 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     }
   };
 
-  const statsItems: StatItem[] = [
+  // Build stats items with conditional visibility
+  const baseStatsItems: StatItem[] = [
     {
       id: "posts",
       label: "Posts",
@@ -166,6 +167,36 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       onClick: "shares",
     },
   ];
+
+  // Owner-only stats (wallet balance and ELO points)
+  const ownerOnlyStats: StatItem[] = isOwnProfile
+    ? [
+        {
+          id: "wallet",
+          label: "Wallet Balance",
+          icon: <Wallet className="h-6 w-6" aria-hidden="true" />,
+          value:
+            typeof stats.walletBalance === "number"
+              ? `$${stats.walletBalance.toFixed(2)}`
+              : "$0.00",
+          description: "Total balance",
+          gradient: "bg-gradient-to-br from-green-500 to-green-600",
+          onClick: "wallet",
+        },
+        {
+          id: "elopoints",
+          label: "ELO Points",
+          icon: <Coins className="h-6 w-6" aria-hidden="true" />,
+          value: stats.eloPoints || 0,
+          description: "Reward points",
+          gradient: "bg-gradient-to-br from-violet-500 to-violet-600",
+          onClick: "elopoints",
+        },
+      ]
+    : [];
+
+  // Combine all items
+  const statsItems: StatItem[] = [...baseStatsItems, ...ownerOnlyStats];
 
   // Show error state if stats failed to load
   if (stats.error && isInitialized) {
