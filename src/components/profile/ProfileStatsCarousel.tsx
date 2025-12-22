@@ -44,15 +44,15 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
   onStatClick,
   enableRealData = true,
 }) => {
-  const [api, setApi] = useState<CarouselApi>();
-  const [canScroll, setCanScroll] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Fetch real stats from database
   const stats = useProfileStats(profile, profile?.id, enableRealData);
 
   // Mark carousel as initialized when stats load completes
-  React.useEffect(() => {
+  useEffect(() => {
     if (!stats.loading) {
       setIsInitialized(true);
     }
@@ -63,23 +63,19 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
   const followingCount = stats.followingCount || initialFollowingCount;
   const loading = externalLoading || stats.loading;
 
-  useEffect(() => {
-    if (!api) {
-      return;
+  // Handle scroll navigation
+  const scroll = (direction: "left" | "right") => {
+    if (!scrollContainerRef.current) return;
+    
+    const itemWidth = 320; // Approximate card width with gap
+    if (direction === "left") {
+      scrollContainerRef.current.scrollBy({ left: -itemWidth, behavior: "smooth" });
+      setCurrentIndex(Math.max(0, currentIndex - 1));
+    } else {
+      scrollContainerRef.current.scrollBy({ left: itemWidth, behavior: "smooth" });
+      setCurrentIndex(currentIndex + 1);
     }
-
-    const onSelect = () => {
-      setCanScroll(api.canScrollNext() || api.canScrollPrev());
-    };
-
-    api.on("select", onSelect);
-    api.on("reInit", onSelect);
-
-    return () => {
-      api?.off("select", onSelect);
-      api?.off("reInit", onSelect);
-    };
-  }, [api]);
+  };
 
   const statsItems: StatItem[] = [
     {
@@ -176,38 +172,57 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
 
   return (
     <div className="w-full space-y-4" role="region" aria-label="Profile statistics carousel">
-      <Carousel
-        opts={{
-          align: "start",
-          loop: false,
-          skipSnaps: false,
-          dragFree: true,
-        }}
-        setApi={setApi}
-        className="relative w-full"
-        aria-label="Platform statistics"
-      >
+      {/* Stats Container with scroll snap */}
+      <div className="relative">
         {/* Navigation Buttons - Desktop only */}
-        <div className="hidden lg:block">
-          <CarouselPrevious className={cn(
-            "left-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white",
-            "border border-gray-300 shadow-md transition-all duration-300",
-            "hover:shadow-lg hover:bg-gray-50"
-          )} />
-          <CarouselNext className={cn(
-            "right-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white",
-            "border border-gray-300 shadow-md transition-all duration-300",
-            "hover:shadow-lg hover:bg-gray-50"
-          )} />
+        <div className="hidden lg:flex absolute inset-y-0 left-0 right-0 pointer-events-none">
+          <Button
+            onClick={() => scroll("left")}
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "absolute left-0 top-1/3 -translate-y-1/2 h-10 w-10 pointer-events-auto",
+              "bg-white/80 hover:bg-white border border-gray-300 shadow-md",
+              "transition-all duration-300 hover:shadow-lg hover:bg-gray-50"
+            )}
+            aria-label="Scroll carousel left"
+          >
+            <ChevronLeft className="h-5 w-5" />
+          </Button>
+          <Button
+            onClick={() => scroll("right")}
+            size="icon"
+            variant="ghost"
+            className={cn(
+              "absolute right-0 top-1/3 -translate-y-1/2 h-10 w-10 pointer-events-auto",
+              "bg-white/80 hover:bg-white border border-gray-300 shadow-md",
+              "transition-all duration-300 hover:shadow-lg hover:bg-gray-50"
+            )}
+            aria-label="Scroll carousel right"
+          >
+            <ChevronRight className="h-5 w-5" />
+          </Button>
         </div>
 
-        <CarouselContent className="-ml-2 pl-2 sm:pl-0">
-          {statsItems.map((stat) => (
-            <CarouselItem
-              key={stat.id}
-              className="basis-full xs:basis-1/2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 pl-2 sm:pl-4"
-            >
-              <div className="transition-all duration-300 hover:scale-105">
+        {/* Scrollable Container */}
+        <div
+          ref={scrollContainerRef}
+          className="w-full overflow-x-auto scroll-smooth"
+          style={{
+            scrollBehavior: "smooth",
+            scrollSnapType: "x mandatory",
+          }}
+          role="list"
+          aria-label="Statistics items"
+        >
+          <div className="flex gap-3 sm:gap-4 pb-2 px-2 sm:px-0">
+            {statsItems.map((stat) => (
+              <div
+                key={stat.id}
+                className="flex-shrink-0 w-full xs:w-1/2 sm:w-1/2 md:w-1/3 lg:w-1/4"
+                style={{ scrollSnapAlign: "start" }}
+                role="listitem"
+              >
                 <StatsCard
                   icon={stat.icon}
                   label={stat.label}
@@ -222,37 +237,57 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
                   }}
                 />
               </div>
-            </CarouselItem>
-          ))}
-        </CarouselContent>
+            ))}
+          </div>
+        </div>
 
         {/* Mobile Navigation - Visible only on small/medium screens */}
         <div className="flex lg:hidden justify-center gap-2 mt-6">
-          <CarouselPrevious className={cn(
-            "static h-9 w-9 bg-gray-100 hover:bg-gray-200 border-0 shadow-md",
-            "transition-all duration-300 hover:shadow-lg"
-          )} />
-          <CarouselNext className={cn(
-            "static h-9 w-9 bg-gray-100 hover:bg-gray-200 border-0 shadow-md",
-            "transition-all duration-300 hover:shadow-lg"
-          )} />
+          <Button
+            onClick={() => scroll("left")}
+            size="sm"
+            variant="outline"
+            className="h-9 w-9 p-0 shadow-md transition-all duration-300 hover:shadow-lg"
+            aria-label="Scroll carousel left"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            onClick={() => scroll("right")}
+            size="sm"
+            variant="outline"
+            className="h-9 w-9 p-0 shadow-md transition-all duration-300 hover:shadow-lg"
+            aria-label="Scroll carousel right"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
-      </Carousel>
+      </div>
 
       {/* Dots Indicator - Enhanced styling and accessibility */}
       <div className="flex justify-center gap-1.5 mt-4 sm:mt-6 px-4" role="tablist" aria-label="Statistics carousel pages">
         {statsItems.map((stat, index) => (
           <button
             key={index}
-            onClick={() => api?.scrollSnapList()[index] && api?.scrollSnapList()[index]}
+            onClick={() => {
+              // Scroll to position
+              if (scrollContainerRef.current) {
+                const itemWidth = 320;
+                scrollContainerRef.current.scrollBy({
+                  left: itemWidth * (index - currentIndex),
+                  behavior: "smooth",
+                });
+                setCurrentIndex(index);
+              }
+            }}
             className={cn(
               "h-2 transition-all duration-300 rounded-full",
               "hover:bg-gray-500 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
-              index === 0 ? "bg-blue-500 w-4" : "bg-gray-300 w-2 hover:w-3"
+              index === currentIndex ? "bg-blue-500 w-4" : "bg-gray-300 w-2 hover:w-3"
             )}
             role="tab"
             aria-label={`Go to ${stat.label} statistics (slide ${index + 1})`}
-            aria-selected={index === 0}
+            aria-selected={index === currentIndex}
             aria-controls={`stats-carousel-${index}`}
           />
         ))}
