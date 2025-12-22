@@ -82,8 +82,13 @@ export const StatsCard: React.FC<StatsCardProps> = ({
       <CardContent className={cn("p-6 sm:p-8 h-full flex flex-col justify-between", gradient, "text-white")}>
         {/* Icon with animation */}
         <div className="flex items-center justify-between mb-4">
-          <div className="p-3 rounded-lg bg-white/20 group-hover:bg-white/30 transition-all duration-300 transform group-hover:scale-110" aria-hidden="true">
+          <div className="p-3 rounded-lg bg-white/20 group-hover:bg-white/30 transition-all duration-300 transform group-hover:scale-110 relative" aria-hidden="true">
             {icon}
+            {isPrivate && (
+              <div className="absolute -top-1 -right-1 bg-white/90 text-gray-700 rounded-full p-1">
+                <Lock className="h-3 w-3" />
+              </div>
+            )}
           </div>
           <div className="text-sm font-medium opacity-75 group-hover:opacity-100 transition-opacity">{label}</div>
         </div>
