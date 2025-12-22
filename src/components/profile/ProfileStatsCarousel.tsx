@@ -43,13 +43,22 @@ interface StatItem {
 
 export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
   profile,
-  followerCount = 0,
-  followingCount = 0,
-  loading = false,
+  followerCount: initialFollowerCount = 0,
+  followingCount: initialFollowingCount = 0,
+  loading: externalLoading = false,
   onStatClick,
+  enableRealData = true,
 }) => {
   const [api, setApi] = useState<CarouselApi>();
   const [canScroll, setCanScroll] = useState(false);
+
+  // Fetch real stats from database
+  const stats = useProfileStats(profile, profile?.id, enableRealData);
+
+  // Use real data if available, otherwise fallback to props
+  const followerCount = stats.followerCount || initialFollowerCount;
+  const followingCount = stats.followingCount || initialFollowingCount;
+  const loading = externalLoading || stats.loading;
 
   useEffect(() => {
     if (!api) {
