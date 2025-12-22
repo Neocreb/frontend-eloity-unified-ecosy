@@ -203,7 +203,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
 
       {/* Dots Indicator */}
       <div className="flex justify-center gap-1.5 mt-4 sm:mt-6">
-        {stats.map((_, index) => (
+        {statsItems.map((_, index) => (
           <button
             key={index}
             onClick={() => api?.scrollSnapList()[index] && api?.scrollSnapList()[index]}
