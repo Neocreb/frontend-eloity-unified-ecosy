@@ -4,6 +4,9 @@
   "description": "Eloity Unified Ecosystem Platform",
   "main": "server/enhanced-index.ts",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npx cross-env NODE_ENV=development npx tsx server/enhanced-index.ts",
@@ -136,7 +139,6 @@
     "sonner": "^1.5.0",
     "stripe": "^20.1.0",
     "striptags": "^3.2.0",
-    "supabase": "^2.51.0",
     "tailwind-merge": "^2.3.0",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
