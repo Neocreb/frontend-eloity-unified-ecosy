@@ -279,6 +279,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
                   description={stat.description}
                   gradient={stat.gradient}
                   loading={loading}
+                  isPrivate={stat.isPrivate}
                   onClick={() => {
                     if (onStatClick && stat.onClick) {
                       onStatClick(stat.onClick);
