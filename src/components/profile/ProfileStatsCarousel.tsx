@@ -51,9 +51,17 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
 }) => {
   const [api, setApi] = useState<CarouselApi>();
   const [canScroll, setCanScroll] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Fetch real stats from database
   const stats = useProfileStats(profile, profile?.id, enableRealData);
+
+  // Mark carousel as initialized when stats load completes
+  React.useEffect(() => {
+    if (!stats.loading) {
+      setIsInitialized(true);
+    }
+  }, [stats.loading]);
 
   // Use real data if available, otherwise fallback to props
   const followerCount = stats.followerCount || initialFollowerCount;
