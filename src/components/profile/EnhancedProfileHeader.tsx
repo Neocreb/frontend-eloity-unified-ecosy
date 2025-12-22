@@ -131,7 +131,7 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
               variant="secondary"
               onClick={(e) => {
                 e.stopPropagation();
-                onEdit?.();
+                setIsCoverEditorOpen(true);
               }}
               className="gap-2 shadow-lg hover:shadow-xl transition-shadow"
             >
