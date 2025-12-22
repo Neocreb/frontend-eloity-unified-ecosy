@@ -94,27 +94,27 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
 
   return (
     <div className="relative">
-      {/* Banner Section */}
-      <div className="relative h-48 sm:h-56 md:h-64 lg:h-72 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 overflow-hidden rounded-b-lg group cursor-pointer">
+      {/* Banner Section - Full Bleed Cover Photo */}
+      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 overflow-hidden group cursor-pointer">
         {profile.banner_url && (
           <div
-            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
+            className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-300 group-hover:scale-105"
             style={{ backgroundImage: `url(${profile.banner_url})` }}
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/20" />
 
         {/* Online Status */}
         {profile.is_online && (
-          <div className="absolute top-4 left-4 flex items-center gap-2 bg-green-500/90 text-white px-3 py-1 rounded-full text-sm">
+          <div className="absolute top-4 left-4 flex items-center gap-2 bg-green-500/90 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
             <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
             Online
           </div>
         )}
 
-        {/* Banner Edit Overlay - Only visible on own profile */}
+        {/* Banner Edit Overlay - Enhanced for mobile and desktop */}
         {isOwnProfile && (
-          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 sm:gap-4">
             <Button
               size="lg"
               variant="secondary"
@@ -122,7 +122,7 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
                 e.stopPropagation();
                 onEdit?.();
               }}
-              className="gap-2"
+              className="gap-2 shadow-lg hover:shadow-xl transition-shadow"
             >
               <Camera className="w-4 h-4" />
               Change Cover Photo
@@ -131,14 +131,24 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
         )}
 
         {/* Action Buttons - Top Right */}
-        <div className="absolute top-4 right-4 flex gap-2">
+        <div className="absolute top-4 right-4 flex gap-2 z-10">
           {isOwnProfile && (
-            <Button size="sm" variant="secondary" onClick={onEdit}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={onEdit}
+              className="shadow-lg hover:shadow-xl transition-shadow"
+            >
               <Edit className="w-4 h-4 mr-1" />
               Edit
             </Button>
           )}
-          <Button size="sm" variant="secondary" onClick={onShare}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={onShare}
+            className="shadow-lg hover:shadow-xl transition-shadow"
+          >
             <Share2 className="w-4 h-4" />
           </Button>
         </div>
