@@ -23,6 +23,7 @@ export const StatsCard: React.FC<StatsCardProps> = ({
   gradient,
   loading = false,
   onClick,
+  isPrivate = false,
 }) => {
   const [displayValue, setDisplayValue] = useState(0);
 
