@@ -40,6 +40,7 @@ interface StatItem {
   description?: string;
   gradient: string;
   onClick?: string;
+  isPrivate?: boolean;
 }
 
 export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
