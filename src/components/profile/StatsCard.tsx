@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { Lock } from "lucide-react";
 
 interface StatsCardProps {
   icon: React.ReactNode;
@@ -11,6 +12,7 @@ interface StatsCardProps {
   gradient: string;
   loading?: boolean;
   onClick?: () => void;
+  isPrivate?: boolean;
 }
 
 export const StatsCard: React.FC<StatsCardProps> = ({
