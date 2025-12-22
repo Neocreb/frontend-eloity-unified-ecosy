@@ -3,43 +3,71 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 // Check if we're in a browser environment before accessing import.meta.env
-const SUPABASE_URL = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_URL : process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY : process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+const getEnvVar = (key: string): string | undefined => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env[key];
+  }
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key];
+  }
+  return undefined;
+};
+
+const SUPABASE_URL = getEnvVar('VITE_SUPABASE_URL');
+const SUPABASE_PUBLISHABLE_KEY = getEnvVar('VITE_SUPABASE_PUBLISHABLE_KEY');
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-let _supabase: any;
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.');
-  // Provide a defensive stub to avoid runtime "Failed to fetch" errors when
-  // code attempts to call supabase methods while the env is not set.
-  const missingMsg = 'Supabase client not initialized: missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY.';
-  const thrower = () => { throw new Error(missingMsg); };
-  // Minimal proxy that throws on any usage and helps callers fail fast with a clear message.
-  // This prevents attempts to perform network fetches to an invalid URL (which cause the generic "Failed to fetch").
-  // Consumers should handle this error or configure the environment correctly.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _supabase = new Proxy({}, {
-    get() { return thrower; },
-    apply() { return thrower; },
-  });
-} else {
-  _supabase = createClient<Database>(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY,
-    {
-      auth: {
-        storage: typeof window !== 'undefined' ? localStorage : undefined,
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true,
-      },
-    }
-  );
-}
+// Lazy-load the client to avoid TDZ (Temporal Dead Zone) errors from circular dependencies
+let _supabase: any = null;
 
-export const supabase = _supabase;
+const initializeSupabase = (): any => {
+  if (_supabase) return _supabase;
+
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    console.error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.');
+    // Provide a defensive stub to avoid runtime "Failed to fetch" errors when
+    // code attempts to call supabase methods while the env is not set.
+    const missingMsg = 'Supabase client not initialized: missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY.';
+    const thrower = () => { throw new Error(missingMsg); };
+    // Minimal proxy that throws on any usage and helps callers fail fast with a clear message.
+    // This prevents attempts to perform network fetches to an invalid URL (which cause the generic "Failed to fetch").
+    // Consumers should handle this error or configure the environment correctly.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    _supabase = new Proxy({}, {
+      get() { return thrower; },
+      apply() { return thrower; },
+    });
+  } else {
+    _supabase = createClient<Database>(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY,
+      {
+        auth: {
+          storage: typeof window !== 'undefined' ? localStorage : undefined,
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+        },
+      }
+    );
+  }
+
+  return _supabase;
+};
+
+// Lazy getter to ensure initialization happens only when needed
+Object.defineProperty(exports, 'supabase', {
+  get() {
+    return initializeSupabase();
+  },
+  configurable: false,
+  enumerable: true,
+});
+
+// Default export for compatibility
+export const supabase = (() => initializeSupabase())();
 
 // Export createClient for re-export compatibility
 export { createClient };
