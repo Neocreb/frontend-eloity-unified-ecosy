@@ -65,14 +65,21 @@ export const StatsCard: React.FC<StatsCardProps> = ({
     <Card
       className={cn(
         "border-0 overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-2xl hover:scale-105 h-full group",
-        "backdrop-blur-sm"
+        "backdrop-blur-sm focus-within:ring-2 focus-within:ring-blue-400"
       )}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          onClick?.();
+        }
+      }}
     >
       <CardContent className={cn("p-6 sm:p-8 h-full flex flex-col justify-between", gradient, "text-white")}>
         {/* Icon with animation */}
         <div className="flex items-center justify-between mb-4">
-          <div className="p-3 rounded-lg bg-white/20 group-hover:bg-white/30 transition-all duration-300 transform group-hover:scale-110">
+          <div className="p-3 rounded-lg bg-white/20 group-hover:bg-white/30 transition-all duration-300 transform group-hover:scale-110" aria-hidden="true">
             {icon}
           </div>
           <div className="text-sm font-medium opacity-75 group-hover:opacity-100 transition-opacity">{label}</div>
@@ -80,7 +87,10 @@ export const StatsCard: React.FC<StatsCardProps> = ({
 
         {/* Value with counter animation */}
         <div className="space-y-2">
-          <div className="text-3xl sm:text-4xl font-bold tabular-nums transition-transform duration-300 group-hover:scale-105">
+          <div
+            className="text-3xl sm:text-4xl font-bold tabular-nums transition-transform duration-300 group-hover:scale-105"
+            aria-label={`${label}: ${typeof value === "number" && value > 999 ? displayValue.toLocaleString() : value}`}
+          >
             {typeof value === "number" && value > 999
               ? displayValue.toLocaleString()
               : value}
