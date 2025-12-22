@@ -8,6 +8,7 @@ import {
   type CarouselApi,
 } from "@/components/ui/carousel";
 import { StatsCard } from "./StatsCard";
+import { cn } from "@/lib/utils";
 import {
   Users,
   UserPlus,
