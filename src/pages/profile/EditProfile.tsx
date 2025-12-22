@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, ChevronLeft, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { Camera, ChevronLeft, Save, AlertCircle, CheckCircle, X, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProfileData {
