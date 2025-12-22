@@ -161,8 +161,26 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     },
   ];
 
+  // Show error state if stats failed to load
+  if (stats.error && isInitialized) {
+    return (
+      <div className="w-full py-8 text-center">
+        <p className="text-sm text-red-500 mb-3">
+          Unable to load statistics. Please refresh the page.
+        </p>
+        <button
+          onClick={() => window.location.reload()}
+          className="text-sm text-blue-600 hover:underline font-medium"
+          aria-label="Retry loading statistics"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4" role="region" aria-label="Profile statistics carousel">
       <Carousel
         opts={{
           align: "start",
@@ -172,6 +190,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
         }}
         setApi={setApi}
         className="relative w-full"
+        aria-label="Platform statistics"
       >
         {/* Navigation Buttons - Desktop only */}
         <div className="hidden lg:block">
