@@ -172,7 +172,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
         </div>
 
         <CarouselContent className="pl-4 sm:pl-6">
-          {stats.map((stat) => (
+          {statsItems.map((stat) => (
             <CarouselItem
               key={stat.id}
               className="basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 pl-4 sm:pl-6"
