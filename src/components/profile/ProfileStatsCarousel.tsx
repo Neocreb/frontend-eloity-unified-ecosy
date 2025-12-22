@@ -49,13 +49,22 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
   loading: externalLoading = false,
   onStatClick,
   enableRealData = true,
+  isOwnProfile = false,
+  walletBalance = 0,
+  eloPoints = 0,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Fetch real stats from database
-  const stats = useProfileStats(profile, profile?.id, enableRealData);
+  const stats = useProfileStats(
+    profile,
+    profile?.id,
+    enableRealData,
+    walletBalance,
+    eloPoints
+  );
 
   // Mark carousel as initialized when stats load completes
   useEffect(() => {
