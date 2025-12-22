@@ -626,8 +626,16 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                       followerCount={followerCount}
                       followingCount={followingCount}
                       enableRealData={true}
+                      isOwnProfile={isOwnProfile}
+                      walletBalance={isOwnProfile ? totalWalletBalance : undefined}
+                      eloPoints={isOwnProfile ? eloPoints : undefined}
                       onStatClick={(statType) => {
                         // Handle stat click navigation
+                        if (statType === "wallet") {
+                          navigate("/app/wallet");
+                        } else if (statType === "elopoints") {
+                          navigate("/app/rewards");
+                        }
                         console.log("Stat clicked:", statType);
                       }}
                     />
