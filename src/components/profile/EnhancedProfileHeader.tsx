@@ -96,7 +96,7 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
   return (
     <div className="relative">
       {/* Banner Section - Full Bleed Cover Photo */}
-      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 overflow-hidden group cursor-pointer">
+      <div className="relative w-screen left-1/2 right-1/2 -mx-[50vw] h-48 sm:h-56 md:h-64 lg:h-80 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 overflow-hidden group cursor-pointer">
         {profile.banner_url && (
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-300 group-hover:scale-105"
