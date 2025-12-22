@@ -154,7 +154,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
   ];
 
   return (
-    <div className="w-full py-6 sm:py-8 px-0">
+    <div className="w-full space-y-4">
       <Carousel
         opts={{
           align: "start",
@@ -167,47 +167,67 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       >
         {/* Navigation Buttons - Desktop only */}
         <div className="hidden lg:block">
-          <CarouselPrevious className={cn("left-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white border border-gray-200 shadow-md")} />
-          <CarouselNext className={cn("right-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white border border-gray-200 shadow-md")} />
+          <CarouselPrevious className={cn(
+            "left-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white",
+            "border border-gray-300 shadow-md transition-all duration-300",
+            "hover:shadow-lg hover:bg-gray-50"
+          )} />
+          <CarouselNext className={cn(
+            "right-0 top-1/3 -translate-y-1/2 h-10 w-10 bg-white/80 hover:bg-white",
+            "border border-gray-300 shadow-md transition-all duration-300",
+            "hover:shadow-lg hover:bg-gray-50"
+          )} />
         </div>
 
-        <CarouselContent className="pl-4 sm:pl-6">
+        <CarouselContent className="-ml-2 pl-2 sm:pl-0">
           {statsItems.map((stat) => (
             <CarouselItem
               key={stat.id}
-              className="basis-full sm:basis-1/2 lg:basis-1/3 xl:basis-1/4 pl-4 sm:pl-6"
+              className="basis-full xs:basis-1/2 sm:basis-1/2 md:basis-1/3 lg:basis-1/4 pl-2 sm:pl-4"
             >
-              <StatsCard
-                icon={stat.icon}
-                label={stat.label}
-                value={stat.value}
-                description={stat.description}
-                gradient={stat.gradient}
-                loading={loading}
-                onClick={() => {
-                  if (onStatClick && stat.onClick) {
-                    onStatClick(stat.onClick);
-                  }
-                }}
-              />
+              <div className="transition-all duration-300 hover:scale-105">
+                <StatsCard
+                  icon={stat.icon}
+                  label={stat.label}
+                  value={stat.value}
+                  description={stat.description}
+                  gradient={stat.gradient}
+                  loading={loading}
+                  onClick={() => {
+                    if (onStatClick && stat.onClick) {
+                      onStatClick(stat.onClick);
+                    }
+                  }}
+                />
+              </div>
             </CarouselItem>
           ))}
         </CarouselContent>
 
-        {/* Mobile Navigation - Visible only on small screens */}
-        <div className="flex lg:hidden justify-center gap-2 mt-4">
-          <CarouselPrevious className={cn("static h-8 w-8 bg-gray-100 hover:bg-gray-200 border-0 shadow-none")} />
-          <CarouselNext className={cn("static h-8 w-8 bg-gray-100 hover:bg-gray-200 border-0 shadow-none")} />
+        {/* Mobile Navigation - Visible only on small/medium screens */}
+        <div className="flex lg:hidden justify-center gap-2 mt-6">
+          <CarouselPrevious className={cn(
+            "static h-9 w-9 bg-gray-100 hover:bg-gray-200 border-0 shadow-md",
+            "transition-all duration-300 hover:shadow-lg"
+          )} />
+          <CarouselNext className={cn(
+            "static h-9 w-9 bg-gray-100 hover:bg-gray-200 border-0 shadow-md",
+            "transition-all duration-300 hover:shadow-lg"
+          )} />
         </div>
       </Carousel>
 
-      {/* Dots Indicator */}
-      <div className="flex justify-center gap-1.5 mt-4 sm:mt-6">
+      {/* Dots Indicator - Enhanced styling */}
+      <div className="flex justify-center gap-1.5 mt-4 sm:mt-6 px-4">
         {statsItems.map((_, index) => (
           <button
             key={index}
             onClick={() => api?.scrollSnapList()[index] && api?.scrollSnapList()[index]}
-            className="h-2 transition-all duration-300 rounded-full bg-gray-300 hover:bg-gray-400"
+            className={cn(
+              "h-2 transition-all duration-300 rounded-full",
+              "hover:bg-gray-500 cursor-pointer",
+              index === 0 ? "bg-blue-500 w-4" : "bg-gray-300 w-2 hover:w-3"
+            )}
             aria-label={`Go to slide ${index + 1}`}
           />
         ))}
