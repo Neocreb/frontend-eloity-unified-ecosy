@@ -35,6 +35,7 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
 import { UserProfile, Achievement, Badge as UserBadge } from "@/types/user";
+import { ProfileStatsCarousel } from "./ProfileStatsCarousel";
 
 interface EnhancedProfileHeaderProps {
   profile: UserProfile;
