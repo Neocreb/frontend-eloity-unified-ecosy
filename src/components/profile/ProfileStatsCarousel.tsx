@@ -20,6 +20,7 @@ import {
   Share2,
 } from "lucide-react";
 import { UserProfile } from "@/types/user";
+import { useProfileStats } from "@/hooks/useProfileStats";
 
 interface ProfileStatsCarouselProps {
   profile: UserProfile;
