@@ -28,6 +28,7 @@ interface ProfileStatsCarouselProps {
   followingCount?: number;
   loading?: boolean;
   onStatClick?: (statType: string) => void;
+  enableRealData?: boolean;
 }
 
 interface StatItem {
