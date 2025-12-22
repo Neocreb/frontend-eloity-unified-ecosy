@@ -63,6 +63,15 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
 }) => {
   const { isPremium, isVerified } = useUserPremiumStatus();
   const [activeTab, setActiveTab] = useState("overview");
+  const [isCoverEditorOpen, setIsCoverEditorOpen] = useState(false);
+
+  const handleSaveCoverPhoto = async (imageData: string) => {
+    // TODO: Implement cover photo save logic with API
+    // For now, this is a placeholder that accepts the image data
+    console.log("Cover photo saved:", imageData);
+    // In a real implementation, this would call an API to save the image to Supabase storage
+    // and update the profile banner_url
+  };
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
