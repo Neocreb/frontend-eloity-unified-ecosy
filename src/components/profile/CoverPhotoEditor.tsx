@@ -134,12 +134,21 @@ export const CoverPhotoEditor: React.FC<CoverPhotoEditorProps> = ({
             <div
               className={cn(
                 "relative border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
+                "focus-within:ring-2 focus-within:ring-blue-500",
                 isDragging ? "border-blue-500 bg-blue-50" : "border-gray-300 bg-gray-50 hover:border-gray-400"
               )}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               onClick={() => fileInputRef.current?.click()}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  fileInputRef.current?.click();
+                }
+              }}
+              aria-label="Upload cover photo - drag and drop or click to browse"
             >
               <input
                 ref={fileInputRef}
@@ -147,8 +156,9 @@ export const CoverPhotoEditor: React.FC<CoverPhotoEditorProps> = ({
                 accept="image/*"
                 onChange={handleInputChange}
                 className="hidden"
+                aria-label="Cover photo file input"
               />
-              <Upload className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+              <Upload className="h-12 w-12 mx-auto mb-3 text-gray-400" aria-hidden="true" />
               <h3 className="text-lg font-semibold mb-1">Drop your cover photo here</h3>
               <p className="text-sm text-muted-foreground mb-3">or click to browse your computer</p>
               <p className="text-xs text-muted-foreground">Recommended: 1200x400px • JPG, PNG or GIF</p>
