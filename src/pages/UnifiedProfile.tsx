@@ -99,6 +99,7 @@ import { Product } from "@/types/marketplace";
 import { profileService } from "@/services/profileService";
 import EnhancedPostCard from "@/components/feed/EnhancedPostCard";
 import { Post } from "@/components/feed/PostCard";
+import { ProfileStatsCarousel } from "@/components/profile/ProfileStatsCarousel";
 
 interface UnifiedProfileProps {
   username?: string;
