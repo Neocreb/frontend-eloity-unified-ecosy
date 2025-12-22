@@ -267,7 +267,7 @@ export default function EditProfile() {
     }
   };
 
-  const hasChanges = 
+  const hasChanges =
     formData.displayName !== profile.displayName ||
     formData.username !== profile.username ||
     formData.bio !== profile.bio ||
@@ -275,7 +275,9 @@ export default function EditProfile() {
     formData.website !== profile.website ||
     formData.company !== profile.company ||
     formData.education !== profile.education ||
-    !!avatarFile;
+    !!avatarFile ||
+    !!bannerFile ||
+    bannerPreview !== profile.banner;
 
   return (
     <div className="min-h-screen bg-background flex flex-col dark:bg-gray-950">
