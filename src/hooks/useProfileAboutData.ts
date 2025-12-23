@@ -1,10 +1,9 @@
-import { useMemo, useEffect, useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Skill } from "@/components/profile/SkillsSection";
 import { ProfessionalData } from "@/components/profile/ProfessionalInfo";
 import { SocialLink } from "@/components/profile/SocialLinks";
 import { Achievement } from "@/components/profile/EnhancedAchievements";
-import { useAuth } from "@/contexts/AuthContext";
-import { profileService } from "@/services/profileService";
+import { ProfileService } from "@/services/profileService";
 import {
   Code,
   PenTool,
@@ -26,393 +25,285 @@ interface ProfileAboutData {
   socialLinks: SocialLink[];
   achievements: Achievement[];
   totalAchievements: number;
+  isLoading: boolean;
+  error: Error | null;
 }
+
+// Map string skills to Skill objects
+const mapSkillsData = (skillsArray?: string[]): Skill[] => {
+  if (!skillsArray || !Array.isArray(skillsArray)) {
+    return [];
+  }
+
+  return skillsArray.map((skill, index) => ({
+    id: `skill-${index}`,
+    name: skill,
+    proficiency: "intermediate" as const,
+    endorsementCount: 0,
+    endorsedBy: [],
+    isEndorsedByCurrentUser: false,
+  }));
+};
+
+// Map professional info JSONB to ProfessionalData
+const mapProfessionalData = (professionalInfo?: any): ProfessionalData => {
+  if (!professionalInfo) {
+    return {
+      title: "",
+      company: "",
+      yearsOfExperience: 0,
+      specializations: [],
+      languages: [],
+      certifications: [],
+    };
+  }
+
+  return {
+    title: professionalInfo.title || "",
+    company: professionalInfo.company || "",
+    yearsOfExperience: professionalInfo.yearsOfExperience || 0,
+    specializations: professionalInfo.specializations || [],
+    languages: professionalInfo.languages || [],
+    certifications: professionalInfo.certifications || [],
+  };
+};
+
+// Map social links JSONB or individual URL fields to SocialLink[]
+const mapSocialLinks = (socialLinksData?: any, linkedinUrl?: string, githubUrl?: string, twitterUrl?: string, portfolioUrl?: string): SocialLink[] => {
+  const links: SocialLink[] = [];
+
+  // If social_links JSONB field exists, use it
+  if (socialLinksData && Array.isArray(socialLinksData)) {
+    return socialLinksData.map((link: any) => ({
+      platform: link.platform || "portfolio",
+      url: link.url || "",
+      isVerified: link.isVerified || false,
+      username: link.username || "",
+    }));
+  }
+
+  // Otherwise, build from individual URL fields
+  if (linkedinUrl) {
+    links.push({
+      platform: "linkedin",
+      url: linkedinUrl,
+      isVerified: true,
+      username: linkedinUrl.split("/").pop() || "",
+    });
+  }
+  if (githubUrl) {
+    links.push({
+      platform: "github",
+      url: githubUrl,
+      isVerified: true,
+      username: githubUrl.split("/").pop() || "",
+    });
+  }
+  if (twitterUrl) {
+    links.push({
+      platform: "twitter",
+      url: twitterUrl,
+      isVerified: false,
+      username: twitterUrl.split("/").pop() || "",
+    });
+  }
+  if (portfolioUrl) {
+    links.push({
+      platform: "portfolio",
+      url: portfolioUrl,
+      isVerified: true,
+      username: portfolioUrl.replace(/^https?:\/\/?/, ""),
+    });
+  }
+
+  return links;
+};
+
+// Default achievements (can be loaded from API in future)
+const getDefaultAchievements = (): Achievement[] => [
+  {
+    id: "ach-1",
+    title: "Early Adopter",
+    description: "Joined the platform in its early days and supported its growth",
+    category: "special",
+    icon: Star,
+    earnedDate: "",
+    rarity: "rare",
+  },
+  {
+    id: "ach-2",
+    title: "Verified Creator",
+    description: "Successfully verified as a creator and published quality content",
+    category: "creator",
+    icon: Verified,
+    earnedDate: "",
+    rarity: "rare",
+  },
+  {
+    id: "ach-3",
+    title: "Community Champion",
+    description: "Helped 50+ users and received high appreciation ratings",
+    category: "social",
+    icon: Trophy,
+    earnedDate: "",
+    rarity: "rare",
+  },
+];
 
 export const useProfileAboutData = (
   userId?: string
 ): ProfileAboutData => {
-  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
   const [profileData, setProfileData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
 
-  // Fetch real profile data
+  // Fetch profile data from API
   useEffect(() => {
+    if (!userId) {
+      setProfileData(null);
+      return;
+    }
+
     const fetchProfileData = async () => {
       try {
-        if (!userId && !user?.id) {
-          setLoading(false);
-          return;
+        setIsLoading(true);
+        setError(null);
+
+        const profileService = new ProfileService();
+        const profile = await profileService.getUserById(userId);
+
+        if (profile) {
+          setProfileData(profile);
+        } else {
+          setError(new Error("Failed to fetch profile data"));
         }
-
-        const targetUserId = userId || user?.id;
-        if (!targetUserId) return;
-
-        // Fetch profile from database
-        const profile = await profileService.getProfile(targetUserId);
-        setProfileData(profile);
-      } catch (error) {
-        console.warn("Error fetching profile data:", error);
-        // Fall back to mock data on error
+      } catch (err) {
+        console.error("Error fetching profile About data:", err);
+        setError(err instanceof Error ? err : new Error("Unknown error"));
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     };
 
     fetchProfileData();
-  }, [userId, user?.id]);
+  }, [userId]);
 
-  // Mock data for development/demo purposes
-  // Used when real data is not available or in development mode
-  const mockData: ProfileAboutData = useMemo(() => {
-    return {
-      skills: [
-        {
-          id: "skill-1",
-          name: "React",
-          proficiency: "expert",
-          endorsementCount: 24,
-          endorsedBy: ["User1", "User2", "User3"],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-2",
-          name: "TypeScript",
-          proficiency: "advanced",
-          endorsementCount: 18,
-          endorsedBy: ["User1", "User2"],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-3",
-          name: "UI/UX Design",
-          proficiency: "advanced",
-          endorsementCount: 15,
-          endorsedBy: ["User1"],
-          isEndorsedByCurrentUser: true,
-        },
-        {
-          id: "skill-4",
-          name: "Node.js",
-          proficiency: "advanced",
-          endorsementCount: 12,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-5",
-          name: "AWS",
-          proficiency: "intermediate",
-          endorsementCount: 8,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-6",
-          name: "GraphQL",
-          proficiency: "intermediate",
-          endorsementCount: 6,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-7",
-          name: "Tailwind CSS",
-          proficiency: "expert",
-          endorsementCount: 22,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-8",
-          name: "Web Performance",
-          proficiency: "advanced",
-          endorsementCount: 9,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-9",
-          name: "Accessibility",
-          proficiency: "advanced",
-          endorsementCount: 7,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-10",
-          name: "JavaScript",
-          proficiency: "expert",
-          endorsementCount: 28,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-11",
-          name: "CSS",
-          proficiency: "expert",
-          endorsementCount: 19,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-        {
-          id: "skill-12",
-          name: "Problem Solving",
-          proficiency: "expert",
-          endorsementCount: 14,
-          endorsedBy: [],
-          isEndorsedByCurrentUser: false,
-        },
-      ],
-      professional: {
-        title: "Senior Frontend Developer",
-        company: "Tech Innovations Inc.",
-        yearsOfExperience: 7,
-        specializations: [
-          "React Development",
-          "Full Stack Engineering",
-          "Web Design",
-          "Cloud Architecture",
-        ],
-        languages: ["English", "Spanish", "Mandarin"],
-        certifications: [
-          {
-            name: "AWS Certified Solutions Architect",
-            issuer: "Amazon Web Services",
-            year: 2023,
-          },
-          {
-            name: "Google Cloud Professional Data Engineer",
-            issuer: "Google Cloud",
-            year: 2022,
-          },
-          {
-            name: "Certified Kubernetes Administrator",
-            issuer: "Linux Foundation",
-            year: 2023,
-          },
-        ],
+  // Default sample skills
+  const defaultSkills: Skill[] = [
+    {
+      id: 'skill-1',
+      name: 'React',
+      proficiency: 'advanced',
+      endorsementCount: 12,
+      endorsedBy: [],
+      isEndorsedByCurrentUser: false,
+    },
+    {
+      id: 'skill-2',
+      name: 'TypeScript',
+      proficiency: 'advanced',
+      endorsementCount: 8,
+      endorsedBy: [],
+      isEndorsedByCurrentUser: false,
+    },
+    {
+      id: 'skill-3',
+      name: 'Web Development',
+      proficiency: 'expert',
+      endorsementCount: 15,
+      endorsedBy: [],
+      isEndorsedByCurrentUser: false,
+    },
+    {
+      id: 'skill-4',
+      name: 'UI/UX Design',
+      proficiency: 'intermediate',
+      endorsementCount: 5,
+      endorsedBy: [],
+      isEndorsedByCurrentUser: false,
+    },
+  ];
+
+  // Default professional info
+  const defaultProfessional: ProfessionalData = {
+    title: 'Full Stack Developer',
+    company: 'Tech Innovations Inc',
+    yearsOfExperience: 5,
+    specializations: ['Web Development', 'Cloud Architecture', 'DevOps'],
+    languages: ['English', 'Spanish', 'French'],
+    certifications: [
+      {
+        id: 'cert-1',
+        name: 'AWS Certified Solutions Architect',
+        issuer: 'Amazon Web Services',
+        year: 2023,
       },
-      socialLinks: [
-        {
-          platform: "linkedin",
-          url: "https://linkedin.com/in/johndoe",
-          isVerified: true,
-          username: "johndoe",
-        },
-        {
-          platform: "github",
-          url: "https://github.com/johndoe",
-          isVerified: true,
-          username: "johndoe",
-        },
-        {
-          platform: "twitter",
-          url: "https://twitter.com/johndoe",
-          isVerified: false,
-          username: "johndoe",
-        },
-        {
-          platform: "portfolio",
-          url: "https://johndoe.dev",
-          isVerified: true,
-          username: "johndoe.dev",
-        },
-      ],
-      achievements: [
-        {
-          id: "ach-1",
-          title: "Top Contributor",
-          description:
-            "Contributed to 10+ projects and received positive reviews from the community",
-          category: "community",
-          icon: Trophy,
-          earnedDate: "December 2024",
-          rarity: "epic",
-          progress: {
-            current: 15,
-            target: 20,
-            label: "Projects",
-          },
-        },
-        {
-          id: "ach-2",
-          title: "Verified Creator",
-          description:
-            "Successfully verified as a creator and published quality content",
-          category: "creator",
-          icon: Verified,
-          earnedDate: "November 2023",
-          rarity: "rare",
-        },
-        {
-          id: "ach-3",
-          title: "Early Adopter",
-          description:
-            "Joined the platform in its early days and supported its growth",
-          category: "special",
-          icon: Star,
-          earnedDate: "January 2020",
-          rarity: "rare",
-        },
-        {
-          id: "ach-4",
-          title: "Premium Member",
-          description: "Upgraded to premium membership and unlocked exclusive features",
-          category: "special",
-          icon: Crown,
-          earnedDate: "June 2023",
-          rarity: "common",
-        },
-        {
-          id: "ach-5",
-          title: "Trusted Seller",
-          description:
-            "Completed 50+ successful transactions with positive feedback",
-          category: "seller",
-          icon: Shield,
-          earnedDate: "September 2024",
-          rarity: "epic",
-          progress: {
-            current: 50,
-            target: 100,
-            label: "Sales",
-          },
-        },
-        {
-          id: "ach-6",
-          title: "Code Master",
-          description:
-            "Demonstrated exceptional coding skills and problem-solving abilities",
-          category: "creator",
-          icon: Code,
-          earnedDate: "August 2024",
-          rarity: "legendary",
-        },
-        {
-          id: "ach-7",
-          title: "Trading Ace",
-          description:
-            "Executed 100+ successful trades with consistent positive returns",
-          category: "trader",
-          icon: Zap,
-          earnedDate: "October 2024",
-          rarity: "epic",
-          progress: {
-            current: 85,
-            target: 100,
-            label: "Trades",
-          },
-        },
-        {
-          id: "ach-8",
-          title: "Community Champion",
-          description:
-            "Helped 50+ users and received high appreciation ratings",
-          category: "social",
-          icon: Trophy,
-          earnedDate: "November 2024",
-          rarity: "rare",
-          progress: {
-            current: 42,
-            target: 50,
-            label: "Helped Users",
-          },
-        },
-      ],
-      totalAchievements: 15, // Total available achievements on platform
-    };
-  }, [userId, profileData]);
+      {
+        id: 'cert-2',
+        name: 'Google Cloud Professional',
+        issuer: 'Google Cloud',
+        year: 2022,
+      },
+    ],
+  };
 
-  // Transform real profile data into the expected format
-  const realData: ProfileAboutData | null = useMemo(() => {
-    if (!profileData) return null;
+  // Default social links
+  const defaultSocialLinks: SocialLink[] = [
+    {
+      platform: 'github',
+      url: 'https://github.com/user',
+      isVerified: true,
+      username: 'user',
+    },
+    {
+      platform: 'linkedin',
+      url: 'https://linkedin.com/in/user',
+      isVerified: true,
+      username: 'user',
+    },
+    {
+      platform: 'twitter',
+      url: 'https://twitter.com/user',
+      isVerified: false,
+      username: 'user',
+    },
+  ];
 
-    // Transform skills array to Skill objects
-    const skills: Skill[] = (profileData.skills || []).map(
-      (skillName: string, index: number) => ({
-        id: `skill-${index}`,
-        name: skillName,
-        proficiency: "intermediate" as const,
-        endorsementCount: 0,
-        endorsedBy: [],
-        isEndorsedByCurrentUser: false,
-      })
+  // Format the fetched data
+  const data: ProfileAboutData = useMemo(() => {
+    if (!profileData) {
+      return {
+        skills: defaultSkills,
+        professional: defaultProfessional,
+        socialLinks: defaultSocialLinks,
+        achievements: getDefaultAchievements(),
+        totalAchievements: 15,
+        isLoading,
+        error,
+      };
+    }
+
+    // Use real data if available, otherwise use defaults
+    const skills = mapSkillsData(profileData.skills);
+    const professional = mapProfessionalData(profileData.professional_info);
+    const socialLinks = mapSocialLinks(
+      profileData.social_links,
+      profileData.linkedin_url,
+      profileData.github_url,
+      profileData.twitter_url,
+      profileData.portfolio_url
     );
 
-    // Transform professional info
-    const professional: ProfessionalData = profileData.professional_info
-      ? {
-          title: profileData.professional_info.title || "",
-          company: profileData.professional_info.company || "",
-          yearsOfExperience: profileData.professional_info.yearsOfExperience || 0,
-          specializations:
-            profileData.professional_info.specializations || [],
-          languages: profileData.professional_info.languages || [],
-          certifications:
-            profileData.professional_info.certifications || [],
-        }
-      : mockData.professional;
-
-    // Transform social links
-    const socialLinks: SocialLink[] = [];
-    if (profileData.social_links) {
-      // If social_links is a JSONB object, transform it
-      const links = profileData.social_links;
-      Object.entries(links).forEach(([platform, data]: [string, any]) => {
-        if (data && data.url) {
-          socialLinks.push({
-            platform,
-            url: data.url,
-            isVerified: data.isVerified || false,
-            username: data.username || "",
-          });
-        }
-      });
-    }
-    // Also add individual social URLs
-    if (profileData.linkedin_url) {
-      socialLinks.push({
-        platform: "linkedin",
-        url: profileData.linkedin_url,
-        isVerified: true,
-        username: "",
-      });
-    }
-    if (profileData.github_url) {
-      socialLinks.push({
-        platform: "github",
-        url: profileData.github_url,
-        isVerified: true,
-        username: "",
-      });
-    }
-    if (profileData.twitter_url) {
-      socialLinks.push({
-        platform: "twitter",
-        url: profileData.twitter_url,
-        isVerified: true,
-        username: "",
-      });
-    }
-    if (profileData.portfolio_url) {
-      socialLinks.push({
-        platform: "portfolio",
-        url: profileData.portfolio_url,
-        isVerified: true,
-        username: "",
-      });
-    }
-
     return {
-      skills: skills.length > 0 ? skills : mockData.skills,
-      professional,
-      socialLinks:
-        socialLinks.length > 0 ? socialLinks : mockData.socialLinks,
-      achievements: mockData.achievements, // TODO: Fetch real achievements from database
-      totalAchievements: mockData.totalAchievements,
+      skills: skills.length > 0 ? skills : defaultSkills,
+      professional: professional.title ? professional : defaultProfessional,
+      socialLinks: socialLinks.length > 0 ? socialLinks : defaultSocialLinks,
+      achievements: profileData.achievements || getDefaultAchievements(),
+      totalAchievements: profileData.totalAchievements || 15,
+      isLoading,
+      error,
     };
-  }, [profileData, mockData]);
+  }, [profileData, isLoading, error]);
 
-  // Return real data if available, otherwise use mock data
-  return realData || mockData;
+  return data;
 };

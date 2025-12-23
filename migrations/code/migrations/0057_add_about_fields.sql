@@ -1,22 +1,23 @@
--- Add columns for About tab profile enhancement (Phase 4)
--- Stores skills, professional info, and social links
-ALTER TABLE public.profiles 
-ADD COLUMN IF NOT EXISTS skills TEXT[] DEFAULT ARRAY[]::TEXT[],
-ADD COLUMN IF NOT EXISTS social_links JSONB,
-ADD COLUMN IF NOT EXISTS professional_info JSONB,
-ADD COLUMN IF NOT EXISTS linkedin_url TEXT,
-ADD COLUMN IF NOT EXISTS github_url TEXT,
-ADD COLUMN IF NOT EXISTS twitter_url TEXT,
-ADD COLUMN IF NOT EXISTS portfolio_url TEXT;
+-- Migration: Add About tab fields to profiles table for Phase 5
+-- Adds support for: skills, social links, professional info, and social URLs
 
--- Create indices for skills queries
-CREATE INDEX IF NOT EXISTS idx_profiles_skills ON public.profiles USING GIN(skills);
+-- Add skills array column
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS skills text[] DEFAULT ARRAY[]::text[];
 
--- Add comments for documentation
-COMMENT ON COLUMN public.profiles.skills IS 'Array of user skills with proficiency levels';
-COMMENT ON COLUMN public.profiles.social_links IS 'JSON object containing social media links and verification status';
-COMMENT ON COLUMN public.profiles.professional_info IS 'JSON object with professional background, certifications, and specializations';
-COMMENT ON COLUMN public.profiles.linkedin_url IS 'LinkedIn profile URL';
-COMMENT ON COLUMN public.profiles.github_url IS 'GitHub profile URL';
-COMMENT ON COLUMN public.profiles.twitter_url IS 'Twitter/X profile URL';
-COMMENT ON COLUMN public.profiles.portfolio_url IS 'Portfolio or personal website URL';
+-- Add social_links JSONB column (stores structured social link data)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS social_links jsonb;
+
+-- Add professional_info JSONB column (stores title, company, experience, languages, certifications)
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS professional_info jsonb;
+
+-- Add individual social URL columns for easy querying
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS linkedin_url text;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS github_url text;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS twitter_url text;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS portfolio_url text;
+
+-- Create indexes for better query performance on social URLs
+CREATE INDEX IF NOT EXISTS idx_profiles_linkedin_url ON profiles(linkedin_url);
+CREATE INDEX IF NOT EXISTS idx_profiles_github_url ON profiles(github_url);
+CREATE INDEX IF NOT EXISTS idx_profiles_twitter_url ON profiles(twitter_url);
+CREATE INDEX IF NOT EXISTS idx_profiles_portfolio_url ON profiles(portfolio_url);

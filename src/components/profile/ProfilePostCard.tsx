@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,9 @@ import EnhancedShareDialog from "@/components/feed/EnhancedShareDialog";
 import { EnhancedCommentsSection } from "@/components/feed/EnhancedCommentsSection";
 import VirtualGiftsAndTips from "@/components/premium/VirtualGiftsAndTips";
 import PostAnalyticsPreview from "./PostAnalyticsPreview";
+import PostDetailModal from "./PostDetailModal";
 import { usePostAnalytics } from "@/hooks/usePostAnalytics";
+import { usePostKeyboardNavigation } from "@/hooks/usePostKeyboardNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -73,10 +75,11 @@ export const ProfilePostCard = ({
   // Fetch real analytics data
   const { analytics, isLoading: analyticsLoading } = usePostAnalytics(post.id);
 
-  const handleLike = async () => {
+  // Define handlers with useCallback
+  const handleLike = useCallback(async () => {
     const newIsLiked = !isLiked;
     const newCount = newIsLiked ? likeCount + 1 : likeCount - 1;
-    
+
     setIsLiked(newIsLiked);
     setLikeCount(newCount);
     onLikeToggle?.(post.id, newCount, newIsLiked);
@@ -86,6 +89,10 @@ export const ProfilePostCard = ({
         await supabase.from("post_likes").insert({
           post_id: post.id,
           user_id: post.author.id,
+        });
+        toast({
+          title: "Post liked",
+          duration: 1500,
         });
       } else {
         await supabase
@@ -99,10 +106,15 @@ export const ProfilePostCard = ({
       // Revert on error
       setIsLiked(!newIsLiked);
       setLikeCount(post.likes);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive",
+      });
     }
-  };
+  }, [isLiked, likeCount, post.id, post.author.id, onLikeToggle, toast]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const newIsSaved = !isSaved;
     setIsSaved(newIsSaved);
     onSaveToggle?.(post.id, newIsSaved);
@@ -112,8 +124,21 @@ export const ProfilePostCard = ({
       description: newIsSaved
         ? "Added to your saved posts"
         : "Removed from saved posts",
+      duration: 1500,
     });
-  };
+  }, [isSaved, post.id, onSaveToggle, toast]);
+
+  // Setup keyboard navigation
+  usePostKeyboardNavigation(
+    {
+      onLike: handleLike,
+      onComment: () => setShowComments(!showComments),
+      onSave: handleSave,
+      onOpenDetail: () => setShowDetailModal(true),
+      onClose: () => setShowDetailModal(false),
+    },
+    showDetailModal // Only enable when detail modal is open
+  );
 
   const getPrivacyIcon = () => {
     switch (post.privacy.toLowerCase()) {
@@ -207,6 +232,7 @@ export const ProfilePostCard = ({
                       isLiked && "text-red-500"
                     )}
                     onClick={handleLike}
+                    title="Like this post (Keyboard: L)"
                   >
                     <Heart
                       className={cn("w-4 h-4", isLiked && "fill-current")}
@@ -222,6 +248,7 @@ export const ProfilePostCard = ({
                       "flex items-center gap-1 px-2 py-1.5 h-auto",
                       showComments && "text-blue-500"
                     )}
+                    title="View comments (Keyboard: C)"
                   >
                     <MessageSquare className="w-4 h-4" />
                     <span className="text-xs sm:text-sm">{post.comments}</span>
@@ -239,6 +266,7 @@ export const ProfilePostCard = ({
                         variant="ghost"
                         size="sm"
                         className="flex items-center gap-1 px-2 py-1.5 h-auto hover:text-green-500 transition-colors"
+                        title="Share this post (Keyboard: S)"
                       >
                         <Share2 className="w-4 h-4" />
                         <span className="text-xs sm:text-sm">{post.shares}</span>
@@ -263,6 +291,19 @@ export const ProfilePostCard = ({
                     }
                   />
 
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1 px-2 py-1.5 h-auto hover:text-purple-500 transition-colors"
+                    onClick={() => setShowDetailModal(true)}
+                    title="View full post (Keyboard: Enter)"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                    <span className="text-xs sm:text-sm hidden sm:inline">
+                      View
+                    </span>
+                  </Button>
+
                   {isOwnPost && (
                     <Button
                       variant="ghost"
@@ -282,31 +323,20 @@ export const ProfilePostCard = ({
                   )}
                 </div>
 
-                <div className="flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="px-2 py-1.5 h-auto hover:text-purple-500 transition-colors"
-                    onClick={() => setShowDetailModal(true)}
-                    title="View full post details"
-                  >
-                    <Maximize2 className="w-4 h-4" />
-                  </Button>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className={cn(
-                      "px-2 py-1.5 h-auto",
-                      isSaved && "text-blue-500"
-                    )}
-                    onClick={handleSave}
-                  >
-                    <Bookmark
-                      className={cn("w-4 h-4", isSaved && "fill-current")}
-                    />
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={cn(
+                    "px-2 py-1.5 h-auto",
+                    isSaved && "text-blue-500"
+                  )}
+                  onClick={handleSave}
+                  title="Save post (Keyboard: B)"
+                >
+                  <Bookmark
+                    className={cn("w-4 h-4", isSaved && "fill-current")}
+                  />
+                </Button>
               </div>
 
               {showComments && (
@@ -347,12 +377,12 @@ export const ProfilePostCard = ({
         </div>
       </CardContent>
 
-      {/* Post Detail Modal */}
+      {/* Detail Modal */}
       <PostDetailModal
         post={showDetailModal ? post : null}
         isOpen={showDetailModal}
-        onClose={() => setShowDetailModal(false)}
         isOwnPost={isOwnPost}
+        onClose={() => setShowDetailModal(false)}
         onLikeToggle={onLikeToggle}
         onSaveToggle={onSaveToggle}
       />

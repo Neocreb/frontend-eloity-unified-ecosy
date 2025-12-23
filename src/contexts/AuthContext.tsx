@@ -660,8 +660,10 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
         if (data.timezone) profileData.timezone = data.timezone;
         if (data.preferred_currency) profileData.preferred_currency = data.preferred_currency;
 
-        // Map About tab fields (Phase 4 enhancement)
-        if (data.skills) profileData.skills = Array.isArray(data.skills) ? data.skills : [];
+        // Map About tab fields (Phase 5)
+        if (data.skills) profileData.skills = data.skills;
+        if (data.languages) profileData.languages = data.languages;
+        if (data.certifications) profileData.certifications = data.certifications;
         if (data.social_links) profileData.social_links = data.social_links;
         if (data.professional_info) profileData.professional_info = data.professional_info;
         if (data.linkedin_url) profileData.linkedin_url = data.linkedin_url;

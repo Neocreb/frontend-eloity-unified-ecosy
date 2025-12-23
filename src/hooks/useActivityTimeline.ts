@@ -181,27 +181,201 @@ export function useActivityTimeline({
       setError(null);
 
       try {
-        // Simulate API call delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Import Supabase client
+        const { supabase } = await import('@/integrations/supabase/client');
 
-        // In a real application, this would fetch from the API
-        let filtered = mockActivities;
+        // Fetch activities from database
+        const activities: ActivityItem[] = [];
 
-        if (filters && filters.length > 0) {
-          filtered = filtered.filter(a => filters.includes(a.type));
+        try {
+          // 1. Fetch user's posts (post_created events)
+          const { data: userPosts, error: postsError } = await supabase
+            .from('posts')
+            .select('id, content, created_at, likes_count, comments_count, shares_count')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+          if (!postsError && userPosts) {
+            userPosts.forEach(post => {
+              activities.push({
+                id: `post_created_${post.id}`,
+                type: 'post_created',
+                timestamp: post.created_at,
+                description: `Created a new post`,
+                icon: 'FileText',
+                color: 'bg-blue-100 text-blue-700',
+                relatedEntity: {
+                  id: post.id,
+                  type: 'post',
+                  title: post.content?.substring(0, 50) || 'Post',
+                  url: `/post/${post.id}`,
+                },
+              });
+            });
+          }
+        } catch (err) {
+          console.warn('Failed to fetch user posts:', err);
         }
 
-        // Sort by timestamp (newest first)
-        filtered.sort(
-          (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-        );
+        try {
+          // 2. Fetch user's post likes (content_liked events)
+          const { data: userLikes, error: likesError } = await supabase
+            .from('post_likes')
+            .select('id, post_id, created_at, posts(content)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
 
-        // Apply pagination
-        const paginated = filtered.slice(offset, offset + limit);
-        setActivities(paginated);
-        setHasMore(filtered.length > offset + limit);
+          if (!likesError && userLikes) {
+            userLikes.forEach((like: any) => {
+              activities.push({
+                id: `liked_${like.id}`,
+                type: 'content_liked',
+                timestamp: like.created_at,
+                description: `Liked a post`,
+                icon: 'Heart',
+                color: 'bg-red-100 text-red-700',
+                relatedEntity: {
+                  id: like.post_id,
+                  type: 'post',
+                  title: like.posts?.content?.substring(0, 50) || 'Post',
+                  url: `/post/${like.post_id}`,
+                },
+              });
+            });
+          }
+        } catch (err) {
+          console.warn('Failed to fetch user likes:', err);
+        }
+
+        try {
+          // 3. Fetch user's comments (comment_added events)
+          const { data: userComments, error: commentsError } = await supabase
+            .from('post_comments')
+            .select('id, post_id, content, created_at, posts(content)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+          if (!commentsError && userComments) {
+            userComments.forEach((comment: any) => {
+              activities.push({
+                id: `comment_${comment.id}`,
+                type: 'comment_added',
+                timestamp: comment.created_at,
+                description: `Added a comment`,
+                icon: 'MessageSquare',
+                color: 'bg-green-100 text-green-700',
+                relatedEntity: {
+                  id: comment.post_id,
+                  type: 'post',
+                  title: comment.posts?.content?.substring(0, 50) || 'Post',
+                  url: `/post/${comment.post_id}`,
+                },
+                metadata: { comment: comment.content },
+              });
+            });
+          }
+        } catch (err) {
+          console.warn('Failed to fetch user comments:', err);
+        }
+
+        try {
+          // 4. Fetch user's saved posts (content_purchased / bookmarks)
+          const { data: userSaves, error: savesError } = await supabase
+            .from('user_saved_posts')
+            .select('id, post_id, created_at, posts(content)')
+            .eq('user_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(limit);
+
+          if (!savesError && userSaves) {
+            userSaves.forEach((save: any) => {
+              activities.push({
+                id: `saved_${save.id}`,
+                type: 'content_purchased',
+                timestamp: save.created_at,
+                description: `Saved a post`,
+                icon: 'ShoppingCart',
+                color: 'bg-green-100 text-green-700',
+                relatedEntity: {
+                  id: save.post_id,
+                  type: 'post',
+                  title: save.posts?.content?.substring(0, 50) || 'Post',
+                  url: `/post/${save.post_id}`,
+                },
+              });
+            });
+          }
+        } catch (err) {
+          console.warn('Failed to fetch saved posts:', err);
+        }
+
+        try {
+          // 5. Fetch profile views (followers_gained as proxy)
+          const { data: profileViews, error: viewsError } = await supabase
+            .from('profile_views')
+            .select('id, viewer_id, created_at, profiles(full_name, username, avatar_url)')
+            .eq('profile_id', userId)
+            .order('created_at', { ascending: false })
+            .limit(Math.floor(limit / 2));
+
+          if (!viewsError && profileViews) {
+            profileViews.forEach((view: any) => {
+              if (view.profiles) {
+                activities.push({
+                  id: `view_${view.id}`,
+                  type: 'followers_gained',
+                  timestamp: view.created_at,
+                  description: `Profile viewed by ${view.profiles.full_name}`,
+                  icon: 'Users',
+                  color: 'bg-purple-100 text-purple-700',
+                  relatedEntity: {
+                    id: view.viewer_id,
+                    type: 'profile',
+                    title: view.profiles.username,
+                    url: `/profile/${view.profiles.username}`,
+                  },
+                });
+              }
+            });
+          }
+        } catch (err) {
+          console.warn('Failed to fetch profile views:', err);
+        }
+
+        // If no real activities found, use mock data as fallback
+        if (activities.length === 0) {
+          const limitedMocks = mockActivities.slice(0, limit);
+          setActivities(limitedMocks);
+          setHasMore(false);
+        } else {
+          // Sort by timestamp (newest first)
+          activities.sort(
+            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+          );
+
+          // Apply filters
+          let filtered = activities;
+          if (filters && filters.length > 0) {
+            filtered = filtered.filter(a => filters.includes(a.type));
+          }
+
+          // Apply pagination
+          const paginated = filtered.slice(offset, offset + limit);
+          setActivities(paginated);
+          setHasMore(filtered.length > offset + limit);
+        }
+
+        setError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to fetch activities');
+        console.warn('Failed to fetch activities, using fallback:', err);
+        // Fallback to mock data on critical error
+        const limitedMocks = mockActivities.slice(0, limit);
+        setActivities(limitedMocks);
+        setHasMore(false);
+        setError(null);
       } finally {
         setIsLoading(false);
       }

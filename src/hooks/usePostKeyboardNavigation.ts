@@ -1,85 +1,106 @@
 import { useEffect, useCallback, useRef } from "react";
 
-interface UsePostKeyboardNavigationOptions {
-  enabled?: boolean;
-  onArrowUp?: () => void;
-  onArrowDown?: () => void;
-  onArrowLeft?: () => void;
-  onArrowRight?: () => void;
-  onEnter?: () => void;
-  onEscape?: () => void;
+interface KeyboardActions {
+  onLike?: () => void;
+  onComment?: () => void;
+  onShare?: () => void;
+  onSave?: () => void;
+  onOpenDetail?: () => void;
+  onNavigatePrevious?: () => void;
+  onNavigateNext?: () => void;
+  onClose?: () => void;
 }
 
 /**
- * Hook for handling keyboard navigation in post lists
- * Supports:
- * - Arrow Up/Down: Navigate between posts
- * - Arrow Left/Right: Navigate between tabs/sections
- * - Enter: Open post detail modal
- * - Escape: Close modal or clear selection
+ * Hook for keyboard navigation and shortcuts in post components
+ * Supports: L (like), C (comment), S (share), B (save), Enter (open detail), ArrowUp/Down (navigate), Escape (close)
  */
-export const usePostKeyboardNavigation = ({
-  enabled = true,
-  onArrowUp,
-  onArrowDown,
-  onArrowLeft,
-  onArrowRight,
-  onEnter,
-  onEscape,
-}: UsePostKeyboardNavigationOptions) => {
-  const handleRef = useRef<HTMLElement | null>(null);
+export const usePostKeyboardNavigation = (
+  actions: KeyboardActions,
+  enabled: boolean = true
+) => {
+  const focusedRef = useRef<HTMLElement | null>(null);
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent) => {
       if (!enabled) return;
 
-      // Don't handle if user is typing in an input
-      if (
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      ) {
-        return;
-      }
+      // Don't trigger shortcuts if user is typing in an input/textarea
+      const target = event.target as HTMLElement;
+      const isTyping =
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.contentEditable === "true";
 
-      switch (event.key) {
-        case "ArrowUp":
-          event.preventDefault();
-          onArrowUp?.();
-          break;
+      if (isTyping) return;
 
-        case "ArrowDown":
-          event.preventDefault();
-          onArrowDown?.();
-          break;
+      // Case-insensitive letter shortcuts
+      const key = event.key.toLowerCase();
 
-        case "ArrowLeft":
-          event.preventDefault();
-          onArrowLeft?.();
-          break;
-
-        case "ArrowRight":
-          event.preventDefault();
-          onArrowRight?.();
-          break;
-
-        case "Enter":
-          // Only handle Enter if no modifier keys are pressed
+      switch (key) {
+        case "l":
+          // Like
           if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
             event.preventDefault();
-            onEnter?.();
+            actions.onLike?.();
           }
           break;
 
-        case "Escape":
+        case "c":
+          // Comment
+          if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+            event.preventDefault();
+            actions.onComment?.();
+          }
+          break;
+
+        case "s":
+          // Share
+          if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+            event.preventDefault();
+            actions.onShare?.();
+          }
+          break;
+
+        case "b":
+          // Bookmark/Save
+          if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+            event.preventDefault();
+            actions.onSave?.();
+          }
+          break;
+
+        case "enter":
+          // Open detail view
+          if (!event.ctrlKey && !event.metaKey && !event.shiftKey) {
+            event.preventDefault();
+            actions.onOpenDetail?.();
+          }
+          break;
+
+        case "arrowup":
+          // Navigate to previous post
           event.preventDefault();
-          onEscape?.();
+          actions.onNavigatePrevious?.();
+          break;
+
+        case "arrowdown":
+          // Navigate to next post
+          event.preventDefault();
+          actions.onNavigateNext?.();
+          break;
+
+        case "escape":
+          // Close modal/detail view
+          event.preventDefault();
+          actions.onClose?.();
           break;
 
         default:
           break;
       }
     },
-    [enabled, onArrowUp, onArrowDown, onArrowLeft, onArrowRight, onEnter, onEscape]
+    [actions, enabled]
   );
 
   useEffect(() => {
@@ -89,63 +110,19 @@ export const usePostKeyboardNavigation = ({
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [enabled, handleKeyDown]);
-
-  const setFocusRef = useCallback((element: HTMLElement | null) => {
-    handleRef.current = element;
-    if (element) {
-      element.focus();
-    }
-  }, []);
-
-  return { setFocusRef };
-};
-
-/**
- * Hook for managing focus within a list of posts
- * Allows keyboard navigation between posts using arrow keys
- */
-export const usePostListKeyboardNavigation = (
-  postIds: string[],
-  onPostSelect: (postId: string) => void
-) => {
-  const currentIndexRef = useRef<number>(-1);
-
-  const handleNavigate = useCallback(
-    (direction: "up" | "down") => {
-      if (postIds.length === 0) return;
-
-      const newIndex =
-        direction === "down"
-          ? Math.min(currentIndexRef.current + 1, postIds.length - 1)
-          : Math.max(currentIndexRef.current - 1, 0);
-
-      currentIndexRef.current = newIndex;
-      onPostSelect(postIds[newIndex]);
-
-      // Scroll into view
-      const element = document.getElementById(`post-${postIds[newIndex]}`);
-      element?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    },
-    [postIds, onPostSelect]
-  );
-
-  const handleSelect = useCallback(() => {
-    if (currentIndexRef.current >= 0 && currentIndexRef.current < postIds.length) {
-      onPostSelect(postIds[currentIndexRef.current]);
-    }
-  }, [postIds, onPostSelect]);
-
-  const handleReset = useCallback(() => {
-    currentIndexRef.current = -1;
-  }, []);
+  }, [handleKeyDown, enabled]);
 
   return {
-    navigate: handleNavigate,
-    select: handleSelect,
-    reset: handleReset,
-    currentIndex: currentIndexRef.current,
+    focusedRef,
+    shortcuts: {
+      like: "L",
+      comment: "C",
+      share: "S",
+      save: "B",
+      openDetail: "Enter",
+      previousPost: "↑",
+      nextPost: "↓",
+      closeModal: "Esc",
+    },
   };
 };
-
-export default usePostKeyboardNavigation;

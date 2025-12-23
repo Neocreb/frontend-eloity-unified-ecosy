@@ -1,5 +1,5 @@
-import { pgTable, uuid, text, timestamp, boolean, jsonb, numeric, integer, varchar, serial, sql } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { pgTable, uuid, text, timestamp, boolean, jsonb, numeric, integer, varchar, serial } from 'drizzle-orm/pg-core';
+import { relations, sql } from 'drizzle-orm';
 import { users, followers } from './schema';
 import { freelance_payments } from './freelance-schema.js';
 
@@ -48,7 +48,7 @@ export const profiles = pgTable('profiles', {
   auto_play_videos: boolean('auto_play_videos').default(true),
   reduced_motion: boolean('reduced_motion').default(false),
   high_contrast: boolean('high_contrast').default(false),
-  // About tab fields
+  // About tab fields - Phase 5
   skills: text('skills').array().default(sql`ARRAY[]::text[]`),
   social_links: jsonb('social_links'),
   professional_info: jsonb('professional_info'),
