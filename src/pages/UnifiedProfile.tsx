@@ -875,6 +875,23 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
             </Card>
           )}
 
+          {/* Creator Studio Quick Access (Own Profile Only) */}
+          {isOwnProfile && (
+            <CreatorStudioQuickAccess
+              isOwnProfile={isOwnProfile}
+              stats={{
+                totalViews: posts.reduce((sum, p) => sum + p.views, 0),
+                totalLikes: posts.reduce((sum, p) => sum + p.likes, 0),
+                totalComments: posts.reduce((sum, p) => sum + p.comments, 0),
+                topPostViews: Math.max(...posts.map(p => p.views || 0), 0),
+                averageEngagementRate: posts.length > 0
+                  ? (posts.reduce((sum, p) => sum + (p.likes + p.comments) / Math.max(p.views, 1), 0) / posts.length) * 100
+                  : 0,
+                videosCreated: posts.length,
+              }}
+            />
+          )}
+
           {/* Unified Notifications Overview (Own Profile Only) */}
           {isOwnProfile && (
             <Card>
