@@ -27,68 +27,42 @@ export const usePostAnalytics = (postId: string) => {
         setIsLoading(true);
         setError(null);
 
-        // Fetch post with view count
+        // Fetch post with all count columns
         const { data: postData, error: postError } = await supabase
           .from('posts')
-          .select('id, view_count, likes, shares')
+          .select('id, views_count, likes_count, comments_count, shares_count')
           .eq('id', postId)
           .single();
 
         if (postError) {
-          console.error('Error fetching post:', postError);
-          throw postError;
+          const errorMessage = postError.message || 'Failed to fetch post data';
+          console.error('Error fetching post:', {
+            code: postError.code,
+            message: errorMessage,
+            details: postError.details,
+          });
+          throw new Error(`Failed to fetch post: ${errorMessage}`);
         }
 
         if (!postData) {
           throw new Error('Post not found');
         }
 
-        // Fetch likes count
-        const { count: likesCount = 0, error: likesError } = await supabase
-          .from('post_likes')
-          .select('*', { count: 'exact', head: true })
-          .eq('post_id', postId);
+        // Use count columns directly from posts table (already maintained by database)
+        const views = postData.views_count || 0;
+        const likes = postData.likes_count || 0;
+        const comments = postData.comments_count || 0;
+        const shares = postData.shares_count || 0;
 
-        if (likesError && !likesError.message.includes('does not exist')) {
-          console.error('Error fetching likes count:', likesError);
-        }
-
-        // Fetch comments count
-        const { count: commentsCount = 0, error: commentsError } = await supabase
-          .from('post_comments')
-          .select('*', { count: 'exact', head: true })
-          .eq('post_id', postId);
-
-        if (commentsError && !commentsError.message.includes('does not exist')) {
-          console.error('Error fetching comments count:', commentsError);
-        }
-
-        // Fetch saves count (if table exists)
-        let savesCount = 0;
-        try {
-          const { count = 0, error: savesError } = await supabase
-            .from('post_saves')
-            .select('*', { count: 'exact', head: true })
-            .eq('post_id', postId);
-
-          if (!savesError && count !== null) {
-            savesCount = count;
-          }
-        } catch (err) {
-          console.warn('post_saves table may not exist or is inaccessible');
-        }
-
-        const views = postData.view_count || 0;
-        const likes = likesCount || postData.likes || 0;
-        const comments = commentsCount || 0;
-        const shares = postData.shares || 0;
-        const saves = savesCount;
+        // For now, saves count is 0 (post_saves table doesn't exist yet)
+        // In the future, this can be fetched from post_saves table when implemented
+        const saves = 0;
 
         // Calculate engagement rate
         const totalEngagement = likes + comments + shares + saves;
         const engagementRate = views > 0 ? (totalEngagement / views) * 100 : 0;
 
-        setAnalytics({
+        const analyticsData: PostAnalyticsData = {
           postId,
           views,
           likes,
@@ -96,11 +70,25 @@ export const usePostAnalytics = (postId: string) => {
           shares,
           saves,
           engagementRate: parseFloat(engagementRate.toFixed(2)),
-        });
+        };
+
+        setAnalytics(analyticsData);
       } catch (err) {
-        const error = err instanceof Error ? err : new Error('Failed to fetch analytics');
+        let error: Error;
+        
+        if (err instanceof Error) {
+          error = err;
+        } else if (typeof err === 'object' && err !== null) {
+          error = new Error(JSON.stringify(err));
+        } else {
+          error = new Error('Failed to fetch analytics');
+        }
+        
         setError(error);
-        console.error('Error in usePostAnalytics:', error);
+        console.error('Error in usePostAnalytics:', {
+          message: error.message,
+          stack: error.stack,
+        });
         setAnalytics(null);
       } finally {
         setIsLoading(false);
