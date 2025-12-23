@@ -346,6 +346,16 @@ export const ProfilePostCard = ({
           </div>
         </div>
       </CardContent>
+
+      {/* Post Detail Modal */}
+      <PostDetailModal
+        post={showDetailModal ? post : null}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        isOwnPost={isOwnPost}
+        onLikeToggle={onLikeToggle}
+        onSaveToggle={onSaveToggle}
+      />
     </Card>
   );
 };
