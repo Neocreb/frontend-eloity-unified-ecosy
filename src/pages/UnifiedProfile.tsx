@@ -511,20 +511,14 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                         @{mockProfile.username}
                       </p>
 
-                      {/* Enhanced Status Badges */}
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Premium
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Trust Score {mockProfile.trustScore}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
-                          <Star className="h-3 w-3 mr-1" />
-                          Level 8
-                        </Badge>
+                      {/* Dynamic Badge System */}
+                      <div className="mb-2">
+                        <BadgeSystem
+                          userId={profileUser?.id || ''}
+                          isOwnProfile={isOwnProfile}
+                          variant="compact"
+                          maxDisplay={6}
+                        />
                       </div>
 
                       <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
