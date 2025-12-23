@@ -202,18 +202,24 @@ const PostPinningSystem: React.FC<PostPinningSystemProps> = ({
               <div key={post.id} className="relative group">
                 {/* Pin button for owner */}
                 {isOwnProfile && pinnedPostsList.length < maxPinned && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handlePin(post.id)}
-                    className="absolute -right-10 top-0 opacity-0 group-hover:opacity-100 transition-opacity text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                  >
-                    <Pin className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute -right-12 top-0 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePin(post.id)}
+                      className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      title="Pin to featured posts"
+                    >
+                      <Pin className="h-4 w-4" />
+                    </Button>
+                  </div>
                 )}
 
-                {/* Post card */}
-                {/* You would render ProfilePostCard here */}
+                {/* Render post card with pin integration */}
+                <ProfilePostCard
+                  post={post}
+                  isOwnPost={isOwnProfile}
+                />
               </div>
             ))}
           </div>
