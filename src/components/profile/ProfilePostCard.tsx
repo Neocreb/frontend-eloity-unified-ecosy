@@ -288,6 +288,19 @@ export const ProfilePostCard = ({
                     }
                   />
 
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1 px-2 py-1.5 h-auto hover:text-purple-500 transition-colors"
+                    onClick={() => setShowDetailModal(true)}
+                    title="View full post (Keyboard: Enter)"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                    <span className="text-xs sm:text-sm hidden sm:inline">
+                      View
+                    </span>
+                  </Button>
+
                   {isOwnPost && (
                     <Button
                       variant="ghost"
@@ -315,6 +328,7 @@ export const ProfilePostCard = ({
                     isSaved && "text-blue-500"
                   )}
                   onClick={handleSave}
+                  title="Save post (Keyboard: B)"
                 >
                   <Bookmark
                     className={cn("w-4 h-4", isSaved && "fill-current")}
