@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe, Pin, TrendingUp } from "lucide-react";
+import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe, Pin, TrendingUp, Maximize2 } from "lucide-react";
 import { cn } from "@/utils/utils";
 import { PostActionsMenu } from "./PostActionsMenu";
 import EnhancedShareDialog from "@/components/feed/EnhancedShareDialog";
 import { EnhancedCommentsSection } from "@/components/feed/EnhancedCommentsSection";
 import VirtualGiftsAndTips from "@/components/premium/VirtualGiftsAndTips";
 import PostAnalyticsPreview from "./PostAnalyticsPreview";
+import PostDetailModal from "./PostDetailModal";
 import { usePostAnalytics } from "@/hooks/usePostAnalytics";
+import { usePostKeyboardNavigation } from "@/hooks/usePostKeyboardNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -64,6 +66,7 @@ export const ProfilePostCard = ({
   const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [isLiked, setIsLiked] = useState(post._liked || false);
   const [isSaved, setIsSaved] = useState(post._saved || false);
   const [likeCount, setLikeCount] = useState(post.likes);
@@ -71,10 +74,11 @@ export const ProfilePostCard = ({
   // Fetch real analytics data
   const { analytics, isLoading: analyticsLoading } = usePostAnalytics(post.id);
 
-  const handleLike = async () => {
+  // Define handlers with useCallback
+  const handleLike = useCallback(async () => {
     const newIsLiked = !isLiked;
     const newCount = newIsLiked ? likeCount + 1 : likeCount - 1;
-    
+
     setIsLiked(newIsLiked);
     setLikeCount(newCount);
     onLikeToggle?.(post.id, newCount, newIsLiked);
@@ -84,6 +88,10 @@ export const ProfilePostCard = ({
         await supabase.from("post_likes").insert({
           post_id: post.id,
           user_id: post.author.id,
+        });
+        toast({
+          title: "Post liked",
+          duration: 1500,
         });
       } else {
         await supabase
@@ -97,10 +105,15 @@ export const ProfilePostCard = ({
       // Revert on error
       setIsLiked(!newIsLiked);
       setLikeCount(post.likes);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive",
+      });
     }
-  };
+  }, [isLiked, likeCount, post.id, post.author.id, onLikeToggle, toast]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const newIsSaved = !isSaved;
     setIsSaved(newIsSaved);
     onSaveToggle?.(post.id, newIsSaved);
@@ -110,8 +123,21 @@ export const ProfilePostCard = ({
       description: newIsSaved
         ? "Added to your saved posts"
         : "Removed from saved posts",
+      duration: 1500,
     });
-  };
+  }, [isSaved, post.id, onSaveToggle, toast]);
+
+  // Setup keyboard navigation
+  usePostKeyboardNavigation(
+    {
+      onLike: handleLike,
+      onComment: () => setShowComments(!showComments),
+      onSave: handleSave,
+      onOpenDetail: () => setShowDetailModal(true),
+      onClose: () => setShowDetailModal(false),
+    },
+    showDetailModal // Only enable when detail modal is open
+  );
 
   const getPrivacyIcon = () => {
     switch (post.privacy.toLowerCase()) {
@@ -205,6 +231,7 @@ export const ProfilePostCard = ({
                       isLiked && "text-red-500"
                     )}
                     onClick={handleLike}
+                    title="Like this post (Keyboard: L)"
                   >
                     <Heart
                       className={cn("w-4 h-4", isLiked && "fill-current")}
@@ -220,6 +247,7 @@ export const ProfilePostCard = ({
                       "flex items-center gap-1 px-2 py-1.5 h-auto",
                       showComments && "text-blue-500"
                     )}
+                    title="View comments (Keyboard: C)"
                   >
                     <MessageSquare className="w-4 h-4" />
                     <span className="text-xs sm:text-sm">{post.comments}</span>
@@ -237,6 +265,7 @@ export const ProfilePostCard = ({
                         variant="ghost"
                         size="sm"
                         className="flex items-center gap-1 px-2 py-1.5 h-auto hover:text-green-500 transition-colors"
+                        title="Share this post (Keyboard: S)"
                       >
                         <Share2 className="w-4 h-4" />
                         <span className="text-xs sm:text-sm">{post.shares}</span>
@@ -260,6 +289,19 @@ export const ProfilePostCard = ({
                       </Button>
                     }
                   />
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="flex items-center gap-1 px-2 py-1.5 h-auto hover:text-purple-500 transition-colors"
+                    onClick={() => setShowDetailModal(true)}
+                    title="View full post (Keyboard: Enter)"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                    <span className="text-xs sm:text-sm hidden sm:inline">
+                      View
+                    </span>
+                  </Button>
 
                   {isOwnPost && (
                     <Button
@@ -288,6 +330,7 @@ export const ProfilePostCard = ({
                     isSaved && "text-blue-500"
                   )}
                   onClick={handleSave}
+                  title="Save post (Keyboard: B)"
                 >
                   <Bookmark
                     className={cn("w-4 h-4", isSaved && "fill-current")}
@@ -332,6 +375,16 @@ export const ProfilePostCard = ({
           </div>
         </div>
       </CardContent>
+
+      {/* Detail Modal */}
+      <PostDetailModal
+        post={showDetailModal ? post : null}
+        isOpen={showDetailModal}
+        isOwnPost={isOwnPost}
+        onClose={() => setShowDetailModal(false)}
+        onLikeToggle={onLikeToggle}
+        onSaveToggle={onSaveToggle}
+      />
     </Card>
   );
 };
