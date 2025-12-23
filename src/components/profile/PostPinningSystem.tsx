@@ -33,10 +33,10 @@ const PostPinningSystem: React.FC<PostPinningSystemProps> = ({
   maxPinned = 3,
   onPinChange,
   onReorder,
-  onDelete,
-  onPrivacyChange,
-  onLikeToggle,
-  onSaveToggle,
+  onDelete = () => {},
+  onPrivacyChange = () => {},
+  onLikeToggle = () => {},
+  onSaveToggle = () => {},
   className = '',
 }) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
