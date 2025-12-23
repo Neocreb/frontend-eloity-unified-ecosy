@@ -3,12 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe } from "lucide-react";
+import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe, Pin, TrendingUp } from "lucide-react";
 import { cn } from "@/utils/utils";
 import { PostActionsMenu } from "./PostActionsMenu";
 import EnhancedShareDialog from "@/components/feed/EnhancedShareDialog";
 import { EnhancedCommentsSection } from "@/components/feed/EnhancedCommentsSection";
 import VirtualGiftsAndTips from "@/components/premium/VirtualGiftsAndTips";
+import PostAnalyticsPreview from "./PostAnalyticsPreview";
+import { usePostAnalytics } from "@/hooks/usePostAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -37,25 +39,37 @@ interface Post {
 interface ProfilePostCardProps {
   post: Post;
   isOwnPost: boolean;
+  isPinned?: boolean;
+  canPin?: boolean;
   onDelete?: (postId: string) => void;
   onPrivacyChange?: (postId: string, privacy: string) => void;
   onLikeToggle?: (postId: string, newLikeCount: number, isLiked: boolean) => void;
   onSaveToggle?: (postId: string, isSaved: boolean) => void;
+  onPin?: (postId: string) => void;
+  onUnpin?: (postId: string) => void;
 }
 
 export const ProfilePostCard = ({
   post,
   isOwnPost,
+  isPinned = false,
+  canPin = true,
   onDelete,
   onPrivacyChange,
   onLikeToggle,
   onSaveToggle,
+  onPin,
+  onUnpin,
 }: ProfilePostCardProps) => {
   const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(false);
   const [isLiked, setIsLiked] = useState(post._liked || false);
   const [isSaved, setIsSaved] = useState(post._saved || false);
   const [likeCount, setLikeCount] = useState(post.likes);
+
+  // Fetch real analytics data
+  const { analytics, isLoading: analyticsLoading } = usePostAnalytics(post.id);
 
   const handleLike = async () => {
     const newIsLiked = !isLiked;
@@ -138,6 +152,12 @@ export const ProfilePostCard = ({
                   <span className="text-muted-foreground">
                     {post.createdAt}
                   </span>
+                  {isPinned && (
+                    <Badge className="bg-blue-600 text-white h-5 px-1.5 text-xs flex items-center gap-1">
+                      <Pin className="h-3 w-3" />
+                      Pinned
+                    </Badge>
+                  )}
                   <Badge
                     variant="outline"
                     className="h-5 px-1.5 text-xs flex items-center gap-1"
@@ -150,11 +170,15 @@ export const ProfilePostCard = ({
                   postId={post.id}
                   isOwnPost={isOwnPost}
                   currentPrivacy={post.privacy}
+                  isPinned={isPinned}
+                  canPin={canPin}
                   onDelete={() => onDelete?.(post.id)}
                   onPrivacyChange={(privacy: string) =>
                     onPrivacyChange?.(post.id, privacy)
                   }
                   onEdit={() => {}}
+                  onPin={() => onPin?.(post.id)}
+                  onUnpin={() => onUnpin?.(post.id)}
                 />
               </div>
               {post.content && <p className="mt-2">{post.content}</p>}
@@ -236,6 +260,24 @@ export const ProfilePostCard = ({
                       </Button>
                     }
                   />
+
+                  {isOwnPost && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1.5 h-auto",
+                        showAnalytics && "text-green-500"
+                      )}
+                      onClick={() => setShowAnalytics(!showAnalytics)}
+                      title="View post analytics"
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-xs sm:text-sm hidden sm:inline">
+                        Analytics
+                      </span>
+                    </Button>
+                  )}
                 </div>
 
                 <Button
@@ -261,6 +303,29 @@ export const ProfilePostCard = ({
                     commentsCount={post.comments}
                     onCommentsCountChange={() => {}}
                   />
+                </div>
+              )}
+
+              {showAnalytics && isOwnPost && analytics && (
+                <div className="mt-4 border-t pt-4">
+                  <PostAnalyticsPreview
+                    postId={post.id}
+                    analytics={analytics}
+                    isOwnPost={isOwnPost}
+                    compact={false}
+                    onViewFullAnalytics={() => {
+                      toast({
+                        title: "Analytics",
+                        description: "Full analytics coming soon. Check Creator Studio for detailed stats.",
+                      });
+                    }}
+                  />
+                </div>
+              )}
+
+              {showAnalytics && isOwnPost && analyticsLoading && (
+                <div className="mt-4 border-t pt-4 text-center py-4">
+                  <p className="text-sm text-muted-foreground">Loading analytics...</p>
                 </div>
               )}
             </div>

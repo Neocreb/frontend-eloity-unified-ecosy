@@ -103,6 +103,8 @@ import { Post } from "@/components/feed/PostCard";
 import { ProfileStatsCarousel } from "@/components/profile/ProfileStatsCarousel";
 import BadgeSystem from "@/components/profile/BadgeSystem";
 import ActivityTimeline from "@/components/profile/ActivityTimeline";
+import PostPinningSystem from "@/components/profile/PostPinningSystem";
+import { ProfilePostCard } from "@/components/profile/ProfilePostCard";
 
 interface UnifiedProfileProps {
   username?: string;
@@ -139,6 +141,7 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const [mediaViewMode, setMediaViewMode] = useState("grid");
   const [mediaLikes, setMediaLikes] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [pinnedPosts, setPinnedPosts] = useState<Array<{ postId: string; pinnedOrder: number; pinnedDate: string }>>([]);
 
   const isOwnProfile =
     !targetUsername || (user && user.profile?.username === targetUsername);
@@ -387,6 +390,42 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
 
   const handleSendMoney = () => {
     navigateToSendMoney(targetUsername, navigate);
+  };
+
+  const handlePinPost = (postId: string) => {
+    if (pinnedPosts.length < 3) {
+      const newPinned = {
+        postId,
+        pinnedOrder: pinnedPosts.length,
+        pinnedDate: new Date().toISOString(),
+      };
+      setPinnedPosts([...pinnedPosts, newPinned]);
+      toast({
+        title: "Post pinned",
+        description: "This post has been added to your featured posts.",
+      });
+    } else {
+      toast({
+        title: "Cannot pin more posts",
+        description: "You can pin up to 3 posts. Unpin a post first.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnpinPost = (postId: string) => {
+    const filtered = pinnedPosts
+      .filter(p => p.postId !== postId)
+      .map((p, idx) => ({ ...p, pinnedOrder: idx }));
+    setPinnedPosts(filtered);
+    toast({
+      title: "Post unpinned",
+      description: "This post has been removed from your featured posts.",
+    });
+  };
+
+  const handleReorderPinnedPosts = (reorderedPinned: Array<{ postId: string; pinnedOrder: number; pinnedDate: string }>) => {
+    setPinnedPosts(reorderedPinned);
   };
 
   if (isLoading) {
@@ -836,11 +875,15 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {posts.map((post) => (
-                        <EnhancedPostCard key={post.id} post={post} />
-                      ))}
-                    </div>
+                    <PostPinningSystem
+                      posts={posts}
+                      pinnedPostIds={pinnedPosts}
+                      isOwnProfile={isOwnProfile}
+                      maxPinned={3}
+                      onPinChange={handlePinPost}
+                      onReorder={handleReorderPinnedPosts}
+                      className="space-y-6"
+                    />
                   )}
                 </TabsContent>
 
