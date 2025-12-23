@@ -321,7 +321,98 @@ export const useProfileAboutData = (
       ],
       totalAchievements: 15, // Total available achievements on platform
     };
-  }, [userId]);
+  }, [userId, profileData]);
 
-  return mockData;
+  // Transform real profile data into the expected format
+  const realData: ProfileAboutData | null = useMemo(() => {
+    if (!profileData) return null;
+
+    // Transform skills array to Skill objects
+    const skills: Skill[] = (profileData.skills || []).map(
+      (skillName: string, index: number) => ({
+        id: `skill-${index}`,
+        name: skillName,
+        proficiency: "intermediate" as const,
+        endorsementCount: 0,
+        endorsedBy: [],
+        isEndorsedByCurrentUser: false,
+      })
+    );
+
+    // Transform professional info
+    const professional: ProfessionalData = profileData.professional_info
+      ? {
+          title: profileData.professional_info.title || "",
+          company: profileData.professional_info.company || "",
+          yearsOfExperience: profileData.professional_info.yearsOfExperience || 0,
+          specializations:
+            profileData.professional_info.specializations || [],
+          languages: profileData.professional_info.languages || [],
+          certifications:
+            profileData.professional_info.certifications || [],
+        }
+      : mockData.professional;
+
+    // Transform social links
+    const socialLinks: SocialLink[] = [];
+    if (profileData.social_links) {
+      // If social_links is a JSONB object, transform it
+      const links = profileData.social_links;
+      Object.entries(links).forEach(([platform, data]: [string, any]) => {
+        if (data && data.url) {
+          socialLinks.push({
+            platform,
+            url: data.url,
+            isVerified: data.isVerified || false,
+            username: data.username || "",
+          });
+        }
+      });
+    }
+    // Also add individual social URLs
+    if (profileData.linkedin_url) {
+      socialLinks.push({
+        platform: "linkedin",
+        url: profileData.linkedin_url,
+        isVerified: true,
+        username: "",
+      });
+    }
+    if (profileData.github_url) {
+      socialLinks.push({
+        platform: "github",
+        url: profileData.github_url,
+        isVerified: true,
+        username: "",
+      });
+    }
+    if (profileData.twitter_url) {
+      socialLinks.push({
+        platform: "twitter",
+        url: profileData.twitter_url,
+        isVerified: true,
+        username: "",
+      });
+    }
+    if (profileData.portfolio_url) {
+      socialLinks.push({
+        platform: "portfolio",
+        url: profileData.portfolio_url,
+        isVerified: true,
+        username: "",
+      });
+    }
+
+    return {
+      skills: skills.length > 0 ? skills : mockData.skills,
+      professional,
+      socialLinks:
+        socialLinks.length > 0 ? socialLinks : mockData.socialLinks,
+      achievements: mockData.achievements, // TODO: Fetch real achievements from database
+      totalAchievements: mockData.totalAchievements,
+    };
+  }, [profileData, mockData]);
+
+  // Return real data if available, otherwise use mock data
+  return realData || mockData;
 };
