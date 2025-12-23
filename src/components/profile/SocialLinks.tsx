@@ -37,7 +37,7 @@ interface SocialLinksProps {
   onOpenLink?: (url: string) => void;
 }
 
-const getPlatformIcon = (platform: SocialPlatform) => {
+const getPlatformIcon = (platform: SocialPlatform): React.ComponentType<any> => {
   switch (platform) {
     case "linkedin":
       return Linkedin;
@@ -48,13 +48,13 @@ const getPlatformIcon = (platform: SocialPlatform) => {
     case "portfolio":
       return Globe;
     case "youtube":
-      return Youtube;
+      return Globe; // Using Globe as placeholder for YouTube
     case "instagram":
-      return Instagram;
+      return Globe; // Using Globe as placeholder for Instagram
     case "discord":
-      return Discord;
+      return Globe; // Using Globe as placeholder for Discord
     case "telegram":
-      return Telegram;
+      return Globe; // Using Globe as placeholder for Telegram
     default:
       return Globe;
   }
