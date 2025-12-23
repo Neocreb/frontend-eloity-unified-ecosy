@@ -88,12 +88,6 @@ const getPlatformColor = (platform: SocialPlatform) => {
   return colors[platform] || "text-gray-600 hover:text-gray-700";
 };
 
-// Placeholder icons for missing ones
-const Youtube = () => <Globe className="h-5 w-5" />;
-const Instagram = () => <Globe className="h-5 w-5" />;
-const Discord = () => <Globe className="h-5 w-5" />;
-const Telegram = () => <Globe className="h-5 w-5" />;
-
 export const SocialLinks: React.FC<SocialLinksProps> = ({
   links,
   isOwner = false,
