@@ -68,16 +68,8 @@ export const ProfilePostCard = ({
   const [isSaved, setIsSaved] = useState(post._saved || false);
   const [likeCount, setLikeCount] = useState(post.likes);
 
-  // Mock analytics data - in production, fetch from backend
-  const mockAnalytics = {
-    postId: post.id,
-    views: Math.floor(Math.random() * 5000) + 100,
-    likes: post.likes,
-    comments: post.comments,
-    shares: post.shares,
-    saves: Math.floor(Math.random() * 100) + 5,
-    engagementRate: 0,
-  };
+  // Fetch real analytics data
+  const { analytics, isLoading: analyticsLoading } = usePostAnalytics(post.id);
 
   const handleLike = async () => {
     const newIsLiked = !isLiked;
