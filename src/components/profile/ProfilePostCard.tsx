@@ -74,22 +74,11 @@ export const ProfilePostCard = ({
   // Fetch real analytics data
   const { analytics, isLoading: analyticsLoading } = usePostAnalytics(post.id);
 
-  // Setup keyboard navigation
-  usePostKeyboardNavigation(
-    {
-      onLike: handleLike,
-      onComment: () => setShowComments(!showComments),
-      onSave: handleSave,
-      onOpenDetail: () => setShowDetailModal(true),
-      onClose: () => setShowDetailModal(false),
-    },
-    showDetailModal // Only enable when detail modal is open
-  );
-
-  const handleLike = async () => {
+  // Define handlers with useCallback
+  const handleLike = useCallback(async () => {
     const newIsLiked = !isLiked;
     const newCount = newIsLiked ? likeCount + 1 : likeCount - 1;
-    
+
     setIsLiked(newIsLiked);
     setLikeCount(newCount);
     onLikeToggle?.(post.id, newCount, newIsLiked);
@@ -99,6 +88,10 @@ export const ProfilePostCard = ({
         await supabase.from("post_likes").insert({
           post_id: post.id,
           user_id: post.author.id,
+        });
+        toast({
+          title: "Post liked",
+          duration: 1500,
         });
       } else {
         await supabase
@@ -112,10 +105,15 @@ export const ProfilePostCard = ({
       // Revert on error
       setIsLiked(!newIsLiked);
       setLikeCount(post.likes);
+      toast({
+        title: "Error",
+        description: "Failed to update like status",
+        variant: "destructive",
+      });
     }
-  };
+  }, [isLiked, likeCount, post.id, post.author.id, onLikeToggle, toast]);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     const newIsSaved = !isSaved;
     setIsSaved(newIsSaved);
     onSaveToggle?.(post.id, newIsSaved);
@@ -125,8 +123,21 @@ export const ProfilePostCard = ({
       description: newIsSaved
         ? "Added to your saved posts"
         : "Removed from saved posts",
+      duration: 1500,
     });
-  };
+  }, [isSaved, post.id, onSaveToggle, toast]);
+
+  // Setup keyboard navigation
+  usePostKeyboardNavigation(
+    {
+      onLike: handleLike,
+      onComment: () => setShowComments(!showComments),
+      onSave: handleSave,
+      onOpenDetail: () => setShowDetailModal(true),
+      onClose: () => setShowDetailModal(false),
+    },
+    showDetailModal // Only enable when detail modal is open
+  );
 
   const getPrivacyIcon = () => {
     switch (post.privacy.toLowerCase()) {
