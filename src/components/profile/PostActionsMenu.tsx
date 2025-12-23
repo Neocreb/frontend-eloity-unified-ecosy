@@ -60,9 +60,13 @@ export const PostActionsMenu = ({
   postId,
   isOwnPost,
   currentPrivacy = "public",
+  isPinned = false,
+  canPin = true,
   onDelete,
   onPrivacyChange,
   onEdit,
+  onPin,
+  onUnpin,
 }: PostActionsMenuProps) => {
   const { toast } = useToast();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
