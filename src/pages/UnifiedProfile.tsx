@@ -255,6 +255,8 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const [mediaLikes, setMediaLikes] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<any[]>([]);
   const [pinnedPosts, setPinnedPosts] = useState<Array<{ postId: string; pinnedOrder: number; pinnedDate: string }>>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   const isOwnProfile =
     !targetUsername || (user && user.profile?.username === targetUsername);
