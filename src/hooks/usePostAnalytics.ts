@@ -88,10 +88,6 @@ export const usePostAnalytics = (postId: string) => {
         const comments = commentsCount || 0;
         const saves = savesCount || 0;
 
-        // For now, saves count is 0 (post_saves table doesn't exist yet)
-        // In the future, this can be fetched from post_saves table when implemented
-        const saves = 0;
-
         // Calculate engagement rate
         const totalEngagement = likes + comments + shares + saves;
         const engagementRate = views > 0 ? (totalEngagement / views) * 100 : 0;
