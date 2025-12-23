@@ -70,7 +70,7 @@ const badgeIconMap: Record<string, React.ReactNode> = {
   'Ambassador': <Users className="h-4 w-4" />,
   'Trustworthy': <Shield className="h-4 w-4" />,
   'Helpful': <MessageSquare className="h-4 w-4" />,
-  'Engaged': <BarChart3className="h-4 w-4" />,
+  'Engaged': <BarChart3 className="h-4 w-4" />,
   'Reliable': <Clock className="h-4 w-4" />,
   'Exceptional': <AlertCircle className="h-4 w-4" />,
 };
@@ -90,7 +90,7 @@ const mockBadges: BadgeData[] = [
     type: 'special',
     name: 'Premium',
     description: 'Premium member with exclusive benefits',
-    icon: badgeIconMap['Premium'],
+    icon: <Crown className="h-4 w-4" />,
     color: badgeColorMap['special'],
     earnedDate: '2024-01-15',
     isActive: true,
@@ -101,7 +101,7 @@ const mockBadges: BadgeData[] = [
     type: 'trust',
     name: 'Trustworthy',
     description: 'Verified trusted member',
-    icon: badgeIconMap['Trustworthy'],
+    icon: <Shield className="h-4 w-4" />,
     color: badgeColorMap['trust'],
     earnedDate: '2024-02-10',
     isActive: true,
@@ -112,7 +112,7 @@ const mockBadges: BadgeData[] = [
     type: 'engagement',
     name: 'Top Contributor',
     description: 'Highly engaged community member',
-    icon: badgeIconMap['Top Contributor'],
+    icon: <Heart className="h-4 w-4" />,
     color: badgeColorMap['engagement'],
     earnedDate: '2024-03-05',
     isActive: true,
@@ -123,7 +123,7 @@ const mockBadges: BadgeData[] = [
     type: 'creator',
     name: 'Creator',
     description: 'Active content creator',
-    icon: badgeIconMap['Creator'],
+    icon: <Star className="h-4 w-4" />,
     color: badgeColorMap['creator'],
     earnedDate: '2024-02-20',
     isActive: true,
@@ -134,7 +134,7 @@ const mockBadges: BadgeData[] = [
     type: 'trading',
     name: 'Crypto Trader',
     description: 'Active cryptocurrency trader',
-    icon: badgeIconMap['Crypto Trader'],
+    icon: <Zap className="h-4 w-4" />,
     color: badgeColorMap['trading'],
     earnedDate: '2024-01-30',
     isActive: true,
@@ -145,7 +145,7 @@ const mockBadges: BadgeData[] = [
     type: 'special',
     name: 'Pioneer',
     description: 'Early platform adopter',
-    icon: badgeIconMap['Pioneer'],
+    icon: <Trophy className="h-4 w-4" />,
     color: badgeColorMap['special'],
     earnedDate: '2023-12-01',
     isActive: true,
@@ -187,47 +187,45 @@ const BadgeSystem: React.FC<BadgeSystemProps> = ({
   if (variant === 'detailed') {
     return (
       <>
-        <TooltipProvider>
-          <div className={cn('flex flex-wrap gap-2', className)}>
-            {visibleBadges.map((badge) => (
-              <Tooltip key={badge.id}>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => handleBadgeClick(badge)}
-                    className="focus:outline-none transition-transform hover:scale-110"
+        <div className={cn('flex flex-wrap gap-2', className)}>
+          {visibleBadges.map((badge) => (
+            <Tooltip key={badge.id}>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={() => handleBadgeClick(badge)}
+                  className="focus:outline-none transition-transform hover:scale-110"
+                >
+                  <Badge
+                    variant="secondary"
+                    className={cn(
+                      'text-xs cursor-pointer transition-all hover:shadow-md',
+                      badge.color
+                    )}
                   >
-                    <Badge
-                      variant="secondary"
-                      className={cn(
-                        'text-xs cursor-pointer transition-all hover:shadow-md',
-                        badge.color
-                      )}
-                    >
-                      {badge.icon && <span className="mr-1 flex-shrink-0">{badge.icon}</span>}
-                      {badge.name}
-                    </Badge>
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs max-w-xs">{badge.description}</p>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Earned {new Date(badge.earnedDate).toLocaleDateString()}
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            ))}
-            {hasMoreBadges && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowDetailModal(true)}
-                className="h-6 text-xs px-2"
-              >
-                +{activeBadges.length - maxDisplay} more
-              </Button>
-            )}
-          </div>
-        </TooltipProvider>
+                    {badge.icon && <span className="mr-1 flex-shrink-0">{badge.icon}</span>}
+                    {badge.name}
+                  </Badge>
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="text-xs max-w-xs">{badge.description}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  Earned {new Date(badge.earnedDate).toLocaleDateString()}
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+          {hasMoreBadges && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDetailModal(true)}
+              className="h-6 text-xs px-2"
+            >
+              +{activeBadges.length - maxDisplay} more
+            </Button>
+          )}
+        </div>
 
         {showDetailModal && (
           <BadgeDetailModal
@@ -245,44 +243,42 @@ const BadgeSystem: React.FC<BadgeSystemProps> = ({
   // Compact variant
   return (
     <>
-      <TooltipProvider>
-        <div className={cn('flex flex-wrap gap-1.5', className)}>
-          {visibleBadges.map((badge) => (
-            <Tooltip key={badge.id}>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={() => handleBadgeClick(badge)}
-                  className="focus:outline-none transition-transform hover:scale-105"
+      <div className={cn('flex flex-wrap gap-1.5', className)}>
+        {visibleBadges.map((badge) => (
+          <Tooltip key={badge.id}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => handleBadgeClick(badge)}
+                className="focus:outline-none transition-transform hover:scale-105"
+              >
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    'text-xs cursor-pointer transition-all hover:shadow-sm',
+                    badge.color
+                  )}
                 >
-                  <Badge
-                    variant="secondary"
-                    className={cn(
-                      'text-xs cursor-pointer transition-all hover:shadow-sm',
-                      badge.color
-                    )}
-                  >
-                    {badge.icon && <span className="mr-0.5 flex-shrink-0">{badge.icon}</span>}
-                    {badge.name}
-                  </Badge>
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs max-w-xs">{badge.description}</p>
-              </TooltipContent>
-            </Tooltip>
-          ))}
-          {hasMoreBadges && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDetailModal(true)}
-              className="h-6 text-xs px-2 hover:bg-gray-100"
-            >
-              View all ({activeBadges.length})
-            </Button>
-          )}
-        </div>
-      </TooltipProvider>
+                  {badge.icon && <span className="mr-0.5 flex-shrink-0">{badge.icon}</span>}
+                  {badge.name}
+                </Badge>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs max-w-xs">{badge.description}</p>
+            </TooltipContent>
+          </Tooltip>
+        ))}
+        {hasMoreBadges && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowDetailModal(true)}
+            className="h-6 text-xs px-2 hover:bg-gray-100"
+          >
+            View all ({activeBadges.length})
+          </Button>
+        )}
+      </div>
 
       {showDetailModal && (
         <BadgeDetailModal
