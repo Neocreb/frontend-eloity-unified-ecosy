@@ -207,6 +207,34 @@ export const PostActionsMenu = ({
                 Copy link
               </DropdownMenuItem>
 
+              {canPin && (
+                isPinned ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem onClick={onUnpin} className="text-blue-600">
+                        <Pin className="mr-2 h-4 w-4" />
+                        Unpin from profile
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Remove from featured posts</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuItem onClick={onPin} className="text-blue-600">
+                        <Pin className="mr-2 h-4 w-4" />
+                        Pin to profile
+                      </DropdownMenuItem>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add to featured posts (max 3)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                )
+              )}
+
               <DropdownMenuSeparator />
 
               <Tooltip>
