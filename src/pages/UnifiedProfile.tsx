@@ -875,11 +875,15 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {posts.map((post) => (
-                        <EnhancedPostCard key={post.id} post={post} />
-                      ))}
-                    </div>
+                    <PostPinningSystem
+                      posts={posts}
+                      pinnedPostIds={pinnedPosts}
+                      isOwnProfile={isOwnProfile}
+                      maxPinned={3}
+                      onPinChange={handlePinPost}
+                      onReorder={handleReorderPinnedPosts}
+                      className="space-y-6"
+                    />
                   )}
                 </TabsContent>
 
