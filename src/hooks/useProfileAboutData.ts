@@ -1,8 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useEffect, useState } from "react";
 import { Skill } from "@/components/profile/SkillsSection";
 import { ProfessionalData } from "@/components/profile/ProfessionalInfo";
 import { SocialLink } from "@/components/profile/SocialLinks";
 import { Achievement } from "@/components/profile/EnhancedAchievements";
+import { useAuth } from "@/contexts/AuthContext";
+import { profileService } from "@/services/profileService";
 import {
   Code,
   PenTool,
@@ -29,8 +31,38 @@ interface ProfileAboutData {
 export const useProfileAboutData = (
   userId?: string
 ): ProfileAboutData => {
+  const { user } = useAuth();
+  const [profileData, setProfileData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch real profile data
+  useEffect(() => {
+    const fetchProfileData = async () => {
+      try {
+        if (!userId && !user?.id) {
+          setLoading(false);
+          return;
+        }
+
+        const targetUserId = userId || user?.id;
+        if (!targetUserId) return;
+
+        // Fetch profile from database
+        const profile = await profileService.getProfile(targetUserId);
+        setProfileData(profile);
+      } catch (error) {
+        console.warn("Error fetching profile data:", error);
+        // Fall back to mock data on error
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfileData();
+  }, [userId, user?.id]);
+
   // Mock data for development/demo purposes
-  // In production, replace with actual API calls
+  // Used when real data is not available or in development mode
   const mockData: ProfileAboutData = useMemo(() => {
     return {
       skills: [
