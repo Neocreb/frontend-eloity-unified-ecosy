@@ -10,6 +10,7 @@ import EnhancedShareDialog from "@/components/feed/EnhancedShareDialog";
 import { EnhancedCommentsSection } from "@/components/feed/EnhancedCommentsSection";
 import VirtualGiftsAndTips from "@/components/premium/VirtualGiftsAndTips";
 import PostAnalyticsPreview from "./PostAnalyticsPreview";
+import { usePostAnalytics } from "@/hooks/usePostAnalytics";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
