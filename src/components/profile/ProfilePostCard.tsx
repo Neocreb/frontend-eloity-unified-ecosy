@@ -50,10 +50,14 @@ interface ProfilePostCardProps {
 export const ProfilePostCard = ({
   post,
   isOwnPost,
+  isPinned = false,
+  canPin = true,
   onDelete,
   onPrivacyChange,
   onLikeToggle,
   onSaveToggle,
+  onPin,
+  onUnpin,
 }: ProfilePostCardProps) => {
   const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
