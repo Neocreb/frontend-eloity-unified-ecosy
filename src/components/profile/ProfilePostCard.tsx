@@ -66,12 +66,25 @@ export const ProfilePostCard = ({
   const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [isLiked, setIsLiked] = useState(post._liked || false);
   const [isSaved, setIsSaved] = useState(post._saved || false);
   const [likeCount, setLikeCount] = useState(post.likes);
 
   // Fetch real analytics data
   const { analytics, isLoading: analyticsLoading } = usePostAnalytics(post.id);
+
+  // Setup keyboard navigation
+  usePostKeyboardNavigation(
+    {
+      onLike: handleLike,
+      onComment: () => setShowComments(!showComments),
+      onSave: handleSave,
+      onOpenDetail: () => setShowDetailModal(true),
+      onClose: () => setShowDetailModal(false),
+    },
+    showDetailModal // Only enable when detail modal is open
+  );
 
   const handleLike = async () => {
     const newIsLiked = !isLiked;
