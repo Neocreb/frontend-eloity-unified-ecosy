@@ -177,32 +177,32 @@ const AdCarousel = ({
           <>
             <button
               onClick={handlePrev}
-              className="absolute left-2 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100"
+              className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-2 md:p-3 rounded-full transition-all opacity-0 group-hover:opacity-100"
               aria-label="Previous ad"
             >
-              <ChevronLeft className="h-4 w-4 md:h-5 md:w-5 text-white" />
+              <ChevronLeft className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-2 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-1.5 rounded-full transition-all opacity-0 group-hover:opacity-100"
+              className="absolute right-4 md:right-6 top-1/2 -translate-y-1/2 z-20 bg-white/20 hover:bg-white/40 backdrop-blur-sm p-2 md:p-3 rounded-full transition-all opacity-0 group-hover:opacity-100"
               aria-label="Next ad"
             >
-              <ChevronRight className="h-4 w-4 md:h-5 md:w-5 text-white" />
+              <ChevronRight className="h-5 w-5 md:h-6 md:w-6 text-white" />
             </button>
           </>
         )}
 
         {/* Dot Indicators */}
         {visibleAds.length > 1 && (
-          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+          <div className="absolute bottom-4 md:bottom-6 left-1/2 -translate-x-1/2 z-20 flex gap-2 md:gap-2.5">
             {visibleAds.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentIndex(index)}
-                className={`h-2 rounded-full transition-all ${
+                className={`rounded-full transition-all ${
                   index === currentIndex
-                    ? "bg-white w-6"
-                    : "bg-white/50 w-2 hover:bg-white/70"
+                    ? "bg-white h-2.5 w-6 md:h-3 md:w-8"
+                    : "bg-white/50 h-2.5 w-2.5 md:h-3 md:w-3 hover:bg-white/70"
                 }`}
                 aria-label={`Go to ad ${index + 1}`}
               />
