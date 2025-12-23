@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { getErrorMessage } from '@/utils/utils';
 
 export interface PostAnalyticsData {
   postId: string;
