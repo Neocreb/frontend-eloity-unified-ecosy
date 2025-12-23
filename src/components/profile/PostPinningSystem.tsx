@@ -227,6 +227,13 @@ const PostPinningSystem: React.FC<PostPinningSystemProps> = ({
                 <ProfilePostCard
                   post={post}
                   isOwnPost={isOwnProfile}
+                  isPinned={true}
+                  canPin={false}
+                  onDelete={onDelete}
+                  onPrivacyChange={onPrivacyChange}
+                  onLikeToggle={onLikeToggle}
+                  onSaveToggle={onSaveToggle}
+                  onUnpin={() => handleUnpin(post.id)}
                 />
               </div>
             ))}
