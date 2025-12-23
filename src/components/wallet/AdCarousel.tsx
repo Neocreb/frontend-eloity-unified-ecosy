@@ -144,16 +144,16 @@ const AdCarousel = ({
           )}
 
           {/* Content */}
-          <div className="relative z-10 h-full p-4 md:p-6 flex flex-col justify-between text-left">
-            <div className="space-y-1">
+          <div className="relative z-10 h-full p-6 md:p-8 lg:p-12 flex flex-col justify-between text-left">
+            <div className="space-y-2 md:space-y-3">
               <h3
-                className="text-sm md:text-base font-bold truncate"
+                className="text-lg md:text-2xl lg:text-3xl font-bold"
                 style={{ color: currentAd.textColor || "#FFFFFF" }}
               >
                 {currentAd.title}
               </h3>
               <p
-                className="text-xs md:text-sm truncate opacity-90"
+                className="text-sm md:text-base lg:text-lg opacity-90"
                 style={{ color: currentAd.textColor || "#FFFFFF" }}
               >
                 {currentAd.description}
@@ -163,7 +163,7 @@ const AdCarousel = ({
             {currentAd.ctaText && (
               <button
                 onClick={() => handleAdClick(currentAd)}
-                className="self-start px-3 py-1 bg-white/20 backdrop-blur-sm rounded-lg text-xs md:text-sm font-semibold hover:bg-white/30 transition-all"
+                className="self-start px-4 md:px-6 py-2 md:py-3 bg-white/20 backdrop-blur-sm rounded-lg text-sm md:text-base font-semibold hover:bg-white/30 transition-all"
                 style={{ color: currentAd.textColor || "#FFFFFF" }}
               >
                 {currentAd.ctaText}
