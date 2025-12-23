@@ -105,6 +105,11 @@ import BadgeSystem from "@/components/profile/BadgeSystem";
 import ActivityTimeline from "@/components/profile/ActivityTimeline";
 import PostPinningSystem from "@/components/profile/PostPinningSystem";
 import { ProfilePostCard } from "@/components/profile/ProfilePostCard";
+import { SkillsSection } from "@/components/profile/SkillsSection";
+import { ProfessionalInfo } from "@/components/profile/ProfessionalInfo";
+import { SocialLinks } from "@/components/profile/SocialLinks";
+import { EnhancedAchievements } from "@/components/profile/EnhancedAchievements";
+import { useProfileAboutData } from "@/hooks/useProfileAboutData";
 
 interface UnifiedProfileProps {
   username?: string;
