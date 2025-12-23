@@ -19,6 +19,10 @@ interface PostPinningSystemProps {
   maxPinned?: number;
   onPinChange?: (postId: string, isPinned: boolean) => void;
   onReorder?: (pinnedPosts: PinnedPost[]) => void;
+  onDelete?: (postId: string) => void;
+  onPrivacyChange?: (postId: string, privacy: string) => void;
+  onLikeToggle?: (postId: string, newLikeCount: number, isLiked: boolean) => void;
+  onSaveToggle?: (postId: string, isSaved: boolean) => void;
   className?: string;
 }
 
