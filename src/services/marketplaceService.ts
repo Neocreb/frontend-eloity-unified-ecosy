@@ -80,7 +80,7 @@ export class MarketplaceService {
   ];
 
   // Categories
-  async getCategories(): Promise<Category[]> {
+  static async getCategories(): Promise<Category[]> {
     try {
       const { data, error } = await supabase
         .from('categories')
@@ -90,12 +90,12 @@ export class MarketplaceService {
       if (error) {
         const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
         console.warn("Supabase categories fetch failed, using defaults:", errorMsg);
-        return this.DEFAULT_CATEGORIES;
+        return MarketplaceService.DEFAULT_CATEGORIES;
       }
 
       if (!data || data.length === 0) {
         console.info("No categories found in database, using defaults");
-        return this.DEFAULT_CATEGORIES;
+        return MarketplaceService.DEFAULT_CATEGORIES;
       }
 
       return data.map(category => ({
@@ -110,11 +110,11 @@ export class MarketplaceService {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.warn("Error in getCategories (using defaults):", errorMsg);
-      return this.DEFAULT_CATEGORIES;
+      return MarketplaceService.DEFAULT_CATEGORIES;
     }
   }
 
-  async getCategoryBySlug(slug: string): Promise<Category | null> {
+  static async getCategoryBySlug(slug: string): Promise<Category | null> {
     try {
       const { data, error } = await supabase
         .from('categories')
@@ -145,7 +145,7 @@ export class MarketplaceService {
   }
 
   // Products
-  async getProducts(filters: ProductFilter = {}): Promise<Product[]> {
+  static async getProducts(filters: ProductFilter = {}): Promise<Product[]> {
     try {
       let query = supabase
         .from('products')
@@ -222,7 +222,7 @@ export class MarketplaceService {
     }
   }
 
-  async getProductById(id: string): Promise<Product | null> {
+  static async getProductById(id: string): Promise<Product | null> {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -271,7 +271,7 @@ export class MarketplaceService {
     }
   }
 
-  async createProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product | null> {
+  static async createProduct(productData: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>): Promise<Product | null> {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -406,7 +406,7 @@ export class MarketplaceService {
     }
   }
 
-  async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
+  static async updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
     try {
       const updateData: any = {
         name: updates.name,
@@ -548,7 +548,7 @@ export class MarketplaceService {
   }
 
   // Reviews (using canonical product_reviews table)
-  async getReviews(productId: string): Promise<Review[]> {
+  static async getReviews(productId: string): Promise<Review[]> {
     try {
       const { data, error } = await supabase
         .from('product_reviews')
@@ -589,7 +589,7 @@ export class MarketplaceService {
     }
   }
 
-  async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<Review | null> {
+  static async createReview(reviewData: Omit<Review, 'id' | 'createdAt' | 'updatedAt'>): Promise<Review | null> {
     try {
       const { data, error } = await supabase
         .from('product_reviews')
@@ -613,7 +613,7 @@ export class MarketplaceService {
       }
 
       // Update product rating and review count
-      await this.updateProductRating(reviewData.productId);
+      await MarketplaceService.updateProductRating(reviewData.productId);
 
       return {
         id: data.id,
@@ -635,7 +635,7 @@ export class MarketplaceService {
     }
   }
 
-  async updateProductRating(productId: string): Promise<void> {
+  static async updateProductRating(productId: string): Promise<void> {
     try {
       // Get all reviews for this product
       const { data: reviews, error } = await supabase
@@ -678,7 +678,7 @@ export class MarketplaceService {
   }
 
   // Orders
-  async createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'items'>, items: Omit<OrderItem, 'id' | 'orderId'>[]): Promise<Order | null> {
+  static async createOrder(orderData: Omit<Order, 'id' | 'createdAt' | 'updatedAt' | 'items'>, items: Omit<OrderItem, 'id' | 'orderId'>[]): Promise<Order | null> {
     try {
       // Start a transaction
       const { data: order, error: orderError } = await supabase
@@ -746,7 +746,7 @@ export class MarketplaceService {
     }
   }
 
-  async getUserOrders(userId: string): Promise<Order[]> {
+  static async getUserOrders(userId: string): Promise<Order[]> {
     try {
       const { data, error } = await supabase
         .from('orders')
@@ -782,7 +782,7 @@ export class MarketplaceService {
   }
 
   // Search
-  async searchProducts(query: string, limit = 20): Promise<SearchResult[]> {
+  static async searchProducts(query: string, limit = 20): Promise<SearchResult[]> {
     try {
       // Sanitize query to prevent complex parsing issues
       const sanitizedQuery = query.trim().replace(/[^a-zA-Z0-9_\-.\s]/g, '');
@@ -814,7 +814,7 @@ export class MarketplaceService {
   }
 
   // Stats
-  async getMarketplaceStats(): Promise<MarketplaceStats> {
+  static async getMarketplaceStats(): Promise<MarketplaceStats> {
     try {
       // Get total products count
       const { count: productsCount, error: productsError } = await supabase
@@ -865,7 +865,7 @@ export class MarketplaceService {
     }
   }
 
-  async getSellerStats(sellerId: string): Promise<SellerStats> {
+  static async getSellerStats(sellerId: string): Promise<SellerStats> {
     try {
       // Get seller's products count
       const { count: productsCount, error: productsError } = await supabase
@@ -938,7 +938,7 @@ export class MarketplaceService {
   }
 
   // Get seller's marketplace balance from unified wallet
-  async getSellerBalance(sellerId: string): Promise<number> {
+  static async getSellerBalance(sellerId: string): Promise<number> {
     try {
       const response = await fetch(`/api/wallet/balance?userId=${sellerId}`, {
         method: 'GET',
@@ -957,7 +957,7 @@ export class MarketplaceService {
   }
 
   // Get sellers (using canonical store_profiles table)
-  async getSellers(): Promise<SellerProfile[]> {
+  static async getSellers(): Promise<SellerProfile[]> {
     try {
       // Get from canonical store_profiles table
       const { data: profiles, error: profilesError } = await supabase
@@ -1016,7 +1016,7 @@ export class MarketplaceService {
   }
 
   // Get reviews for products using canonical product_reviews table
-  async getProductReviews(productId: string): Promise<Review[]> {
+  static async getProductReviews(productId: string): Promise<Review[]> {
     try {
       const { data, error } = await supabase
         .from('product_reviews')
@@ -1084,7 +1084,7 @@ export class MarketplaceService {
   }
 
   // Flash Sales
-  async getActiveFlashSales(): Promise<any[]> {
+  static async getActiveFlashSales(): Promise<any[]> {
     try {
       // In a real implementation, we would fetch from the flash_sales table
       // For now, return an empty array as we're using mock data
@@ -1106,7 +1106,7 @@ export class MarketplaceService {
     }
   }
 
-  async createFlashSale(flashSaleData: any): Promise<any | null> {
+  static async createFlashSale(flashSaleData: any): Promise<any | null> {
     try {
       const { data, error } = await supabase
         .from('flash_sales')
@@ -1139,7 +1139,7 @@ export class MarketplaceService {
     }
   }
 
-  async updateFlashSale(id: string, updates: any): Promise<any | null> {
+  static async updateFlashSale(id: string, updates: any): Promise<any | null> {
     try {
       const { data, error } = await supabase
         .from('flash_sales')
@@ -1163,7 +1163,7 @@ export class MarketplaceService {
     }
   }
 
-  async deleteFlashSale(id: string): Promise<boolean> {
+  static async deleteFlashSale(id: string): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('flash_sales')
@@ -1183,7 +1183,7 @@ export class MarketplaceService {
   }
 
   // Sponsored Products
-  async getSponsoredProducts(): Promise<any[]> {
+  static async getSponsoredProducts(): Promise<any[]> {
     try {
       const { data, error } = await supabase
         .from('sponsored_products')
@@ -1203,7 +1203,7 @@ export class MarketplaceService {
     }
   }
 
-  async createSponsoredProduct(sponsoredProductData: any): Promise<any | null> {
+  static async createSponsoredProduct(sponsoredProductData: any): Promise<any | null> {
     try {
       const { data, error } = await supabase
         .from('sponsored_products')
@@ -1236,7 +1236,7 @@ export class MarketplaceService {
     }
   }
 
-  async updateSponsoredProduct(id: string, updates: any): Promise<any | null> {
+  static async updateSponsoredProduct(id: string, updates: any): Promise<any | null> {
     try {
       const { data, error } = await supabase
         .from('sponsored_products')
@@ -1260,7 +1260,7 @@ export class MarketplaceService {
     }
   }
 
-  async deleteSponsoredProduct(id: string): Promise<boolean> {
+  static async deleteSponsoredProduct(id: string): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('sponsored_products')
@@ -1280,7 +1280,7 @@ export class MarketplaceService {
   }
 
   // Campaigns
-  async getCampaigns(): Promise<any[]> {
+  static async getCampaigns(): Promise<any[]> {
     try {
       const { data, error } = await supabase
         .from('campaigns')
@@ -1321,7 +1321,7 @@ export class MarketplaceService {
     }
   }
 
-  async createCampaign(campaignData: any): Promise<any | null> {
+  static async createCampaign(campaignData: any): Promise<any | null> {
     try {
       // In a real implementation, we would insert into the campaigns table
       // For now, just return the data with an ID
@@ -1335,7 +1335,7 @@ export class MarketplaceService {
     }
   }
 
-  async updateCampaign(id: string, updates: any): Promise<any | null> {
+  static async updateCampaign(id: string, updates: any): Promise<any | null> {
     try {
       // In a real implementation, we would update the campaigns table
       // For now, just return the updates with the ID
@@ -1349,7 +1349,7 @@ export class MarketplaceService {
     }
   }
 
-  async deleteCampaign(id: string): Promise<boolean> {
+  static async deleteCampaign(id: string): Promise<boolean> {
     try {
       // In a real implementation, we would delete from the campaigns table
       // For now, just return true
@@ -1361,7 +1361,7 @@ export class MarketplaceService {
   }
 
   // Marketplace Ads
-  async getActiveAds(): Promise<any[]> {
+  static async getActiveAds(): Promise<any[]> {
     try {
       const { data, error } = await supabase
         .from('marketplace_ads')
@@ -1381,7 +1381,7 @@ export class MarketplaceService {
     }
   }
 
-  async createAd(adData: any): Promise<any | null> {
+  static async createAd(adData: any): Promise<any | null> {
     try {
       const { data, error } = await supabase
         .from('marketplace_ads')
@@ -1416,7 +1416,7 @@ export class MarketplaceService {
     }
   }
 
-  async updateAd(id: string, updates: any): Promise<any | null> {
+  static async updateAd(id: string, updates: any): Promise<any | null> {
     try {
       const { data, error } = await supabase
         .from('marketplace_ads')
@@ -1440,7 +1440,7 @@ export class MarketplaceService {
     }
   }
 
-  async deleteAd(id: string): Promise<boolean> {
+  static async deleteAd(id: string): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('marketplace_ads')
@@ -1460,7 +1460,7 @@ export class MarketplaceService {
   }
 
   // Get unique tags from all products
-  async getProductTags(): Promise<string[]> {
+  static async getProductTags(): Promise<string[]> {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -1483,7 +1483,7 @@ export class MarketplaceService {
     }
   }
 
-  async deleteProduct(productId: string): Promise<boolean> {
+  static async deleteProduct(productId: string): Promise<boolean> {
     try {
       const { error } = await supabase
         .from('products')
@@ -1964,5 +1964,3 @@ export class MarketplaceService {
     }
   }
 }
-
-export const marketplaceService = new MarketplaceService();
