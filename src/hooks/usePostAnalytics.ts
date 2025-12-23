@@ -75,7 +75,7 @@ export const usePostAnalytics = (postId: string) => {
         setAnalytics(analyticsData);
       } catch (err) {
         let error: Error;
-        
+
         if (err instanceof Error) {
           error = err;
         } else if (typeof err === 'object' && err !== null) {
@@ -83,11 +83,11 @@ export const usePostAnalytics = (postId: string) => {
         } else {
           error = new Error('Failed to fetch analytics');
         }
-        
+
         setError(error);
-        console.error('Error in usePostAnalytics:', {
-          message: error.message,
+        console.error('Error in usePostAnalytics:', error.message, {
           stack: error.stack,
+          details: err instanceof Error ? { code: (err as any).code, details: (err as any).details } : err,
         });
         setAnalytics(null);
       } finally {
