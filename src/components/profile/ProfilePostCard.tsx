@@ -306,11 +306,11 @@ export const ProfilePostCard = ({
                 </div>
               )}
 
-              {showAnalytics && isOwnPost && (
+              {showAnalytics && isOwnPost && analytics && (
                 <div className="mt-4 border-t pt-4">
                   <PostAnalyticsPreview
                     postId={post.id}
-                    analytics={mockAnalytics}
+                    analytics={analytics}
                     isOwnPost={isOwnPost}
                     compact={false}
                     onViewFullAnalytics={() => {
@@ -320,6 +320,12 @@ export const ProfilePostCard = ({
                       });
                     }}
                   />
+                </div>
+              )}
+
+              {showAnalytics && isOwnPost && analyticsLoading && (
+                <div className="mt-4 border-t pt-4 text-center py-4">
+                  <p className="text-sm text-muted-foreground">Loading analytics...</p>
                 </div>
               )}
             </div>
