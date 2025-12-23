@@ -246,6 +246,7 @@ export const ProfilePostCard = ({
                       "flex items-center gap-1 px-2 py-1.5 h-auto",
                       showComments && "text-blue-500"
                     )}
+                    title="View comments (Keyboard: C)"
                   >
                     <MessageSquare className="w-4 h-4" />
                     <span className="text-xs sm:text-sm">{post.comments}</span>
