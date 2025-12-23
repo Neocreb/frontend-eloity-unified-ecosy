@@ -460,6 +460,77 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
     loadProfile();
   }, [targetUsername, isOwnProfile, user, toast]);
 
+  // Keyboard navigation support for posts (Phase 5)
+  useEffect(() => {
+    if (activeTab !== "posts" || posts.length === 0) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't handle if user is typing in an input
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      switch (event.key) {
+        case "ArrowDown": {
+          event.preventDefault();
+          const postElements = document.querySelectorAll("[data-post-id]");
+          if (postElements.length > 0) {
+            const nextElement = postElements[Math.min(
+              Array.from(postElements).indexOf(document.activeElement as Element) + 1,
+              postElements.length - 1
+            )] as HTMLElement;
+            nextElement?.focus();
+          }
+          break;
+        }
+
+        case "ArrowUp": {
+          event.preventDefault();
+          const postElements = document.querySelectorAll("[data-post-id]");
+          if (postElements.length > 0) {
+            const prevElement = postElements[Math.max(
+              Array.from(postElements).indexOf(document.activeElement as Element) - 1,
+              0
+            )] as HTMLElement;
+            prevElement?.focus();
+          }
+          break;
+        }
+
+        case "Enter": {
+          // Open post detail modal for focused post
+          const focusedPost = document.activeElement?.getAttribute("data-post-id");
+          if (focusedPost) {
+            event.preventDefault();
+            setSelectedPostId(focusedPost);
+            setDetailModalOpen(true);
+          }
+          break;
+        }
+
+        case "Escape": {
+          // Close modal
+          if (detailModalOpen) {
+            event.preventDefault();
+            setDetailModalOpen(false);
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeTab, posts, detailModalOpen]);
+
   const handleFollow = async () => {
     if (!user?.id || !profileUser?.id) {
       toast({
