@@ -1,16 +1,18 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe, Pin, TrendingUp } from "lucide-react";
+import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe, Pin, TrendingUp, Maximize2 } from "lucide-react";
 import { cn } from "@/utils/utils";
 import { PostActionsMenu } from "./PostActionsMenu";
 import EnhancedShareDialog from "@/components/feed/EnhancedShareDialog";
 import { EnhancedCommentsSection } from "@/components/feed/EnhancedCommentsSection";
 import VirtualGiftsAndTips from "@/components/premium/VirtualGiftsAndTips";
 import PostAnalyticsPreview from "./PostAnalyticsPreview";
+import PostDetailModal from "./PostDetailModal";
 import { usePostAnalytics } from "@/hooks/usePostAnalytics";
+import { usePostKeyboardNavigation } from "@/hooks/usePostKeyboardNavigation";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
