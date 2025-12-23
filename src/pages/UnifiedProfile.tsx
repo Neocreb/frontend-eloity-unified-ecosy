@@ -110,6 +110,7 @@ import { ProfessionalInfo } from "@/components/profile/ProfessionalInfo";
 import { SocialLinks } from "@/components/profile/SocialLinks";
 import { EnhancedAchievements } from "@/components/profile/EnhancedAchievements";
 import { useProfileAboutData } from "@/hooks/useProfileAboutData";
+import { CreatorStudioQuickAccess } from "@/components/profile/CreatorStudioQuickAccess";
 
 interface UnifiedProfileProps {
   username?: string;
@@ -872,6 +873,26 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Creator Studio Quick Access (Own Profile Only) */}
+          {isOwnProfile && (
+            <CreatorStudioQuickAccess
+              isOwnProfile={isOwnProfile}
+              stats={{
+                totalViews: posts.reduce((sum, p) => sum + (p.views as any || 0), 0),
+                totalLikes: posts.reduce((sum, p) => sum + p.likes, 0),
+                totalComments: posts.reduce((sum, p) => sum + p.comments, 0),
+                topPostViews: Math.max(...posts.map(p => (p.views as any) || 0), 0),
+                averageEngagementRate: posts.length > 0
+                  ? (posts.reduce((sum, p) => {
+                      const views = (p.views as any) || 100;
+                      return sum + ((p.likes + p.comments) / Math.max(views, 1));
+                    }, 0) / posts.length) * 100
+                  : 0,
+                videosCreated: posts.length,
+              }}
+            />
           )}
 
           {/* Unified Notifications Overview (Own Profile Only) */}
