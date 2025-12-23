@@ -6,6 +6,7 @@ import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHel
 import { useWalletContext } from "@/contexts/WalletContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
+import { usePostKeyboardNavigation } from "@/hooks/usePostKeyboardNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
