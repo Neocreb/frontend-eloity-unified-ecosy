@@ -546,53 +546,6 @@ Integration Points:
 
 **Timeline**: 1 day of focused implementation (December 23, 2024)
 
-#### 5.1: Post Engagement Improvements
-
-**Make Content Clickable**
-```
-Current Issues:
-- Posts are mostly read-only
-- Limited interaction feedback
-
-Enhancements:
-- Click anywhere on post to open detail view
-- Click author name/avatar to navigate to profile
-- Click images to open lightbox
-- Inline editing for own posts (double-click content)
-- Hover effects showing available actions
-- Keyboard navigation support (arrow keys, enter)
-```
-
-**Add Post Detail Modal**
-```
-File: src/components/profile/PostDetailModal.tsx (NEW)
-
-Shows:
-- Full post content
-- All comments (with pagination)
-- All shares
-- Post analytics (if owner)
-- Similar posts
-- Share buttons
-- Report button
-- Thread view (if quoted/reply post)
-```
-
-#### 5.2: Profile Interaction Tracker
-
-**Track & Display Interactions**
-```
-File: src/hooks/useProfileInteractions.ts (NEW)
-
-Tracks:
-- User visited profile
-- Time spent on profile
-- Sections viewed (Posts, About, Media, etc.)
-- Posts viewed
-- Actions taken (Follow, Message, etc.)
-
-For owner: Display interaction analytics
-```
 
 ---
 
