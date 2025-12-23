@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Pin, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ProfilePostCard } from './ProfilePostCard';
-import { Post, PostAuthor } from './ProfilePostCard';
 
 export interface PinnedPost {
   postId: string;
