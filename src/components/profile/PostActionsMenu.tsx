@@ -47,9 +47,13 @@ interface PostActionsMenuProps {
   postId: string;
   isOwnPost: boolean;
   currentPrivacy?: string;
+  isPinned?: boolean;
+  canPin?: boolean;
   onDelete?: () => void;
   onPrivacyChange?: (privacy: string) => void;
   onEdit?: () => void;
+  onPin?: () => void;
+  onUnpin?: () => void;
 }
 
 export const PostActionsMenu = ({
