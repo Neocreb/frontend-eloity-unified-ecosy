@@ -18,6 +18,7 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/utils/utils';
 import VirtualGiftsAndTips from '@/components/premium/VirtualGiftsAndTips';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
