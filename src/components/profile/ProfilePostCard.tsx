@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe, Pin, TrendingUp, Maximize2 } from "lucide-react";
 import { cn } from "@/utils/utils";
 import { PostActionsMenu } from "./PostActionsMenu";
+import PostDetailModal from "./PostDetailModal";
 import EnhancedShareDialog from "@/components/feed/EnhancedShareDialog";
 import { EnhancedCommentsSection } from "@/components/feed/EnhancedCommentsSection";
 import VirtualGiftsAndTips from "@/components/premium/VirtualGiftsAndTips";

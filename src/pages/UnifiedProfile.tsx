@@ -6,6 +6,7 @@ import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHel
 import { useWalletContext } from "@/contexts/WalletContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useRewards } from "@/hooks/use-rewards";
+import { usePostKeyboardNavigation } from "@/hooks/usePostKeyboardNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -255,6 +256,8 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const [mediaLikes, setMediaLikes] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<any[]>([]);
   const [pinnedPosts, setPinnedPosts] = useState<Array<{ postId: string; pinnedOrder: number; pinnedDate: string }>>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   const isOwnProfile =
     !targetUsername || (user && user.profile?.username === targetUsername);
@@ -457,6 +460,77 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
 
     loadProfile();
   }, [targetUsername, isOwnProfile, user, toast]);
+
+  // Keyboard navigation support for posts (Phase 5)
+  useEffect(() => {
+    if (activeTab !== "posts" || posts.length === 0) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't handle if user is typing in an input
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      switch (event.key) {
+        case "ArrowDown": {
+          event.preventDefault();
+          const postElements = document.querySelectorAll("[data-post-id]");
+          if (postElements.length > 0) {
+            const nextElement = postElements[Math.min(
+              Array.from(postElements).indexOf(document.activeElement as Element) + 1,
+              postElements.length - 1
+            )] as HTMLElement;
+            nextElement?.focus();
+          }
+          break;
+        }
+
+        case "ArrowUp": {
+          event.preventDefault();
+          const postElements = document.querySelectorAll("[data-post-id]");
+          if (postElements.length > 0) {
+            const prevElement = postElements[Math.max(
+              Array.from(postElements).indexOf(document.activeElement as Element) - 1,
+              0
+            )] as HTMLElement;
+            prevElement?.focus();
+          }
+          break;
+        }
+
+        case "Enter": {
+          // Open post detail modal for focused post
+          const focusedPost = document.activeElement?.getAttribute("data-post-id");
+          if (focusedPost) {
+            event.preventDefault();
+            setSelectedPostId(focusedPost);
+            setDetailModalOpen(true);
+          }
+          break;
+        }
+
+        case "Escape": {
+          // Close modal
+          if (detailModalOpen) {
+            event.preventDefault();
+            setDetailModalOpen(false);
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeTab, posts, detailModalOpen]);
 
   const handleFollow = async () => {
     if (!user?.id || !profileUser?.id) {

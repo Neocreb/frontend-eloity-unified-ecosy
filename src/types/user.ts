@@ -66,6 +66,13 @@ export interface UserProfile {
   skills?: string[];
   interests?: string[];
   languages?: string[];
+  // About Tab Enhancement (Phase 4)
+  social_links?: Record<string, any> | null;
+  professional_info?: Record<string, any> | null;
+  linkedin_url?: string | null;
+  github_url?: string | null;
+  twitter_url?: string | null;
+  portfolio_url?: string | null;
   achievements?: Achievement[];
   badges?: Badge[];
 }
