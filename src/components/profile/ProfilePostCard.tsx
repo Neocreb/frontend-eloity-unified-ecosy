@@ -267,6 +267,24 @@ export const ProfilePostCard = ({
                       </Button>
                     }
                   />
+
+                  {isOwnPost && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className={cn(
+                        "flex items-center gap-1 px-2 py-1.5 h-auto",
+                        showAnalytics && "text-green-500"
+                      )}
+                      onClick={() => setShowAnalytics(!showAnalytics)}
+                      title="View post analytics"
+                    >
+                      <TrendingUp className="w-4 h-4" />
+                      <span className="text-xs sm:text-sm hidden sm:inline">
+                        Analytics
+                      </span>
+                    </Button>
+                  )}
                 </div>
 
                 <Button
