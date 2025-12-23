@@ -101,6 +101,8 @@ import { profileService } from "@/services/profileService";
 import EnhancedPostCard from "@/components/feed/EnhancedPostCard";
 import { Post } from "@/components/feed/PostCard";
 import { ProfileStatsCarousel } from "@/components/profile/ProfileStatsCarousel";
+import BadgeSystem from "@/components/profile/BadgeSystem";
+import ActivityTimeline from "@/components/profile/ActivityTimeline";
 
 interface UnifiedProfileProps {
   username?: string;
@@ -509,20 +511,14 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                         @{mockProfile.username}
                       </p>
 
-                      {/* Enhanced Status Badges */}
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Premium
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Trust Score {mockProfile.trustScore}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
-                          <Star className="h-3 w-3 mr-1" />
-                          Level 8
-                        </Badge>
+                      {/* Dynamic Badge System */}
+                      <div className="mb-2">
+                        <BadgeSystem
+                          userId={profileUser?.id || ''}
+                          isOwnProfile={isOwnProfile}
+                          variant="compact"
+                          maxDisplay={6}
+                        />
                       </div>
 
                       <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
@@ -969,11 +965,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0">
-                  <div className="text-center py-12">
-                    <Activity className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Activity Timeline</h3>
-                    <p className="text-muted-foreground">Recent actions and interactions</p>
-                  </div>
+                  {profileUser && (
+                    <ActivityTimeline
+                      userId={profileUser.id}
+                      showFilters={true}
+                      maxItems={20}
+                    />
+                  )}
                 </TabsContent>
 
                 {isOwnProfile && (
