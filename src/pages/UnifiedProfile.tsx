@@ -1060,55 +1060,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 )}
 
                 <TabsContent value="about" className="mt-0">
-                  <div className="space-y-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>About {mockProfile.displayName}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="flex items-center gap-3">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-sm font-medium">Location</div>
-                              <div className="text-sm text-muted-foreground">{mockProfile.location}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-sm font-medium">Joined</div>
-                              <div className="text-sm text-muted-foreground">{mockProfile.joinDate}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Achievements</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {mockProfile.achievements?.map((achievement, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-3 p-4 rounded-lg border bg-gradient-to-r from-blue-50 to-purple-50"
-                            >
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                                <achievement.icon className="h-5 w-5 text-white" />
-                              </div>
-                              <div>
-                                <div className="font-medium">{achievement.title}</div>
-                                <div className="text-xs text-muted-foreground">{achievement.date}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  <AboutTabContent
+                    userId={profileUser?.id}
+                    displayName={mockProfile.displayName}
+                    location={mockProfile.location}
+                    joinDate={mockProfile.joinDate}
+                    isOwnProfile={isOwnProfile}
+                  />
                 </TabsContent>
               </div>
             </Tabs>
