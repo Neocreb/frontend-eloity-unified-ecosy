@@ -141,6 +141,7 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const [mediaViewMode, setMediaViewMode] = useState("grid");
   const [mediaLikes, setMediaLikes] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [pinnedPosts, setPinnedPosts] = useState<Array<{ postId: string; pinnedOrder: number; pinnedDate: string }>>([]);
 
   const isOwnProfile =
     !targetUsername || (user && user.profile?.username === targetUsername);
