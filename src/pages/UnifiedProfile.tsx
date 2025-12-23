@@ -110,6 +110,7 @@ import { ProfessionalInfo } from "@/components/profile/ProfessionalInfo";
 import { SocialLinks } from "@/components/profile/SocialLinks";
 import { EnhancedAchievements } from "@/components/profile/EnhancedAchievements";
 import { useProfileAboutData } from "@/hooks/useProfileAboutData";
+import { CreatorStudioQuickAccess } from "@/components/profile/CreatorStudioQuickAccess";
 
 interface UnifiedProfileProps {
   username?: string;
