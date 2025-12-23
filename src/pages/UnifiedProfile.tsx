@@ -392,6 +392,42 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
     navigateToSendMoney(targetUsername, navigate);
   };
 
+  const handlePinPost = (postId: string) => {
+    if (pinnedPosts.length < 3) {
+      const newPinned = {
+        postId,
+        pinnedOrder: pinnedPosts.length,
+        pinnedDate: new Date().toISOString(),
+      };
+      setPinnedPosts([...pinnedPosts, newPinned]);
+      toast({
+        title: "Post pinned",
+        description: "This post has been added to your featured posts.",
+      });
+    } else {
+      toast({
+        title: "Cannot pin more posts",
+        description: "You can pin up to 3 posts. Unpin a post first.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnpinPost = (postId: string) => {
+    const filtered = pinnedPosts
+      .filter(p => p.postId !== postId)
+      .map((p, idx) => ({ ...p, pinnedOrder: idx }));
+    setPinnedPosts(filtered);
+    toast({
+      title: "Post unpinned",
+      description: "This post has been removed from your featured posts.",
+    });
+  };
+
+  const handleReorderPinnedPosts = (reorderedPinned: Array<{ postId: string; pinnedOrder: number; pinnedDate: string }>) => {
+    setPinnedPosts(reorderedPinned);
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
