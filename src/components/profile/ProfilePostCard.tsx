@@ -265,6 +265,7 @@ export const ProfilePostCard = ({
                         variant="ghost"
                         size="sm"
                         className="flex items-center gap-1 px-2 py-1.5 h-auto hover:text-green-500 transition-colors"
+                        title="Share this post (Keyboard: S)"
                       >
                         <Share2 className="w-4 h-4" />
                         <span className="text-xs sm:text-sm">{post.shares}</span>
