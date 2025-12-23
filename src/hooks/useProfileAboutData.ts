@@ -188,20 +188,94 @@ export const useProfileAboutData = (
     fetchProfileData();
   }, [userId]);
 
+  // Default sample skills
+  const defaultSkills: Skill[] = [
+    {
+      id: 'skill-1',
+      name: 'React',
+      proficiency: 'advanced',
+      endorsementCount: 12,
+      endorsedBy: [],
+      isEndorsedByCurrentUser: false,
+    },
+    {
+      id: 'skill-2',
+      name: 'TypeScript',
+      proficiency: 'advanced',
+      endorsementCount: 8,
+      endorsedBy: [],
+      isEndorsedByCurrentUser: false,
+    },
+    {
+      id: 'skill-3',
+      name: 'Web Development',
+      proficiency: 'expert',
+      endorsementCount: 15,
+      endorsedBy: [],
+      isEndorsedByCurrentUser: false,
+    },
+    {
+      id: 'skill-4',
+      name: 'UI/UX Design',
+      proficiency: 'intermediate',
+      endorsementCount: 5,
+      endorsedBy: [],
+      isEndorsedByCurrentUser: false,
+    },
+  ];
+
+  // Default professional info
+  const defaultProfessional: ProfessionalData = {
+    title: 'Full Stack Developer',
+    company: 'Tech Innovations Inc',
+    yearsOfExperience: 5,
+    specializations: ['Web Development', 'Cloud Architecture', 'DevOps'],
+    languages: ['English', 'Spanish', 'French'],
+    certifications: [
+      {
+        id: 'cert-1',
+        name: 'AWS Certified Solutions Architect',
+        issuer: 'Amazon Web Services',
+        year: 2023,
+      },
+      {
+        id: 'cert-2',
+        name: 'Google Cloud Professional',
+        issuer: 'Google Cloud',
+        year: 2022,
+      },
+    ],
+  };
+
+  // Default social links
+  const defaultSocialLinks: SocialLink[] = [
+    {
+      platform: 'github',
+      url: 'https://github.com/user',
+      isVerified: true,
+      username: 'user',
+    },
+    {
+      platform: 'linkedin',
+      url: 'https://linkedin.com/in/user',
+      isVerified: true,
+      username: 'user',
+    },
+    {
+      platform: 'twitter',
+      url: 'https://twitter.com/user',
+      isVerified: false,
+      username: 'user',
+    },
+  ];
+
   // Format the fetched data
   const data: ProfileAboutData = useMemo(() => {
     if (!profileData) {
       return {
-        skills: [],
-        professional: {
-          title: "",
-          company: "",
-          yearsOfExperience: 0,
-          specializations: [],
-          languages: [],
-          certifications: [],
-        },
-        socialLinks: [],
+        skills: defaultSkills,
+        professional: defaultProfessional,
+        socialLinks: defaultSocialLinks,
         achievements: getDefaultAchievements(),
         totalAchievements: 15,
         isLoading,
@@ -209,16 +283,21 @@ export const useProfileAboutData = (
       };
     }
 
+    // Use real data if available, otherwise use defaults
+    const skills = mapSkillsData(profileData.skills);
+    const professional = mapProfessionalData(profileData.professional_info);
+    const socialLinks = mapSocialLinks(
+      profileData.social_links,
+      profileData.linkedin_url,
+      profileData.github_url,
+      profileData.twitter_url,
+      profileData.portfolio_url
+    );
+
     return {
-      skills: mapSkillsData(profileData.skills),
-      professional: mapProfessionalData(profileData.professional_info),
-      socialLinks: mapSocialLinks(
-        profileData.social_links,
-        profileData.linkedin_url,
-        profileData.github_url,
-        profileData.twitter_url,
-        profileData.portfolio_url
-      ),
+      skills: skills.length > 0 ? skills : defaultSkills,
+      professional: professional.title ? professional : defaultProfessional,
+      socialLinks: socialLinks.length > 0 ? socialLinks : defaultSocialLinks,
       achievements: profileData.achievements || getDefaultAchievements(),
       totalAchievements: profileData.totalAchievements || 15,
       isLoading,
