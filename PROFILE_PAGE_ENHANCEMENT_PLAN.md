@@ -306,7 +306,10 @@ Features Implemented:
 - Drag-to-reorder pinned posts (owner-only)
 - Pin action available from post menu
 - Visual pinned badges on featured posts
-- Post analytics preview for owners
+- **Real post analytics** fetched from database
+- Post metrics: views, likes, comments, shares, saves
+- Engagement rate calculated from actual data
+- Analytics loading state with user feedback
 - Smooth transitions and user feedback (toasts)
 - Full privacy control maintained
 
