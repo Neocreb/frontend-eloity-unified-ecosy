@@ -294,6 +294,23 @@ export const ProfilePostCard = ({
                   />
                 </div>
               )}
+
+              {showAnalytics && isOwnPost && (
+                <div className="mt-4 border-t pt-4">
+                  <PostAnalyticsPreview
+                    postId={post.id}
+                    analytics={mockAnalytics}
+                    isOwnPost={isOwnPost}
+                    compact={false}
+                    onViewFullAnalytics={() => {
+                      toast({
+                        title: "Analytics",
+                        description: "Full analytics coming soon. Check Creator Studio for detailed stats.",
+                      });
+                    }}
+                  />
+                </div>
+              )}
             </div>
           </div>
         </div>
