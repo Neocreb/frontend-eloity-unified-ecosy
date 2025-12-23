@@ -28,10 +28,10 @@ export const usePostAnalytics = (postId: string) => {
         setIsLoading(true);
         setError(null);
 
-        // Fetch post with all count columns
+        // Fetch post basic data
         const { data: postData, error: postError } = await supabase
           .from('posts')
-          .select('id, views_count, likes_count, comments_count, shares_count')
+          .select('id')
           .eq('id', postId)
           .single();
 
@@ -49,11 +49,44 @@ export const usePostAnalytics = (postId: string) => {
           throw new Error('Post not found');
         }
 
-        // Use count columns directly from posts table (already maintained by database)
-        const views = postData.views_count || 0;
-        const likes = postData.likes_count || 0;
-        const comments = postData.comments_count || 0;
-        const shares = postData.shares_count || 0;
+        // Get actual counts from related tables
+        const { count: likesCount, error: likesError } = await supabase
+          .from('post_likes')
+          .select('*', { count: 'exact', head: true })
+          .eq('post_id', postId);
+
+        const { count: commentsCount, error: commentsError } = await supabase
+          .from('post_comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('post_id', postId);
+
+        const { count: savesCount, error: savesError } = await supabase
+          .from('user_saved_posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('post_id', postId);
+
+        // For views and shares, try to get from posts table but fallback to 0
+        let views = 0;
+        let shares = 0;
+
+        // Try to fetch views and shares from posts table (if columns exist)
+        const { data: postDataWithCounts } = await supabase
+          .from('posts')
+          .select('shares_count')
+          .eq('id', postId)
+          .single()
+          .catch(() => ({ data: null }));
+
+        if (postDataWithCounts && 'shares_count' in postDataWithCounts) {
+          shares = postDataWithCounts.shares_count || 0;
+        }
+
+        // Views is not commonly tracked, default to 0
+        views = 0;
+
+        const likes = likesCount || 0;
+        const comments = commentsCount || 0;
+        const saves = savesCount || 0;
 
         // For now, saves count is 0 (post_saves table doesn't exist yet)
         // In the future, this can be fetched from post_saves table when implemented
