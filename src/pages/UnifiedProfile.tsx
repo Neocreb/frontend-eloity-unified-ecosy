@@ -103,6 +103,8 @@ import { Post } from "@/components/feed/PostCard";
 import { ProfileStatsCarousel } from "@/components/profile/ProfileStatsCarousel";
 import BadgeSystem from "@/components/profile/BadgeSystem";
 import ActivityTimeline from "@/components/profile/ActivityTimeline";
+import PostPinningSystem from "@/components/profile/PostPinningSystem";
+import { ProfilePostCard } from "@/components/profile/ProfilePostCard";
 
 interface UnifiedProfileProps {
   username?: string;
