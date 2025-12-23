@@ -105,10 +105,122 @@ import BadgeSystem from "@/components/profile/BadgeSystem";
 import ActivityTimeline from "@/components/profile/ActivityTimeline";
 import PostPinningSystem from "@/components/profile/PostPinningSystem";
 import { ProfilePostCard } from "@/components/profile/ProfilePostCard";
+import { SkillsSection } from "@/components/profile/SkillsSection";
+import { ProfessionalInfo } from "@/components/profile/ProfessionalInfo";
+import { SocialLinks } from "@/components/profile/SocialLinks";
+import { EnhancedAchievements } from "@/components/profile/EnhancedAchievements";
+import { useProfileAboutData } from "@/hooks/useProfileAboutData";
 
 interface UnifiedProfileProps {
   username?: string;
 }
+
+// About Tab Content Component
+interface AboutTabContentProps {
+  userId?: string;
+  displayName: string;
+  location: string;
+  joinDate: string;
+  isOwnProfile: boolean;
+}
+
+const AboutTabContent: React.FC<AboutTabContentProps> = ({
+  userId,
+  displayName,
+  location,
+  joinDate,
+  isOwnProfile,
+}) => {
+  const aboutData = useProfileAboutData(userId);
+  const { toast } = useToast();
+
+  const handleEndorseSkill = (skillId: string) => {
+    toast({
+      title: "Skill Endorsed",
+      description: "You have successfully endorsed this skill.",
+      duration: 2000,
+    });
+  };
+
+  const handleOpenLink = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Location & Join Date Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>About {displayName}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Location</div>
+                <div className="text-sm text-muted-foreground">{location}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Joined</div>
+                <div className="text-sm text-muted-foreground">{joinDate}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Professional Info */}
+      <ProfessionalInfo
+        data={aboutData.professional}
+        isOwner={isOwnProfile}
+        onEdit={() =>
+          toast({
+            title: "Edit Professional Info",
+            description: "This feature will be available soon.",
+          })
+        }
+      />
+
+      {/* Skills Section */}
+      <SkillsSection
+        skills={aboutData.skills}
+        isOwner={isOwnProfile}
+        onAddSkill={() =>
+          toast({
+            title: "Add Skill",
+            description: "This feature will be available soon.",
+          })
+        }
+        onEndorseSkill={handleEndorseSkill}
+        maxVisibleSkills={10}
+      />
+
+      {/* Social Links */}
+      <SocialLinks
+        links={aboutData.socialLinks}
+        isOwner={isOwnProfile}
+        onEdit={() =>
+          toast({
+            title: "Edit Social Links",
+            description: "This feature will be available soon.",
+          })
+        }
+        onOpenLink={handleOpenLink}
+      />
+
+      {/* Enhanced Achievements */}
+      <EnhancedAchievements
+        achievements={aboutData.achievements}
+        completedAchievements={8}
+        totalAchievements={aboutData.totalAchievements}
+      />
+    </div>
+  );
+};
 
 const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   username: propUsername,
@@ -1055,55 +1167,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 )}
 
                 <TabsContent value="about" className="mt-0">
-                  <div className="space-y-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>About {mockProfile.displayName}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="flex items-center gap-3">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-sm font-medium">Location</div>
-                              <div className="text-sm text-muted-foreground">{mockProfile.location}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-sm font-medium">Joined</div>
-                              <div className="text-sm text-muted-foreground">{mockProfile.joinDate}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Achievements</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {mockProfile.achievements?.map((achievement, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-3 p-4 rounded-lg border bg-gradient-to-r from-blue-50 to-purple-50"
-                            >
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                                <achievement.icon className="h-5 w-5 text-white" />
-                              </div>
-                              <div>
-                                <div className="font-medium">{achievement.title}</div>
-                                <div className="text-xs text-muted-foreground">{achievement.date}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  <AboutTabContent
+                    userId={profileUser?.id}
+                    displayName={mockProfile.displayName}
+                    location={mockProfile.location}
+                    joinDate={mockProfile.joinDate}
+                    isOwnProfile={isOwnProfile}
+                  />
                 </TabsContent>
               </div>
             </Tabs>
