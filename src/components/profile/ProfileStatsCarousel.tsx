@@ -12,6 +12,9 @@ import {
   Share2,
   ChevronLeft,
   ChevronRight,
+  Wallet,
+  Coins,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserProfile } from "@/types/user";
@@ -24,6 +27,9 @@ interface ProfileStatsCarouselProps {
   loading?: boolean;
   onStatClick?: (statType: string) => void;
   enableRealData?: boolean;
+  isOwnProfile?: boolean;
+  walletBalance?: number;
+  eloPoints?: number;
 }
 
 interface StatItem {
@@ -34,6 +40,7 @@ interface StatItem {
   description?: string;
   gradient: string;
   onClick?: string;
+  isPrivate?: boolean;
 }
 
 export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
@@ -43,13 +50,22 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
   loading: externalLoading = false,
   onStatClick,
   enableRealData = true,
+  isOwnProfile = false,
+  walletBalance = 0,
+  eloPoints = 0,
 }) => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Fetch real stats from database
-  const stats = useProfileStats(profile, profile?.id, enableRealData);
+  const stats = useProfileStats(
+    profile,
+    profile?.id,
+    enableRealData,
+    walletBalance,
+    eloPoints
+  );
 
   // Mark carousel as initialized when stats load completes
   useEffect(() => {
@@ -77,7 +93,8 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
     }
   };
 
-  const statsItems: StatItem[] = [
+  // Build stats items with conditional visibility
+  const baseStatsItems: StatItem[] = [
     {
       id: "posts",
       label: "Posts",
@@ -151,6 +168,38 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
       onClick: "shares",
     },
   ];
+
+  // Owner-only stats (wallet balance and ELO points)
+  const ownerOnlyStats: StatItem[] = isOwnProfile
+    ? [
+        {
+          id: "wallet",
+          label: "Wallet Balance",
+          icon: <Wallet className="h-6 w-6" aria-hidden="true" />,
+          value:
+            typeof stats.walletBalance === "number"
+              ? `$${stats.walletBalance.toFixed(2)}`
+              : "$0.00",
+          description: "Total balance",
+          gradient: "bg-gradient-to-br from-green-500 to-green-600",
+          onClick: "wallet",
+          isPrivate: true,
+        },
+        {
+          id: "elopoints",
+          label: "ELO Points",
+          icon: <Coins className="h-6 w-6" aria-hidden="true" />,
+          value: stats.eloPoints || 0,
+          description: "Reward points",
+          gradient: "bg-gradient-to-br from-violet-500 to-violet-600",
+          onClick: "elopoints",
+          isPrivate: true,
+        },
+      ]
+    : [];
+
+  // Combine all items
+  const statsItems: StatItem[] = [...baseStatsItems, ...ownerOnlyStats];
 
   // Show error state if stats failed to load
   if (stats.error && isInitialized) {
@@ -230,6 +279,7 @@ export const ProfileStatsCarousel: React.FC<ProfileStatsCarouselProps> = ({
                   description={stat.description}
                   gradient={stat.gradient}
                   loading={loading}
+                  isPrivate={stat.isPrivate}
                   onClick={() => {
                     if (onStatClick && stat.onClick) {
                       onStatClick(stat.onClick);

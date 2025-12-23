@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
 import { useWalletContext } from "@/contexts/WalletContext";
 import { useToast } from "@/components/ui/use-toast";
+import { useRewards } from "@/hooks/use-rewards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -112,9 +113,15 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { walletBalance, transactions, isLoading: walletLoading } = useWalletContext();
+  const { data: rewardsData } = useRewards();
   const { toast } = useToast();
 
   const targetUsername = propUsername || paramUsername;
+
+  // Calculate total wallet balance (sum of all portfolio types)
+  const totalWalletBalance = walletBalance?.total || 0;
+  // Extract ELO points from rewards data
+  const eloPoints = rewardsData?.calculatedUserRewards?.total_earned || 0;
 
   // State management
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
@@ -619,8 +626,16 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                       followerCount={followerCount}
                       followingCount={followingCount}
                       enableRealData={true}
+                      isOwnProfile={isOwnProfile}
+                      walletBalance={isOwnProfile ? totalWalletBalance : undefined}
+                      eloPoints={isOwnProfile ? eloPoints : undefined}
                       onStatClick={(statType) => {
                         // Handle stat click navigation
+                        if (statType === "wallet") {
+                          navigate("/app/wallet");
+                        } else if (statType === "elopoints") {
+                          navigate("/app/rewards");
+                        }
                         console.log("Stat clicked:", statType);
                       }}
                     />
