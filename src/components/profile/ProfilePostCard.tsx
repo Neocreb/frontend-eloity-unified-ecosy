@@ -282,19 +282,31 @@ export const ProfilePostCard = ({
                   )}
                 </div>
 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className={cn(
-                    "px-2 py-1.5 h-auto",
-                    isSaved && "text-blue-500"
-                  )}
-                  onClick={handleSave}
-                >
-                  <Bookmark
-                    className={cn("w-4 h-4", isSaved && "fill-current")}
-                  />
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="px-2 py-1.5 h-auto hover:text-purple-500 transition-colors"
+                    onClick={() => setShowDetailModal(true)}
+                    title="View full post details"
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                  </Button>
+
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className={cn(
+                      "px-2 py-1.5 h-auto",
+                      isSaved && "text-blue-500"
+                    )}
+                    onClick={handleSave}
+                  >
+                    <Bookmark
+                      className={cn("w-4 h-4", isSaved && "fill-current")}
+                    />
+                  </Button>
+                </div>
               </div>
 
               {showComments && (
