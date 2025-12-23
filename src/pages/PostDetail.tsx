@@ -405,8 +405,7 @@ const PostDetail: React.FC = () => {
           }
         }
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : typeof error === 'object' ? JSON.stringify(error) : String(error);
-        console.error('Error fetching post:', errorMessage);
+        console.error('Error fetching post:', getErrorMessage(error));
         // Fall back to mock data
         const foundPost = allPosts[postId];
         if (foundPost) {
