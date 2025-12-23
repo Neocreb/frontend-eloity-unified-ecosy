@@ -101,6 +101,8 @@ import { profileService } from "@/services/profileService";
 import EnhancedPostCard from "@/components/feed/EnhancedPostCard";
 import { Post } from "@/components/feed/PostCard";
 import { ProfileStatsCarousel } from "@/components/profile/ProfileStatsCarousel";
+import BadgeSystem from "@/components/profile/BadgeSystem";
+import ActivityTimeline from "@/components/profile/ActivityTimeline";
 
 interface UnifiedProfileProps {
   username?: string;
