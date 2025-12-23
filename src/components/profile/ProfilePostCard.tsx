@@ -231,6 +231,7 @@ export const ProfilePostCard = ({
                       isLiked && "text-red-500"
                     )}
                     onClick={handleLike}
+                    title="Like this post (Keyboard: L)"
                   >
                     <Heart
                       className={cn("w-4 h-4", isLiked && "fill-current")}
