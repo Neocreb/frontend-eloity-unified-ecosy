@@ -37,10 +37,14 @@ interface Post {
 interface ProfilePostCardProps {
   post: Post;
   isOwnPost: boolean;
+  isPinned?: boolean;
+  canPin?: boolean;
   onDelete?: (postId: string) => void;
   onPrivacyChange?: (postId: string, privacy: string) => void;
   onLikeToggle?: (postId: string, newLikeCount: number, isLiked: boolean) => void;
   onSaveToggle?: (postId: string, isSaved: boolean) => void;
+  onPin?: (postId: string) => void;
+  onUnpin?: (postId: string) => void;
 }
 
 export const ProfilePostCard = ({
