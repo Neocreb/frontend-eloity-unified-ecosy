@@ -660,6 +660,15 @@ export const AuthProvider: FC<{ children: ReactNode }> = ({ children }) => {
         if (data.timezone) profileData.timezone = data.timezone;
         if (data.preferred_currency) profileData.preferred_currency = data.preferred_currency;
 
+        // Map About tab fields (Phase 4 enhancement)
+        if (data.skills) profileData.skills = Array.isArray(data.skills) ? data.skills : [];
+        if (data.social_links) profileData.social_links = data.social_links;
+        if (data.professional_info) profileData.professional_info = data.professional_info;
+        if (data.linkedin_url) profileData.linkedin_url = data.linkedin_url;
+        if (data.github_url) profileData.github_url = data.github_url;
+        if (data.twitter_url) profileData.twitter_url = data.twitter_url;
+        if (data.portfolio_url) profileData.portfolio_url = data.portfolio_url;
+
         // Update profiles table if there's data to update
         if (Object.keys(profileData).length > 0) {
           const { error: dbError } = await supabase
