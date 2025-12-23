@@ -65,6 +65,7 @@ export const ProfilePostCard = ({
   const { toast } = useToast();
   const [showComments, setShowComments] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
   const [isLiked, setIsLiked] = useState(post._liked || false);
   const [isSaved, setIsSaved] = useState(post._saved || false);
   const [likeCount, setLikeCount] = useState(post.likes);
