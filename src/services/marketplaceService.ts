@@ -22,7 +22,7 @@ import {
 
 export class MarketplaceService {
   // Default categories fallback
-  static readonly DEFAULT_CATEGORIES: Category[] = [
+  readonly DEFAULT_CATEGORIES: Category[] = [
     {
       id: "electronics",
       name: "Electronics",
