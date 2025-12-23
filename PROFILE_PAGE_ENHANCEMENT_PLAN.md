@@ -266,19 +266,32 @@ Actions Added:
 - ✅ Smooth pin/unpin transitions
 - ✅ All existing actions preserved (delete, edit, privacy, copy link)
 
-**3.4: Integrate Post Analytics Preview** ✅
+**3.4: Integrate Post Analytics Preview** ✅ → **ENHANCED WITH REAL DATA** ✅
 
-File: `src/components/profile/ProfilePostCard.tsx` (UPDATED)
+Files:
+- `src/components/profile/ProfilePostCard.tsx` (UPDATED)
+- `src/hooks/usePostAnalytics.ts` (NEW)
 
 Features Implemented:
 - ✅ PostAnalyticsPreview component imported and integrated
 - ✅ Analytics button added to post action bar (owner-only)
 - ✅ Toggle between showing/hiding analytics
-- ✅ Mock analytics data with realistic values
-- ✅ Display: views, likes, comments, shares, saves, engagement rate
+- ✅ **REAL analytics data from database** (not mock)
+- ✅ Custom hook `usePostAnalytics` to fetch actual metrics
+- ✅ Display: actual views, likes, comments, shares, saves, engagement rate
 - ✅ Compact and detailed view modes
 - ✅ Link to Creator Studio for full analytics
 - ✅ Green highlight when analytics visible
+- ✅ Loading state while fetching real data
+- ✅ Error handling for missing database tables
+
+**Real Data Sources:**
+- Views: `posts.view_count`
+- Likes: `post_likes` table count
+- Comments: `post_comments` table count
+- Shares: `posts.shares`
+- Saves: `post_saves` table count
+- Engagement Rate: Calculated from actual metrics
 
 #### Files Modified
 1. `src/pages/UnifiedProfile.tsx` - Added PostPinningSystem integration and pin handlers
