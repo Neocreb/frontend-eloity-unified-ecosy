@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe } from "lucide-react";
+import { Heart, MessageSquare, Share2, Gift, Bookmark, Lock, Users, Globe, Pin } from "lucide-react";
 import { cn } from "@/utils/utils";
 import { PostActionsMenu } from "./PostActionsMenu";
 import EnhancedShareDialog from "@/components/feed/EnhancedShareDialog";
