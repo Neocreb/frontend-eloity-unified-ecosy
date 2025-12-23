@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, boolean, jsonb, numeric, integer, varchar, serial } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { users, followers } from './schema';
 import { freelance_payments } from './freelance-schema.js';
 
