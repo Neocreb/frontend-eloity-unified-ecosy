@@ -965,11 +965,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0">
-                  <div className="text-center py-12">
-                    <Activity className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Activity Timeline</h3>
-                    <p className="text-muted-foreground">Recent actions and interactions</p>
-                  </div>
+                  {profileUser && (
+                    <ActivityTimeline
+                      userId={profileUser.id}
+                      showFilters={true}
+                      maxItems={20}
+                    />
+                  )}
                 </TabsContent>
 
                 {isOwnProfile && (
