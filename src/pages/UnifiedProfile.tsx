@@ -115,6 +115,113 @@ interface UnifiedProfileProps {
   username?: string;
 }
 
+// About Tab Content Component
+interface AboutTabContentProps {
+  userId?: string;
+  displayName: string;
+  location: string;
+  joinDate: string;
+  isOwnProfile: boolean;
+}
+
+const AboutTabContent: React.FC<AboutTabContentProps> = ({
+  userId,
+  displayName,
+  location,
+  joinDate,
+  isOwnProfile,
+}) => {
+  const aboutData = useProfileAboutData(userId);
+  const { toast } = useToast();
+
+  const handleEndorseSkill = (skillId: string) => {
+    toast({
+      title: "Skill Endorsed",
+      description: "You have successfully endorsed this skill.",
+      duration: 2000,
+    });
+  };
+
+  const handleOpenLink = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Location & Join Date Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>About {displayName}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Location</div>
+                <div className="text-sm text-muted-foreground">{location}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Joined</div>
+                <div className="text-sm text-muted-foreground">{joinDate}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Professional Info */}
+      <ProfessionalInfo
+        data={aboutData.professional}
+        isOwner={isOwnProfile}
+        onEdit={() =>
+          toast({
+            title: "Edit Professional Info",
+            description: "This feature will be available soon.",
+          })
+        }
+      />
+
+      {/* Skills Section */}
+      <SkillsSection
+        skills={aboutData.skills}
+        isOwner={isOwnProfile}
+        onAddSkill={() =>
+          toast({
+            title: "Add Skill",
+            description: "This feature will be available soon.",
+          })
+        }
+        onEndorseSkill={handleEndorseSkill}
+        maxVisibleSkills={10}
+      />
+
+      {/* Social Links */}
+      <SocialLinks
+        links={aboutData.socialLinks}
+        isOwner={isOwnProfile}
+        onEdit={() =>
+          toast({
+            title: "Edit Social Links",
+            description: "This feature will be available soon.",
+          })
+        }
+        onOpenLink={handleOpenLink}
+      />
+
+      {/* Enhanced Achievements */}
+      <EnhancedAchievements
+        achievements={aboutData.achievements}
+        completedAchievements={8}
+        totalAchievements={aboutData.totalAchievements}
+      />
+    </div>
+  );
+};
+
 const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   username: propUsername,
 }) => {
