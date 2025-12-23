@@ -146,6 +146,12 @@ export const ProfilePostCard = ({
                   <span className="text-muted-foreground">
                     {post.createdAt}
                   </span>
+                  {isPinned && (
+                    <Badge className="bg-blue-600 text-white h-5 px-1.5 text-xs flex items-center gap-1">
+                      <Pin className="h-3 w-3" />
+                      Pinned
+                    </Badge>
+                  )}
                   <Badge
                     variant="outline"
                     className="h-5 px-1.5 text-xs flex items-center gap-1"
