@@ -158,11 +158,15 @@ export const ProfilePostCard = ({
                   postId={post.id}
                   isOwnPost={isOwnPost}
                   currentPrivacy={post.privacy}
+                  isPinned={isPinned}
+                  canPin={canPin}
                   onDelete={() => onDelete?.(post.id)}
                   onPrivacyChange={(privacy: string) =>
                     onPrivacyChange?.(post.id, privacy)
                   }
                   onEdit={() => {}}
+                  onPin={() => onPin?.(post.id)}
+                  onUnpin={() => onUnpin?.(post.id)}
                 />
               </div>
               {post.content && <p className="mt-2">{post.content}</p>}
