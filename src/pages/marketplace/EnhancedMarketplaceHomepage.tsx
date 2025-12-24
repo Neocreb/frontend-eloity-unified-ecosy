@@ -23,7 +23,6 @@ import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrum
 import { EnhancedMarketplaceHeader } from "@/components/marketplace/EnhancedMarketplaceHeader";
 import { CampaignBanners } from "@/components/marketplace/CampaignBanners";
 import { OptimizedSmartRecommendations } from "@/components/marketplace/OptimizedSmartRecommendations";
-import ProductQuickView from "@/components/marketplace/ProductQuickView";
 import ResponsiveProductCarousel from "@/components/marketplace/ResponsiveProductCarousel";
 import CategoryBrowser from "@/components/marketplace/CategoryBrowser";
 import { MarketplaceService } from "@/services/marketplaceService";
