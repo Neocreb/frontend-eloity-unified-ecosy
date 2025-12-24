@@ -593,10 +593,10 @@ const EnhancedMarketplaceHomepage: React.FC = () => {
                   isNew: Math.random() > 0.7,
                   category: "Electronics",
                 }))}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 autoplay={true}
                 autoplayInterval={4000}
                 itemsPerView={{
