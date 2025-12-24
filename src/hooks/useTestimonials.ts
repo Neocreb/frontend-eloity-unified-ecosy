@@ -86,14 +86,20 @@ export const useTestimonials = ({
   ];
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchTestimonials = async () => {
       if (!userId) {
-        setTestimonials(defaultTestimonials.slice(0, limit));
+        if (isMounted) {
+          setTestimonials(defaultTestimonials.slice(0, limit));
+        }
         return;
       }
 
-      setIsLoading(true);
-      setError(null);
+      if (isMounted) {
+        setIsLoading(true);
+        setError(null);
+      }
 
       try {
         // In a real implementation, this would fetch from your API
@@ -121,41 +127,53 @@ export const useTestimonials = ({
             .order('created_at', { ascending: false })
             .limit(limit);
 
-          if (!dbError && dbTestimonials && dbTestimonials.length > 0) {
-            const transformedTestimonials = dbTestimonials.map((test: any) => ({
-              id: test.id,
-              authorName: test.author?.full_name || 'Anonymous',
-              authorRole: undefined,
-              authorCompany: undefined,
-              authorAvatar: test.author?.avatar_url || undefined,
-              rating: test.rating || 5,
-              title: test.title,
-              content: test.content,
-              createdAt: test.created_at,
-              isPinned: test.is_pinned,
-              helpfulCount: test.helpful_count || 0,
-              source: test.source,
-              relatedService: test.related_service,
-            }));
-            setTestimonials(transformedTestimonials);
-          } else {
-            // Fall back to default data
-            setTestimonials(defaultTestimonials.slice(0, limit));
+          if (isMounted) {
+            if (!dbError && dbTestimonials && dbTestimonials.length > 0) {
+              const transformedTestimonials = dbTestimonials.map((test: any) => ({
+                id: test.id,
+                authorName: test.author?.full_name || 'Anonymous',
+                authorRole: undefined,
+                authorCompany: undefined,
+                authorAvatar: test.author?.avatar_url || undefined,
+                rating: test.rating || 5,
+                title: test.title,
+                content: test.content,
+                createdAt: test.created_at,
+                isPinned: test.is_pinned,
+                helpfulCount: test.helpful_count || 0,
+                source: test.source,
+                relatedService: test.related_service,
+              }));
+              setTestimonials(transformedTestimonials);
+            } else {
+              // Fall back to default data
+              setTestimonials(defaultTestimonials.slice(0, limit));
+            }
           }
         } catch (dbError) {
-          console.warn('Failed to fetch testimonials from database:', dbError);
-          setTestimonials(defaultTestimonials.slice(0, limit));
+          if (isMounted) {
+            console.warn('Failed to fetch testimonials from database:', dbError);
+            setTestimonials(defaultTestimonials.slice(0, limit));
+          }
         }
       } catch (err) {
-        console.error('Error fetching testimonials:', err);
-        setError(err instanceof Error ? err : new Error('Failed to fetch testimonials'));
-        setTestimonials(defaultTestimonials.slice(0, limit));
+        if (isMounted) {
+          console.error('Error fetching testimonials:', err);
+          setError(err instanceof Error ? err : new Error('Failed to fetch testimonials'));
+          setTestimonials(defaultTestimonials.slice(0, limit));
+        }
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchTestimonials();
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId, limit]);
 
   const pinTestimonial = (testimonialId: string) => {
