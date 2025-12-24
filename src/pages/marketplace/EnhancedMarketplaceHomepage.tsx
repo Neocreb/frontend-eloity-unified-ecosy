@@ -619,12 +619,12 @@ const EnhancedMarketplaceHomepage: React.FC = () => {
                 }}
                 onProductClick={(product) => {
                   console.log("Product clicked:", product);
-                  handleProductQuickView(product as any);
+                  handleProductClick(product as any);
                 }}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
                 onQuickView={(product) =>
-                  handleProductQuickView(product as any)
+                  handleProductClick(product as any)
                 }
                 maxItems={8}
                 enableRealTimeUpdates={false}
