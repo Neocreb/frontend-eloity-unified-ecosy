@@ -112,6 +112,12 @@ import { SocialLinks } from "@/components/profile/SocialLinks";
 import { EnhancedAchievements } from "@/components/profile/EnhancedAchievements";
 import { useProfileAboutData } from "@/hooks/useProfileAboutData";
 import { CreatorStudioQuickAccess } from "@/components/profile/CreatorStudioQuickAccess";
+import FeaturedContent from "@/components/profile/FeaturedContent";
+import TestimonialsSection from "@/components/profile/TestimonialsSection";
+import ConnectionStats from "@/components/profile/ConnectionStats";
+import { useFeaturedContent } from "@/hooks/useFeaturedContent";
+import { useTestimonials } from "@/hooks/useTestimonials";
+import { useConnectionStats } from "@/hooks/useConnectionStats";
 
 interface UnifiedProfileProps {
   username?: string;
