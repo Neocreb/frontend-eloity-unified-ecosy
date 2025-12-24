@@ -46,6 +46,7 @@ interface FlashSaleProduct extends Product {
 }
 
 const MarketplaceHomepage: React.FC = () => {
+  const navigate = useNavigate();
   const { products, categories, addToCart, addToWishlist } =
     useEnhancedMarketplace();
   const [searchQuery, setSearchQuery] = useState("");
@@ -57,9 +58,6 @@ const MarketplaceHomepage: React.FC = () => {
     minutes: 19,
     seconds: 56,
   });
-  const [selectedProduct, setSelectedProduct] =
-    useState<FlashSaleProduct | null>(null);
-  const [showQuickView, setShowQuickView] = useState(false);
   const [flashSaleProducts, setFlashSaleProducts] = useState<FlashSaleProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<{name: string, hasSubmenu: boolean}[]>([]);
