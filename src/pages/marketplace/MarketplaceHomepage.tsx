@@ -235,10 +235,9 @@ const MarketplaceHomepage: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Quick view handlers
-  const handleProductQuickView = (product: FlashSaleProduct) => {
-    setSelectedProduct(product);
-    setShowQuickView(true);
+  // Product view handler - navigate to full product detail page
+  const handleProductClick = (product: FlashSaleProduct) => {
+    navigate(`/app/marketplace/product/${product.id}`);
   };
 
   const handleAddToCart = (productId: string, quantity: number = 1) => {
