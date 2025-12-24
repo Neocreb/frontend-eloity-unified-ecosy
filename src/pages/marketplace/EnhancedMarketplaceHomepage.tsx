@@ -254,9 +254,8 @@ const EnhancedMarketplaceHomepage: React.FC = () => {
     console.log("Filter toggled:", filterId);
   };
 
-  const handleProductQuickView = (product: FlashSaleProduct) => {
-    setSelectedProduct(product);
-    setShowQuickView(true);
+  const handleProductClick = (product: FlashSaleProduct) => {
+    navigate(`/app/marketplace/product/${product.id}`);
   };
 
   const handleAddToCart = (productId: string, quantity: number = 1) => {
