@@ -643,41 +643,6 @@ const MarketplaceHomepage: React.FC = () => {
         </div>
       </div>
 
-      {/* Product Quick View Modal */}
-      {selectedProduct && (
-        <ProductQuickView
-          product={{
-            ...selectedProduct,
-            description: `High-quality ${selectedProduct.name} with excellent features and great value for money.`,
-            highlights: [
-              "Premium quality materials",
-              "Fast shipping available",
-              "30-day return policy",
-              "Customer satisfaction guaranteed",
-            ],
-            seller: {
-              name: "Premium Electronics Store",
-              rating: 4.8,
-              verified: true,
-            },
-            shipping: {
-              freeShipping: true,
-              estimatedDays: 3,
-            },
-            warranty: "1 year manufacturer warranty",
-            returnPolicy: "30-day hassle-free returns",
-          }}
-          isOpen={showQuickView}
-          onClose={() => {
-            setShowQuickView(false);
-            setSelectedProduct(null);
-          }}
-          onAddToCart={handleAddToCart}
-          onAddToWishlist={handleAddToWishlist}
-          isInWishlist={false}
-          isInCart={false}
-        />
-      )}
     </div>
   );
 };
