@@ -553,10 +553,10 @@ const MarketplaceHomepage: React.FC = () => {
                   isNew: Math.random() > 0.7,
                   category: "Electronics",
                 }))}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 autoplay={true}
                 autoplayInterval={4000}
                 itemsPerView={{
@@ -581,10 +581,10 @@ const MarketplaceHomepage: React.FC = () => {
                     : undefined,
                   category: "Fashion",
                 }))}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 showPagination={true}
                 itemsPerView={{
                   mobile: 1.5,
@@ -608,10 +608,10 @@ const MarketplaceHomepage: React.FC = () => {
                     : undefined,
                   category: "Home & Garden",
                 }))}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 autoplay={false}
                 itemsPerView={{
                   mobile: 1.3,
@@ -631,10 +631,10 @@ const MarketplaceHomepage: React.FC = () => {
                   priceRange: [50, 500],
                   brands: ["Apple", "Samsung", "Nike", "Sony"],
                 }}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 maxItems={8}
                 enableRealTimeUpdates={true}
               />
