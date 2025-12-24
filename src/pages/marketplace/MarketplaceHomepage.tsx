@@ -468,7 +468,7 @@ const MarketplaceHomepage: React.FC = () => {
                           variant="outline"
                           size="icon"
                           className="bg-white w-8 h-8 rounded-full shadow-sm"
-                          onClick={() => handleProductQuickView(product)}
+                          onClick={() => handleProductClick(product)}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
