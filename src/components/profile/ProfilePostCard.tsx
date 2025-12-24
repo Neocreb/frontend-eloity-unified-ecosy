@@ -11,7 +11,6 @@ import EnhancedShareDialog from "@/components/feed/EnhancedShareDialog";
 import { EnhancedCommentsSection } from "@/components/feed/EnhancedCommentsSection";
 import VirtualGiftsAndTips from "@/components/premium/VirtualGiftsAndTips";
 import PostAnalyticsPreview from "./PostAnalyticsPreview";
-import PostDetailModal from "./PostDetailModal";
 import { usePostAnalytics } from "@/hooks/usePostAnalytics";
 import { usePostKeyboardNavigation } from "@/hooks/usePostKeyboardNavigation";
 import { supabase } from "@/integrations/supabase/client";
