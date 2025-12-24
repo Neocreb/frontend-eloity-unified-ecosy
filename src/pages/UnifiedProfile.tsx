@@ -1298,6 +1298,66 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
             </Tabs>
           </Card>
         </div>
+
+        {/* Phase 7: Advanced Features Section */}
+        {!isLoading && (
+          <div className="space-y-6">
+            {/* Featured Content */}
+            {featuredPosts.length > 0 && (
+              <FeaturedContent
+                pinnedPosts={featuredPosts}
+                isOwner={isOwnProfile}
+                onReorder={(reordered) => {
+                  // Handle reorder
+                  toast({
+                    title: "Featured posts reordered",
+                    description: "Your featured content order has been updated.",
+                  });
+                }}
+                onRemove={(postId) => {
+                  toast({
+                    title: "Featured post removed",
+                    description: "Post has been removed from featured section.",
+                  });
+                }}
+              />
+            )}
+
+            {/* Testimonials Section */}
+            {testimonials.length > 0 && (
+              <TestimonialsSection
+                testimonials={testimonials}
+                isOwner={isOwnProfile}
+                onPin={(testimonialId) => {
+                  toast({
+                    title: "Testimonial pinned",
+                    description: "Testimonial has been featured.",
+                  });
+                }}
+                onRemove={(testimonialId) => {
+                  toast({
+                    title: "Testimonial removed",
+                    description: "Testimonial has been removed.",
+                  });
+                }}
+              />
+            )}
+
+            {/* Connection Stats */}
+            {connectionStats.totalConnections > 0 && (
+              <ConnectionStats
+                totalConnections={connectionStats.totalConnections}
+                mutualConnections={connectionStats.mutualConnections}
+                networkSize={connectionStats.networkSize}
+                topConnections={connectionStats.topConnections}
+                isOwner={isOwnProfile}
+                onViewNetwork={() => {
+                  navigate("/app/network");
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Edit Profile Modal */}
