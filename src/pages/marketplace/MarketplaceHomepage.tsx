@@ -21,8 +21,6 @@ import { Badge } from "@/components/ui/badge";
 import { useEnhancedMarketplace } from "@/contexts/EnhancedMarketplaceContext";
 import { MobileProductCard } from "@/components/marketplace/MobileProductCard";
 
-import ProductQuickView from "@/components/marketplace/ProductQuickView";
-
 import ResponsiveProductCarousel from "@/components/marketplace/ResponsiveProductCarousel";
 import CategoryBrowser from "@/components/marketplace/CategoryBrowser";
 import SmartRecommendations from "@/components/marketplace/SmartRecommendations";
