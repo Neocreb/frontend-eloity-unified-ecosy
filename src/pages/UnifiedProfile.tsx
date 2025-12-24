@@ -467,6 +467,24 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
     loadProfile();
   }, [targetUsername, isOwnProfile, user, toast]);
 
+  // Phase 7: Featured Content Hook
+  const { featuredPosts } = useFeaturedContent({
+    userId: profileUser?.id,
+    limit: 5,
+  });
+
+  // Phase 7: Testimonials Hook
+  const { testimonials } = useTestimonials({
+    userId: profileUser?.id,
+    limit: 10,
+  });
+
+  // Phase 7: Connection Stats Hook
+  const connectionStats = useConnectionStats({
+    userId: profileUser?.id,
+    limit: 10,
+  });
+
   // Keyboard navigation support for posts (Phase 5)
   useEffect(() => {
     if (activeTab !== "posts" || posts.length === 0) return;
