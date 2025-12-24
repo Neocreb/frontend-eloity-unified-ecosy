@@ -76,17 +76,23 @@ export const useConnectionStats = ({
   ];
 
   useEffect(() => {
+    let isMounted = true;
+
     const fetchConnectionStats = async () => {
       if (!userId) {
-        setTopConnections(defaultConnections.slice(0, limit));
-        setTotalConnections(defaultConnections.length);
-        setMutualConnections(defaultConnections.reduce((sum, c) => sum + (c.mutualConnections || 0), 0));
-        setNetworkSize(defaultConnections.length * 3);
+        if (isMounted) {
+          setTopConnections(defaultConnections.slice(0, limit));
+          setTotalConnections(defaultConnections.length);
+          setMutualConnections(defaultConnections.reduce((sum, c) => sum + (c.mutualConnections || 0), 0));
+          setNetworkSize(defaultConnections.length * 3);
+        }
         return;
       }
 
-      setIsLoading(true);
-      setError(null);
+      if (isMounted) {
+        setIsLoading(true);
+        setError(null);
+      }
 
       try {
         // In a real implementation, this would fetch from your API
@@ -112,23 +118,35 @@ export const useConnectionStats = ({
             .order('mutual_count', { ascending: false })
             .limit(limit);
 
-          if (!dbError && connections && connections.length > 0) {
-            const transformedConnections = connections.map((conn: any) => ({
-              id: conn.connected_user?.id || conn.id,
-              name: conn.connected_user?.full_name || 'User',
-              username: conn.connected_user?.username || 'user',
-              avatar: conn.connected_user?.avatar_url || undefined,
-              mutualConnections: conn.mutual_count || 0,
-            }));
+          if (isMounted) {
+            if (!dbError && connections && connections.length > 0) {
+              const transformedConnections = connections.map((conn: any) => ({
+                id: conn.connected_user?.id || conn.id,
+                name: conn.connected_user?.full_name || 'User',
+                username: conn.connected_user?.username || 'user',
+                avatar: conn.connected_user?.avatar_url || undefined,
+                mutualConnections: conn.mutual_count || 0,
+              }));
 
-            setTopConnections(transformedConnections);
-            setTotalConnections(connections.length);
-            setMutualConnections(
-              transformedConnections.reduce((sum, c) => sum + (c.mutualConnections || 0), 0)
-            );
-            setNetworkSize(connections.length * 3); // Approximate network reach
-          } else {
-            // Fall back to default data
+              setTopConnections(transformedConnections);
+              setTotalConnections(connections.length);
+              setMutualConnections(
+                transformedConnections.reduce((sum, c) => sum + (c.mutualConnections || 0), 0)
+              );
+              setNetworkSize(connections.length * 3); // Approximate network reach
+            } else {
+              // Fall back to default data
+              setTopConnections(defaultConnections.slice(0, limit));
+              setTotalConnections(defaultConnections.length);
+              setMutualConnections(
+                defaultConnections.reduce((sum, c) => sum + (c.mutualConnections || 0), 0)
+              );
+              setNetworkSize(defaultConnections.length * 3);
+            }
+          }
+        } catch (dbError) {
+          if (isMounted) {
+            console.warn('Failed to fetch connections from database:', dbError);
             setTopConnections(defaultConnections.slice(0, limit));
             setTotalConnections(defaultConnections.length);
             setMutualConnections(
@@ -136,8 +154,11 @@ export const useConnectionStats = ({
             );
             setNetworkSize(defaultConnections.length * 3);
           }
-        } catch (dbError) {
-          console.warn('Failed to fetch connections from database:', dbError);
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Error fetching connection stats:', err);
+          setError(err instanceof Error ? err : new Error('Failed to fetch connection stats'));
           setTopConnections(defaultConnections.slice(0, limit));
           setTotalConnections(defaultConnections.length);
           setMutualConnections(
@@ -145,21 +166,18 @@ export const useConnectionStats = ({
           );
           setNetworkSize(defaultConnections.length * 3);
         }
-      } catch (err) {
-        console.error('Error fetching connection stats:', err);
-        setError(err instanceof Error ? err : new Error('Failed to fetch connection stats'));
-        setTopConnections(defaultConnections.slice(0, limit));
-        setTotalConnections(defaultConnections.length);
-        setMutualConnections(
-          defaultConnections.reduce((sum, c) => sum + (c.mutualConnections || 0), 0)
-        );
-        setNetworkSize(defaultConnections.length * 3);
       } finally {
-        setIsLoading(false);
+        if (isMounted) {
+          setIsLoading(false);
+        }
       }
     };
 
     fetchConnectionStats();
+
+    return () => {
+      isMounted = false;
+    };
   }, [userId, limit]);
 
   return {
