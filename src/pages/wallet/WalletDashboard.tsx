@@ -305,7 +305,7 @@ const DashboardInner = () => {
           </div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12 pt-4">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12 pt-8 md:pt-12">
 
           {/* Wallet Services Grid with Customizable Favorites */}
           <WalletServicesGrid />
