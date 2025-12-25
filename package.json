@@ -86,7 +86,7 @@
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.10",
     "@vitejs/plugin-react": "^4.7.0",
-    "autoprefixer": "^10.4.19",
+    "autoprefixer": "^10.4.23",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.4.3",
