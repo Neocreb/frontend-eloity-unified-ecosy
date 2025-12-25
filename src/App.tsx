@@ -1022,9 +1022,10 @@ const App = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <SafeThemeProvider>
+    <OnboardingProvider>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <SafeThemeProvider>
           <ErrorBoundary
             fallback={
               <div className="min-h-screen flex items-center justify-center">
@@ -1080,9 +1081,10 @@ const App = () => {
               </AuthProvider>
             </SafeI18nProvider>
           </ErrorBoundary>
-        </SafeThemeProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+          </SafeThemeProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </OnboardingProvider>
   );
 };
 
