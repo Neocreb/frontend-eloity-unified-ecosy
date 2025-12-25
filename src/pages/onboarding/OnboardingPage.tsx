@@ -121,46 +121,49 @@ const OnboardingPage: React.FC = () => {
         <div className="absolute top-1/3 right-20 w-20 h-20 bg-gradient-to-bl from-purple-300 to-pink-300 rounded-2xl opacity-10 blur-2xl" style={{ animation: 'float 6s ease-in-out infinite' }}></div>
         <div className="absolute bottom-1/4 left-1/4 w-24 h-24 bg-gradient-to-tr from-indigo-200 to-blue-200 rounded-full opacity-5 blur-3xl"></div>
       </div>
-      <div className="w-full max-w-2xl">
+      <div className="w-full max-w-2xl relative z-10">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-2">
+        <div className="mb-8 text-center">
+          <div className="inline-block mb-4 p-3 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-2xl">
+            <div className="text-4xl">✨</div>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent mb-3">
             Welcome to Eloity
           </h1>
-          <p className="text-purple-200 text-lg">
+          <p className="text-slate-600 text-lg font-medium">
             Let&apos;s get you set up in just a few steps
           </p>
         </div>
 
         {/* Progress Bar - Desktop */}
-        <div className="hidden md:block mb-8">
+        <div className="hidden md:block mb-10 px-6">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-purple-200 text-sm font-medium">
+            <span className="text-slate-600 text-sm font-semibold">
               Step {stepIndex + 1} of {STEPS.length - 1}
             </span>
-            <span className="text-purple-300 text-sm font-medium">
+            <span className="text-slate-700 text-sm font-semibold">
               {completionPercentage}% Complete
             </span>
           </div>
-          <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+          <div className="w-full h-3 bg-slate-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-all duration-500"
+              className="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 transition-all duration-500 rounded-full shadow-lg"
               style={{ width: `${completionPercentage}%` }}
             />
           </div>
         </div>
 
         {/* Progress Indicators - Mobile */}
-        <div className="md:hidden mb-8 flex gap-2 overflow-x-auto">
+        <div className="md:hidden mb-10 flex gap-2 overflow-x-auto justify-center">
           {STEPS.map((step, idx) => (
             <div
               key={step}
-              className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold transition-all ${
+              className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold transition-all shadow-md ${
                 idx < stepIndex
-                  ? 'bg-green-500 text-white'
+                  ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white scale-110'
                   : idx === stepIndex
-                  ? 'bg-purple-500 text-white ring-2 ring-purple-300'
-                  : 'bg-slate-700 text-slate-400'
+                  ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white ring-4 ring-blue-200 scale-110'
+                  : 'bg-slate-200 text-slate-500'
               }`}
               title={getStepLabel(step)}
             >
@@ -174,16 +177,16 @@ const OnboardingPage: React.FC = () => {
         </div>
 
         {/* Step Indicators - Desktop */}
-        <div className="hidden md:flex gap-3 mb-8">
+        <div className="hidden md:flex gap-2 mb-10 px-6">
           {STEPS.map((step, idx) => (
             <div key={step} className="flex items-center flex-1">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all ${
+                className={`w-11 h-11 rounded-full flex items-center justify-center font-bold transition-all ${
                   idx < stepIndex
-                    ? 'bg-green-500 text-white'
+                    ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white shadow-lg'
                     : idx === stepIndex
-                    ? 'bg-purple-500 text-white ring-2 ring-purple-300'
-                    : 'bg-slate-700 text-slate-400'
+                    ? 'bg-gradient-to-br from-blue-500 to-indigo-600 text-white ring-4 ring-blue-200 shadow-lg'
+                    : 'bg-slate-200 text-slate-500'
                 }`}
               >
                 {idx < stepIndex ? (
@@ -194,8 +197,8 @@ const OnboardingPage: React.FC = () => {
               </div>
               {idx < STEPS.length - 1 && (
                 <div
-                  className={`flex-1 h-1 mx-2 rounded-full transition-all ${
-                    idx < stepIndex ? 'bg-green-500' : 'bg-slate-700'
+                  className={`flex-1 h-2 mx-2 rounded-full transition-all ${
+                    idx < stepIndex ? 'bg-gradient-to-r from-green-400 to-emerald-500' : 'bg-slate-200'
                   }`}
                 />
               )}
@@ -205,18 +208,18 @@ const OnboardingPage: React.FC = () => {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex gap-3">
-            <AlertCircle className="text-red-400 flex-shrink-0" size={20} />
-            <p className="text-red-300 text-sm">{error}</p>
+          <div className="mb-6 p-4 bg-red-50 border-2 border-red-200 rounded-2xl flex gap-3">
+            <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+            <p className="text-red-700 text-sm font-medium">{error}</p>
           </div>
         )}
 
         {/* Content Card */}
-        <Card className="bg-slate-800/50 border-slate-700 backdrop-blur-sm">
-          <div className="p-6 md:p-8">
+        <Card className="bg-white/80 backdrop-blur-sm border-2 border-slate-100 shadow-2xl rounded-3xl">
+          <div className="p-6 md:p-10">
             {isTransitioning ? (
               <div className="flex items-center justify-center py-12">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-purple-500" />
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-blue-500"></div>
               </div>
             ) : (
               renderStepContent()
@@ -225,12 +228,12 @@ const OnboardingPage: React.FC = () => {
 
           {/* Navigation Buttons - Not shown on completion step */}
           {currentStep !== 'complete' && (
-            <div className="px-6 md:px-8 pb-6 md:pb-8 flex gap-3 justify-between">
+            <div className="px-6 md:px-10 pb-6 md:pb-8 flex gap-3 justify-between border-t border-slate-100">
               <Button
                 onClick={handlePrevious}
                 disabled={stepIndex === 0 || isLoading}
                 variant="outline"
-                className="flex-1 md:flex-none"
+                className="flex-1 md:flex-none border-2 border-slate-300 hover:border-slate-400 text-slate-700 hover:bg-slate-50 rounded-xl"
               >
                 <ArrowLeft size={18} className="mr-2" />
                 Back
@@ -239,11 +242,11 @@ const OnboardingPage: React.FC = () => {
               <Button
                 onClick={handleNext}
                 disabled={!canProceedToNextStep() || isLoading}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all"
               >
                 {isLoading ? (
                   <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white mr-2" />
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
                     Processing...
                   </>
                 ) : (
@@ -258,19 +261,31 @@ const OnboardingPage: React.FC = () => {
         </Card>
 
         {/* Footer Help Text */}
-        <div className="mt-6 text-center text-purple-300 text-sm">
+        <div className="mt-8 text-center text-slate-600 text-sm">
           <p>
             By signing up, you agree to our{' '}
-            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">
+            <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 font-semibold underline">
               Terms of Service
             </a>
             {' '}and{' '}
-            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">
+            <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 font-semibold underline">
               Privacy Policy
             </a>
           </p>
         </div>
       </div>
+
+      {/* Animation keyframes */}
+      <style>{`
+        @keyframes float {
+          0%, 100% {
+            transform: translateY(0px) rotate(0deg);
+          }
+          50% {
+            transform: translateY(-20px) rotate(5deg);
+          }
+        }
+      `}</style>
     </div>
   );
 };
