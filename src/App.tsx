@@ -13,6 +13,7 @@ import {
 import { setupGlobalErrorHandlers } from "@/lib/error-handler";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider } from "./contexts/AdminContext";
+import { OnboardingProvider } from "./contexts/OnboardingContext";
 import { MarketplaceProvider } from "./contexts/MarketplaceContext";
 import { EnhancedMarketplaceProvider } from "./contexts/EnhancedMarketplaceContext";
 import { ChatProvider } from "./contexts/ChatContext";
