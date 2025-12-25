@@ -172,7 +172,7 @@ const DashboardInner = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Upper Zone - Full Bleed Gradient */}
-      <div className="relative w-full bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-20 sm:pb-24 md:pb-32">
+      <div className="relative w-full bg-gradient-to-b from-[#8B5CF6] via-[#6366F1] to-[#4F46E5] pt-8 pb-8">
         <AnimatedWave />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -202,7 +202,7 @@ const DashboardInner = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button 
+              <Button
                 variant="ghost"
                 size="sm"
                 className="text-white hover:bg-white/20 h-9 w-9 p-0"
@@ -287,29 +287,25 @@ const DashboardInner = () => {
         </div>
       </div>
 
-      {/* Lower Zone - White Content Area with Curved Top */}
-      <div className="relative w-full bg-white min-h-screen" style={{
-        marginTop: '-8px',
-        borderRadius: '48px 48px 0 0',
-      }}>
-        {/* Ad Carousel Banner - Full Bleed with Curved Top */}
-        <div className="w-full" style={{
-          borderRadius: '48px 48px 0 0',
-          overflow: 'hidden',
-        }}>
-          <AdCarousel
-            ads={ads}
-            autoScroll={true}
-            scrollInterval={6000}
-            onAdClick={(ad) => {
-              if (ad.ctaUrl) {
-                navigate(ad.ctaUrl);
-              }
-            }}
-          />
+      {/* Lower Zone - White Content Area */}
+      <div className="relative w-full bg-white min-h-screen">
+        {/* Ad Carousel - Floating Card Style */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 md:pt-8">
+          <div className="rounded-2xl md:rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <AdCarousel
+              ads={ads}
+              autoScroll={true}
+              scrollInterval={6000}
+              onAdClick={(ad) => {
+                if (ad.ctaUrl) {
+                  navigate(ad.ctaUrl);
+                }
+              }}
+            />
+          </div>
         </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12 pt-4">
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12 pt-8 md:pt-12">
 
           {/* Wallet Services Grid with Customizable Favorites */}
           <WalletServicesGrid />
