@@ -172,7 +172,7 @@ const DashboardInner = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Upper Zone - Full Bleed Gradient */}
-      <div className="relative w-full bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-20 sm:pb-24 md:pb-32">
+      <div className="relative w-full bg-gradient-to-b from-[#8B5CF6] via-[#6366F1] to-[#4F46E5] pt-8 pb-8">
         <AnimatedWave />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -202,7 +202,7 @@ const DashboardInner = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button 
+              <Button
                 variant="ghost"
                 size="sm"
                 className="text-white hover:bg-white/20 h-9 w-9 p-0"
