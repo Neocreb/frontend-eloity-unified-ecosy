@@ -13,6 +13,7 @@ import {
 import { setupGlobalErrorHandlers } from "@/lib/error-handler";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider } from "./contexts/AdminContext";
+import { OnboardingProvider } from "./contexts/OnboardingContext";
 import { MarketplaceProvider } from "./contexts/MarketplaceContext";
 import { EnhancedMarketplaceProvider } from "./contexts/EnhancedMarketplaceContext";
 import { ChatProvider } from "./contexts/ChatContext";
@@ -45,6 +46,7 @@ import AppLayout from "./components/layout/AppLayout";
 import Auth from "./pages/Auth";
 import Join from "./pages/Join";
 import Home from "./pages/Home";
+import OnboardingPage from "./pages/onboarding/OnboardingPage";
 import Feed from "./pages/Feed";
 import CreatePost from "./pages/CreatePost";
 import EnhancedFreelance from "./pages/EnhancedFreelance";
@@ -510,6 +512,9 @@ const AppRoutes = () => {
 
       {/* Join route - for referral links */}
       <Route path="/join" element={<Join />} />
+
+      {/* Onboarding route - new user registration flow */}
+      <Route path="/onboarding" element={<OnboardingPage />} />
 
       {/* Public payment link route - accessible to everyone without authentication */}
       <Route path="/pay/:code" element={<PaymentLinkView />} />
@@ -1020,9 +1025,10 @@ const App = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <QueryClientProvider client={queryClient}>
-        <SafeThemeProvider>
+    <OnboardingProvider>
+      <BrowserRouter>
+        <QueryClientProvider client={queryClient}>
+          <SafeThemeProvider>
           <ErrorBoundary
             fallback={
               <div className="min-h-screen flex items-center justify-center">
@@ -1078,9 +1084,10 @@ const App = () => {
               </AuthProvider>
             </SafeI18nProvider>
           </ErrorBoundary>
-        </SafeThemeProvider>
-      </QueryClientProvider>
-    </BrowserRouter>
+          </SafeThemeProvider>
+        </QueryClientProvider>
+      </BrowserRouter>
+    </OnboardingProvider>
   );
 };
 
