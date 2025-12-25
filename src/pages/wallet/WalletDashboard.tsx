@@ -228,33 +228,33 @@ const DashboardInner = () => {
           </div>
         </div>
 
-        {/* Floating Action Buttons */}
+        {/* Floating Action Buttons - Glassmorphic */}
         <div className="relative z-20 max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12 -mb-4 md:-mb-6">
           <div className="flex gap-2 sm:gap-2.5 md:gap-3 justify-center">
             <button
               onClick={()=>navigate('/app/wallet/deposit')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="action-glass-button flex-1"
             >
               <Plus className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
               <span>Deposit</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/send-money')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="action-glass-button flex-1"
             >
               <Send className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
               <span>Send</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/withdraw')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="action-glass-button flex-1"
             >
               <ArrowUp className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
               <span>Withdraw</span>
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex-1 bg-white text-[#8B5CF6] rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
+                <button className="action-glass-button flex-1">
                   <MoreHorizontal className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
                   <span>More</span>
                 </button>
