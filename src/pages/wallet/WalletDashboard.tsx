@@ -287,23 +287,22 @@ const DashboardInner = () => {
         </div>
       </div>
 
-      {/* Gradient Transition - Smooths blend from purple to content */}
-      <div className="w-full h-32 bg-gradient-to-b from-[#4F46E5] via-[#FF6B6B]/80 to-[#FF6B6B]" />
-
       {/* Lower Zone - White Content Area */}
       <div className="relative w-full bg-white min-h-screen">
-        {/* Ad Carousel Banner */}
-        <div className="w-full -mt-32">
-          <AdCarousel
-            ads={ads}
-            autoScroll={true}
-            scrollInterval={6000}
-            onAdClick={(ad) => {
-              if (ad.ctaUrl) {
-                navigate(ad.ctaUrl);
-              }
-            }}
-          />
+        {/* Ad Carousel - Floating Card Style */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 md:pt-8">
+          <div className="rounded-2xl md:rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+            <AdCarousel
+              ads={ads}
+              autoScroll={true}
+              scrollInterval={6000}
+              onAdClick={(ad) => {
+                if (ad.ctaUrl) {
+                  navigate(ad.ctaUrl);
+                }
+              }}
+            />
+          </div>
         </div>
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12 pt-4">
