@@ -108,38 +108,42 @@ export const useWebSocketChat = (options: UseWebSocketChatOptions = {}): WebSock
   }, [user, reconnectAttempts]);
 
   const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
-    switch (message.type) {
-      case 'message':
-        options.onMessageReceived?.(message.payload);
-        break;
-      
-      case 'typing':
-        options.onTypingStatusChanged?.(message.chatId!, message.payload.users);
-        break;
-      
-      case 'call_start':
-        options.onCallStarted?.(message.payload);
-        break;
-      
-      case 'call_end':
-        options.onCallEnded?.(message.payload.callId);
-        break;
-      
-      case 'user_online':
-      case 'user_offline':
-        options.onUserStatusChanged?.(message.userId!, message.type === 'user_online');
-        break;
-      
-      case 'group_update':
-        options.onGroupUpdated?.(message.payload);
-        break;
-      
-      case 'invite_created':
-        options.onInviteLinkCreated?.(message.payload.groupId, message.payload.link);
-        break;
-      
-      default:
-        console.warn('Unknown WebSocket message type:', message.type);
+    try {
+      switch (message.type) {
+        case 'message':
+          options.onMessageReceived?.(message.payload);
+          break;
+
+        case 'typing':
+          options.onTypingStatusChanged?.(message.chatId!, message.payload.users);
+          break;
+
+        case 'call_start':
+          options.onCallStarted?.(message.payload);
+          break;
+
+        case 'call_end':
+          options.onCallEnded?.(message.payload.callId);
+          break;
+
+        case 'user_online':
+        case 'user_offline':
+          options.onUserStatusChanged?.(message.userId!, message.type === 'user_online');
+          break;
+
+        case 'group_update':
+          options.onGroupUpdated?.(message.payload);
+          break;
+
+        case 'invite_created':
+          options.onInviteLinkCreated?.(message.payload.groupId, message.payload.link);
+          break;
+
+        default:
+          console.warn('Unknown WebSocket message type:', message.type);
+      }
+    } catch (error) {
+      console.error('Error handling WebSocket message:', error);
     }
   }, [options]);
 
