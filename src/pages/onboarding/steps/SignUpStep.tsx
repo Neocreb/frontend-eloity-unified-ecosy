@@ -161,19 +161,19 @@ const SignUpStep: React.FC = () => {
   const passwordStrength = getPasswordStrength();
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5">
       {/* Error Alert */}
       {localError && (
-        <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex gap-3">
-          <AlertCircle className="text-red-400 flex-shrink-0 mt-0.5" size={20} />
-          <p className="text-red-300 text-sm">{localError}</p>
+        <div className="p-4 bg-red-50 border-2 border-red-200 rounded-2xl flex gap-3">
+          <AlertCircle className="text-red-600 flex-shrink-0 mt-0.5" size={20} />
+          <p className="text-red-700 text-sm font-medium">{localError}</p>
         </div>
       )}
 
       {/* Name Field */}
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
-          Full Name *
+        <label className="block text-sm font-semibold text-slate-700 mb-2.5">
+          Full Name <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
@@ -182,19 +182,19 @@ const SignUpStep: React.FC = () => {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="John Doe"
-            className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20"
+            className="pl-10 bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
             disabled={isLoading}
           />
         </div>
         {name && name.length < 2 && (
-          <p className="text-red-400 text-xs mt-1">Name must be at least 2 characters</p>
+          <p className="text-red-600 text-xs mt-2 font-medium">Name must be at least 2 characters</p>
         )}
       </div>
 
       {/* Email Field */}
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
-          Email Address *
+        <label className="block text-sm font-semibold text-slate-700 mb-2.5">
+          Email Address <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
@@ -203,19 +203,19 @@ const SignUpStep: React.FC = () => {
             value={email}
             onChange={handleEmailChange}
             placeholder="you@example.com"
-            className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20"
+            className="pl-10 bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
             disabled={isLoading}
           />
         </div>
         {emailError && (
-          <p className="text-red-400 text-xs mt-1">{emailError}</p>
+          <p className="text-red-600 text-xs mt-2 font-medium">{emailError}</p>
         )}
       </div>
 
       {/* Password Field */}
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
-          Password *
+        <label className="block text-sm font-semibold text-slate-700 mb-2.5">
+          Password <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
@@ -224,13 +224,13 @@ const SignUpStep: React.FC = () => {
             value={password}
             onChange={handlePasswordChange}
             placeholder="Enter a strong password"
-            className="pl-10 pr-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20"
+            className="pl-10 pr-10 bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
             disabled={isLoading}
           />
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
           >
             {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
@@ -238,19 +238,19 @@ const SignUpStep: React.FC = () => {
 
         {/* Password Strength Indicator */}
         {password && (
-          <div className="mt-2 space-y-1">
+          <div className="mt-3 space-y-2">
             <div className="flex items-center gap-2">
-              <div className="flex-1 h-2 bg-slate-700 rounded-full overflow-hidden">
+              <div className="flex-1 h-2.5 bg-slate-200 rounded-full overflow-hidden">
                 <div
-                  className={`h-full ${passwordStrength.color} transition-all`}
+                  className={`h-full ${passwordStrength.color} transition-all rounded-full`}
                   style={{ width: `${(passwordStrength.strength / 5) * 100}%` }}
                 />
               </div>
-              <span className={`text-xs font-medium ${
-                passwordStrength.strength <= 1 ? 'text-red-400' :
-                passwordStrength.strength <= 2 ? 'text-yellow-400' :
-                passwordStrength.strength <= 3 ? 'text-blue-400' :
-                'text-green-400'
+              <span className={`text-xs font-bold ${
+                passwordStrength.strength <= 1 ? 'text-red-600' :
+                passwordStrength.strength <= 2 ? 'text-yellow-600' :
+                passwordStrength.strength <= 3 ? 'text-blue-600' :
+                'text-green-600'
               }`}>
                 {passwordStrength.label}
               </span>
@@ -259,29 +259,29 @@ const SignUpStep: React.FC = () => {
         )}
 
         {passwordError && (
-          <p className="text-red-400 text-xs mt-2">{passwordError}</p>
+          <p className="text-red-600 text-xs mt-2 font-medium">{passwordError}</p>
         )}
 
         {/* Password Requirements */}
         {password && (
-          <div className="mt-3 space-y-1 text-xs">
-            <div className={`flex items-center gap-2 ${password.length >= 8 ? 'text-green-400' : 'text-slate-400'}`}>
+          <div className="mt-3 space-y-1.5 text-xs bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <div className={`flex items-center gap-2 font-medium ${password.length >= 8 ? 'text-green-600' : 'text-slate-500'}`}>
               <Check size={14} />
               <span>At least 8 characters</span>
             </div>
-            <div className={`flex items-center gap-2 ${/[A-Z]/.test(password) ? 'text-green-400' : 'text-slate-400'}`}>
+            <div className={`flex items-center gap-2 font-medium ${/[A-Z]/.test(password) ? 'text-green-600' : 'text-slate-500'}`}>
               <Check size={14} />
               <span>One uppercase letter</span>
             </div>
-            <div className={`flex items-center gap-2 ${/[a-z]/.test(password) ? 'text-green-400' : 'text-slate-400'}`}>
+            <div className={`flex items-center gap-2 font-medium ${/[a-z]/.test(password) ? 'text-green-600' : 'text-slate-500'}`}>
               <Check size={14} />
               <span>One lowercase letter</span>
             </div>
-            <div className={`flex items-center gap-2 ${/[0-9]/.test(password) ? 'text-green-400' : 'text-slate-400'}`}>
+            <div className={`flex items-center gap-2 font-medium ${/[0-9]/.test(password) ? 'text-green-600' : 'text-slate-500'}`}>
               <Check size={14} />
               <span>One number</span>
             </div>
-            <div className={`flex items-center gap-2 ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-green-400' : 'text-slate-400'}`}>
+            <div className={`flex items-center gap-2 font-medium ${/[!@#$%^&*(),.?":{}|<>]/.test(password) ? 'text-green-600' : 'text-slate-500'}`}>
               <Check size={14} />
               <span>One special character (!@#$%^&*...)</span>
             </div>
@@ -291,8 +291,8 @@ const SignUpStep: React.FC = () => {
 
       {/* Confirm Password Field */}
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
-          Confirm Password *
+        <label className="block text-sm font-semibold text-slate-700 mb-2.5">
+          Confirm Password <span className="text-red-500">*</span>
         </label>
         <div className="relative">
           <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
@@ -301,22 +301,22 @@ const SignUpStep: React.FC = () => {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="Confirm your password"
-            className="pl-10 pr-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20"
+            className="pl-10 pr-10 bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
             disabled={isLoading}
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-300"
+            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
           >
             {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
         {confirmPassword && password !== confirmPassword && (
-          <p className="text-red-400 text-xs mt-1">Passwords do not match</p>
+          <p className="text-red-600 text-xs mt-2 font-medium">Passwords do not match</p>
         )}
         {confirmPassword && password === confirmPassword && (
-          <p className="text-green-400 text-xs mt-1 flex items-center gap-1">
+          <p className="text-green-600 text-xs mt-2 font-medium flex items-center gap-1">
             <Check size={14} />
             Passwords match
           </p>
@@ -325,28 +325,28 @@ const SignUpStep: React.FC = () => {
 
       {/* Referral Code (Optional) */}
       <div>
-        <label className="block text-sm font-medium text-white mb-2">
-          Referral Code <span className="text-slate-400 text-xs">(Optional)</span>
+        <label className="block text-sm font-semibold text-slate-700 mb-2.5">
+          Referral Code <span className="text-slate-500 text-xs font-normal">(Optional)</span>
         </label>
         <Input
           type="text"
           value={referralCode}
           onChange={(e) => setReferralCode(e.target.value)}
           placeholder="Enter referral code if you have one"
-          className="bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-purple-500 focus:ring-purple-500/20"
+          className="bg-slate-50 border-2 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:ring-blue-500/20 rounded-xl"
           disabled={isLoading}
         />
       </div>
 
       {/* Terms Agreement */}
-      <div className="p-4 bg-slate-700/30 rounded-lg border border-slate-600">
-        <p className="text-slate-300 text-sm">
+      <div className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl border-2 border-blue-100">
+        <p className="text-slate-700 text-sm font-medium">
           By creating an account, you agree to our{' '}
-          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">
+          <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 font-bold underline">
             Terms of Service
           </a>
           {' '}and{' '}
-          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-purple-400 hover:text-purple-300 underline">
+          <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 font-bold underline">
             Privacy Policy
           </a>
         </p>
@@ -356,11 +356,11 @@ const SignUpStep: React.FC = () => {
       <Button
         type="submit"
         disabled={!isFormValid || isLoading}
-        className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 h-12 text-base"
+        className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold h-12 text-base rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50"
       >
         {isLoading ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-white mr-2" />
+            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
             Processing...
           </>
         ) : (
