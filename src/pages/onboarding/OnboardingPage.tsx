@@ -15,19 +15,19 @@ import CompletionStep from './steps/CompletionStep';
 
 const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
-  const { 
-    currentStep, 
-    previousStep, 
+  const {
+    currentStep,
+    previousStep,
     nextStep,
-    error, 
+    error,
     completionPercentage,
     canProceedToNextStep,
     getStepIndex,
-    isLoading 
+    isLoading
   } = useOnboarding();
-  
+
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+
   const STEPS = ['signup', 'profile', 'interests', 'kyc', 'confirmation', 'complete'];
   const stepIndex = getStepIndex();
   const isLastStep = currentStep === 'complete';
@@ -52,7 +52,7 @@ const OnboardingPage: React.FC = () => {
     if (!canProceedToNextStep()) {
       return;
     }
-    
+
     setIsTransitioning(true);
     nextStep();
     setIsTransitioning(false);
@@ -90,7 +90,37 @@ const OnboardingPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 py-8 md:py-12">
+    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-indigo-50 flex items-center justify-center p-4 py-8 md:py-12 relative overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Top right blob */}
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-200 to-indigo-200 rounded-full opacity-40 blur-3xl"></div>
+
+        {/* Bottom left blob */}
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-purple-200 to-pink-200 rounded-full opacity-40 blur-3xl"></div>
+
+        {/* Center accent */}
+        <div className="absolute top-1/2 right-1/4 w-60 h-60 bg-gradient-to-bl from-indigo-100 to-blue-100 rounded-full opacity-30 blur-3xl"></div>
+
+        {/* Decorative curved lines */}
+        <svg className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+          <defs>
+            <linearGradient id="curve-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stopColor="rgba(99, 102, 241, 0.08)" />
+              <stop offset="100%" stopColor="rgba(139, 92, 246, 0.08)" />
+            </linearGradient>
+          </defs>
+          {/* Curved lines */}
+          <path d="M 0,100 Q 300,50 600,150 T 1200,100" stroke="url(#curve-gradient)" strokeWidth="2" fill="none" />
+          <path d="M 0,200 Q 400,100 800,200 T 1600,150" stroke="url(#curve-gradient)" strokeWidth="1.5" fill="none" opacity="0.5" />
+          <path d="M 0,300 Q 250,250 500,350 T 1000,300" stroke="url(#curve-gradient)" strokeWidth="1" fill="none" opacity="0.3" />
+        </svg>
+
+        {/* Small floating shapes */}
+        <div className="absolute top-20 left-10 w-16 h-16 bg-gradient-to-br from-blue-300 to-indigo-300 rounded-3xl opacity-10 blur-2xl animate-pulse"></div>
+        <div className="absolute top-1/3 right-20 w-20 h-20 bg-gradient-to-bl from-purple-300 to-pink-300 rounded-2xl opacity-10 blur-2xl" style={{ animation: 'float 6s ease-in-out infinite' }}></div>
+        <div className="absolute bottom-1/4 left-1/4 w-24 h-24 bg-gradient-to-tr from-indigo-200 to-blue-200 rounded-full opacity-5 blur-3xl"></div>
+      </div>
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="mb-8">
