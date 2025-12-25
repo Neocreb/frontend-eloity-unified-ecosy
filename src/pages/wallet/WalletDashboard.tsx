@@ -287,16 +287,13 @@ const DashboardInner = () => {
         </div>
       </div>
 
-      {/* Lower Zone - White Content Area with Curved Top */}
-      <div className="relative w-full bg-white min-h-screen" style={{
-        marginTop: '-8px',
-        borderRadius: '48px 48px 0 0',
-      }}>
-        {/* Ad Carousel Banner - Full Bleed with Curved Top */}
-        <div className="w-full" style={{
-          borderRadius: '48px 48px 0 0',
-          overflow: 'hidden',
-        }}>
+      {/* Gradient Transition - Smooths blend from purple to content */}
+      <div className="w-full h-32 bg-gradient-to-b from-[#4F46E5] via-[#FF6B6B]/80 to-[#FF6B6B]" />
+
+      {/* Lower Zone - White Content Area */}
+      <div className="relative w-full bg-white min-h-screen">
+        {/* Ad Carousel Banner */}
+        <div className="w-full -mt-32">
           <AdCarousel
             ads={ads}
             autoScroll={true}
