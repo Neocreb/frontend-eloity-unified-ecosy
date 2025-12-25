@@ -327,3 +327,234 @@ body {
 .safe-area-pb { padding-bottom: env(safe-area-inset-bottom); }
 .pb-safe-or-4 { padding-bottom: calc(env(safe-area-inset-bottom) + 1rem); }
 .pt-safe-or-4 { padding-top: calc(env(safe-area-inset-top) + 1rem); }
+
+/* ========== GLASSMORPHIC BUTTON STYLES ========== */
+
+/* Base glassmorphic button container */
+.glass-button-base {
+  background: rgba(139, 92, 246, 0.12);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(139, 92, 246, 0.25);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+}
+
+/* Holographic gradient overlay */
+.glass-button-base::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.1) 0%, rgba(139, 92, 246, 0.05) 50%, rgba(99, 102, 241, 0.1) 100%);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+/* Inner shadow effect */
+.glass-button-base::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.25), inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Neon glow effect */
+.glass-button-neon-glow {
+  box-shadow:
+    0 0 20px rgba(168, 85, 247, 0.3),
+    0 0 40px rgba(99, 102, 241, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Hover state with enhanced glow */
+.glass-button-hover {
+  background: rgba(139, 92, 246, 0.18);
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow:
+    0 0 30px rgba(168, 85, 247, 0.5),
+    0 0 60px rgba(99, 102, 241, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+/* Active/pressed state */
+.glass-button-active {
+  background: rgba(139, 92, 246, 0.15);
+  box-shadow:
+    0 0 15px rgba(168, 85, 247, 0.25),
+    0 0 30px rgba(99, 102, 241, 0.15),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+  transform: translateY(0);
+}
+
+/* Floating animation keyframes */
+@keyframes float-soft {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Pulse glow animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 20px rgba(168, 85, 247, 0.3),
+      0 0 40px rgba(99, 102, 241, 0.2),
+      inset 0 1px 2px rgba(255, 255, 255, 0.25),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+  }
+  50% {
+    box-shadow:
+      0 0 25px rgba(168, 85, 247, 0.4),
+      0 0 50px rgba(99, 102, 241, 0.25),
+      inset 0 1px 2px rgba(255, 255, 255, 0.25),
+      inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+  }
+}
+
+/* Shimmer animation for holographic effect */
+@keyframes shimmer-holographic {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Glass button with floating effect */
+.action-glass-button {
+  background: rgba(139, 92, 246, 0.12);
+  backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(168, 85, 247, 0.3);
+  border-radius: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  font-weight: 600;
+  color: rgb(139, 92, 246);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  font-size: 0.75rem;
+  transition: all 0.4s cubic-bezier(0.4, 0.0, 0.2, 1);
+  animation: float-soft 3s ease-in-out infinite;
+  box-shadow:
+    0 0 20px rgba(168, 85, 247, 0.3),
+    0 0 40px rgba(99, 102, 241, 0.2),
+    inset 0 1px 2px rgba(255, 255, 255, 0.25),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.15);
+}
+
+/* Holographic inner gradient */
+.action-glass-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(139, 92, 246, 0.08) 50%, rgba(99, 102, 241, 0.12) 100%);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.action-glass-button:hover {
+  background: rgba(139, 92, 246, 0.18);
+  border-color: rgba(168, 85, 247, 0.5);
+  box-shadow:
+    0 0 30px rgba(168, 85, 247, 0.5),
+    0 0 60px rgba(99, 102, 241, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.3),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
+  transform: translateY(-4px) scale(1.05);
+  animation: float-soft 2.5s ease-in-out infinite;
+}
+
+.action-glass-button:active {
+  background: rgba(139, 92, 246, 0.15);
+  box-shadow:
+    0 0 15px rgba(168, 85, 247, 0.25),
+    0 0 30px rgba(99, 102, 241, 0.15),
+    inset 0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.1);
+  transform: translateY(-2px) scale(0.98);
+}
+
+/* Responsive sizing for glass button */
+@media (min-width: 640px) {
+  .action-glass-button {
+    padding: 0.75rem 1rem;
+    font-size: 0.875rem;
+    border-radius: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .action-glass-button {
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    border-radius: 1.5rem;
+  }
+}
+
+/* Dark mode glass button */
+.dark .action-glass-button {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: rgba(168, 85, 247, 0.25);
+  color: rgb(168, 85, 247);
+  box-shadow:
+    0 0 20px rgba(168, 85, 247, 0.25),
+    0 0 40px rgba(99, 102, 241, 0.15),
+    inset 0 1px 2px rgba(255, 255, 255, 0.15),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.dark .action-glass-button:hover {
+  background: rgba(99, 102, 241, 0.2);
+  border-color: rgba(168, 85, 247, 0.4);
+  box-shadow:
+    0 0 30px rgba(168, 85, 247, 0.4),
+    0 0 60px rgba(99, 102, 241, 0.25),
+    inset 0 1px 2px rgba(255, 255, 255, 0.2),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.dark .action-glass-button:active {
+  background: rgba(99, 102, 241, 0.12);
+  box-shadow:
+    0 0 15px rgba(168, 85, 247, 0.2),
+    0 0 30px rgba(99, 102, 241, 0.1),
+    inset 0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Icon styling within glass buttons */
+.action-glass-button svg {
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.action-glass-button:hover svg {
+  filter: drop-shadow(0 0 8px rgba(168, 85, 247, 0.6));
+  transform: scale(1.1);
+}
+
+/* Spin animation for convert/interact icons */
+@keyframes icon-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.action-glass-button.icon-spin:hover svg {
+  animation: icon-spin 1.5s linear infinite;
+}
+
+/* ========== END GLASSMORPHIC BUTTON STYLES ========== */
