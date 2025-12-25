@@ -121,7 +121,7 @@ const AdCarousel = ({
   const currentAd = visibleAds[currentIndex];
 
   return (
-    <div ref={containerRef} className="relative w-full h-40 md:h-48 lg:h-56 overflow-hidden group">
+    <div ref={containerRef} className="relative w-full h-40 md:h-48 lg:h-56 overflow-hidden group bg-gradient-to-b from-[#FF6B6B] to-[#FF6B6B]">
       {/* Ad Carousel Container */}
       <div className="relative w-full h-full">
         {/* Ad Slide */}
