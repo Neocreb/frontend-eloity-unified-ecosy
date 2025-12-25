@@ -46,6 +46,7 @@ import AppLayout from "./components/layout/AppLayout";
 import Auth from "./pages/Auth";
 import Join from "./pages/Join";
 import Home from "./pages/Home";
+import OnboardingPage from "./pages/onboarding/OnboardingPage";
 import Feed from "./pages/Feed";
 import CreatePost from "./pages/CreatePost";
 import EnhancedFreelance from "./pages/EnhancedFreelance";
