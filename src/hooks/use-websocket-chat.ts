@@ -75,10 +75,18 @@ export const useWebSocketChat = (options: UseWebSocketChatOptions = {}): WebSock
 
       wsRef.current.onmessage = (event) => {
         try {
+          if (!event.data) {
+            console.warn('Empty WebSocket message received');
+            return;
+          }
           const message: WebSocketMessage = JSON.parse(event.data);
-          handleWebSocketMessage(message);
+          if (message?.type) {
+            handleWebSocketMessage(message);
+          } else {
+            console.warn('Invalid WebSocket message format:', message);
+          }
         } catch (error) {
-          console.error('Error parsing WebSocket message:', error);
+          console.error('Error parsing WebSocket message:', error, 'Raw data:', event.data);
         }
       };
 
