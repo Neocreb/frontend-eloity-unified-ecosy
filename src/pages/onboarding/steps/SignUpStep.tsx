@@ -65,13 +65,13 @@ const SignUpStep: React.FC = () => {
 
   const getPasswordStrength = (): { strength: number; label: string; color: string } => {
     let strength = 0;
-    const password = password || '';
+    const pwd = password || '';
 
-    if (password.length >= 8) strength++;
-    if (/[A-Z]/.test(password)) strength++;
-    if (/[a-z]/.test(password)) strength++;
-    if (/[0-9]/.test(password)) strength++;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) strength++;
+    if (pwd.length >= 8) strength++;
+    if (/[A-Z]/.test(pwd)) strength++;
+    if (/[a-z]/.test(pwd)) strength++;
+    if (/[0-9]/.test(pwd)) strength++;
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) strength++;
 
     if (strength <= 1) return { strength: 1, label: 'Weak', color: 'bg-red-500' };
     if (strength <= 2) return { strength: 2, label: 'Fair', color: 'bg-yellow-500' };
