@@ -243,20 +243,34 @@ export const useWebSocketChat = (options: UseWebSocketChatOptions = {}): WebSock
   const revokeInviteLink = useCallback(async (groupId: string, linkId: string): Promise<void> => {
     return new Promise((resolve, reject) => {
       const messageId = `revoke_${Date.now()}`;
-      
-      const handleResponse = (event: MessageEvent) => {
+      let timeoutId: NodeJS.Timeout | null = null;
+      let originalOnMessage: ((event: Event) => void) | null = null;
+
+      const handleResponse = (event: Event) => {
         try {
-          const message = JSON.parse(event.data);
-          if (message.type === 'invite_revoked' && message.payload.messageId === messageId) {
-            wsRef.current?.removeEventListener('message', handleResponse);
-            resolve();
+          if (event instanceof MessageEvent) {
+            const message = JSON.parse(event.data);
+            if (message.type === 'invite_revoked' && message.payload?.messageId === messageId) {
+              if (timeoutId) clearTimeout(timeoutId);
+              if (originalOnMessage && wsRef.current) {
+                wsRef.current.onmessage = originalOnMessage;
+              }
+              resolve();
+            }
           }
         } catch (error) {
           // Ignore parsing errors for other messages
         }
       };
 
-      wsRef.current?.addEventListener('message', handleResponse);
+      if (wsRef.current) {
+        originalOnMessage = wsRef.current.onmessage;
+        const prevOnMessage = originalOnMessage;
+        wsRef.current.onmessage = (event: Event) => {
+          handleResponse(event);
+          if (prevOnMessage) prevOnMessage(event);
+        };
+      }
 
       sendWebSocketMessage({
         type: 'revoke_invite',
@@ -264,8 +278,10 @@ export const useWebSocketChat = (options: UseWebSocketChatOptions = {}): WebSock
       });
 
       // Timeout after 10 seconds
-      setTimeout(() => {
-        wsRef.current?.removeEventListener('message', handleResponse);
+      timeoutId = setTimeout(() => {
+        if (originalOnMessage && wsRef.current) {
+          wsRef.current.onmessage = originalOnMessage;
+        }
         reject(new Error('Timeout revoking invite link'));
       }, 10000);
     });
