@@ -111,7 +111,9 @@ export const JobDetailPage: React.FC = () => {
           )}
         </div>
 
-        <JobDetails job={job} />
+        <FreelanceErrorBoundary>
+          <JobDetails job={job} />
+        </FreelanceErrorBoundary>
       </div>
     </div>
   );
