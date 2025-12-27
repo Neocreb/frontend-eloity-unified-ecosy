@@ -44,6 +44,9 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useFreelance } from "@/hooks/use-freelance";
 import { toast } from "sonner";
+// Phase 4 Integrations
+import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
 
 interface Job {
   id: string;
