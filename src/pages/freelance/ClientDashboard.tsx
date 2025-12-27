@@ -153,6 +153,11 @@ export const ClientDashboard: React.FC = () => {
   const [hasSeenTour, setHasSeenTour] = useState(() => {
     return localStorage.getItem('client-tour-completed') === 'true';
   });
+  // Phase 4 State
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { getProjects, loading } = useFreelance();
   const { getUserEscrows } = useEscrow();
