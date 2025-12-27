@@ -59,15 +59,8 @@ export const JobDetailPage: React.FC = () => {
               Back to Jobs
             </Button>
           </div>
-          
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <span className="ml-2">Loading job details...</span>
-              </div>
-            </CardContent>
-          </Card>
+
+          <FreelanceSkeletons.JobDetailSkeleton />
         </div>
       </div>
     );
