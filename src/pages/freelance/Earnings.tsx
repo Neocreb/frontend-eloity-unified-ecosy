@@ -33,6 +33,11 @@ import {
   Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+// Phase 4 Integrations
+import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
+import { FreelanceErrorBoundary, FreelanceErrorMessage } from "@/components/freelance/FreelanceErrorBoundary";
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
+import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
 
 interface EarningsData {
   totalEarnings: number;
