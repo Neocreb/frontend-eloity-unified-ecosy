@@ -34,6 +34,11 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+// Phase 4 Integrations
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface ClientProposal {
   id: string;
