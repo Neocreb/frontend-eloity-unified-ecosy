@@ -257,6 +257,24 @@ const ApplyJob: React.FC = () => {
 
       const result = await submitProposal(proposal);
       if (result) {
+        // Award rewards for proposal submission
+        try {
+          await FreelanceRewardsIntegrationService.rewardProposalSubmission(
+            user.id,
+            job.id
+          );
+
+          // Send notification to freelancer
+          await FreelanceNotificationsService.notifyProposalSubmitted(
+            user.id,
+            job.title,
+            job.id
+          );
+        } catch (rewardError) {
+          console.error("Reward integration error:", rewardError);
+          // Continue even if rewards fail
+        }
+
         toast({
           title: "Success",
           description: "Your proposal has been submitted!",
