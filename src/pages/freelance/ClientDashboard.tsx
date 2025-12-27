@@ -79,6 +79,13 @@ import ClientProposals from "@/components/freelance/ClientProposals";
 import { walletService, WalletBalance } from "@/services/walletService";
 import { FreelanceNotifications } from "@/components/freelance/FreelanceNotifications";
 import { cn } from "@/lib/utils";
+// Phase 4 Integrations
+import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
+import { FreelanceErrorBoundary, FreelanceErrorMessage, FreelanceSuccessMessage } from "@/components/freelance/FreelanceErrorBoundary";
+import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
 
 interface ClientStats {
   totalSpent: number;
