@@ -156,6 +156,11 @@ export const FreelanceDashboard: React.FC = () => {
   });
   const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null);
   const [walletLoading, setWalletLoading] = useState(false);
+  // Phase 4 State
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { getProjects, getFreelanceStats, getActivityLog, loading } = useFreelance();
   const { getUserEscrows } = useEscrow();
