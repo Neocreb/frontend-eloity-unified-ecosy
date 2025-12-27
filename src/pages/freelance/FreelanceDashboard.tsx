@@ -544,6 +544,7 @@ export const FreelanceDashboard: React.FC = () => {
 
   // Main dashboard view
   return (
+    <FreelanceErrorBoundary>
     <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
       <FreelanceHeader />
       
@@ -905,6 +906,42 @@ export const FreelanceDashboard: React.FC = () => {
         onComplete={handleTourComplete}
       />
 
+      {/* Phase 4: Notifications Display */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+          {notifications.map((notification) => (
+            <FreelanceSuccessMessage
+              key={notification.id}
+              title={notification.title}
+              message={notification.message}
+              onDismiss={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+              autoClose={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Phase 4: Error Messages */}
+      {errorMessage && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <FreelanceErrorMessage
+            message={errorMessage}
+            onDismiss={() => setErrorMessage(null)}
+          />
+        </div>
+      )}
+
+      {/* Phase 4: Success Messages */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <FreelanceSuccessMessage
+            message={successMessage}
+            autoClose={true}
+            onDismiss={() => setShowSuccessMessage(false)}
+          />
+        </div>
+      )}
+
       {/* Review Modal */}
       {showReviewModal && selectedProject && (
         <ReviewForm
@@ -919,6 +956,7 @@ export const FreelanceDashboard: React.FC = () => {
         />
       )}
     </div>
+    </FreelanceErrorBoundary>
   );
 };
 
