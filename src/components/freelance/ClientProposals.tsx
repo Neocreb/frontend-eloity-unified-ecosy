@@ -179,8 +179,55 @@ export const ClientProposals: React.FC = () => {
     );
   };
 
-  const updateProposalStatus = (proposalId: string, newStatus: ClientProposal["status"]) => {
-    setProposals(prev => prev.map(p => 
+  const updateProposalStatus = async (proposalId: string, newStatus: ClientProposal["status"]) => {
+    const proposal = proposals.find(p => p.id === proposalId);
+    if (!proposal) return;
+
+    // If hiring (accepting proposal), integrate rewards and notifications
+    if (newStatus === "hired" && user) {
+      setProcessingProposal(proposalId);
+      try {
+        // Award rewards to freelancer for proposal acceptance
+        await FreelanceRewardsIntegrationService.rewardProposalAccepted(
+          proposal.freelancer.name, // Using name as placeholder for freelancer ID
+          proposal.jobId,
+          proposal.budgetProposed
+        );
+
+        // Send notification to freelancer
+        await FreelanceNotificationsService.notifyProposalAccepted(
+          proposal.freelancer.name, // Using name as placeholder
+          proposal.jobTitle,
+          proposal.jobId
+        );
+
+        // Reject other proposals for this job
+        const otherProposalsForJob = proposals.filter(p =>
+          p.jobId === proposal.jobId && p.id !== proposalId && p.status === "new"
+        );
+
+        for (const otherProposal of otherProposalsForJob) {
+          try {
+            await FreelanceNotificationsService.notifyProposalRejected(
+              otherProposal.freelancer.name, // Using name as placeholder
+              proposal.jobTitle,
+              otherProposal.id
+            );
+          } catch (error) {
+            console.error("Error notifying rejection:", error);
+          }
+        }
+
+        toast.success("Proposal accepted! Freelancer has been notified.");
+      } catch (error) {
+        console.error("Error processing proposal acceptance:", error);
+        toast.error(`Proposal accepted but service error: ${(error as Error).message}`);
+      } finally {
+        setProcessingProposal(null);
+      }
+    }
+
+    setProposals(prev => prev.map(p =>
       p.id === proposalId ? { ...p, status: newStatus } : p
     ));
   };
