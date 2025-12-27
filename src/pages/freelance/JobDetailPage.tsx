@@ -8,6 +8,9 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import JobDetails from "@/components/freelance/JobDetails";
 import { JobPosting } from "@/types/freelance";
 import { useFreelance } from "@/hooks/use-freelance";
+// Phase 4 Integrations
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
+import { FreelanceErrorBoundary } from "@/components/freelance/FreelanceErrorBoundary";
 
 export const JobDetailPage: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
