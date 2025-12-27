@@ -36,6 +36,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
 
 interface WorkSubmission {
   id: string;
