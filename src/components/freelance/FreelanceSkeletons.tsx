@@ -1,314 +1,249 @@
-import React from "react";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import React from 'react';
 
+const SkeletonPulse = () => (
+  <div className="animate-pulse" />
+);
+
+/**
+ * Skeleton loading components for freelance platform
+ */
 export const FreelanceSkeletons = {
-  // Job card skeleton
+  /**
+   * Job card skeleton
+   */
   JobCardSkeleton: () => (
-    <Card>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <Skeleton className="h-6 w-3/4" />
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-3 w-1/3" />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-16" />
-            <Skeleton className="h-16" />
-          </div>
-          <Skeleton className="h-2" />
-        </div>
-      </CardContent>
-    </Card>
-  ),
-
-  // Multiple job cards skeleton
-  JobListSkeleton: ({ count = 3 }: { count?: number }) => (
-    <div className="space-y-4">
-      {Array.from({ length: count }).map((_, i) => (
-        <FreelanceSkeletons.JobCardSkeleton key={i} />
-      ))}
-    </div>
-  ),
-
-  // Freelancer profile skeleton
-  FreelancerProfileSkeleton: () => (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-start gap-4 mb-4">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <div className="space-y-2 flex-1">
-            <Skeleton className="h-5 w-1/2" />
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-3 w-1/4" />
-          </div>
-        </div>
-        <div className="space-y-3">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-5/6" />
-          <div className="flex gap-2">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-16" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  ),
-
-  // Multiple freelancer profiles skeleton
-  FreelancerListSkeleton: ({ count = 3 }: { count?: number }) => (
-    <div className="space-y-4">
-      {Array.from({ length: count }).map((_, i) => (
-        <FreelanceSkeletons.FreelancerProfileSkeleton key={i} />
-      ))}
-    </div>
-  ),
-
-  // Project card skeleton
-  ProjectCardSkeleton: () => (
-    <Card>
-      <CardContent className="p-6">
-        <div className="space-y-4">
-          <div className="flex justify-between items-start">
-            <Skeleton className="h-6 w-1/2" />
-            <Skeleton className="h-6 w-20" />
-          </div>
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-4 w-1/3" />
-              <Skeleton className="h-3 w-1/4" />
-            </div>
-          </div>
-          <Skeleton className="h-2" />
-          <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-12" />
-            <Skeleton className="h-12" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  ),
-
-  // Multiple project cards skeleton
-  ProjectListSkeleton: ({ count = 3 }: { count?: number }) => (
-    <div className="space-y-4">
-      {Array.from({ length: count }).map((_, i) => (
-        <FreelanceSkeletons.ProjectCardSkeleton key={i} />
-      ))}
-    </div>
-  ),
-
-  // Proposal skeleton
-  ProposalSkeleton: () => (
-    <Card>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-1/2" />
-            <Skeleton className="h-6 w-16" />
-          </div>
-          <Skeleton className="h-4 w-3/4" />
-          <div className="flex gap-4">
-            <Skeleton className="h-4 w-1/4" />
-            <Skeleton className="h-4 w-1/4" />
-          </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-9 w-20" />
-            <Skeleton className="h-9 w-20" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  ),
-
-  // Multiple proposals skeleton
-  ProposalListSkeleton: ({ count = 3 }: { count?: number }) => (
-    <div className="space-y-3">
-      {Array.from({ length: count }).map((_, i) => (
-        <FreelanceSkeletons.ProposalSkeleton key={i} />
-      ))}
-    </div>
-  ),
-
-  // Review skeleton
-  ReviewSkeleton: () => (
-    <Card>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          <div className="flex items-start justify-between">
-            <div className="space-y-2 flex-1">
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-3 w-1/3" />
-            </div>
-            <div className="flex gap-1">
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Skeleton key={i} className="h-4 w-4 rounded-full" />
-              ))}
-            </div>
-          </div>
-          <Skeleton className="h-16 w-full" />
-          <Skeleton className="h-3 w-1/4" />
-        </div>
-      </CardContent>
-    </Card>
-  ),
-
-  // Multiple reviews skeleton
-  ReviewListSkeleton: ({ count = 3 }: { count?: number }) => (
-    <div className="space-y-4">
-      {Array.from({ length: count }).map((_, i) => (
-        <FreelanceSkeletons.ReviewSkeleton key={i} />
-      ))}
-    </div>
-  ),
-
-  // Dashboard stats skeleton
-  StatsSkeleton: () => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <Card key={i}>
-          <CardContent className="p-6">
-            <div className="space-y-4">
-              <Skeleton className="h-4 w-1/2" />
-              <Skeleton className="h-8 w-1/3" />
-              <Skeleton className="h-3 w-1/2" />
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  ),
-
-  // Message skeleton
-  MessageSkeleton: () => (
-    <div className="flex gap-3 mb-4">
-      <Skeleton className="h-10 w-10 rounded-full" />
-      <div className="space-y-2 flex-1">
-        <Skeleton className="h-4 w-1/4" />
-        <Skeleton className="h-12 w-full" />
+    <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 space-y-3">
+      <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4" />
+      <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full" />
+      <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-5/6" />
+      <div className="flex gap-2 pt-2">
+        <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-20" />
+        <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-20" />
+      </div>
+      <div className="pt-2 border-t border-neutral-200 dark:border-neutral-800">
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-2/3" />
       </div>
     </div>
   ),
 
-  // Message thread skeleton
-  MessageThreadSkeleton: ({ count = 5 }: { count?: number }) => (
-    <div className="space-y-4">
-      {Array.from({ length: count }).map((_, i) => (
-        <FreelanceSkeletons.MessageSkeleton key={i} />
-      ))}
-    </div>
-  ),
-
-  // Milestone skeleton
-  MilestoneSkeleton: () => (
-    <Card>
-      <CardContent className="p-4">
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Skeleton className="h-5 w-1/2" />
-            <Skeleton className="h-6 w-20" />
-          </div>
-          <Skeleton className="h-2 w-full" />
-          <div className="flex justify-between text-sm">
-            <Skeleton className="h-3 w-1/4" />
-            <Skeleton className="h-3 w-1/4" />
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  ),
-
-  // Multiple milestones skeleton
-  MilestoneListSkeleton: ({ count = 3 }: { count?: number }) => (
-    <div className="space-y-3">
-      {Array.from({ length: count }).map((_, i) => (
-        <FreelanceSkeletons.MilestoneSkeleton key={i} />
-      ))}
-    </div>
-  ),
-
-  // Timeline skeleton
-  TimelineSkeleton: () => (
-    <div className="space-y-4">
-      {Array.from({ length: 3 }).map((_, i) => (
-        <div key={i} className="flex gap-4">
-          <Skeleton className="h-3 w-3 rounded-full mt-2" />
-          <div className="space-y-2 flex-1">
-            <Skeleton className="h-4 w-1/2" />
-            <Skeleton className="h-3 w-2/3" />
-          </div>
-        </div>
-      ))}
-    </div>
-  ),
-
-  // Activity feed skeleton
-  ActivityFeedSkeleton: ({ count = 4 }: { count?: number }) => (
-    <div className="space-y-3">
-      {Array.from({ length: count }).map((_, i) => (
-        <Card key={i}>
-          <CardContent className="p-3">
-            <div className="flex gap-3">
-              <Skeleton className="h-8 w-8 rounded-full" />
-              <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-1/2" />
-                <Skeleton className="h-3 w-2/3" />
-                <Skeleton className="h-2 w-1/4" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      ))}
-    </div>
-  ),
-
-  // Payment history skeleton
-  PaymentHistorySkeleton: ({ count = 5 }: { count?: number }) => (
-    <div className="space-y-2">
-      {Array.from({ length: count }).map((_, i) => (
-        <div key={i} className="flex justify-between items-center p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <div className="space-y-2 flex-1">
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-3 w-1/4" />
-          </div>
-          <Skeleton className="h-5 w-20" />
-        </div>
-      ))}
-    </div>
-  ),
-
-  // Invoice skeleton
-  InvoiceSkeleton: () => (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-1/3" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Skeleton className="h-20" />
-        <Skeleton className="h-20" />
-        <Skeleton className="h-12" />
-      </CardContent>
-    </Card>
-  ),
-
-  // Dashboard layout skeleton
-  DashboardSkeleton: () => (
+  /**
+   * Job detail page skeleton
+   */
+  JobDetailSkeleton: () => (
     <div className="space-y-6">
-      <FreelanceSkeletons.StatsSkeleton />
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <FreelanceSkeletons.ProjectListSkeleton count={3} />
-        </div>
-        <div>
-          <FreelanceSkeletons.ActivityFeedSkeleton count={4} />
+      {/* Header */}
+      <div className="space-y-3">
+        <div className="h-8 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+      </div>
+
+      {/* Description */}
+      <div className="space-y-3">
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-2/3" />
+      </div>
+
+      {/* Budget and info */}
+      <div className="grid grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-2">
+            <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded" />
+            <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded" />
+          </div>
+        ))}
+      </div>
+
+      {/* Apply button */}
+      <div className="h-10 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3" />
+    </div>
+  ),
+
+  /**
+   * Freelancer profile skeleton
+   */
+  FreelancerProfileSkeleton: () => (
+    <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 space-y-4">
+      {/* Header */}
+      <div className="flex gap-3">
+        <div className="h-16 w-16 bg-neutral-200 dark:bg-neutral-700 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-2/3" />
         </div>
       </div>
+
+      {/* Rating and stats */}
+      <div className="flex gap-4 pt-2 border-t border-neutral-200 dark:border-neutral-800">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="space-y-1">
+            <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-12" />
+            <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded w-16" />
+          </div>
+        ))}
+      </div>
+
+      {/* Description */}
+      <div className="space-y-2 pt-2">
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-5/6" />
+      </div>
+
+      {/* Skills */}
+      <div className="flex gap-2 flex-wrap">
+        {[1, 2, 3, 4].map((i) => (
+          <div key={i} className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-20" />
+        ))}
+      </div>
+
+      {/* Button */}
+      <div className="h-10 bg-neutral-200 dark:bg-neutral-700 rounded w-full" />
+    </div>
+  ),
+
+  /**
+   * Project card skeleton
+   */
+  ProjectCardSkeleton: () => (
+    <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 space-y-4">
+      <div className="space-y-2">
+        <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-3/4" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+      </div>
+
+      {/* Progress bar */}
+      <div className="space-y-2">
+        <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-full w-full" />
+        <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded-full w-1/3" />
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-2 gap-2">
+        {[1, 2].map((i) => (
+          <div key={i} className="space-y-1">
+            <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+            <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
+
+  /**
+   * Proposal skeleton
+   */
+  ProposalSkeleton: () => (
+    <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 space-y-4">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div className="flex-1 space-y-2">
+          <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded w-2/3" />
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+        </div>
+        <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-16" />
+      </div>
+
+      {/* Freelancer info */}
+      <div className="flex gap-3 py-3 border-y border-neutral-200 dark:border-neutral-800">
+        <div className="h-12 w-12 bg-neutral-200 dark:bg-neutral-700 rounded-full" />
+        <div className="flex-1 space-y-2">
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+          <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3" />
+        </div>
+      </div>
+
+      {/* Cover letter */}
+      <div className="space-y-2">
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-5/6" />
+      </div>
+
+      {/* Budget and timeline */}
+      <div className="grid grid-cols-2 gap-4">
+        {[1, 2].map((i) => (
+          <div key={i} className="space-y-1">
+            <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+            <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded" />
+          </div>
+        ))}
+      </div>
+    </div>
+  ),
+
+  /**
+   * Review/rating skeleton
+   */
+  ReviewSkeleton: () => (
+    <div className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 space-y-3">
+      {/* Header */}
+      <div className="flex justify-between items-start">
+        <div className="flex gap-2 items-center">
+          <div className="h-10 w-10 bg-neutral-200 dark:bg-neutral-700 rounded-full" />
+          <div className="space-y-1">
+            <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-20" />
+            <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-16" />
+          </div>
+        </div>
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-12" />
+      </div>
+
+      {/* Stars */}
+      <div className="flex gap-1">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="h-4 w-4 bg-neutral-200 dark:bg-neutral-700 rounded" />
+        ))}
+      </div>
+
+      {/* Review text */}
+      <div className="space-y-2">
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-full" />
+        <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-5/6" />
+      </div>
+    </div>
+  ),
+
+  /**
+   * Earnings history skeleton
+   */
+  EarningsHistorySkeleton: () => (
+    <div className="space-y-3">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <div key={i} className="flex justify-between items-center p-3 bg-neutral-50 dark:bg-neutral-900 rounded">
+          <div className="flex-1 space-y-2">
+            <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+            <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-1/3" />
+          </div>
+          <div className="h-5 bg-neutral-200 dark:bg-neutral-700 rounded w-20" />
+        </div>
+      ))}
+    </div>
+  ),
+
+  /**
+   * Dashboard stats skeleton
+   */
+  DashboardStatsSkeleton: () => (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <div key={i} className="bg-neutral-50 dark:bg-neutral-900 rounded-lg p-4 space-y-2">
+          <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded w-2/3" />
+          <div className="h-6 bg-neutral-200 dark:bg-neutral-700 rounded w-1/2" />
+          <div className="h-3 bg-neutral-200 dark:bg-neutral-700 rounded w-2/3" />
+        </div>
+      ))}
+    </div>
+  ),
+
+  /**
+   * List skeleton - for multiple items
+   */
+  ListSkeleton: ({ count = 3 }: { count?: number }) => (
+    <div className="space-y-3">
+      {Array(count)
+        .fill(null)
+        .map((_, i) => (
+          <div key={i} className="h-16 bg-neutral-200 dark:bg-neutral-700 rounded" />
+        ))}
     </div>
   ),
 };
