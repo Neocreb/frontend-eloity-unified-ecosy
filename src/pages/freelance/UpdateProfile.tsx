@@ -38,6 +38,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+// Phase 4 Integrations
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceErrorBoundary } from "@/components/freelance/FreelanceErrorBoundary";
 
 interface FreelancerProfile {
   id: string;
