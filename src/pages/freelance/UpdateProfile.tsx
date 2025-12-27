@@ -349,6 +349,7 @@ const UpdateProfile: React.FC = () => {
   };
 
   return (
+    <FreelanceErrorBoundary>
     <div className="container mx-auto px-4 py-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
@@ -919,6 +920,7 @@ const UpdateProfile: React.FC = () => {
         </div>
       </div>
     </div>
+    </FreelanceErrorBoundary>
   );
 };
 
