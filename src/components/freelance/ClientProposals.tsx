@@ -141,10 +141,12 @@ const mockProposals: ClientProposal[] = [
 ];
 
 export const ClientProposals: React.FC = () => {
+  const { user } = useAuth();
   const [proposals, setProposals] = useState<ClientProposal[]>(mockProposals);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedProposal, setSelectedProposal] = useState<ClientProposal | null>(null);
+  const [processingProposal, setProcessingProposal] = useState<string | null>(null);
 
   const getStatusColor = (status: ClientProposal["status"]) => {
     switch (status) {
