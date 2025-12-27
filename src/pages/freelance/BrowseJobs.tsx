@@ -44,6 +44,9 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useFreelance } from "@/hooks/use-freelance";
 import { toast } from "sonner";
+// Phase 4 Integrations
+import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
 
 interface Job {
   id: string;
@@ -525,20 +528,9 @@ const BrowseJobs: React.FC = () => {
             <JobCard key={job.id} job={job} />
           ))
         ) : (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">No jobs found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your search terms or filters to find more opportunities
-                </p>
-                <Button variant="outline" onClick={() => setSearchTerm("")}>
-                  Clear Search
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <FreelanceEmptyStates.EmptyJobs
+            onPostJob={() => navigate("/app/freelance/post-job")}
+          />
         )}
       </div>
 

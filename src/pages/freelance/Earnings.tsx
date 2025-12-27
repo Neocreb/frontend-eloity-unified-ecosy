@@ -33,9 +33,11 @@ import {
   Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 // Phase 4 Integrations
 import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
-import { FreelanceErrorBoundary, FreelanceErrorMessage } from "@/components/freelance/FreelanceErrorBoundary";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
+import { FreelanceErrorBoundary, FreelanceErrorMessage, FreelanceSuccessMessage } from "@/components/freelance/FreelanceErrorBoundary";
 import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
 import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
 
@@ -78,6 +80,9 @@ const Earnings: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("all");
   const [viewMode, setViewMode] = useState<"overview" | "transactions" | "analytics">("overview");
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [withdrawalAmount, setWithdrawalAmount] = useState("");
+  const [withdrawalMethod, setWithdrawalMethod] = useState<"bank_transfer" | "paypal" | "crypto">("bank_transfer");
 
   const [earningsData, setEarningsData] = useState<EarningsData>({
     totalEarnings: 45750,
@@ -210,10 +215,75 @@ const Earnings: React.FC = () => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days === 0) return "Today";
     if (days === 1) return "Yesterday";
     return `${days} days ago`;
+  };
+
+  const handleWithdrawal = async () => {
+    if (!withdrawalAmount || !user?.id) {
+      toast.error("Please enter a valid withdrawal amount");
+      return;
+    }
+
+    const amount = parseFloat(withdrawalAmount);
+    if (amount <= 0 || amount > earningsData.availableBalance) {
+      toast.error(`Please enter an amount between $0 and $${earningsData.availableBalance}`);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Process withdrawal via wallet service
+      const result = await FreelanceWalletIntegrationService.processWithdrawal(
+        user.id,
+        amount,
+        withdrawalMethod
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to process withdrawal");
+      }
+
+      // Notify freelancer of withdrawal request
+      await FreelanceNotificationsService.notifyWithdrawalApproved(
+        user.id,
+        amount,
+        withdrawalMethod
+      );
+
+      // Update local state
+      setEarningsData(prev => ({
+        ...prev,
+        availableBalance: prev.availableBalance - amount,
+        totalWithdrawn: prev.totalWithdrawn + amount,
+      }));
+
+      // Add transaction to list
+      const newTransaction: Transaction = {
+        id: `txn_${Date.now()}`,
+        type: "withdrawal",
+        amount: -amount,
+        status: "pending",
+        description: `Withdrawal to ${withdrawalMethod.replace('_', ' ')}`,
+        date: new Date(),
+        paymentMethod: withdrawalMethod.replace('_', ' '),
+        transactionFee: amount * 0.01, // 1% fee
+      };
+
+      setTransactions(prev => [newTransaction, ...prev]);
+
+      toast.success(`Withdrawal of $${amount} requested successfully!`);
+      setShowWithdrawalModal(false);
+      setWithdrawalAmount("");
+      setWithdrawalMethod("bank_transfer");
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+      toast.error(`Failed to process withdrawal: ${(error as Error).message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const StatCard: React.FC<{
@@ -300,6 +370,7 @@ const Earnings: React.FC = () => {
   );
 
   return (
+    <FreelanceErrorBoundary>
     <div className="container mx-auto px-4 py-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
@@ -320,7 +391,7 @@ const Earnings: React.FC = () => {
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button>
+          <Button onClick={() => setShowWithdrawalModal(true)}>
             <Wallet className="w-4 h-4 mr-2" />
             Withdraw
           </Button>
@@ -684,7 +755,118 @@ const Earnings: React.FC = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Withdrawal Modal */}
+      {showWithdrawalModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle>Request Withdrawal</CardTitle>
+              <p className="text-muted-foreground text-sm mt-1">
+                Withdraw your available balance to your preferred payment method
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Available Balance Info */}
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  ${earningsData.availableBalance.toLocaleString()}
+                </p>
+              </div>
+
+              {/* Withdrawal Amount */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Withdrawal Amount</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={withdrawalAmount}
+                    onChange={(e) => setWithdrawalAmount(e.target.value)}
+                    max={earningsData.availableBalance}
+                    min="0"
+                    step="0.01"
+                    className="w-full pl-7 pr-4 py-2 border rounded-md"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Max: ${earningsData.availableBalance.toLocaleString()}
+                </p>
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Payment Method</label>
+                <select
+                  value={withdrawalMethod}
+                  onChange={(e) => setWithdrawalMethod(e.target.value as any)}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="crypto">Cryptocurrency</option>
+                </select>
+              </div>
+
+              {/* Fee Info */}
+              {withdrawalAmount && (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-muted-foreground">Withdrawal Amount</span>
+                    <span className="font-medium">${parseFloat(withdrawalAmount || "0").toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-muted-foreground">Processing Fee (1%)</span>
+                    <span className="text-red-600">-${(parseFloat(withdrawalAmount || "0") * 0.01).toFixed(2)}</span>
+                  </div>
+                  <hr className="my-2" />
+                  <div className="flex justify-between">
+                    <span className="font-medium">You'll receive</span>
+                    <span className="font-bold text-green-600">
+                      ${(parseFloat(withdrawalAmount || "0") * 0.99).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Terms */}
+              <div className="text-xs text-muted-foreground">
+                <p>💡 Processing times:</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Bank Transfer: 3-5 business days</li>
+                  <li>PayPal: 1-2 business days</li>
+                  <li>Cryptocurrency: Instant</li>
+                </ul>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2 border-t">
+                <Button
+                  className="flex-1"
+                  onClick={handleWithdrawal}
+                  disabled={loading || !withdrawalAmount}
+                >
+                  {loading ? "Processing..." : "Request Withdrawal"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowWithdrawalModal(false);
+                    setWithdrawalAmount("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
+    </FreelanceErrorBoundary>
   );
 };
 

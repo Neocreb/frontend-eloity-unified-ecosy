@@ -8,6 +8,9 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import JobDetails from "@/components/freelance/JobDetails";
 import { JobPosting } from "@/types/freelance";
 import { useFreelance } from "@/hooks/use-freelance";
+// Phase 4 Integrations
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
+import { FreelanceErrorBoundary } from "@/components/freelance/FreelanceErrorBoundary";
 
 export const JobDetailPage: React.FC = () => {
   const { jobId } = useParams<{ jobId: string }>();
@@ -56,15 +59,8 @@ export const JobDetailPage: React.FC = () => {
               Back to Jobs
             </Button>
           </div>
-          
-          <Card>
-            <CardContent className="p-8">
-              <div className="flex items-center justify-center">
-                <Loader2 className="w-8 h-8 animate-spin" />
-                <span className="ml-2">Loading job details...</span>
-              </div>
-            </CardContent>
-          </Card>
+
+          <FreelanceSkeletons.JobDetailSkeleton />
         </div>
       </div>
     );
@@ -115,7 +111,9 @@ export const JobDetailPage: React.FC = () => {
           )}
         </div>
 
-        <JobDetails job={job} />
+        <FreelanceErrorBoundary>
+          <JobDetails job={job} />
+        </FreelanceErrorBoundary>
       </div>
     </div>
   );
