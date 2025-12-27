@@ -33,9 +33,11 @@ import {
   Receipt,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 // Phase 4 Integrations
 import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
-import { FreelanceErrorBoundary, FreelanceErrorMessage } from "@/components/freelance/FreelanceErrorBoundary";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
+import { FreelanceErrorBoundary, FreelanceErrorMessage, FreelanceSuccessMessage } from "@/components/freelance/FreelanceErrorBoundary";
 import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
 import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
 
