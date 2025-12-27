@@ -351,16 +351,17 @@ export const ClientProposals: React.FC = () => {
 
           {/* Quick Action Buttons */}
           <div className="flex gap-2 pt-2">
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               onClick={() => updateProposalStatus(proposal.id, "hired")}
               className="flex-1"
+              disabled={processingProposal === proposal.id}
             >
               <ThumbsUp className="w-4 h-4 mr-1" />
-              Hire
+              {processingProposal === proposal.id ? "Processing..." : "Hire"}
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => updateProposalStatus(proposal.id, "shortlisted")}
               className="flex-1"
@@ -368,8 +369,8 @@ export const ClientProposals: React.FC = () => {
               <Award className="w-4 h-4 mr-1" />
               Shortlist
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={() => setSelectedProposal(proposal)}
             >
