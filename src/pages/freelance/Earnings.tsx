@@ -390,7 +390,7 @@ const Earnings: React.FC = () => {
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
-          <Button>
+          <Button onClick={() => setShowWithdrawalModal(true)}>
             <Wallet className="w-4 h-4 mr-2" />
             Withdraw
           </Button>
