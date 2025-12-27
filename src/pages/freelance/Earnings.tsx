@@ -215,10 +215,75 @@ const Earnings: React.FC = () => {
     const now = new Date();
     const diff = now.getTime() - date.getTime();
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    
+
     if (days === 0) return "Today";
     if (days === 1) return "Yesterday";
     return `${days} days ago`;
+  };
+
+  const handleWithdrawal = async () => {
+    if (!withdrawalAmount || !user?.id) {
+      toast.error("Please enter a valid withdrawal amount");
+      return;
+    }
+
+    const amount = parseFloat(withdrawalAmount);
+    if (amount <= 0 || amount > earningsData.availableBalance) {
+      toast.error(`Please enter an amount between $0 and $${earningsData.availableBalance}`);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Process withdrawal via wallet service
+      const result = await FreelanceWalletIntegrationService.processWithdrawal(
+        user.id,
+        amount,
+        withdrawalMethod
+      );
+
+      if (!result.success) {
+        throw new Error(result.error || "Failed to process withdrawal");
+      }
+
+      // Notify freelancer of withdrawal request
+      await FreelanceNotificationsService.notifyWithdrawalApproved(
+        user.id,
+        amount,
+        withdrawalMethod
+      );
+
+      // Update local state
+      setEarningsData(prev => ({
+        ...prev,
+        availableBalance: prev.availableBalance - amount,
+        totalWithdrawn: prev.totalWithdrawn + amount,
+      }));
+
+      // Add transaction to list
+      const newTransaction: Transaction = {
+        id: `txn_${Date.now()}`,
+        type: "withdrawal",
+        amount: -amount,
+        status: "pending",
+        description: `Withdrawal to ${withdrawalMethod.replace('_', ' ')}`,
+        date: new Date(),
+        paymentMethod: withdrawalMethod.replace('_', ' '),
+        transactionFee: amount * 0.01, // 1% fee
+      };
+
+      setTransactions(prev => [newTransaction, ...prev]);
+
+      toast.success(`Withdrawal of $${amount} requested successfully!`);
+      setShowWithdrawalModal(false);
+      setWithdrawalAmount("");
+      setWithdrawalMethod("bank_transfer");
+    } catch (error) {
+      console.error("Withdrawal error:", error);
+      toast.error(`Failed to process withdrawal: ${(error as Error).message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const StatCard: React.FC<{
