@@ -754,6 +754,116 @@ const Earnings: React.FC = () => {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Withdrawal Modal */}
+      {showWithdrawalModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="max-w-md w-full">
+            <CardHeader>
+              <CardTitle>Request Withdrawal</CardTitle>
+              <p className="text-muted-foreground text-sm mt-1">
+                Withdraw your available balance to your preferred payment method
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Available Balance Info */}
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <p className="text-sm text-muted-foreground mb-1">Available Balance</p>
+                <p className="text-2xl font-bold text-blue-600">
+                  ${earningsData.availableBalance.toLocaleString()}
+                </p>
+              </div>
+
+              {/* Withdrawal Amount */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Withdrawal Amount</label>
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                  <input
+                    type="number"
+                    placeholder="0.00"
+                    value={withdrawalAmount}
+                    onChange={(e) => setWithdrawalAmount(e.target.value)}
+                    max={earningsData.availableBalance}
+                    min="0"
+                    step="0.01"
+                    className="w-full pl-7 pr-4 py-2 border rounded-md"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Max: ${earningsData.availableBalance.toLocaleString()}
+                </p>
+              </div>
+
+              {/* Payment Method */}
+              <div>
+                <label className="block text-sm font-medium mb-2">Payment Method</label>
+                <select
+                  value={withdrawalMethod}
+                  onChange={(e) => setWithdrawalMethod(e.target.value as any)}
+                  className="w-full px-3 py-2 border rounded-md"
+                >
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="paypal">PayPal</option>
+                  <option value="crypto">Cryptocurrency</option>
+                </select>
+              </div>
+
+              {/* Fee Info */}
+              {withdrawalAmount && (
+                <div className="p-3 bg-gray-50 rounded-lg text-sm">
+                  <div className="flex justify-between mb-2">
+                    <span className="text-muted-foreground">Withdrawal Amount</span>
+                    <span className="font-medium">${parseFloat(withdrawalAmount || "0").toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between mb-2">
+                    <span className="text-muted-foreground">Processing Fee (1%)</span>
+                    <span className="text-red-600">-${(parseFloat(withdrawalAmount || "0") * 0.01).toFixed(2)}</span>
+                  </div>
+                  <hr className="my-2" />
+                  <div className="flex justify-between">
+                    <span className="font-medium">You'll receive</span>
+                    <span className="font-bold text-green-600">
+                      ${(parseFloat(withdrawalAmount || "0") * 0.99).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* Terms */}
+              <div className="text-xs text-muted-foreground">
+                <p>💡 Processing times:</p>
+                <ul className="list-disc list-inside mt-1 space-y-1">
+                  <li>Bank Transfer: 3-5 business days</li>
+                  <li>PayPal: 1-2 business days</li>
+                  <li>Cryptocurrency: Instant</li>
+                </ul>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2 border-t">
+                <Button
+                  className="flex-1"
+                  onClick={handleWithdrawal}
+                  disabled={loading || !withdrawalAmount}
+                >
+                  {loading ? "Processing..." : "Request Withdrawal"}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setShowWithdrawalModal(false);
+                    setWithdrawalAmount("");
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };
