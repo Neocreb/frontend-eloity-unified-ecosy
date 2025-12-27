@@ -274,6 +274,37 @@ export const ClientDashboard: React.FC = () => {
     loadData();
   }, [user, searchFreelancers, getClientProposals]);
 
+  // Phase 4: Real-time notifications subscription
+  useEffect(() => {
+    if (!user?.id) return;
+
+    try {
+      const subscription = FreelanceNotificationsService.subscribeToNotifications(
+        user.id,
+        (notification) => {
+          // Add notification to list
+          setNotifications(prev => [notification, ...prev].slice(0, 20));
+
+          // Auto-dismiss notification after 5 seconds
+          setTimeout(() => {
+            setNotifications(prev => prev.filter(n => n.id !== notification.id));
+          }, 5000);
+        },
+        (error) => {
+          console.error("Notification subscription error:", error);
+          setErrorMessage("Failed to connect to notifications");
+        }
+      );
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription?.unsubscribe?.();
+      };
+    } catch (error) {
+      console.error("Error setting up notifications:", error);
+    }
+  }, [user?.id]);
+
   const ClientProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
       <CardContent className="p-6">
