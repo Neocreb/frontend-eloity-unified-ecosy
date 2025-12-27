@@ -80,6 +80,9 @@ const Earnings: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [selectedPeriod, setSelectedPeriod] = useState("all");
   const [viewMode, setViewMode] = useState<"overview" | "transactions" | "analytics">("overview");
+  const [showWithdrawalModal, setShowWithdrawalModal] = useState(false);
+  const [withdrawalAmount, setWithdrawalAmount] = useState("");
+  const [withdrawalMethod, setWithdrawalMethod] = useState<"bank_transfer" | "paypal" | "crypto">("bank_transfer");
 
   const [earningsData, setEarningsData] = useState<EarningsData>({
     totalEarnings: 45750,
