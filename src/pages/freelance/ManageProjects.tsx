@@ -487,10 +487,54 @@ const ManageProjects: React.FC = () => {
   const handleMilestoneAction = async (projectId: string, milestoneId: string, action: string) => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setProjects(prev => prev.map(project => 
-        project.id === projectId 
+      const project = projects.find(p => p.id === projectId);
+      if (!project) throw new Error("Project not found");
+
+      const milestone = project.milestones.find(m => m.id === milestoneId);
+      if (!milestone) throw new Error("Milestone not found");
+
+      // If approving a milestone, integrate wallet and rewards services
+      if (action === "approved") {
+        try {
+          // Release milestone payment via wallet service
+          const walletResult = await FreelanceWalletIntegrationService.releaseMilestonePayment(
+            project.id,
+            milestone.id,
+            project.freelancer.id,
+            user?.id || "",
+            milestone.amount,
+            milestone.title
+          );
+
+          if (!walletResult.success) {
+            throw new Error(walletResult.error || "Failed to release payment");
+          }
+
+          // Award rewards for milestone completion
+          await FreelanceRewardsIntegrationService.rewardMilestoneCompletion(
+            project.freelancer.id,
+            project.id,
+            1, // milestone number (simplified)
+            milestone.amount
+          );
+
+          // Send real-time notification to freelancer
+          await FreelanceNotificationsService.notifyMilestoneApproved(
+            project.freelancer.id,
+            project.title,
+            milestone.title,
+            project.id,
+            milestone.amount
+          );
+        } catch (serviceError) {
+          console.error("Service integration error:", serviceError);
+          toast.error(`Approval processed but service error: ${(serviceError as Error).message}`);
+          // Continue with status update even if services fail
+        }
+      }
+
+      setProjects(prev => prev.map(project =>
+        project.id === projectId
           ? {
               ...project,
               milestones: project.milestones.map(milestone =>
@@ -501,10 +545,11 @@ const ManageProjects: React.FC = () => {
             }
           : project
       ));
-      
+
       toast.success(`Milestone ${action} successfully`);
     } catch (error) {
-      toast.error(`Failed to ${action} milestone`);
+      console.error("Error handling milestone action:", error);
+      toast.error(`Failed to ${action} milestone: ${(error as Error).message}`);
     } finally {
       setLoading(false);
     }
