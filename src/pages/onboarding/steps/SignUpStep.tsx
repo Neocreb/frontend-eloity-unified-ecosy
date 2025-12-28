@@ -359,7 +359,7 @@ const SignUpStep: React.FC = () => {
         </p>
       </div>
 
-      {/* Submit Button - For standalone testing */}
+      {/* Submit Button - Creates account and proceeds to profile */}
       <Button
         type="submit"
         disabled={!isFormValid || isLoading}
@@ -367,11 +367,11 @@ const SignUpStep: React.FC = () => {
       >
         {isLoading ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-            Processing...
+            <Loader className="h-4 w-4 animate-spin mr-2" />
+            Creating Account...
           </>
         ) : (
-          'Continue to Profile'
+          'Create Account & Continue'
         )}
       </Button>
     </form>
