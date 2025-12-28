@@ -514,8 +514,15 @@ const AppRoutes = () => {
       {/* Join route - for referral links */}
       <Route path="/join" element={<Join />} />
 
-      {/* Onboarding route - new user registration flow */}
-      <Route path="/onboarding" element={<OnboardingPage />} />
+      {/* Onboarding route - new user registration flow with route protection */}
+      <Route
+        path="/onboarding"
+        element={
+          <OnboardingRouteGuard>
+            <OnboardingPage />
+          </OnboardingRouteGuard>
+        }
+      />
 
       {/* Public payment link route - accessible to everyone without authentication */}
       <Route path="/pay/:code" element={<PaymentLinkView />} />
