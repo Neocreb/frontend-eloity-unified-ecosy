@@ -14,6 +14,7 @@ import {
   Check,
   ArrowRight,
   Heart,
+  AlertCircle,
 } from 'lucide-react';
 
 const CompletionStep: React.FC = () => {
