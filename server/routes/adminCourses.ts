@@ -22,6 +22,11 @@ try {
  * Middleware to check if user is admin
  */
 async function isAdmin(userId: string): Promise<boolean> {
+  if (!supabase) {
+    console.warn('Supabase client not available for admin check');
+    return false;
+  }
+
   try {
     const { data, error } = await supabase
       .from('user_roles')
@@ -32,6 +37,7 @@ async function isAdmin(userId: string): Promise<boolean> {
 
     return !error && data?.role === 'admin';
   } catch (error) {
+    console.error('Error checking admin status:', error);
     return false;
   }
 }
