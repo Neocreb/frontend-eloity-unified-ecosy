@@ -358,19 +358,55 @@ export class FreelanceDisputeService {
     projectId: string,
     reason: string
   ): Promise<void> {
-    // Implementation would integrate with FreelanceNotificationService
-    console.log(`Notify user ${userId} that dispute was filed on project ${projectId}: ${reason}`);
+    try {
+      await FreelanceNotificationService.createNotification({
+        userId,
+        type: 'dispute_filed',
+        title: 'Dispute Filed',
+        message: `A dispute has been filed on your project due to: ${reason}`,
+        projectId,
+        actionUrl: `/app/freelance/disputes`,
+      });
+    } catch (error) {
+      console.error('Error notifying dispute filed:', error);
+    }
   }
 
   private static async notifyArbiterAssigned(
     disputeId: string,
     arbiterId: string
   ): Promise<void> {
-    console.log(`Notify arbiter ${arbiterId} assigned to dispute ${disputeId}`);
+    try {
+      await FreelanceNotificationService.createNotification({
+        userId: arbiterId,
+        type: 'dispute_assigned',
+        title: 'Dispute Assignment',
+        message: 'You have been assigned as an arbiter for a dispute',
+        actionUrl: `/app/freelance/disputes/${disputeId}`,
+      });
+    } catch (error) {
+      console.error('Error notifying arbiter assigned:', error);
+    }
   }
 
   private static async notifyDisputeResolved(dispute: FreelanceDispute): Promise<void> {
-    console.log(`Notify both parties that dispute ${dispute.id} has been resolved`);
+    try {
+      // Notify both parties
+      const parties = [dispute.filed_by_id, dispute.filed_against_id];
+
+      for (const partyId of parties) {
+        await FreelanceNotificationService.createNotification({
+          userId: partyId,
+          type: 'dispute_resolved',
+          title: 'Dispute Resolved',
+          message: `A dispute has been resolved. Final amount: $${dispute.final_amount || 0}`,
+          projectId: dispute.project_id,
+          actionUrl: `/app/freelance/disputes/${dispute.id}`,
+        });
+      }
+    } catch (error) {
+      console.error('Error notifying dispute resolved:', error);
+    }
   }
 
   /**
