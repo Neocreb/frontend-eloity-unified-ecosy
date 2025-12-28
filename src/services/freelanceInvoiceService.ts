@@ -498,19 +498,20 @@ export class FreelanceInvoiceService {
   // INVOICE GENERATION AND EXPORT
   // ============================================================================
 
-  static async generateInvoicePDF(invoiceId: string): Promise<Blob | null> {
+  static async generateInvoicePDF(invoiceId: string): Promise<string | null> {
     try {
       const invoice = await this.getInvoice(invoiceId);
       if (!invoice) return null;
 
-      // This would integrate with a PDF generation service
-      // For now, return a placeholder
+      // Fetch HTML representation from server
       const response = await fetch(`/api/invoices/${invoiceId}/pdf`, {
         method: "GET",
       });
 
       if (response.ok) {
-        return await response.blob();
+        // Get the HTML content
+        const html = await response.text();
+        return html;
       }
       return null;
     } catch (error) {
@@ -521,19 +522,38 @@ export class FreelanceInvoiceService {
 
   static async downloadInvoice(invoiceId: string): Promise<void> {
     try {
-      const pdf = await this.generateInvoicePDF(invoiceId);
-      if (!pdf) throw new Error("Failed to generate PDF");
+      const html = await this.generateInvoicePDF(invoiceId);
+      if (!html) throw new Error("Failed to generate invoice");
 
-      const url = window.URL.createObjectURL(pdf);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `invoice-${invoiceId}.pdf`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      // Create a new window with the invoice HTML
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) throw new Error("Unable to open print window");
+
+      printWindow.document.write(html);
+      printWindow.document.close();
+
+      // Trigger print dialog which user can save as PDF
+      printWindow.print();
     } catch (error) {
       console.error("Error downloading invoice:", error);
+      throw error;
+    }
+  }
+
+  static async getInvoiceAsHTML(invoiceId: string): Promise<any> {
+    try {
+      const response = await fetch(`/api/invoices/${invoiceId}/html`, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch invoice HTML");
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error fetching invoice HTML:", error);
+      return null;
     }
   }
 
