@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { AlertCircle, Check, Eye, EyeOff, Mail, Lock, User, Loader } from 'lucide-react';
 
 const SignUpStep: React.FC = () => {
-  const { data, updateData, nextStep, isLoading } = useOnboarding();
+  const { data, updateData, createAccount, isLoading } = useOnboarding();
   
   const [email, setEmail] = useState(data.email || '');
   const [password, setPassword] = useState(data.password || '');
