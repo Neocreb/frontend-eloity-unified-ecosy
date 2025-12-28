@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 
-export type OnboardingStep = 
-  | 'signup' 
-  | 'profile' 
-  | 'interests' 
-  | 'kyc' 
-  | 'confirmation' 
+export type OnboardingStep =
+  | 'signup'
+  | 'profile'
+  | 'interests'
+  | 'kyc'
+  | 'confirmation'
   | 'complete';
 
 export interface OnboardingData {
@@ -61,6 +62,7 @@ interface OnboardingContextType {
   // Data methods
   updateData: (updates: Partial<OnboardingData>) => void;
   saveProgress: () => Promise<void>;
+  createAccount: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
 
   // Getters
@@ -83,6 +85,7 @@ const STEP_REQUIREMENTS: Record<OnboardingStep, (keyof OnboardingData)[]> = {
 };
 
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { signup } = useAuth();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('signup');
   const [data, setData] = useState<OnboardingData>({
     selectedInterests: [],
@@ -183,6 +186,44 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
   }, [currentStep, data]);
 
+  const createAccount = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Validate signup data
+      if (!data.email || !data.password || !data.name) {
+        throw new Error('Email, password, and name are required');
+      }
+
+      if (data.password.length < 8) {
+        throw new Error('Password must be at least 8 characters');
+      }
+
+      // Call AuthContext.signup to create the actual Supabase account
+      const signupResult = await signup(
+        data.email,
+        data.password,
+        data.name,
+        data.referralCode
+      );
+
+      if (signupResult.error) {
+        const errorMessage = signupResult.error.message || 'Failed to create account';
+        throw new Error(errorMessage);
+      }
+
+      // Proceed to next step after successful account creation
+      nextStep();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to create account';
+      setError(message);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [data, signup, nextStep]);
+
   const completeOnboarding = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -202,10 +243,20 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         throw new Error('Please accept the terms and conditions');
       }
 
-      // TODO: Send to backend to complete registration
-      // const result = await completeOnboardingAPI(data);
+      // Save profile data to localStorage temporarily in case of network issues
+      localStorage.setItem('onboarding_progress', JSON.stringify({
+        currentStep: 'confirmation',
+        data,
+        timestamp: new Date().toISOString(),
+      }));
 
-      // Clear localStorage on successful completion
+      // TODO: Send profile data to backend API to update user profile
+      // await updateUserProfile(data);
+
+      // Mark onboarding as completed in localStorage
+      localStorage.setItem('onboarding-completed', 'true');
+
+      // Clear progress from localStorage only after successful completion
       localStorage.removeItem('onboarding_progress');
 
       setCurrentStep('complete');
@@ -230,6 +281,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     skipKYC,
     updateData,
     saveProgress,
+    createAccount,
     completeOnboarding,
     isStepCompleted,
     canProceedToNextStep,
