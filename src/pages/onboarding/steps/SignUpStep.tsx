@@ -96,7 +96,7 @@ const SignUpStep: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
 
@@ -137,16 +137,23 @@ const SignUpStep: React.FC = () => {
       return;
     }
 
-    // Update context with validated data
-    updateData({
-      email: email.toLowerCase().trim(),
-      password,
-      name: name.trim(),
-      referralCode: referralCode.trim() || undefined,
-    });
+    try {
+      // Update context with validated data
+      updateData({
+        email: email.toLowerCase().trim(),
+        password,
+        name: name.trim(),
+        referralCode: referralCode.trim() || undefined,
+      });
 
-    // Proceed to next step
-    nextStep();
+      // Create account - this will call AuthContext.signup and proceed to next step
+      await createAccount();
+    } catch (error) {
+      // Error is already set in OnboardingContext
+      // Display it from context or use local state
+      const errorMsg = error instanceof Error ? error.message : 'Failed to create account. Please try again.';
+      setLocalError(errorMsg);
+    }
   };
 
   const isFormValid = 
