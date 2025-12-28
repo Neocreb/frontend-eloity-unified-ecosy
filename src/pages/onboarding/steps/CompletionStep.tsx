@@ -84,6 +84,64 @@ const CompletionStep: React.FC = () => {
     },
   ];
 
+  // Show loading state while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-4 border-purple-500 border-t-blue-500 mx-auto mb-4"></div>
+          <p className="text-slate-300">Finalizing your account...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if authentication failed
+  if (showAuthError || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-0 left-0 w-96 h-96 bg-red-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
+          <div className="absolute top-0 right-0 w-96 h-96 bg-orange-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse animation-delay-2000"></div>
+        </div>
+
+        <div className="w-full max-w-2xl relative z-10">
+          <div className="text-center mb-8">
+            <div className="inline-block mb-6 p-6 rounded-full bg-red-500 bg-opacity-20 border-2 border-red-500">
+              <AlertCircle className="text-red-400" size={48} />
+            </div>
+            <h1 className="text-4xl font-bold text-white mb-3">Account Setup Error</h1>
+            <p className="text-red-300 mb-4">
+              We encountered an issue finalizing your account. Please try again or contact support.
+            </p>
+          </div>
+
+          <Card className="bg-slate-800 border-slate-700 p-6 mb-6">
+            <p className="text-slate-300 mb-4">
+              Your account may have been created successfully, but we're having trouble confirming it.
+              Please try logging in with your credentials.
+            </p>
+            <div className="flex flex-col md:flex-row gap-4">
+              <Button
+                onClick={() => navigate('/auth', { replace: true })}
+                className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3"
+              >
+                Try Logging In
+              </Button>
+              <Button
+                onClick={() => window.location.reload()}
+                variant="outline"
+                className="flex-1 border-slate-600 text-slate-300 hover:bg-slate-700"
+              >
+                Reload Page
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Animated background */}
@@ -103,7 +161,7 @@ const CompletionStep: React.FC = () => {
             Welcome to Eloity!
           </h1>
           <p className="text-xl text-purple-300 mb-2">
-            {data.name || 'Friend'}, you're all set to explore
+            {user?.name || 'Friend'}, your account is ready
           </p>
           <p className="text-slate-400 text-sm md:text-base">
             Your account has been successfully created and verified
