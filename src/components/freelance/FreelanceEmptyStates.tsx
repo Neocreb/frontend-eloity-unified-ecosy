@@ -1,17 +1,6 @@
-import React from "react";
-import {
-  Briefcase,
-  FileText,
-  Users,
-  DollarSign,
-  Star,
-  CheckCircle2,
-  AlertCircle,
-  Plus,
-  Search,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import React from 'react';
+import { Button } from '@/components/ui/button';
+import { FileX, Briefcase, MessageSquare, Star, TrendingUp, Search } from 'lucide-react';
 
 interface EmptyStateProps {
   title: string;
@@ -21,235 +10,189 @@ interface EmptyStateProps {
     label: string;
     onClick: () => void;
   };
-  secondaryAction?: {
-    label: string;
-    onClick: () => void;
-  };
 }
 
-const BaseEmptyState: React.FC<EmptyStateProps> = ({
+const EmptyStateContainer: React.FC<EmptyStateProps> = ({
   title,
   description,
   icon,
   action,
-  secondaryAction,
 }) => (
   <div className="flex flex-col items-center justify-center py-12 px-4">
-    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
-      {icon}
-    </div>
-    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+    <div className="mb-4 text-neutral-300">{icon}</div>
+    <h3 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 mb-2">
       {title}
     </h3>
-    <p className="text-gray-600 dark:text-gray-400 text-center mb-6 max-w-sm">
+    <p className="text-neutral-600 dark:text-neutral-400 text-sm mb-6 max-w-sm text-center">
       {description}
     </p>
-    <div className="flex gap-3">
-      {action && (
-        <Button onClick={action.onClick}>
-          <Plus className="w-4 h-4 mr-2" />
-          {action.label}
-        </Button>
-      )}
-      {secondaryAction && (
-        <Button variant="outline" onClick={secondaryAction.onClick}>
-          <Search className="w-4 h-4 mr-2" />
-          {secondaryAction.label}
-        </Button>
-      )}
-    </div>
+    {action && (
+      <Button onClick={action.onClick} className="gap-2">
+        {action.label}
+      </Button>
+    )}
   </div>
 );
 
-interface FreelanceEmptyStatesProps {
-  onCreateJob?: () => void;
-  onBrowseJobs?: () => void;
-  onFindFreelancers?: () => void;
-  onApplyJob?: () => void;
-}
+/**
+ * Empty states for freelance platform
+ */
+export const FreelanceEmptyStates = {
+  /**
+   * No jobs found/posted
+   */
+  EmptyJobs: ({ onPostJob }: { onPostJob?: () => void }) => (
+    <EmptyStateContainer
+      title="No Jobs Yet"
+      description="Start your freelancing journey by browsing available jobs or create your profile to get started."
+      icon={<Briefcase className="w-12 h-12" />}
+      action={
+        onPostJob
+          ? {
+              label: 'Browse Jobs',
+              onClick: onPostJob,
+            }
+          : undefined
+      }
+    />
+  ),
 
-export const FreelanceEmptyStates: React.FC<FreelanceEmptyStatesProps> = ({
-  onCreateJob,
-  onBrowseJobs,
-  onFindFreelancers,
-  onApplyJob,
-}) => {
-  const navigate = useNavigate();
+  /**
+   * No proposals submitted/received
+   */
+  EmptyProposals: ({ isFreelancer, onAction }: { isFreelancer: boolean; onAction?: () => void }) => (
+    <EmptyStateContainer
+      title={isFreelancer ? 'No Proposals Yet' : 'No Proposals Received'}
+      description={
+        isFreelancer
+          ? 'Start applying to jobs to see your proposals here.'
+          : 'Post a job to receive proposals from freelancers.'
+      }
+      icon={<FileX className="w-12 h-12" />}
+      action={
+        onAction
+          ? {
+              label: isFreelancer ? 'Browse Jobs' : 'Post a Job',
+              onClick: onAction,
+            }
+          : undefined
+      }
+    />
+  ),
 
-  return {
-    // Job-related empty states
-    EmptyJobState: () => (
-      <BaseEmptyState
-        title="No Jobs Available"
-        description="There are no active jobs matching your criteria right now. Check back soon or adjust your filters."
-        icon={<Briefcase className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Browse All Jobs",
-          onClick: onBrowseJobs || (() => navigate("/app/freelance/browse-jobs")),
-        }}
-      />
-    ),
+  /**
+   * No projects
+   */
+  EmptyProjects: ({ onAction }: { onAction?: () => void }) => (
+    <EmptyStateContainer
+      title="No Active Projects"
+      description="Your accepted projects will appear here. Start by submitting proposals or posting a job."
+      icon={<Briefcase className="w-12 h-12" />}
+      action={
+        onAction
+          ? {
+              label: 'Get Started',
+              onClick: onAction,
+            }
+          : undefined
+      }
+    />
+  ),
 
-    EmptyJobPostings: () => (
-      <BaseEmptyState
-        title="No Job Postings Yet"
-        description="You haven't posted any jobs yet. Create your first job posting to find talented freelancers."
-        icon={<Plus className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Post a Job",
-          onClick: onCreateJob || (() => navigate("/app/freelance/create-job")),
-        }}
-        secondaryAction={{
-          label: "Browse Freelancers",
-          onClick: onFindFreelancers || (() => navigate("/app/freelance/find-freelancers")),
-        }}
-      />
-    ),
+  /**
+   * No messages
+   */
+  EmptyMessages: ({ onAction }: { onAction?: () => void }) => (
+    <EmptyStateContainer
+      title="No Messages Yet"
+      description="Messages with clients or freelancers will appear here once you start a project."
+      icon={<MessageSquare className="w-12 h-12" />}
+      action={
+        onAction
+          ? {
+              label: 'Start Collaborating',
+              onClick: onAction,
+            }
+          : undefined
+      }
+    />
+  ),
 
-    // Project-related empty states
-    EmptyProjects: () => (
-      <BaseEmptyState
-        title="No Projects Yet"
-        description="You don't have any active projects. Start by browsing available jobs or posting a new one."
-        icon={<Briefcase className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Find a Project",
-          onClick: onApplyJob || (() => navigate("/app/freelance/browse-jobs")),
-        }}
-      />
-    ),
+  /**
+   * No reviews/ratings
+   */
+  EmptyReviews: ({ onAction }: { onAction?: () => void }) => (
+    <EmptyStateContainer
+      title="No Reviews Yet"
+      description="Complete projects and receive reviews from your clients to build your reputation."
+      icon={<Star className="w-12 h-12" />}
+      action={
+        onAction
+          ? {
+              label: 'Find Projects',
+              onClick: onAction,
+            }
+          : undefined
+      }
+    />
+  ),
 
-    EmptyActiveProjects: () => (
-      <BaseEmptyState
-        title="No Active Projects"
-        description="You don't have any active projects at the moment. Your completed projects will appear here."
-        icon={<CheckCircle2 className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Find a Project",
-          onClick: onBrowseJobs || (() => navigate("/app/freelance/browse-jobs")),
-        }}
-      />
-    ),
+  /**
+   * No earnings
+   */
+  EmptyEarnings: ({ onAction }: { onAction?: () => void }) => (
+    <EmptyStateContainer
+      title="No Earnings Yet"
+      description="Complete projects to start earning. Your payments will appear here once projects are completed."
+      icon={<TrendingUp className="w-12 h-12" />}
+      action={
+        onAction
+          ? {
+              label: 'Start Earning',
+              onClick: onAction,
+            }
+          : undefined
+      }
+    />
+  ),
 
-    // Proposal-related empty states
-    EmptyProposals: () => (
-      <BaseEmptyState
-        title="No Proposals Yet"
-        description="You haven't submitted any proposals yet. Browse available jobs and submit your first proposal."
-        icon={<FileText className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Browse Jobs",
-          onClick: onBrowseJobs || (() => navigate("/app/freelance/browse-jobs")),
-        }}
-      />
-    ),
+  /**
+   * No search results
+   */
+  EmptySearchResults: ({ query, onClear }: { query: string; onClear?: () => void }) => (
+    <EmptyStateContainer
+      title="No Results Found"
+      description={`We couldn't find any results for "${query}". Try adjusting your search terms.`}
+      icon={<Search className="w-12 h-12" />}
+      action={
+        onClear
+          ? {
+              label: 'Clear Search',
+              onClick: onClear,
+            }
+          : undefined
+      }
+    />
+  ),
 
-    EmptyJobProposals: () => (
-      <BaseEmptyState
-        title="No Proposals Received"
-        description="You haven't received any proposals for this job yet. Try adjusting your requirements or increase your budget."
-        icon={<FileText className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Edit Job Post",
-          onClick: () => navigate("/app/freelance"),
-        }}
-      />
-    ),
-
-    EmptyReceivedProposals: () => (
-      <BaseEmptyState
-        title="No Proposals Received"
-        description="You haven't received any proposals yet. Make sure your job posting is detailed and competitive."
-        icon={<FileText className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "View Active Jobs",
-          onClick: () => navigate("/app/freelance"),
-        }}
-      />
-    ),
-
-    // Freelancer-related empty states
-    EmptyFreelancers: () => (
-      <BaseEmptyState
-        title="No Freelancers Found"
-        description="No freelancers match your search criteria. Try adjusting your filters or search terms."
-        icon={<Users className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Clear Filters",
-          onClick: () => {
-            // This would typically clear filters in parent component
-          },
-        }}
-      />
-    ),
-
-    EmptyRecommendedFreelancers: () => (
-      <BaseEmptyState
-        title="No Recommended Freelancers"
-        description="We couldn't find recommended freelancers for this job. Browse all freelancers instead."
-        icon={<Star className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Browse All Freelancers",
-          onClick: onFindFreelancers || (() => navigate("/app/freelance/find-freelancers")),
-        }}
-      />
-    ),
-
-    // Review-related empty states
-    NoReviewsState: () => (
-      <BaseEmptyState
-        title="No Reviews Yet"
-        description="You don't have any reviews yet. Complete projects and ask clients to leave feedback."
-        icon={<Star className="w-8 h-8 text-gray-400" />}
-      />
-    ),
-
-    // Earnings-related empty states
-    NoEarningsState: () => (
-      <BaseEmptyState
-        title="No Earnings Yet"
-        description="You haven't earned any money yet. Complete projects and request payments to see your earnings."
-        icon={<DollarSign className="w-8 h-8 text-gray-400" />}
-        action={{
-          label: "Find a Project",
-          onClick: onBrowseJobs || (() => navigate("/app/freelance/browse-jobs")),
-        }}
-      />
-    ),
-
-    // Activity-related empty states
-    NoActivityState: () => (
-      <BaseEmptyState
-        title="No Recent Activity"
-        description="Your recent activity will appear here as you work on projects and interact with clients."
-        icon={<AlertCircle className="w-8 h-8 text-gray-400" />}
-      />
-    ),
-
-    // Messages-related empty states
-    NoMessagesState: () => (
-      <BaseEmptyState
-        title="No Messages"
-        description="You don't have any messages yet. Start collaborating with clients and freelancers."
-        icon={<FileText className="w-8 h-8 text-gray-400" />}
-      />
-    ),
-
-    // Search results empty states
-    EmptySearchResults: () => (
-      <BaseEmptyState
-        title="No Results Found"
-        description="Your search didn't return any results. Try using different keywords or filters."
-        icon={<Search className="w-8 h-8 text-gray-400" />}
-        secondaryAction={{
-          label: "Clear Search",
-          onClick: () => {
-            // This would typically clear search in parent component
-          },
-        }}
-      />
-    ),
-  };
+  /**
+   * No freelancers found
+   */
+  EmptyFreelancers: ({ onAction }: { onAction?: () => void }) => (
+    <EmptyStateContainer
+      title="No Freelancers Found"
+      description="Try adjusting your filters or search criteria to find the right freelancer for your project."
+      icon={<Search className="w-12 h-12" />}
+      action={
+        onAction
+          ? {
+              label: 'Adjust Filters',
+              onClick: onAction,
+            }
+          : undefined
+      }
+    />
+  ),
 };
 
 export default FreelanceEmptyStates;

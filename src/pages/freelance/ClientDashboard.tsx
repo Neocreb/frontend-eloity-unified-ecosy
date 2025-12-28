@@ -79,6 +79,13 @@ import ClientProposals from "@/components/freelance/ClientProposals";
 import { walletService, WalletBalance } from "@/services/walletService";
 import { FreelanceNotifications } from "@/components/freelance/FreelanceNotifications";
 import { cn } from "@/lib/utils";
+// Phase 4 Integrations
+import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
+import { FreelanceErrorBoundary, FreelanceErrorMessage, FreelanceSuccessMessage } from "@/components/freelance/FreelanceErrorBoundary";
+import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
 
 interface ClientStats {
   totalSpent: number;
@@ -146,6 +153,11 @@ export const ClientDashboard: React.FC = () => {
   const [hasSeenTour, setHasSeenTour] = useState(() => {
     return localStorage.getItem('client-tour-completed') === 'true';
   });
+  // Phase 4 State
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const { getProjects, loading } = useFreelance();
   const { getUserEscrows } = useEscrow();
@@ -261,6 +273,37 @@ export const ClientDashboard: React.FC = () => {
 
     loadData();
   }, [user, searchFreelancers, getClientProposals]);
+
+  // Phase 4: Real-time notifications subscription
+  useEffect(() => {
+    if (!user?.id) return;
+
+    try {
+      const subscription = FreelanceNotificationsService.subscribeToNotifications(
+        user.id,
+        (notification) => {
+          // Add notification to list
+          setNotifications(prev => [notification, ...prev].slice(0, 20));
+
+          // Auto-dismiss notification after 5 seconds
+          setTimeout(() => {
+            setNotifications(prev => prev.filter(n => n.id !== notification.id));
+          }, 5000);
+        },
+        (error) => {
+          console.error("Notification subscription error:", error);
+          setErrorMessage("Failed to connect to notifications");
+        }
+      );
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription?.unsubscribe?.();
+      };
+    } catch (error) {
+      console.error("Error setting up notifications:", error);
+    }
+  }, [user?.id]);
 
   const ClientProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -501,6 +544,7 @@ export const ClientDashboard: React.FC = () => {
 
   // Main dashboard view
   return (
+    <FreelanceErrorBoundary>
     <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
       <ClientHeader />
       
@@ -945,6 +989,42 @@ export const ClientDashboard: React.FC = () => {
         onComplete={handleTourComplete}
       />
 
+      {/* Phase 4: Notifications Display */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+          {notifications.map((notification) => (
+            <FreelanceSuccessMessage
+              key={notification.id}
+              title={notification.title}
+              message={notification.message}
+              onDismiss={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+              autoClose={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Phase 4: Error Messages */}
+      {errorMessage && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <FreelanceErrorMessage
+            message={errorMessage}
+            onDismiss={() => setErrorMessage(null)}
+          />
+        </div>
+      )}
+
+      {/* Phase 4: Success Messages */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <FreelanceSuccessMessage
+            message={successMessage}
+            autoClose={true}
+            onDismiss={() => setShowSuccessMessage(false)}
+          />
+        </div>
+      )}
+
       {/* Review Modal */}
       {showReviewModal && selectedProject && (
         <ReviewForm
@@ -959,6 +1039,7 @@ export const ClientDashboard: React.FC = () => {
         />
       )}
     </div>
+    </FreelanceErrorBoundary>
   );
 };
 

@@ -19,6 +19,10 @@ interface PostPinningSystemProps {
   maxPinned?: number;
   onPinChange?: (postId: string, isPinned: boolean) => void;
   onReorder?: (pinnedPosts: PinnedPost[]) => void;
+  onDelete?: (postId: string) => void;
+  onPrivacyChange?: (postId: string, privacy: string) => void;
+  onLikeToggle?: (postId: string, newLikeCount: number, isLiked: boolean) => void;
+  onSaveToggle?: (postId: string, isSaved: boolean) => void;
   className?: string;
 }
 
@@ -29,6 +33,10 @@ const PostPinningSystem: React.FC<PostPinningSystemProps> = ({
   maxPinned = 3,
   onPinChange,
   onReorder,
+  onDelete = () => {},
+  onPrivacyChange = () => {},
+  onLikeToggle = () => {},
+  onSaveToggle = () => {},
   className = '',
 }) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
@@ -129,52 +137,38 @@ const PostPinningSystem: React.FC<PostPinningSystemProps> = ({
                   isOwnProfile && 'cursor-move hover:opacity-75 transition-opacity'
                 )}
               >
-                {/* Pinned indicator */}
-                <div className="absolute -top-2 -right-2 z-10">
-                  <Badge className="bg-blue-600 text-white flex items-center gap-1">
-                    <Pin className="h-3 w-3" />
-                    {idx + 1}
-                  </Badge>
-                </div>
+                {/* Pinned Post Card */}
+                <div className="relative">
+                  {/* Pinned indicator badge */}
+                  <div className="absolute -top-3 -right-3 z-20">
+                    <Badge className="bg-blue-600 text-white flex items-center gap-1 shadow-md">
+                      <Pin className="h-3 w-3" />
+                      Featured {idx + 1}
+                    </Badge>
+                  </div>
 
-                {/* Post card */}
-                <Card className="border-2 border-blue-200 bg-blue-50/30">
-                  <CardContent className="p-4 sm:p-6">
-                    <div className="space-y-3">
-                      {/* Post content */}
-                      <div className="flex-1">
-                        {/* You would render your post content here */}
-                        <p className="text-sm text-gray-600 mb-2">{post.content?.substring(0, 100)}...</p>
-                        {post.image && (
-                          <img 
-                            src={post.image} 
-                            alt="Post" 
-                            className="rounded-md w-full h-32 object-cover mb-2"
-                          />
-                        )}
-                      </div>
-
-                      {/* Reorder hint for owner */}
-                      {isOwnProfile && (
-                        <div className="text-xs text-gray-500 italic">
-                          Drag to reorder featured posts
-                        </div>
-                      )}
+                  {/* Reorder hint for owner */}
+                  {isOwnProfile && (
+                    <div className="absolute -left-12 top-0 text-xs text-gray-500 italic hidden lg:block">
+                      Drag to reorder
                     </div>
-                  </CardContent>
-                </Card>
+                  )}
 
-                {/* Unpin button for owner */}
-                {isOwnProfile && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleUnpin(post.id)}
-                    className="absolute -right-10 top-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
+                  {/* Featured post styling wrapper */}
+                  <div className="border-2 border-blue-200 bg-blue-50/30 rounded-lg">
+                    <ProfilePostCard
+                      post={post}
+                      isOwnPost={isOwnProfile}
+                      isPinned={true}
+                      canPin={false}
+                      onDelete={onDelete}
+                      onPrivacyChange={onPrivacyChange}
+                      onLikeToggle={onLikeToggle}
+                      onSaveToggle={onSaveToggle}
+                      onUnpin={() => handleUnpin(post.id)}
+                    />
+                  </div>
+                </div>
               </div>
             ))}
           </div>
@@ -219,6 +213,13 @@ const PostPinningSystem: React.FC<PostPinningSystemProps> = ({
                 <ProfilePostCard
                   post={post}
                   isOwnPost={isOwnProfile}
+                  isPinned={false}
+                  canPin={pinnedPostsList.length < maxPinned}
+                  onDelete={onDelete}
+                  onPrivacyChange={onPrivacyChange}
+                  onLikeToggle={onLikeToggle}
+                  onSaveToggle={onSaveToggle}
+                  onPin={() => handlePin(post.id)}
                 />
               </div>
             ))}

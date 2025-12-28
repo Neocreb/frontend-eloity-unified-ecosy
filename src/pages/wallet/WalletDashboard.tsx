@@ -172,7 +172,7 @@ const DashboardInner = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Upper Zone - Full Bleed Gradient */}
-      <div className="relative w-full bg-gradient-to-b from-[#8B5CF6] to-[#4F46E5] pt-8 pb-20 sm:pb-24 md:pb-32">
+      <div className="relative w-full bg-gradient-to-b from-[#8B5CF6] via-[#6366F1] to-[#4F46E5] pt-8 pb-8">
         <AnimatedWave />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
@@ -202,7 +202,7 @@ const DashboardInner = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              <Button 
+              <Button
                 variant="ghost"
                 size="sm"
                 className="text-white hover:bg-white/20 h-9 w-9 p-0"
@@ -228,33 +228,33 @@ const DashboardInner = () => {
           </div>
         </div>
 
-        {/* Floating Action Buttons */}
+        {/* Floating Action Buttons - Glassmorphic */}
         <div className="relative z-20 max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8 mt-8 md:mt-12 -mb-4 md:-mb-6">
           <div className="flex gap-2 sm:gap-2.5 md:gap-3 justify-center">
             <button
               onClick={()=>navigate('/app/wallet/deposit')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="action-glass-button flex-1"
             >
               <Plus className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
               <span>Deposit</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/send-money')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="action-glass-button flex-1"
             >
               <Send className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
               <span>Send</span>
             </button>
             <button
               onClick={()=>navigate('/app/wallet/withdraw')}
-              className="flex-1 bg-white text-[#8B5CF6] rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95"
+              className="action-glass-button flex-1"
             >
               <ArrowUp className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
               <span>Withdraw</span>
             </button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex-1 bg-white text-[#8B5CF6] rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95">
+                <button className="action-glass-button flex-1">
                   <MoreHorizontal className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
                   <span>More</span>
                 </button>
@@ -287,18 +287,11 @@ const DashboardInner = () => {
         </div>
       </div>
 
-      {/* Lower Zone - White Content Area with Curved Top */}
-      <div className="relative w-full bg-white pt-2 min-h-screen">
-        {/* Curved divider */}
-        <div className="absolute -top-12 left-0 right-0 h-24 bg-white" style={{
-          borderRadius: '48px 48px 0 0',
-          backgroundColor: 'white',
-        }}></div>
-
-        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12">
-
-          {/* Ad Carousel Banner - Positioned to eliminate white space */}
-          <div className="mt-0">
+      {/* Lower Zone - White Content Area */}
+      <div className="relative w-full bg-white min-h-screen">
+        {/* Ad Carousel - Floating Card Style */}
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 pt-6 md:pt-8">
+          <div className="rounded-2xl md:rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
             <AdCarousel
               ads={ads}
               autoScroll={true}
@@ -310,6 +303,9 @@ const DashboardInner = () => {
               }}
             />
           </div>
+        </div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12 pt-8 md:pt-12">
 
           {/* Wallet Services Grid with Customizable Favorites */}
           <WalletServicesGrid />

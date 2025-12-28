@@ -14,7 +14,7 @@ import {
   SearchResult,
   Promotion,
 } from "@/types/marketplace";
-import { marketplaceService } from "@/services/marketplaceService";
+import { MarketplaceService } from "@/services/marketplaceService";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -75,7 +75,7 @@ export function useMarketplace() {
 
     try {
       const [categories] = await Promise.all([
-        marketplaceService.getCategories(),
+        MarketplaceService.getCategories(),
       ]);
 
       setState((prev) => ({
@@ -120,7 +120,7 @@ export function useMarketplace() {
       }));
 
       // Load orders from API (this would be a real API call)
-      const orders = await marketplaceService.getUserOrders(user.id);
+      const orders = await MarketplaceService.getUserOrders(user.id);
       setState((prev) => ({ ...prev, orders }));
     } catch (error) {
       console.error("Failed to load user data:", error instanceof Error ? error.message : JSON.stringify(error));
@@ -138,7 +138,7 @@ export function useMarketplace() {
           ...filters,
           searchQuery: query,
         };
-        const products = await marketplaceService.getProducts(mergedFilters);
+        const products = await MarketplaceService.getProducts(mergedFilters);
         const searchResults = {
           products,
           total: products.length,
@@ -423,7 +423,7 @@ export function useMarketplace() {
       setState((prev) => ({ ...prev, isLoading: true }));
 
       try {
-        const order = await marketplaceService.createOrder(orderData);
+        const order = await MarketplaceService.createOrder(orderData);
 
         setState((prev) => ({
           ...prev,
@@ -455,7 +455,7 @@ export function useMarketplace() {
   const updateOrderStatus = useCallback(
     async (orderId: string, status: Order["status"]) => {
       try {
-        const updatedOrder = await marketplaceService.updateOrderStatus(
+        const updatedOrder = await MarketplaceService.updateOrderStatus(
           orderId,
           status,
         );
@@ -585,7 +585,7 @@ export function useMarketplace() {
   const calculateShipping = useCallback(
     async (addressId: string) => {
       try {
-        return await marketplaceService.calculateShipping(
+        return await MarketplaceService.calculateShipping(
           addressId,
           state.cart,
         );
@@ -618,7 +618,7 @@ export function useMarketplace() {
 
   const getRecommendedProducts = useCallback(async (productId?: string) => {
     try {
-      return await marketplaceService.getRecommendedProducts(productId);
+      return await MarketplaceService.getRecommendedProducts(productId);
     } catch (error) {
       console.error("Failed to get recommendations:", error);
       return [];
