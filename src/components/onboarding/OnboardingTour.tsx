@@ -310,25 +310,6 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({
   };
 
   if (!isOpen) {
-    // Debug trigger for testing (only show in development on landing and auth pages)
-    if (process.env.NODE_ENV === "development" && (location.pathname === "/" || location.pathname === "/auth")) {
-      return (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => {
-            localStorage.removeItem("onboarding-completed");
-            setIsOpen(true);
-            setShowPathSelection(true);
-            setSelectedPath(null);
-            setCurrentStep(0);
-          }}
-          className="fixed bottom-4 left-4 z-50 bg-yellow-100 border-yellow-400 text-yellow-800 hover:bg-yellow-200 text-xs"
-        >
-          🎯 Test Onboarding
-        </Button>
-      );
-    }
     return null;
   }
 
