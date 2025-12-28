@@ -34,6 +34,7 @@ import {
   ReadingGuide,
 } from "./components/accessibility/AccessibilityFeatures";
 import { OnboardingTour } from "./components/onboarding/OnboardingTour";
+import { OnboardingRouteGuard } from "./components/onboarding/OnboardingRouteGuard";
 import { NotificationSystem } from "./components/notifications/NotificationSystem";
 import { GiftTipEventManager } from "./components/rewards/GiftTipEventManager";
 import {
@@ -513,8 +514,15 @@ const AppRoutes = () => {
       {/* Join route - for referral links */}
       <Route path="/join" element={<Join />} />
 
-      {/* Onboarding route - new user registration flow */}
-      <Route path="/onboarding" element={<OnboardingPage />} />
+      {/* Onboarding route - new user registration flow with route protection */}
+      <Route
+        path="/onboarding"
+        element={
+          <OnboardingRouteGuard>
+            <OnboardingPage />
+          </OnboardingRouteGuard>
+        }
+      />
 
       {/* Public payment link route - accessible to everyone without authentication */}
       <Route path="/pay/:code" element={<PaymentLinkView />} />
@@ -1025,32 +1033,32 @@ const App = () => {
   }, []);
 
   return (
-    <OnboardingProvider>
-      <BrowserRouter>
-        <QueryClientProvider client={queryClient}>
-          <SafeThemeProvider>
-          <ErrorBoundary
-            fallback={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold mb-2">
-                    Application Error
-                  </h2>
-                  <p className="text-muted-foreground mb-4">
-                    Something went wrong. Please refresh the page.
-                  </p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded"
-                  >
-                    Refresh Page
-                  </button>
-                </div>
+    <BrowserRouter>
+      <QueryClientProvider client={queryClient}>
+        <SafeThemeProvider>
+        <ErrorBoundary
+          fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold mb-2">
+                  Application Error
+                </h2>
+                <p className="text-muted-foreground mb-4">
+                  Something went wrong. Please refresh the page.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded"
+                >
+                  Refresh Page
+                </button>
               </div>
-            }
-          >
-            <SafeI18nProvider>
-              <AuthProvider>
+            </div>
+          }
+        >
+          <SafeI18nProvider>
+            <AuthProvider>
+              <OnboardingProvider>
                 <SafeCurrencyProvider>
                   <UserCollectionsProvider>
                     <UnifiedNotificationProvider>
@@ -1081,13 +1089,13 @@ const App = () => {
                     </UnifiedNotificationProvider>
                   </UserCollectionsProvider>
                 </SafeCurrencyProvider>
-              </AuthProvider>
-            </SafeI18nProvider>
-          </ErrorBoundary>
-          </SafeThemeProvider>
-        </QueryClientProvider>
-      </BrowserRouter>
-    </OnboardingProvider>
+              </OnboardingProvider>
+            </AuthProvider>
+          </SafeI18nProvider>
+        </ErrorBoundary>
+        </SafeThemeProvider>
+      </QueryClientProvider>
+    </BrowserRouter>
   );
 };
 

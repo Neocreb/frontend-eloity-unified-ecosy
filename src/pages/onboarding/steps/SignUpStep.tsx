@@ -3,10 +3,10 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, Check, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { AlertCircle, Check, Eye, EyeOff, Mail, Lock, User, Loader } from 'lucide-react';
 
 const SignUpStep: React.FC = () => {
-  const { data, updateData, nextStep, isLoading } = useOnboarding();
+  const { data, updateData, createAccount, isLoading } = useOnboarding();
   
   const [email, setEmail] = useState(data.email || '');
   const [password, setPassword] = useState(data.password || '');
@@ -96,7 +96,7 @@ const SignUpStep: React.FC = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError(null);
 
@@ -137,16 +137,23 @@ const SignUpStep: React.FC = () => {
       return;
     }
 
-    // Update context with validated data
-    updateData({
-      email: email.toLowerCase().trim(),
-      password,
-      name: name.trim(),
-      referralCode: referralCode.trim() || undefined,
-    });
+    try {
+      // Update context with validated data
+      updateData({
+        email: email.toLowerCase().trim(),
+        password,
+        name: name.trim(),
+        referralCode: referralCode.trim() || undefined,
+      });
 
-    // Proceed to next step
-    nextStep();
+      // Create account - this will call AuthContext.signup and proceed to next step
+      await createAccount();
+    } catch (error) {
+      // Error is already set in OnboardingContext
+      // Display it from context or use local state
+      const errorMsg = error instanceof Error ? error.message : 'Failed to create account. Please try again.';
+      setLocalError(errorMsg);
+    }
   };
 
   const isFormValid = 
@@ -352,7 +359,7 @@ const SignUpStep: React.FC = () => {
         </p>
       </div>
 
-      {/* Submit Button - For standalone testing */}
+      {/* Submit Button - Creates account and proceeds to profile */}
       <Button
         type="submit"
         disabled={!isFormValid || isLoading}
@@ -360,11 +367,11 @@ const SignUpStep: React.FC = () => {
       >
         {isLoading ? (
           <>
-            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2" />
-            Processing...
+            <Loader className="h-4 w-4 animate-spin mr-2" />
+            Creating Account...
           </>
         ) : (
-          'Continue to Profile'
+          'Create Account & Continue'
         )}
       </Button>
     </form>
