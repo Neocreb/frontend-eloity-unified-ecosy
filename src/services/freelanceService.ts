@@ -1155,6 +1155,48 @@ export class FreelanceService {
     }
   }
 
+  static async getFreelancerEarningsStats(userId: string): Promise<{
+    totalEarnings: number;
+    monthlyEarnings: number;
+    projectCount: number;
+    completedProjects: number;
+    averageRating: number;
+    successRate: number;
+  } | null> {
+    try {
+      const stats = await this.getFreelanceStats(userId);
+
+      // Calculate earnings for current month
+      const now = new Date();
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      const monthlyEarnings = await this.calculateEarnings(userId, monthStart, monthEnd);
+
+      if (!stats) {
+        return {
+          totalEarnings: 0,
+          monthlyEarnings: monthlyEarnings,
+          projectCount: 0,
+          completedProjects: 0,
+          averageRating: 5,
+          successRate: 0,
+        };
+      }
+
+      return {
+        totalEarnings: stats.totalEarnings || 0,
+        monthlyEarnings: monthlyEarnings || 0,
+        projectCount: stats.totalProjects || 0,
+        completedProjects: stats.completedProjects || 0,
+        averageRating: stats.averageRating || 5,
+        successRate: stats.successRate || 0,
+      };
+    } catch (error) {
+      console.error("Error fetching earnings stats:", error);
+      return null;
+    }
+  }
+
   // ============================================================================
   // ACTIVITY LOGGING
   // ============================================================================
