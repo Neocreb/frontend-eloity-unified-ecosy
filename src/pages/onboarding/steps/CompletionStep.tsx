@@ -287,7 +287,7 @@ const CompletionStep: React.FC = () => {
         {/* Auto-redirect Info */}
         <div className="text-center mt-8 text-slate-400 text-sm">
           <p>Redirecting to your feed in {redirectCountdown}s...</p>
-          <p className="text-xs mt-2">Click any button above to skip</p>
+          <p className="text-xs mt-2">Click any button above to skip this redirect</p>
         </div>
       </div>
 
