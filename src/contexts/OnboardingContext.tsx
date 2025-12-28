@@ -281,6 +281,7 @@ export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     skipKYC,
     updateData,
     saveProgress,
+    createAccount,
     completeOnboarding,
     isStepCompleted,
     canProceedToNextStep,
