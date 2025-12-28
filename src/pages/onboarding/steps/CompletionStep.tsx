@@ -18,11 +18,22 @@ import {
 
 const CompletionStep: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const { data } = useOnboarding();
   const [redirectCountdown, setRedirectCountdown] = useState(5);
+  const [showAuthError, setShowAuthError] = useState(false);
 
+  // Check authentication and redirect
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to load
+
+    // If not authenticated after onboarding, something went wrong
+    if (!isAuthenticated || !user) {
+      setShowAuthError(true);
+      return;
+    }
+
+    // Start countdown and redirect to feed
     const timer = setInterval(() => {
       setRedirectCountdown((prev) => {
         if (prev <= 1) {
@@ -34,7 +45,7 @@ const CompletionStep: React.FC = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [navigate]);
+  }, [navigate, authLoading, isAuthenticated, user]);
 
   const handleNavigateToFeed = () => {
     navigate('/app/feed', { replace: true });
