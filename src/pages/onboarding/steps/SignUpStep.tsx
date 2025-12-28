@@ -3,7 +3,7 @@ import { useOnboarding } from '@/contexts/OnboardingContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
-import { AlertCircle, Check, Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { AlertCircle, Check, Eye, EyeOff, Mail, Lock, User, Loader } from 'lucide-react';
 
 const SignUpStep: React.FC = () => {
   const { data, updateData, nextStep, isLoading } = useOnboarding();
