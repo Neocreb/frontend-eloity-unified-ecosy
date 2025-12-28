@@ -48,53 +48,60 @@
 - ✅ freelanceJobMatchingService, freelanceAnalyticsService, and more
 - ⚠️ Minor gaps: File storage, PDF generation, notification integration, payout providers
 
-### ❌ What's Missing or Uses Mocks
+### ⚠️ What Needs Finishing
 
-#### Critical Mock Data Issues
-1. **JobDetailPage.tsx** (Line 12)
-   - Uses `mockJobs` array instead of real data
-   - Fallback to mock when database fetch fails
+#### Known Stubs & Incomplete Features (Priority Order)
 
-2. **ClientDashboard.tsx** (Lines 217-252)
-   - `getMockFreelancers()` - Returns 2 fake freelancers
-   - `getMockProposals()` - Returns fake proposal data
-   - Mock values for statistics (Line 178: `averageProjectRating: 4.8`)
+1. **File Storage (Attachments)** - PRIORITY: HIGH
+   - Location: freelanceMessagingService.ts (uploadAttachment)
+   - Status: Uses blob URLs, not persistent storage
+   - Affects: Message attachments, job attachments, proposal attachments
+   - Solution: Integrate Supabase Storage or S3
 
-3. **FreelanceDashboard.tsx** (Lines 208-230)
-   - TODO: Fetch real urgent tasks
-   - TODO: Fetch real recent activities
-   - Returns hardcoded placeholder data
+2. **Invoice PDF Generation** - PRIORITY: HIGH
+   - Location: freelanceInvoiceService.ts (generateInvoicePDF)
+   - Status: Calls undefined /api/invoices/{id}/pdf endpoint
+   - Affects: Invoice download/export functionality
+   - Solution: Create server endpoint with PDF library (Puppeteer, wkhtmltopdf, etc.)
 
-#### Missing Service Methods
-- ❌ Real-time notifications
-- ❌ Rating/review system (partial)
-- ❌ Payment processing integration
-- ❌ Dispute resolution workflow
-- ❌ Escrow fund management
-- ❌ Profile recommendations
-- ❌ Job matching algorithm
-- ❌ Earnings calculation
-- ❌ Tax document generation
-- ❌ Withdrawal management
+3. **Payout/Withdrawal Providers** - PRIORITY: MEDIUM-HIGH
+   - Location: freelanceWithdrawalService.ts (completeWithdrawal)
+   - Status: Supports types but no actual processor integrations
+   - Affects: Freelancer withdrawals (bank, PayPal, crypto, mobile money)
+   - Solution: Integrate Stripe, Wise, PayPal, or crypto APIs
 
-#### Incomplete Database Features
-- ⚠️ Missing: freelance_reviews table
-- ⚠️ Missing: freelance_ratings table
-- ⚠️ Missing: freelancer_experience table
-- ⚠️ Missing: freelancer_certifications table
-- ⚠️ Missing: freelancer_languages table
-- ⚠️ Missing: job_category_preferences table
-- ⚠️ Missing: freelance_withdrawals table
-- ⚠️ Missing: freelance_invoices table
-- ⚠️ Missing: freelance_contracts table
-- ⚠️ Missing: freelance_activity_logs table
+4. **Database Migration Verification** - PRIORITY: CRITICAL
+   - Status: Tables defined but unclear if applied to Supabase
+   - Affects: All freelance features that use new tables
+   - Solution: Run create-freelance-complete-schema.sql in Supabase
+   - Verification: SELECT COUNT(*) FROM information_schema.tables... should return 18
 
-#### Missing UI Polish
-- ⚠️ Empty state designs
-- ⚠️ Loading skeletons
-- ⚠️ Error boundaries
-- ⚠️ Responsive optimization (mobile)
-- ⚠️ Accessibility improvements
+5. **Missing Service Method** - PRIORITY: MEDIUM
+   - Missing: getFreelancerEarningsStats in freelanceService.ts
+   - Called by: use-freelance hook
+   - Solution: Add wrapper method combining getFreelanceStats + calculateEarnings
+
+6. **Dispute Notification Integration** - PRIORITY: MEDIUM
+   - Location: freelanceDisputeService.ts (notify* functions)
+   - Status: console.log() placeholders
+   - Affects: Dispute notifications
+   - Solution: Integrate with FreelanceNotificationService
+
+7. **Contact/Message Mock** - PRIORITY: LOW
+   - Location: FindFreelancers.tsx (handleContactFreelancer)
+   - Status: setTimeout mock instead of actual message creation
+   - Affects: "Send message" button in freelancer search
+   - Solution: Wire to actual messaging service
+
+#### Fully Defined in Schema but Unverified in Supabase
+- freelance_invoices table
+- freelance_withdrawals table
+- freelance_activity_logs table
+- freelancer_experience table
+- freelancer_certifications table
+- freelancer_languages table
+- freelance_escrow table and related tables
+- RLS policies (defined but not verified)
 
 ---
 
