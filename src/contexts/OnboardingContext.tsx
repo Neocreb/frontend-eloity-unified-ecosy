@@ -85,6 +85,7 @@ const STEP_REQUIREMENTS: Record<OnboardingStep, (keyof OnboardingData)[]> = {
 };
 
 export const OnboardingProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { signup } = useAuth();
   const [currentStep, setCurrentStep] = useState<OnboardingStep>('signup');
   const [data, setData] = useState<OnboardingData>({
     selectedInterests: [],
