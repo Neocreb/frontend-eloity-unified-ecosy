@@ -10,6 +10,8 @@ export interface ProfileStatsData {
   cryptoTrades: number;
   likesCount: number;
   sharesCount: number;
+  walletBalance: number;
+  eloPoints: number;
   loading: boolean;
   error: string | null;
 }
@@ -19,11 +21,15 @@ export interface ProfileStatsData {
  * @param profile - The user profile object
  * @param userId - The user ID to fetch stats for
  * @param enabled - Whether to fetch stats (useful for conditional fetching)
+ * @param walletBalance - Optional wallet balance (passed from context)
+ * @param eloPoints - Optional ELO points (passed from rewards context)
  */
 export const useProfileStats = (
   profile: UserProfile | null | undefined,
   userId: string | null | undefined,
-  enabled: boolean = true
+  enabled: boolean = true,
+  walletBalance?: number,
+  eloPoints?: number
 ): ProfileStatsData => {
   const [stats, setStats] = useState<ProfileStatsData>({
     followerCount: 0,
@@ -33,6 +39,8 @@ export const useProfileStats = (
     cryptoTrades: 0,
     likesCount: 0,
     sharesCount: 0,
+    walletBalance: walletBalance || 0,
+    eloPoints: eloPoints || 0,
     loading: true,
     error: null,
   });
@@ -42,6 +50,8 @@ export const useProfileStats = (
       setStats((prev) => ({
         ...prev,
         loading: false,
+        walletBalance: walletBalance || 0,
+        eloPoints: eloPoints || 0,
       }));
       return;
     }
@@ -84,6 +94,8 @@ export const useProfileStats = (
             cryptoTrades,
             likesCount,
             sharesCount,
+            walletBalance: walletBalance || 0,
+            eloPoints: eloPoints || 0,
             loading: false,
             error: null,
           });
@@ -93,6 +105,8 @@ export const useProfileStats = (
           setStats((prev) => ({
             ...prev,
             loading: false,
+            walletBalance: walletBalance || 0,
+            eloPoints: eloPoints || 0,
             error: error instanceof Error ? error.message : "Failed to fetch stats",
           }));
         }
@@ -104,7 +118,7 @@ export const useProfileStats = (
     return () => {
       isMounted = false;
     };
-  }, [userId, profile, enabled]);
+  }, [userId, profile, enabled, walletBalance, eloPoints]);
 
   return stats;
 };

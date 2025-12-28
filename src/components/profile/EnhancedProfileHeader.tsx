@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import VerifiedBadge from "@/components/ui/VerifiedBadge";
 import { useUserPremiumStatus } from "@/hooks/useUserPremiumStatus";
+import { CoverPhotoEditor } from "./CoverPhotoEditor";
 import {
   Verified,
   MapPin,
@@ -62,6 +63,15 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
 }) => {
   const { isPremium, isVerified } = useUserPremiumStatus();
   const [activeTab, setActiveTab] = useState("overview");
+  const [isCoverEditorOpen, setIsCoverEditorOpen] = useState(false);
+
+  const handleSaveCoverPhoto = async (imageData: string) => {
+    // TODO: Implement cover photo save logic with API
+    // For now, this is a placeholder that accepts the image data
+    console.log("Cover photo saved:", imageData);
+    // In a real implementation, this would call an API to save the image to Supabase storage
+    // and update the profile banner_url
+  };
 
   const formatNumber = (num: number) => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -96,7 +106,7 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
   return (
     <div className="relative">
       {/* Banner Section - Full Bleed Cover Photo */}
-      <div className="relative h-48 sm:h-56 md:h-64 lg:h-80 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 overflow-hidden group cursor-pointer">
+      <div className="relative w-screen left-1/2 right-1/2 -mx-[50vw] h-48 sm:h-56 md:h-64 lg:h-80 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-800 overflow-hidden group cursor-pointer">
         {profile.banner_url && (
           <div
             className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-300 group-hover:scale-105"
@@ -121,7 +131,7 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
               variant="secondary"
               onClick={(e) => {
                 e.stopPropagation();
-                onEdit?.();
+                setIsCoverEditorOpen(true);
               }}
               className="gap-2 shadow-lg hover:shadow-xl transition-shadow"
             >
@@ -156,7 +166,7 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
       </div>
 
       {/* Profile Information Section */}
-      <div className="px-4 md:px-6">
+      <div className="px-4 md:px-6 bg-white">
         <div className="relative -mt-12 sm:-mt-16 md:-mt-20">
           {/* Avatar */}
           <div className="flex flex-col sm:flex-row sm:items-end gap-4 mb-6">
@@ -819,6 +829,14 @@ export const EnhancedProfileHeader: React.FC<EnhancedProfileHeaderProps> = ({
           )}
         </Tabs>
       </div>
+
+      {/* Cover Photo Editor Modal */}
+      <CoverPhotoEditor
+        isOpen={isCoverEditorOpen}
+        onClose={() => setIsCoverEditorOpen(false)}
+        onSave={handleSaveCoverPhoto}
+        currentImage={profile.banner_url}
+      />
     </div>
   );
 };

@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
 import { useWalletContext } from "@/contexts/WalletContext";
 import { useToast } from "@/components/ui/use-toast";
+import { useRewards } from "@/hooks/use-rewards";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -99,6 +100,9 @@ import { Product } from "@/types/marketplace";
 import { profileService } from "@/services/profileService";
 import EnhancedPostCard from "@/components/feed/EnhancedPostCard";
 import { Post } from "@/components/feed/PostCard";
+import { ProfileStatsCarousel } from "@/components/profile/ProfileStatsCarousel";
+import BadgeSystem from "@/components/profile/BadgeSystem";
+import ActivityTimeline from "@/components/profile/ActivityTimeline";
 
 interface UnifiedProfileProps {
   username?: string;
@@ -111,9 +115,15 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { walletBalance, transactions, isLoading: walletLoading } = useWalletContext();
+  const { data: rewardsData } = useRewards();
   const { toast } = useToast();
 
   const targetUsername = propUsername || paramUsername;
+
+  // Calculate total wallet balance (sum of all portfolio types)
+  const totalWalletBalance = walletBalance?.total || 0;
+  // Extract ELO points from rewards data
+  const eloPoints = rewardsData?.calculatedUserRewards?.total_earned || 0;
 
   // State management
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
@@ -501,20 +511,14 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                         @{mockProfile.username}
                       </p>
 
-                      {/* Enhanced Status Badges */}
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Premium
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Trust Score {mockProfile.trustScore}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
-                          <Star className="h-3 w-3 mr-1" />
-                          Level 8
-                        </Badge>
+                      {/* Dynamic Badge System */}
+                      <div className="mb-2">
+                        <BadgeSystem
+                          userId={profileUser?.id || ''}
+                          isOwnProfile={isOwnProfile}
+                          variant="compact"
+                          maxDisplay={6}
+                        />
                       </div>
 
                       <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
@@ -609,38 +613,30 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                   )}
                 </div>
 
-                {/* Enhanced Stats with Wallet Integration */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mt-6 py-4 border-t">
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{mockProfile.posts}</div>
-                    <div className="text-xs text-muted-foreground">Posts</div>
+                {/* Enhanced Stats Carousel */}
+                {profileUser && (
+                  <div className="mt-8 py-6 border-t">
+                    <h3 className="text-lg font-semibold mb-4">Platform Statistics</h3>
+                    <ProfileStatsCarousel
+                      profile={profileUser}
+                      followerCount={followerCount}
+                      followingCount={followingCount}
+                      enableRealData={true}
+                      isOwnProfile={isOwnProfile}
+                      walletBalance={isOwnProfile ? totalWalletBalance : undefined}
+                      eloPoints={isOwnProfile ? eloPoints : undefined}
+                      onStatClick={(statType) => {
+                        // Handle stat click navigation
+                        if (statType === "wallet") {
+                          navigate("/app/wallet");
+                        } else if (statType === "elopoints") {
+                          navigate("/app/rewards");
+                        }
+                        console.log("Stat clicked:", statType);
+                      }}
+                    />
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{followerCount.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Followers</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{followingCount.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Following</div>
-                  </div>
-                  {isOwnProfile && (
-                    <>
-                      <div className="text-center cursor-pointer" onClick={() => navigate("/app/wallet")}>
-                        <div className="text-lg sm:text-xl font-bold text-green-600">${mockProfile.walletBalance}</div>
-                        <div className="text-xs text-muted-foreground">Balance</div>
-                      </div>
-                      <div className="text-center cursor-pointer" onClick={() => navigate("/app/notifications")}>
-                        <div className="text-lg sm:text-xl font-bold text-blue-600 relative">
-                          {mockProfile.unreadNotifications}
-                          {mockProfile.unreadNotifications > 0 && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Notifications</div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                )}
               </CardContent>
             </div>
           </Card>
@@ -969,11 +965,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0">
-                  <div className="text-center py-12">
-                    <Activity className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Activity Timeline</h3>
-                    <p className="text-muted-foreground">Recent actions and interactions</p>
-                  </div>
+                  {profileUser && (
+                    <ActivityTimeline
+                      userId={profileUser.id}
+                      showFilters={true}
+                      maxItems={20}
+                    />
+                  )}
                 </TabsContent>
 
                 {isOwnProfile && (
