@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { useAuth } from './AuthContext';
 
-export type OnboardingStep = 
-  | 'signup' 
-  | 'profile' 
-  | 'interests' 
-  | 'kyc' 
-  | 'confirmation' 
+export type OnboardingStep =
+  | 'signup'
+  | 'profile'
+  | 'interests'
+  | 'kyc'
+  | 'confirmation'
   | 'complete';
 
 export interface OnboardingData {
