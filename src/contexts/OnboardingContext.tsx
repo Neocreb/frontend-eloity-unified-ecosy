@@ -62,6 +62,7 @@ interface OnboardingContextType {
   // Data methods
   updateData: (updates: Partial<OnboardingData>) => void;
   saveProgress: () => Promise<void>;
+  createAccount: () => Promise<void>;
   completeOnboarding: () => Promise<void>;
 
   // Getters
