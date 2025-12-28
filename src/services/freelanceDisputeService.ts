@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase/client';
+import { FreelanceNotificationService } from './freelanceNotificationService';
 
 export interface FreelanceDispute {
   id: string;
