@@ -1,131 +1,236 @@
-// @ts-nocheck
-import { supabase } from '@/integrations/supabase/client';
-import { walletService } from './walletService';
+import { supabase } from "@/integrations/supabase/client";
+import { walletService } from "./walletService";
 
 /**
- * Freelance Withdrawal Integration Service
- * Manages freelancer earnings withdrawals
- * Uses the existing unified withdrawals system, not creating duplicates
+ * FreelanceWithdrawalIntegrationService
+ * 
+ * Manages freelance earnings withdrawals using the unified wallet system.
+ * All freelance withdrawals are created in the shared 'withdrawals' table.
+ * This ensures a single source of truth for all platform payouts.
  */
-
-export interface WithdrawalRequest {
-  freelancerId: string;
-  amount: number;
-  withdrawalMethod: 'bank_transfer' | 'paypal' | 'crypto' | 'mobile_money';
-  withdrawalDetails: WithdrawalDetails;
-}
-
-export interface WithdrawalDetails {
-  bankName?: string;
-  accountNumber?: string;
-  accountHolderName?: string;
-  routingNumber?: string;
-  swiftCode?: string;
-  iban?: string;
-  paypalEmail?: string;
-  cryptoAddress?: string;
-  cryptoNetwork?: string;
-  mobileMoneyNumber?: string;
-  mobileMoneyProvider?: string;
-  mobileMoneyCountry?: string;
-}
-
-export interface WithdrawalResponse {
-  id: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
-  amount: number;
-  method: string;
-}
-
 export class FreelanceWithdrawalIntegrationService {
   /**
-   * Request a withdrawal from freelance earnings
-   * Creates withdrawal in unified system with freelance_earnings type
+   * Request withdrawal from freelance earnings
+   * Uses unified wallet withdrawal system
+   * 
+   * @param freelancerId - The freelancer's user ID
+   * @param amount - Amount to withdraw
+   * @param withdrawalMethod - Method of withdrawal ('bank_transfer' | 'paypal' | 'crypto' | 'mobile_money')
+   * @param withdrawalDetails - Details specific to the withdrawal method
+   * @returns Withdrawal ID or null if failed
    */
-  static async requestWithdrawal(input: WithdrawalRequest): Promise<string | null> {
+  static async requestWithdrawal(
+    freelancerId: string,
+    amount: number,
+    withdrawalMethod: "bank_transfer" | "paypal" | "crypto" | "mobile_money",
+    withdrawalDetails: {
+      bankName?: string;
+      accountNumber?: string;
+      routingNumber?: string;
+      paypalEmail?: string;
+      cryptoAddress?: string;
+      cryptoNetwork?: string;
+      mobileMoneyNumber?: string;
+      mobileMoneyCountry?: string;
+    }
+  ): Promise<string | null> {
     try {
-      // Verify freelancer has sufficient balance
-      const eligibility = await this.checkWithdrawalEligibility(input.freelancerId);
-      if (!eligibility.isEligible) {
-        console.error('Not eligible for withdrawal:', eligibility.reason);
-        return null;
-      }
-
-      if (input.amount < eligibility.minimumWithdrawal) {
-        console.error(`Minimum withdrawal is ${eligibility.minimumWithdrawal}`);
-        return null;
-      }
-
-      if (input.amount > eligibility.balance) {
-        console.error('Insufficient balance for requested withdrawal');
-        return null;
-      }
-
-      // Validate withdrawal details based on method
-      const validationError = this.validateWithdrawalDetails(
-        input.withdrawalMethod,
-        input.withdrawalDetails
+      // Validate balance first
+      const eligibility = await this.checkWithdrawalEligibility(
+        freelancerId
       );
-      if (validationError) {
-        console.error('Invalid withdrawal details:', validationError);
-        return null;
+
+      if (!eligibility.isEligible) {
+        throw new Error(eligibility.reason || "Not eligible for withdrawal");
+      }
+
+      if (amount < eligibility.minimumWithdrawal) {
+        throw new Error(
+          `Minimum withdrawal is $${eligibility.minimumWithdrawal}`
+        );
+      }
+
+      if (amount > eligibility.balance) {
+        throw new Error("Insufficient freelance balance");
       }
 
       // Create withdrawal request in unified system
-      const { data: withdrawalData, error: withdrawalError } = await supabase
-        .from('withdrawals')
+      const { data, error } = await supabase
+        .from("withdrawals")
         .insert([
           {
-            user_id: input.freelancerId,
-            amount: input.amount,
-            withdrawal_method: input.withdrawalMethod,
-            withdrawal_details: input.withdrawalDetails,
-            status: 'pending',
-            withdrawal_type: 'freelance_earnings', // New field to identify freelance withdrawals
+            user_id: freelancerId,
+            amount: amount,
+            withdrawal_method: withdrawalMethod,
+            withdrawal_details: withdrawalDetails,
+            status: "pending",
+            withdrawal_type: "freelance_earnings",
             metadata: {
-              source: 'freelance_platform',
-              created_at: new Date().toISOString(),
-              requested_by: input.freelancerId,
+              source: "freelance_platform",
+              method: withdrawalMethod,
+              processed_at: new Date().toISOString(),
             },
           },
         ])
         .select()
         .single();
 
-      if (withdrawalError) {
-        console.error('Error creating withdrawal request:', withdrawalError);
-        return null;
+      if (error) {
+        throw error;
       }
 
-      // Record withdrawal transaction in wallet history
-      try {
-        await supabase.from('wallet_transactions').insert([
-          {
-            user_id: input.freelancerId,
-            transaction_type: 'withdrawal_request',
-            amount: input.amount.toString(),
-            balance_type: 'freelance',
-            withdrawal_id: withdrawalData.id,
-            status: 'pending',
-            description: `Withdrawal request: ${input.amount} via ${input.withdrawalMethod}`,
-            created_at: new Date().toISOString(),
-          },
-        ]);
-      } catch (txError) {
-        console.warn('Warning: Could not record transaction:', txError);
-      }
+      // Record in wallet transaction history
+      await this.recordWithdrawalTransaction(
+        freelancerId,
+        amount,
+        "freelance",
+        data.id
+      );
 
-      return withdrawalData.id;
+      return data.id;
     } catch (error) {
-      console.error('Error requesting withdrawal:', error);
+      console.error("Error requesting withdrawal:", error);
       return null;
     }
   }
 
   /**
-   * Check if freelancer is eligible to withdraw
+   * Record withdrawal in wallet transaction history
+   * 
+   * @param userId - The user's ID
+   * @param amount - Withdrawal amount
+   * @param balanceType - Type of balance ('freelance', 'ecommerce', 'crypto', 'rewards')
+   * @param withdrawalId - The withdrawal request ID
    */
-  static async checkWithdrawalEligibility(freelancerId: string): Promise<{
+  private static async recordWithdrawalTransaction(
+    userId: string,
+    amount: number,
+    balanceType: string,
+    withdrawalId: string
+  ): Promise<void> {
+    try {
+      await supabase.from("wallet_transactions").insert([
+        {
+          user_id: userId,
+          transaction_type: "withdrawal",
+          amount: amount,
+          balance_type: balanceType,
+          withdrawal_id: withdrawalId,
+          description: `Withdrawal request from ${balanceType} balance`,
+          status: "pending",
+          created_at: new Date().toISOString(),
+          metadata: {
+            withdrawalId,
+            type: "freelance_withdrawal",
+          },
+        },
+      ]);
+    } catch (error) {
+      console.error("Error recording withdrawal transaction:", error);
+    }
+  }
+
+  /**
+   * Get freelancer's pending and completed withdrawals
+   * 
+   * @param freelancerId - The freelancer's user ID
+   * @returns Array of withdrawal records
+   */
+  static async getFreelancerWithdrawals(freelancerId: string): Promise<any[]> {
+    try {
+      const { data, error } = await supabase
+        .from("withdrawals")
+        .select("*")
+        .eq("user_id", freelancerId)
+        .eq("withdrawal_type", "freelance_earnings")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching withdrawals:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get a specific withdrawal by ID
+   * 
+   * @param withdrawalId - The withdrawal ID
+   * @returns Withdrawal object or null
+   */
+  static async getWithdrawal(withdrawalId: string): Promise<any | null> {
+    try {
+      const { data, error } = await supabase
+        .from("withdrawals")
+        .select("*")
+        .eq("id", withdrawalId)
+        .single();
+
+      if (error && error.code !== "PGRST116") {
+        throw error;
+      }
+
+      return data || null;
+    } catch (error) {
+      console.error("Error fetching withdrawal:", error);
+      return null;
+    }
+  }
+
+  /**
+   * Cancel a pending withdrawal
+   * 
+   * @param withdrawalId - The withdrawal ID
+   * @returns true if successful
+   */
+  static async cancelWithdrawal(withdrawalId: string): Promise<boolean> {
+    try {
+      const withdrawal = await this.getWithdrawal(withdrawalId);
+
+      if (!withdrawal) {
+        throw new Error("Withdrawal not found");
+      }
+
+      if (withdrawal.status !== "pending") {
+        throw new Error("Only pending withdrawals can be cancelled");
+      }
+
+      // Update withdrawal status
+      const { error } = await supabase
+        .from("withdrawals")
+        .update({ status: "cancelled" })
+        .eq("id", withdrawalId);
+
+      if (error) {
+        throw error;
+      }
+
+      // Update transaction status
+      await supabase
+        .from("wallet_transactions")
+        .update({ status: "cancelled" })
+        .eq("withdrawal_id", withdrawalId);
+
+      return true;
+    } catch (error) {
+      console.error("Error cancelling withdrawal:", error);
+      return false;
+    }
+  }
+
+  /**
+   * Check freelancer withdrawal eligibility
+   * 
+   * @param freelancerId - The freelancer's user ID
+   * @returns Eligibility object with balance, minimum withdrawal, and reason if not eligible
+   */
+  static async checkWithdrawalEligibility(
+    freelancerId: string
+  ): Promise<{
     isEligible: boolean;
     balance: number;
     minimumWithdrawal: number;
@@ -133,310 +238,126 @@ export class FreelanceWithdrawalIntegrationService {
     reason?: string;
   }> {
     try {
-      // Get current freelance balance
-      const walletBalance = await walletService.getWalletBalance();
-      const balance = walletBalance.freelance || 0;
+      const balance = await walletService.getWalletBalance();
+      const freelanceBalance = balance.freelance || 0;
+      const minimumWithdrawal = 10; // Minimum $10 withdrawal
+      const maximumWithdrawal = 100000; // Maximum $100,000 per withdrawal
 
-      const minimumWithdrawal = 10; // $10 minimum
-      const maximumWithdrawal = 50000; // $50,000 maximum per withdrawal
-
-      // Check eligibility criteria
-      if (balance < minimumWithdrawal) {
-        return {
-          isEligible: false,
-          balance,
-          minimumWithdrawal,
-          maximumWithdrawal,
-          reason: `Minimum withdrawal is $${minimumWithdrawal}`,
-        };
-      }
-
-      // Check if freelancer has completed profile
-      const profileComplete = await this.isProfileComplete(freelancerId);
-      if (!profileComplete) {
-        return {
-          isEligible: false,
-          balance,
-          minimumWithdrawal,
-          maximumWithdrawal,
-          reason: 'Please complete your profile to enable withdrawals',
-        };
-      }
-
-      // Check for active disputes
-      const hasDisputes = await this.hasActiveDisputes(freelancerId);
-      if (hasDisputes) {
-        return {
-          isEligible: false,
-          balance,
-          minimumWithdrawal,
-          maximumWithdrawal,
-          reason: 'Cannot withdraw with active disputes',
-        };
-      }
+      const isEligible =
+        freelanceBalance >= minimumWithdrawal && freelanceBalance > 0;
 
       return {
-        isEligible: true,
-        balance,
+        isEligible,
+        balance: freelanceBalance,
         minimumWithdrawal,
         maximumWithdrawal,
+        reason:
+          freelanceBalance < minimumWithdrawal
+            ? `Minimum withdrawal is $${minimumWithdrawal}`
+            : undefined,
       };
     } catch (error) {
-      console.error('Error checking withdrawal eligibility:', error);
+      console.error("Error checking withdrawal eligibility:", error);
       return {
         isEligible: false,
         balance: 0,
         minimumWithdrawal: 10,
-        maximumWithdrawal: 50000,
-        reason: 'Error checking eligibility',
+        maximumWithdrawal: 100000,
+        reason: "Error checking eligibility",
       };
-    }
-  }
-
-  /**
-   * Get withdrawal request details
-   */
-  static async getWithdrawal(withdrawalId: string): Promise<WithdrawalResponse | null> {
-    try {
-      const { data, error } = await supabase
-        .from('withdrawals')
-        .select('*')
-        .eq('id', withdrawalId)
-        .single();
-
-      if (error) {
-        console.error('Error fetching withdrawal:', error);
-        return null;
-      }
-
-      return this.mapWithdrawal(data);
-    } catch (error) {
-      console.error('Error in getWithdrawal:', error);
-      return null;
-    }
-  }
-
-  /**
-   * Get all withdrawal requests for a freelancer
-   */
-  static async getFreelancerWithdrawals(
-    freelancerId: string,
-    status?: string
-  ): Promise<WithdrawalResponse[]> {
-    try {
-      let query = supabase
-        .from('withdrawals')
-        .select('*')
-        .eq('user_id', freelancerId)
-        .eq('withdrawal_type', 'freelance_earnings'); // Only freelance earnings
-
-      if (status) {
-        query = query.eq('status', status);
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching withdrawals:', error);
-        return [];
-      }
-
-      return (data || []).map(withdrawal => this.mapWithdrawal(withdrawal));
-    } catch (error) {
-      console.error('Error in getFreelancerWithdrawals:', error);
-      return [];
-    }
-  }
-
-  /**
-   * Cancel a pending withdrawal
-   */
-  static async cancelWithdrawal(withdrawalId: string): Promise<boolean> {
-    try {
-      // Get withdrawal details first
-      const withdrawal = await this.getWithdrawal(withdrawalId);
-      if (!withdrawal || withdrawal.status !== 'pending') {
-        console.error('Can only cancel pending withdrawals');
-        return false;
-      }
-
-      // Update withdrawal status
-      const { error: updateError } = await supabase
-        .from('withdrawals')
-        .update({
-          status: 'cancelled',
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', withdrawalId);
-
-      if (updateError) {
-        console.error('Error cancelling withdrawal:', updateError);
-        return false;
-      }
-
-      // Record cancellation in transaction history
-      try {
-        await supabase.from('wallet_transactions').insert([
-          {
-            user_id: (await supabase.auth.getUser()).data.user?.id,
-            transaction_type: 'withdrawal_cancelled',
-            amount: withdrawal.amount.toString(),
-            balance_type: 'freelance',
-            withdrawal_id: withdrawalId,
-            status: 'completed',
-            created_at: new Date().toISOString(),
-          },
-        ]);
-      } catch (txError) {
-        console.warn('Warning: Could not record cancellation:', txError);
-      }
-
-      return true;
-    } catch (error) {
-      console.error('Error cancelling withdrawal:', error);
-      return false;
     }
   }
 
   /**
    * Get withdrawal statistics for a freelancer
+   * 
+   * @param freelancerId - The freelancer's user ID
+   * @returns Statistics object
    */
-  static async getWithdrawalStats(freelancerId: string): Promise<{
+  static async getWithdrawalStats(
+    freelancerId: string
+  ): Promise<{
     totalWithdrawn: number;
-    totalPending: number;
-    totalFailed: number;
-    lastWithdrawalDate?: Date;
+    pendingAmount: number;
+    completedAmount: number;
+    withdrawalCount: number;
+    averageWithdrawal: number;
   }> {
     try {
-      const { data, error } = await supabase
-        .from('withdrawals')
-        .select('*')
-        .eq('user_id', freelancerId)
-        .eq('withdrawal_type', 'freelance_earnings');
+      const withdrawals = await this.getFreelancerWithdrawals(freelancerId);
 
-      if (error) throw error;
-
-      const withdrawals = data || [];
-      const completedWithdrawals = withdrawals.filter(w => w.status === 'completed');
-      const pendingWithdrawals = withdrawals.filter(w => w.status === 'pending');
-      const failedWithdrawals = withdrawals.filter(w => w.status === 'failed');
-
-      const totalWithdrawn = completedWithdrawals.reduce(
-        (sum, w) => sum + parseFloat(w.amount || '0'),
+      const totalWithdrawn = withdrawals.reduce(
+        (sum, w) => sum + (w.amount || 0),
         0
       );
-      const totalPending = pendingWithdrawals.reduce(
-        (sum, w) => sum + parseFloat(w.amount || '0'),
-        0
-      );
-      const totalFailed = failedWithdrawals.reduce((sum, w) => sum + parseFloat(w.amount || '0'), 0);
 
-      const lastWithdrawal = completedWithdrawals.sort(
-        (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()
-      )[0];
+      const pending = withdrawals
+        .filter((w) => w.status === "pending")
+        .reduce((sum, w) => sum + (w.amount || 0), 0);
+
+      const completed = withdrawals
+        .filter((w) => w.status === "completed")
+        .reduce((sum, w) => sum + (w.amount || 0), 0);
 
       return {
         totalWithdrawn,
-        totalPending,
-        totalFailed,
-        lastWithdrawalDate: lastWithdrawal ? new Date(lastWithdrawal.updated_at) : undefined,
+        pendingAmount: pending,
+        completedAmount: completed,
+        withdrawalCount: withdrawals.length,
+        averageWithdrawal:
+          withdrawals.length > 0 ? totalWithdrawn / withdrawals.length : 0,
       };
     } catch (error) {
-      console.error('Error getting withdrawal stats:', error);
+      console.error("Error fetching withdrawal stats:", error);
       return {
         totalWithdrawn: 0,
-        totalPending: 0,
-        totalFailed: 0,
+        pendingAmount: 0,
+        completedAmount: 0,
+        withdrawalCount: 0,
+        averageWithdrawal: 0,
       };
     }
   }
 
   /**
-   * Helper: Validate withdrawal details based on method
+   * Update withdrawal status (admin/backend operation)
+   * 
+   * @param withdrawalId - The withdrawal ID
+   * @param status - New status ('pending' | 'completed' | 'failed' | 'cancelled')
+   * @returns true if successful
    */
-  private static validateWithdrawalDetails(
-    method: string,
-    details: WithdrawalDetails
-  ): string | null {
-    switch (method) {
-      case 'bank_transfer':
-        if (!details.accountNumber) return 'Account number required';
-        if (!details.bankName) return 'Bank name required';
-        return null;
-
-      case 'paypal':
-        if (!details.paypalEmail) return 'PayPal email required';
-        return null;
-
-      case 'crypto':
-        if (!details.cryptoAddress) return 'Crypto address required';
-        if (!details.cryptoNetwork) return 'Crypto network required';
-        return null;
-
-      case 'mobile_money':
-        if (!details.mobileMoneyNumber) return 'Mobile money number required';
-        if (!details.mobileMoneyProvider) return 'Mobile money provider required';
-        return null;
-
-      default:
-        return 'Invalid withdrawal method';
-    }
-  }
-
-  /**
-   * Helper: Check if profile is complete
-   */
-  private static async isProfileComplete(freelancerId: string): Promise<boolean> {
+  static async updateWithdrawalStatus(
+    withdrawalId: string,
+    status: "pending" | "completed" | "failed" | "cancelled"
+  ): Promise<boolean> {
     try {
-      const { data, error } = await supabase
-        .from('freelancer_profiles')
-        .select('*')
-        .eq('user_id', freelancerId)
-        .single();
+      const { error } = await supabase
+        .from("withdrawals")
+        .update({
+          status: status,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", withdrawalId);
 
-      if (error) return false;
+      if (error) {
+        throw error;
+      }
 
-      // Check if essential fields are filled
-      return !!(data.professional_title && data.overview && data.skills?.length > 0);
+      // Update corresponding transaction status
+      if (status === "completed") {
+        await supabase
+          .from("wallet_transactions")
+          .update({ status: "completed" })
+          .eq("withdrawal_id", withdrawalId);
+      }
+
+      return true;
     } catch (error) {
-      console.error('Error checking profile completeness:', error);
+      console.error("Error updating withdrawal status:", error);
       return false;
     }
-  }
-
-  /**
-   * Helper: Check if freelancer has active disputes
-   */
-  private static async hasActiveDisputes(freelancerId: string): Promise<boolean> {
-    try {
-      const { data, error } = await supabase
-        .from('freelance_disputes')
-        .select('id')
-        .or(
-          `filed_by_id.eq.${freelancerId},filed_against_id.eq.${freelancerId},arbiter_id.eq.${freelancerId}`
-        )
-        .in('status', ['open', 'in_review', 'mediation']);
-
-      if (error) return false;
-
-      return (data || []).length > 0;
-    } catch (error) {
-      console.error('Error checking disputes:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Helper: Map withdrawal from database format
-   */
-  private static mapWithdrawal(data: any): WithdrawalResponse {
-    return {
-      id: data.id,
-      status: data.status,
-      amount: parseFloat(data.amount || '0'),
-      method: data.withdrawal_method,
-    };
   }
 }
 
-export const freelanceWithdrawalIntegrationService = new FreelanceWithdrawalIntegrationService();
+export const freelanceWithdrawalIntegrationService =
+  new FreelanceWithdrawalIntegrationService();
