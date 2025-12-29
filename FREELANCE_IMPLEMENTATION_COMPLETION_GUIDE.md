@@ -38,35 +38,39 @@
 
 ---
 
-### 3. 📄 Invoice PDF Generation (PRIORITY 2) - COMPLETE
-**Files Updated**:
-- `server/routes/freelance.ts` - Added two new endpoints
-- `src/services/freelanceInvoiceService.ts` - Updated methods to use new endpoints
+### 3. 📄 Invoice Integration (PRIORITY 2) - REVISED FOR UNIFIED WALLET
+**IMPORTANT CHANGE**: Invoices will use the existing unified wallet system, NOT create separate freelance invoices.
 
-**New Server Endpoints**:
-- `GET /api/freelance/invoices/:id/pdf` - Returns formatted HTML invoice ready for printing
-- `GET /api/freelance/invoices/:id/html` - Returns invoice data as JSON for rendering
+**Architecture Updated**:
+- ❌ NO separate `freelance_invoices` table
+- ✅ USE existing `invoices` table with `type: 'freelance'` tag
+- ✅ USE existing payment links system
+- ✅ SYNC with unified wallet balance
+- ✅ USE existing withdrawal system for payouts
 
-**Frontend Updates**:
-- `generateInvoicePDF()` - Fetches HTML from server
-- `downloadInvoice()` - Opens print dialog for user to save as PDF
-- `getInvoiceAsHTML()` - Gets invoice data for custom rendering
+**What This Means**:
+Instead of creating duplicate invoice infrastructure, we enhance the existing wallet system:
+- Invoices table gets `type`, `source_type`, `project_id`, `freelancer_id` fields
+- Freelance invoices are tagged and filtered in the same system
+- All payments sync with wallet balance automatically
+- Same withdrawal system handles both regular and freelance payouts
 
-**How it works**:
-1. User clicks "Download Invoice" → calls `downloadInvoice(invoiceId)`
-2. Frontend fetches HTML from `/api/freelance/invoices/{id}/pdf`
-3. Opens print window with formatted invoice
-4. User prints to PDF (Ctrl+P → Save as PDF) or prints to printer
+**New Integration Services** (to be created):
+- `freelanceInvoiceIntegrationService.ts` - Creates invoices in unified system
+- `freelancePaymentIntegrationService.ts` - Uses payment links for collections
+- `freelanceWithdrawalIntegrationService.ts` - Uses wallet withdrawal system
 
-**Professional Invoice Features**:
-- ✅ Company branding layout
-- ✅ Invoice number and status badges
-- ✅ Formatted dates (Bill From/To)
-- ✅ Itemized services table
-- ✅ Total calculation
-- ✅ Print-optimized styles
+**Benefits**:
+- ✅ Single source of truth for all invoices
+- ✅ No duplicate data
+- ✅ Automatic wallet balance updates
+- ✅ Consistent UI/UX across platform
+- ✅ Simplified maintenance
+- ✅ Real-time balance sync
 
-**Status**: **READY** ✅
+**See**: `FREELANCE_WALLET_INTEGRATION_PLAN.md` for full implementation details
+
+**Status**: **ARCHITECTURE UPDATED** ✅ → Ready for implementation
 
 ---
 
