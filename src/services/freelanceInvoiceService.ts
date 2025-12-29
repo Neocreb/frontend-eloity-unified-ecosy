@@ -43,6 +43,8 @@ export class FreelanceInvoiceService {
   /**
    * Create a new freelance invoice
    * Delegates to unified invoice system via integration service
+   *
+   * Note: Currency is automatically detected from user settings or location
    */
   static async createInvoice(
     projectId: string,
@@ -56,6 +58,7 @@ export class FreelanceInvoiceService {
       discount?: number;
       notes?: string;
       terms?: string;
+      currency?: string;
     }
   ): Promise<Invoice | null> {
     try {
@@ -66,7 +69,8 @@ export class FreelanceInvoiceService {
         projectId,
         `Project ${projectId}`,
         amount,
-        options?.notes || 'Freelance work'
+        options?.notes || 'Freelance work',
+        options?.currency // Pass currency to integration service
       );
 
       if (!invoiceId) {
@@ -194,7 +198,8 @@ export class FreelanceInvoiceService {
     freelancerId: string,
     clientId: string,
     amount: number,
-    description: string
+    description: string,
+    currency?: string
   ): Promise<string | null> {
     try {
       const invoice = await freelanceInvoiceIntegrationService.getInvoice(invoiceId);
@@ -207,7 +212,8 @@ export class FreelanceInvoiceService {
         clientId,
         amount,
         description,
-        'Freelance Project'
+        'Freelance Project',
+        currency || invoice.currency
       );
     } catch (error) {
       console.error('Error creating payment link:', error);
