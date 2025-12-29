@@ -12,13 +12,14 @@ export class FreelancePaymentIntegrationService {
   /**
    * Create a payment link for freelance invoice
    * Uses the unified payment link system
-   * 
+   *
    * @param invoiceId - The invoice ID
    * @param freelancerId - The freelancer's user ID (receiver)
    * @param clientId - The client's user ID (payer)
-   * @param amount - Payment amount in USD
+   * @param amount - Payment amount
    * @param description - Payment description
    * @param projectTitle - Title of the project
+   * @param currency - Optional currency code (auto-detected if not provided)
    * @returns Payment link URL or null if failed
    */
   static async createPaymentLink(
@@ -27,9 +28,12 @@ export class FreelancePaymentIntegrationService {
     clientId: string,
     amount: number,
     description: string,
-    projectTitle: string
+    projectTitle: string,
+    currency?: string
   ): Promise<string | null> {
     try {
+      const userCurrency = currency || (await this.getUserCurrency(freelancerId));
+
       const paymentLink = await paymentLinkService.createPaymentLink(
         freelancerId,
         {
@@ -42,6 +46,7 @@ export class FreelancePaymentIntegrationService {
             freelancerId,
             clientId,
             projectTitle,
+            currency: userCurrency,
             type: "freelance_payment",
           },
           successRedirectUrl: `/app/freelance/invoices/${invoiceId}?paid=true`,
@@ -52,6 +57,63 @@ export class FreelancePaymentIntegrationService {
     } catch (error) {
       console.error("Error creating payment link:", error);
       return null;
+    }
+  }
+
+  /**
+   * Get user's preferred currency
+   */
+  private static async getUserCurrency(userId: string): Promise<string> {
+    try {
+      const { data, error } = await supabase
+        .from("user_settings")
+        .select("preferred_currency")
+        .eq("user_id", userId)
+        .single();
+
+      if (!error && data?.preferred_currency) {
+        return data.preferred_currency;
+      }
+
+      return this.detectCurrencyByLocation();
+    } catch (error) {
+      console.warn("Error getting user currency, using default:", error);
+      return "USD";
+    }
+  }
+
+  /**
+   * Detect currency based on user's timezone/location
+   */
+  private static detectCurrencyByLocation(): string {
+    try {
+      if (typeof window === "undefined") return "USD";
+
+      const savedCurrency = localStorage.getItem("preferred_currency");
+      if (savedCurrency) return savedCurrency;
+
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const currencyMap: Record<string, string> = {
+        "Europe/": "EUR",
+        "Africa/Lagos": "NGN",
+        "Africa/Accra": "GHS",
+        "Africa/Johannesburg": "ZAR",
+        "America/New_York": "USD",
+        "America/Toronto": "CAD",
+        "Australia/Sydney": "AUD",
+      };
+
+      for (const [tzPattern, currency] of Object.entries(currencyMap)) {
+        if (timezone.includes(tzPattern)) {
+          return currency;
+        }
+      }
+
+      return "USD";
+    } catch (error) {
+      console.warn("Error detecting currency by location:", error);
+      return "USD";
     }
   }
 
