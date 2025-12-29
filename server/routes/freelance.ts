@@ -686,4 +686,401 @@ router.get('/stats/:userId', async (req, res) => {
   }
 });
 
+// ============================================================================
+// INVOICE PDF GENERATION
+// ============================================================================
+
+// Get invoice and return as PDF-ready HTML
+router.get('/invoices/:id/pdf', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).userId;
+
+    // Fetch invoice from database
+    const { data: invoiceData, error: fetchError } = await (global as any).supabase
+      .from('freelance_invoices')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !invoiceData) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    // Verify user has access to this invoice
+    if (invoiceData.freelancer_id !== userId && invoiceData.client_id !== userId) {
+      return res.status(403).json({ error: 'Unauthorized access to invoice' });
+    }
+
+    // Get freelancer and client details
+    const { data: freelancerData } = await (global as any).supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', invoiceData.freelancer_id)
+      .single();
+
+    const { data: clientData } = await (global as any).supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', invoiceData.client_id)
+      .single();
+
+    // Format invoice data
+    const invoiceNumber = invoiceData.invoice_number || `INV-${invoiceData.id.slice(0, 8).toUpperCase()}`;
+    const createdDate = new Date(invoiceData.created_at).toLocaleDateString();
+    const dueDate = new Date(invoiceData.due_date).toLocaleDateString();
+    const amount = parseFloat(invoiceData.amount || '0');
+    const status = invoiceData.status || 'pending';
+
+    // Generate HTML for invoice (can be converted to PDF on client)
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+              color: #333;
+              background: #f5f5f5;
+              padding: 20px;
+            }
+            .invoice-container {
+              max-width: 900px;
+              margin: 0 auto;
+              background: white;
+              padding: 40px;
+              border-radius: 8px;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+            .invoice-header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 40px;
+              border-bottom: 2px solid #f0f0f0;
+              padding-bottom: 20px;
+            }
+            .invoice-title {
+              font-size: 32px;
+              font-weight: bold;
+              color: #000;
+            }
+            .invoice-number {
+              font-size: 14px;
+              color: #666;
+              margin-top: 5px;
+            }
+            .invoice-status {
+              display: inline-block;
+              padding: 8px 16px;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: 600;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .status-pending {
+              background: #fff3cd;
+              color: #856404;
+            }
+            .status-paid {
+              background: #d4edda;
+              color: #155724;
+            }
+            .status-overdue {
+              background: #f8d7da;
+              color: #721c24;
+            }
+            .invoice-dates {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 20px;
+              margin-bottom: 40px;
+            }
+            .date-item {
+              display: flex;
+              flex-direction: column;
+            }
+            .date-label {
+              font-size: 12px;
+              font-weight: 600;
+              color: #666;
+              text-transform: uppercase;
+              margin-bottom: 5px;
+            }
+            .date-value {
+              font-size: 16px;
+              color: #000;
+            }
+            .invoice-parties {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 40px;
+              margin-bottom: 40px;
+              padding: 20px;
+              background: #f9f9f9;
+              border-radius: 4px;
+            }
+            .party {
+              display: flex;
+              flex-direction: column;
+            }
+            .party-label {
+              font-size: 12px;
+              font-weight: 600;
+              color: #666;
+              text-transform: uppercase;
+              margin-bottom: 10px;
+            }
+            .party-name {
+              font-size: 14px;
+              font-weight: 600;
+              color: #000;
+              margin-bottom: 5px;
+            }
+            .party-email {
+              font-size: 12px;
+              color: #666;
+            }
+            .invoice-items {
+              width: 100%;
+              margin-bottom: 30px;
+              border-collapse: collapse;
+            }
+            .invoice-items thead {
+              background: #f5f5f5;
+              border-top: 2px solid #ddd;
+              border-bottom: 2px solid #ddd;
+            }
+            .invoice-items th {
+              padding: 12px;
+              text-align: left;
+              font-size: 12px;
+              font-weight: 600;
+              color: #666;
+              text-transform: uppercase;
+            }
+            .invoice-items td {
+              padding: 16px 12px;
+              border-bottom: 1px solid #e5e5e5;
+              font-size: 14px;
+            }
+            .item-description {
+              color: #000;
+              font-weight: 500;
+            }
+            .item-amount {
+              text-align: right;
+              color: #000;
+              font-weight: 600;
+            }
+            .invoice-summary {
+              display: flex;
+              justify-content: flex-end;
+              margin-bottom: 30px;
+            }
+            .summary-table {
+              width: 300px;
+            }
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 10px 0;
+              border-bottom: 1px solid #e5e5e5;
+              font-size: 14px;
+            }
+            .summary-row.total {
+              border-top: 2px solid #ddd;
+              border-bottom: none;
+              padding: 15px 0;
+              font-size: 18px;
+              font-weight: bold;
+              color: #000;
+            }
+            .summary-label {
+              color: #666;
+            }
+            .summary-value {
+              text-align: right;
+              color: #000;
+            }
+            .invoice-footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 2px solid #f0f0f0;
+              color: #666;
+              font-size: 12px;
+              line-height: 1.6;
+            }
+            @media print {
+              body {
+                background: white;
+                padding: 0;
+              }
+              .invoice-container {
+                box-shadow: none;
+                padding: 0;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-container">
+            <div class="invoice-header">
+              <div>
+                <div class="invoice-title">Invoice</div>
+                <div class="invoice-number">#${invoiceNumber}</div>
+              </div>
+              <div>
+                <div class="invoice-status status-${status === 'paid' ? 'paid' : status === 'overdue' ? 'overdue' : 'pending'}">
+                  ${status.toUpperCase()}
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-dates">
+              <div class="date-item">
+                <div class="date-label">Invoice Date</div>
+                <div class="date-value">${createdDate}</div>
+              </div>
+              <div class="date-item">
+                <div class="date-label">Due Date</div>
+                <div class="date-value">${dueDate}</div>
+              </div>
+            </div>
+
+            <div class="invoice-parties">
+              <div class="party">
+                <div class="party-label">Bill From</div>
+                <div class="party-name">${freelancerData?.full_name || 'Freelancer'}</div>
+                <div class="party-email">${freelancerData?.email || 'freelancer@example.com'}</div>
+              </div>
+              <div class="party">
+                <div class="party-label">Bill To</div>
+                <div class="party-name">${clientData?.full_name || 'Client'}</div>
+                <div class="party-email">${clientData?.email || 'client@example.com'}</div>
+              </div>
+            </div>
+
+            <table class="invoice-items">
+              <thead>
+                <tr>
+                  <th style="width: 60%;">Description</th>
+                  <th style="width: 20%; text-align: right;">Quantity</th>
+                  <th style="width: 20%; text-align: right;">Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="item-description">${invoiceData.description || 'Freelance Services'}</td>
+                  <td style="text-align: right;">1</td>
+                  <td class="item-amount">$${amount.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div class="invoice-summary">
+              <div class="summary-table">
+                <div class="summary-row total">
+                  <span class="summary-label">Total</span>
+                  <span class="summary-value">$${amount.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-footer">
+              <p>Thank you for your business.</p>
+              <p>Please make payment by the due date. For payment instructions, contact the freelancer.</p>
+              <p style="margin-top: 15px; color: #999;">This is an electronically generated invoice.</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // Set response headers for PDF download
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoiceNumber}.html"`);
+    res.send(html);
+  } catch (error) {
+    logger.error('Error generating invoice PDF:', error);
+    res.status(500).json({ error: 'Failed to generate invoice' });
+  }
+});
+
+// Get invoice HTML for display (without download headers)
+router.get('/invoices/:id/html', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = (req as any).userId;
+
+    // Fetch invoice from database
+    const { data: invoiceData, error: fetchError } = await (global as any).supabase
+      .from('freelance_invoices')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (fetchError || !invoiceData) {
+      return res.status(404).json({ error: 'Invoice not found' });
+    }
+
+    // Verify user has access to this invoice
+    if (invoiceData.freelancer_id !== userId && invoiceData.client_id !== userId) {
+      return res.status(403).json({ error: 'Unauthorized access to invoice' });
+    }
+
+    // Get freelancer and client details
+    const { data: freelancerData } = await (global as any).supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', invoiceData.freelancer_id)
+      .single();
+
+    const { data: clientData } = await (global as any).supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', invoiceData.client_id)
+      .single();
+
+    // Format invoice data
+    const invoiceNumber = invoiceData.invoice_number || `INV-${invoiceData.id.slice(0, 8).toUpperCase()}`;
+    const createdDate = new Date(invoiceData.created_at).toLocaleDateString();
+    const dueDate = new Date(invoiceData.due_date).toLocaleDateString();
+    const amount = parseFloat(invoiceData.amount || '0');
+    const status = invoiceData.status || 'pending';
+
+    // Return invoice data as JSON for client-side rendering
+    res.json({
+      success: true,
+      invoice: {
+        id,
+        number: invoiceNumber,
+        status,
+        createdDate,
+        dueDate,
+        description: invoiceData.description || 'Freelance Services',
+        amount: amount.toFixed(2),
+        freelancer: {
+          name: freelancerData?.full_name || 'Freelancer',
+          email: freelancerData?.email || 'freelancer@example.com',
+        },
+        client: {
+          name: clientData?.full_name || 'Client',
+          email: clientData?.email || 'client@example.com',
+        },
+      },
+    });
+  } catch (error) {
+    logger.error('Error fetching invoice HTML:', error);
+    res.status(500).json({ error: 'Failed to fetch invoice' });
+  }
+});
+
 export default router;
