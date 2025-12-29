@@ -32,7 +32,8 @@ export class FreelanceWithdrawalIntegrationService {
       cryptoNetwork?: string;
       mobileMoneyNumber?: string;
       mobileMoneyCountry?: string;
-    }
+    },
+    currency?: string
   ): Promise<string | null> {
     try {
       // Validate balance first
@@ -41,18 +42,19 @@ export class FreelanceWithdrawalIntegrationService {
       );
 
       if (!eligibility.isEligible) {
-        throw new Error(eligibility.reason || "Not eligible for withdrawal");
+        throw new Error(eligibility.reason || "No balance available for withdrawal");
       }
 
-      if (amount < eligibility.minimumWithdrawal) {
-        throw new Error(
-          `Minimum withdrawal is $${eligibility.minimumWithdrawal}`
-        );
+      if (amount <= 0) {
+        throw new Error("Withdrawal amount must be greater than 0");
       }
 
       if (amount > eligibility.balance) {
         throw new Error("Insufficient freelance balance");
       }
+
+      // Get user's currency if not provided
+      const userCurrency = currency || (await this.getUserCurrency(freelancerId));
 
       // Create withdrawal request in unified system
       const { data, error } = await supabase
@@ -61,6 +63,7 @@ export class FreelanceWithdrawalIntegrationService {
           {
             user_id: freelancerId,
             amount: amount,
+            currency: userCurrency,
             withdrawal_method: withdrawalMethod,
             withdrawal_details: withdrawalDetails,
             status: "pending",
@@ -68,6 +71,7 @@ export class FreelanceWithdrawalIntegrationService {
             metadata: {
               source: "freelance_platform",
               method: withdrawalMethod,
+              currency: userCurrency,
               processed_at: new Date().toISOString(),
             },
           },
@@ -84,7 +88,8 @@ export class FreelanceWithdrawalIntegrationService {
         freelancerId,
         amount,
         "freelance",
-        data.id
+        data.id,
+        userCurrency
       );
 
       return data.id;
@@ -96,24 +101,29 @@ export class FreelanceWithdrawalIntegrationService {
 
   /**
    * Record withdrawal in wallet transaction history
-   * 
+   *
    * @param userId - The user's ID
    * @param amount - Withdrawal amount
    * @param balanceType - Type of balance ('freelance', 'ecommerce', 'crypto', 'rewards')
    * @param withdrawalId - The withdrawal request ID
+   * @param currency - The currency used
    */
   private static async recordWithdrawalTransaction(
     userId: string,
     amount: number,
     balanceType: string,
-    withdrawalId: string
+    withdrawalId: string,
+    currency?: string
   ): Promise<void> {
     try {
+      const userCurrency = currency || (await this.getUserCurrency(userId));
+
       await supabase.from("wallet_transactions").insert([
         {
           user_id: userId,
           transaction_type: "withdrawal",
           amount: amount,
+          currency: userCurrency,
           balance_type: balanceType,
           withdrawal_id: withdrawalId,
           description: `Withdrawal request from ${balanceType} balance`,
@@ -122,6 +132,7 @@ export class FreelanceWithdrawalIntegrationService {
           metadata: {
             withdrawalId,
             type: "freelance_withdrawal",
+            currency: userCurrency,
           },
         },
       ]);
@@ -224,36 +235,32 @@ export class FreelanceWithdrawalIntegrationService {
 
   /**
    * Check freelancer withdrawal eligibility
-   * 
+   * Since withdrawals to unified wallet (internal transfer) have no minimum,
+   * eligibility is simply having a positive balance.
+   *
    * @param freelancerId - The freelancer's user ID
-   * @returns Eligibility object with balance, minimum withdrawal, and reason if not eligible
+   * @returns Eligibility object with balance and reason if not eligible
    */
   static async checkWithdrawalEligibility(
     freelancerId: string
   ): Promise<{
     isEligible: boolean;
     balance: number;
-    minimumWithdrawal: number;
-    maximumWithdrawal: number;
     reason?: string;
   }> {
     try {
       const balance = await walletService.getWalletBalance();
       const freelanceBalance = balance.freelance || 0;
-      const minimumWithdrawal = 10; // Minimum $10 withdrawal
-      const maximumWithdrawal = 100000; // Maximum $100,000 per withdrawal
 
-      const isEligible =
-        freelanceBalance >= minimumWithdrawal && freelanceBalance > 0;
+      // Eligible if balance > 0 (no minimum for internal wallet transfers)
+      const isEligible = freelanceBalance > 0;
 
       return {
         isEligible,
         balance: freelanceBalance,
-        minimumWithdrawal,
-        maximumWithdrawal,
         reason:
-          freelanceBalance < minimumWithdrawal
-            ? `Minimum withdrawal is $${minimumWithdrawal}`
+          freelanceBalance <= 0
+            ? "No balance available for withdrawal"
             : undefined,
       };
     } catch (error) {
@@ -261,8 +268,6 @@ export class FreelanceWithdrawalIntegrationService {
       return {
         isEligible: false,
         balance: 0,
-        minimumWithdrawal: 10,
-        maximumWithdrawal: 100000,
         reason: "Error checking eligibility",
       };
     }
@@ -316,6 +321,87 @@ export class FreelanceWithdrawalIntegrationService {
         withdrawalCount: 0,
         averageWithdrawal: 0,
       };
+    }
+  }
+
+  /**
+   * Get user's preferred currency
+   * Checks user settings first, then falls back to automatic detection
+   *
+   * @param userId - The user's ID
+   * @returns Currency code (e.g., 'USD', 'EUR', 'GBP')
+   */
+  private static async getUserCurrency(userId: string): Promise<string> {
+    try {
+      // Try to get from user profile/settings first
+      const { data, error } = await supabase
+        .from("user_settings")
+        .select("preferred_currency")
+        .eq("user_id", userId)
+        .single();
+
+      if (!error && data?.preferred_currency) {
+        return data.preferred_currency;
+      }
+
+      // Fall back to automatic detection based on timezone/location
+      return this.detectCurrencyByLocation();
+    } catch (error) {
+      console.warn("Error getting user currency, using default:", error);
+      return "USD"; // Default fallback
+    }
+  }
+
+  /**
+   * Detect currency based on user's timezone/location
+   * Uses browser timezone to infer currency
+   */
+  private static detectCurrencyByLocation(): string {
+    try {
+      if (typeof window === "undefined") return "USD";
+
+      // First, check localStorage for saved preference
+      const savedCurrency = localStorage.getItem("preferred_currency");
+      if (savedCurrency) return savedCurrency;
+
+      // Detect based on timezone
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      // Simple mapping based on timezone
+      const currencyMap: Record<string, string> = {
+        "Europe/": "EUR",
+        "Europe/London": "GBP",
+        "Europe/Paris": "EUR",
+        "Europe/Berlin": "EUR",
+        "Africa/Lagos": "NGN",
+        "Africa/Accra": "GHS",
+        "Africa/Johannesburg": "ZAR",
+        "Africa/Nairobi": "KES",
+        "Africa/Kampala": "UGX",
+        "Africa/Cairo": "EGP",
+        "Asia/Tokyo": "JPY",
+        "Asia/Shanghai": "CNY",
+        "Asia/Hong_Kong": "HKD",
+        "Asia/Singapore": "SGD",
+        "Asia/Dubai": "AED",
+        "America/New_York": "USD",
+        "America/Toronto": "CAD",
+        "America/Mexico_City": "MXN",
+        "America/Sao_Paulo": "BRL",
+        "Australia/Sydney": "AUD",
+      };
+
+      for (const [tzPattern, currency] of Object.entries(currencyMap)) {
+        if (timezone.includes(tzPattern)) {
+          return currency;
+        }
+      }
+
+      // Default to USD if no match
+      return "USD";
+    } catch (error) {
+      console.warn("Error detecting currency by location:", error);
+      return "USD";
     }
   }
 
