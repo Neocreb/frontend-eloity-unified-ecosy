@@ -28,6 +28,7 @@ export interface Invoice {
   projectId?: string;
   freelancerId?: string;
   clientId?: string;
+  currency?: string; // Dynamic currency based on user settings/location
 }
 
 export interface CreateInvoiceInput {
@@ -42,6 +43,7 @@ export interface CreateInvoiceInput {
   projectId?: string;
   freelancerId?: string;
   clientId?: string;
+  currency?: string; // Dynamic currency based on user settings/location
 }
 
 class InvoiceService {
@@ -75,6 +77,7 @@ class InvoiceService {
             project_id: input.projectId,
             freelancer_id: input.freelancerId,
             client_id: input.clientId,
+            currency: input.currency || 'USD', // Default to USD if not provided
           },
         ])
         .select()
@@ -579,6 +582,7 @@ class InvoiceService {
       projectId: data.project_id,
       freelancerId: data.freelancer_id,
       clientId: data.client_id,
+      currency: data.currency || 'USD', // Dynamic currency or default USD
     };
   }
 }
