@@ -105,51 +105,55 @@ await FreelanceNotificationService.createNotification({
 
 ---
 
-## 📋 REMAINING TASKS (4 blockers)
+## 📋 REMAINING TASKS (4 blockers - UPDATED FOR UNIFIED WALLET)
 
-### 1. 🗄️ CRITICAL: Database Migration Verification
-**Priority**: CRITICAL (blocking other features)  
-**Estimated Time**: 15 minutes
+### 1. 🗄️ CRITICAL: Database Verification & Enhancement
+**Priority**: CRITICAL (blocking other features)
+**Estimated Time**: 20 minutes
 
 **What you need to do**:
+
+**Part A**: Verify freelance tables exist
 1. Open Supabase dashboard → SQL Editor
-2. Run this verification query:
+2. Run verification query (see FREELANCE_IMMEDIATE_ACTION_GUIDE.md)
+3. Count results (should be 15-18 freelance tables) ✅
+
+**Part B**: Enhance invoices table for freelance (NEW)
+1. Run this SQL in Supabase:
 ```sql
-SELECT table_name FROM information_schema.tables 
-WHERE table_schema = 'public' 
-AND (table_name LIKE 'freelance_%' 
-     OR table_name LIKE 'freelancer_%'
-     OR table_name LIKE 'escrow_%')
-ORDER BY table_name;
+-- Add fields to categorize invoices
+ALTER TABLE invoices
+ADD COLUMN IF NOT EXISTS type TEXT DEFAULT 'general',
+ADD COLUMN IF NOT EXISTS source_type TEXT,
+ADD COLUMN IF NOT EXISTS project_id UUID,
+ADD COLUMN IF NOT EXISTS freelancer_id UUID,
+ADD COLUMN IF NOT EXISTS client_id UUID;
+
+-- Create index for faster filtering
+CREATE INDEX idx_invoices_type ON invoices(type);
+CREATE INDEX idx_invoices_freelance ON invoices(type, freelancer_id) WHERE type = 'freelance';
 ```
 
-3. Count the results (should be 18 tables)
+2. Verify columns were added:
+```sql
+SELECT column_name FROM information_schema.columns
+WHERE table_name = 'invoices' AND column_name IN ('type', 'source_type', 'project_id');
+```
 
-**Expected tables**:
-- freelance_projects
-- freelance_proposals
-- freelance_contracts
-- freelance_work_submissions
-- freelance_payments
-- freelance_reviews
-- freelance_disputes
-- freelance_skills
-- freelance_user_skills
-- freelance_profiles
-- freelance_messages
-- freelance_stats
-- freelance_notifications
-- freelance_invoices
-- freelance_withdrawals
-- freelance_activity_logs
-- freelance_escrow
-- escrow_contracts or escrow_milestones
+Should see: `type`, `source_type`, `project_id`, `freelancer_id`, `client_id`
 
-**If tables are missing**:
-1. Copy entire SQL from: `scripts/database/create-freelance-complete-schema.sql`
-2. Go to Supabase SQL Editor
-3. Paste and run the entire script
-4. Verify again with above query
+**Part C**: Update withdrawals table for freelance tracking (OPTIONAL)
+```sql
+ALTER TABLE withdrawals
+ADD COLUMN IF NOT EXISTS withdrawal_type TEXT DEFAULT 'general',
+ADD COLUMN IF NOT EXISTS freelance_project_id UUID;
+```
+
+**Expected Result**:
+- ✅ Freelance tables verified
+- ✅ Invoices table enhanced with freelance fields
+- ✅ No separate freelance_invoices table created
+- ✅ Unified wallet system ready
 
 ---
 
