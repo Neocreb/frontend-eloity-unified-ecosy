@@ -51,12 +51,12 @@ export class FreelanceWithdrawalService {
       const withdrawalDetails = this.prepareWithdrawalDetails(method, bankDetails);
 
       // Create withdrawal via integration service
-      const withdrawalId = await freelanceWithdrawalIntegrationService.requestWithdrawal({
+      const withdrawalId = await freelanceWithdrawalIntegrationService.requestWithdrawal(
         freelancerId,
         amount,
-        withdrawalMethod: method,
-        withdrawalDetails,
-      });
+        method,
+        withdrawalDetails
+      );
 
       if (!withdrawalId) {
         throw new Error('Failed to create withdrawal request');
@@ -99,6 +99,7 @@ export class FreelanceWithdrawalService {
     eligible: boolean;
     balance: number;
     minimumWithdrawal: number;
+    maximumWithdrawal?: number;
     reason?: string;
   }> {
     try {
@@ -110,6 +111,7 @@ export class FreelanceWithdrawalService {
         eligible: eligibility.isEligible,
         balance: eligibility.balance,
         minimumWithdrawal: eligibility.minimumWithdrawal,
+        maximumWithdrawal: eligibility.maximumWithdrawal,
         reason: eligibility.reason,
       };
     } catch (error) {
@@ -157,21 +159,22 @@ export class FreelanceWithdrawalService {
   ): Promise<Withdrawal[]> {
     try {
       const withdrawals = await freelanceWithdrawalIntegrationService.getFreelancerWithdrawals(
-        freelancerId,
-        status
+        freelancerId
       );
 
-      return withdrawals.map(w => ({
-        id: w.id,
-        freelancerId,
-        amount: w.amount,
-        currency: 'USD',
-        method: w.method as any,
-        status: w.status as any,
-        fee: this.calculateFeeAmount(w.amount),
-        netAmount: w.amount - this.calculateFeeAmount(w.amount),
-        requestedAt: new Date(),
-      }));
+      return withdrawals
+        .filter((w) => !status || w.status === status)
+        .map((w) => ({
+          id: w.id,
+          freelancerId,
+          amount: w.amount,
+          currency: 'USD',
+          method: (w.withdrawal_method || 'bank_transfer') as any,
+          status: (w.status || 'pending') as any,
+          fee: this.calculateFeeAmount(w.amount),
+          netAmount: w.amount - this.calculateFeeAmount(w.amount),
+          requestedAt: new Date(w.created_at || new Date()),
+        }));
     } catch (error) {
       console.error('Error fetching withdrawals:', error);
       return [];
@@ -200,7 +203,12 @@ export class FreelanceWithdrawalService {
     lastWithdrawal?: Date;
   }> {
     try {
-      return await freelanceWithdrawalIntegrationService.getWithdrawalStats(freelancerId);
+      const stats = await freelanceWithdrawalIntegrationService.getWithdrawalStats(freelancerId);
+      return {
+        totalWithdrawn: stats.completedAmount,
+        totalPending: stats.pendingAmount,
+        totalFailed: 0,
+      };
     } catch (error) {
       console.error('Error getting withdrawal stats:', error);
       return {
