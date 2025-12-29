@@ -217,39 +217,38 @@ const subscription = supabase
 
 ---
 
-### 4. 💳 Payout Provider Integration
-**Priority**: MEDIUM-HIGH  
-**Estimated Time**: 2-3 days (choose one provider)
+### 4. 💳 Unified Wallet Payout Integration
+**Priority**: MEDIUM-HIGH
+**Estimated Time**: 2-3 days
 
-**Options** (choose one):
+**IMPORTANT**: Use the existing wallet withdrawal system, don't create separate freelance payouts.
 
-**A) Stripe Connect** (Recommended - Most features)
-- Bank transfers + debit cards
-- Automated payouts
-- Best docs and support
-- Setup time: 2-3 days
+**Architecture**:
+- ✅ Freelancer balance updates in `wallet.freelance` balance
+- ✅ Use existing withdrawal system at `/app/wallet/withdraw`
+- ✅ Extend existing withdrawals table with `withdrawal_type: 'freelance_earnings'`
+- ✅ Reuse payout providers already integrated with wallet
 
-**B) Wise API** (Best for international)
-- International bank transfers
-- Real exchange rates
-- Lower fees
-- Setup time: 2-3 days
+**What to implement**:
+1. Create `freelanceWithdrawalIntegrationService.ts`
+   - Uses existing `withdrawals` table
+   - Tags withdrawals as `withdrawal_type: 'freelance_earnings'`
+   - Validates freelance balance
+   - Records transaction in wallet system
 
-**C) PayPal Payouts** (Quick setup)
-- PayPal transfers
-- Mass payouts API
-- Fastest to implement
-- Setup time: 1-2 days
+2. Update `FreelancerEarnings.tsx` component
+   - Show freelance balance from wallet
+   - Link to `/app/wallet/withdraw?type=freelance` for withdrawals
+   - Reuse existing withdrawal UI
 
-**D) Crypto/Blockchain** (Web3)
-- Crypto transfers
-- Moralis or Alchemy APIs
-- Setup time: 2-3 days
+3. Payout providers (Stripe/Wise/PayPal/Crypto)
+   - Already integrated with wallet system
+   - No duplicate setup needed
+   - Freelance withdrawals use same providers
 
-**Where to add**:
-- Create: `src/services/payoutProviderService.ts`
-- Update: `src/services/freelanceWithdrawalService.ts`
-- Add API credentials to `.env`
+**See**: `FREELANCE_WALLET_INTEGRATION_PLAN.md` → Phase 4: Withdrawal Integration
+
+**Timeline**: 2-3 days to integrate with existing system
 
 ---
 
