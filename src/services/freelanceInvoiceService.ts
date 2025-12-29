@@ -1,5 +1,12 @@
 // @ts-nocheck
-import { supabase } from "@/integrations/supabase/client";
+/**
+ * Freelance Invoice Service (Updated)
+ * This service now delegates to freelanceInvoiceIntegrationService
+ * Uses the unified wallet invoice system instead of creating duplicates
+ */
+
+import { freelanceInvoiceIntegrationService } from './freelanceInvoiceIntegrationService';
+import { freelancePaymentIntegrationService } from './freelancePaymentIntegrationService';
 
 export interface Invoice {
   id: string;
@@ -9,7 +16,7 @@ export interface Invoice {
   invoiceNumber: string;
   amount: number;
   currency: string;
-  status: "draft" | "sent" | "viewed" | "partial" | "paid" | "overdue" | "cancelled";
+  status: 'draft' | 'sent' | 'viewed' | 'partial' | 'paid' | 'overdue' | 'cancelled';
   issueDate: Date;
   dueDate: Date;
   lineItems: InvoiceLineItem[];
@@ -33,17 +40,17 @@ export interface InvoiceLineItem {
 }
 
 export class FreelanceInvoiceService {
-  // ============================================================================
-  // INVOICE CREATION AND MANAGEMENT
-  // ============================================================================
-
+  /**
+   * Create a new freelance invoice
+   * Delegates to unified invoice system via integration service
+   */
   static async createInvoice(
     projectId: string,
     freelancerId: string,
     clientId: string,
     amount: number,
     dueDate: Date,
-    lineItems: Omit<InvoiceLineItem, "id">[] = [],
+    lineItems: Omit<InvoiceLineItem, 'id'>[] = [],
     options?: {
       taxRate?: number;
       discount?: number;
@@ -52,578 +59,236 @@ export class FreelanceInvoiceService {
     }
   ): Promise<Invoice | null> {
     try {
-      const invoiceNumber = await this.generateInvoiceNumber(freelancerId);
-      const taxAmount = amount * ((options?.taxRate || 0) / 100);
-      const discountAmount = options?.discount || 0;
-
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .insert([
-          {
-            project_id: projectId,
-            freelancer_id: freelancerId,
-            client_id: clientId,
-            invoice_number: invoiceNumber,
-            amount,
-            currency: "USD",
-            status: "draft",
-            issue_date: new Date().toISOString(),
-            due_date: dueDate.toISOString(),
-            tax_rate: options?.taxRate || 0,
-            tax_amount: taxAmount,
-            discount_amount: discountAmount,
-            notes: options?.notes,
-            terms_and_conditions: options?.terms,
-            line_items:
-              lineItems.map((item) => ({
-                ...item,
-                id: Math.random().toString(36).substr(2, 9),
-              })) || [],
-            created_at: new Date().toISOString(),
-          },
-        ])
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await this.logInvoiceActivity(
+      // Use integration service to create invoice in unified system
+      const invoiceId = await freelanceInvoiceIntegrationService.createProjectInvoice({
         freelancerId,
-        "invoice_created",
-        data.id,
-        invoiceNumber
-      );
+        clientId,
+        projectId,
+        projectTitle: `Project ${projectId}`,
+        amount,
+        dueDate,
+        description: options?.notes || 'Freelance work',
+      });
 
-      return this.mapInvoiceData(data);
+      if (!invoiceId) {
+        throw new Error('Failed to create invoice');
+      }
+
+      // Fetch and return the created invoice
+      return await this.getInvoice(invoiceId);
     } catch (error) {
-      console.error("Error creating invoice:", error);
+      console.error('Error creating invoice:', error);
       return null;
     }
   }
 
-  static async updateInvoice(
-    invoiceId: string,
-    updates: Partial<Omit<Invoice, "id" | "invoiceNumber" | "createdAt">>
-  ): Promise<Invoice | null> {
-    try {
-      const updateData: any = {};
-
-      if (updates.amount !== undefined) updateData.amount = updates.amount;
-      if (updates.dueDate !== undefined)
-        updateData.due_date = updates.dueDate.toISOString();
-      if (updates.status !== undefined) updateData.status = updates.status;
-      if (updates.taxRate !== undefined) updateData.tax_rate = updates.taxRate;
-      if (updates.taxAmount !== undefined) updateData.tax_amount = updates.taxAmount;
-      if (updates.discountAmount !== undefined)
-        updateData.discount_amount = updates.discountAmount;
-      if (updates.notes !== undefined) updateData.notes = updates.notes;
-      if (updates.termsAndConditions !== undefined)
-        updateData.terms_and_conditions = updates.termsAndConditions;
-      if (updates.lineItems !== undefined) {
-        updateData.line_items = updates.lineItems.map((item) => ({
-          ...item,
-          id: item.id || Math.random().toString(36).substr(2, 9),
-        }));
-      }
-
-      updateData.updated_at = new Date().toISOString();
-
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .update(updateData)
-        .eq("id", invoiceId)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      await this.logInvoiceActivity(
-        updates.freelancerId || "",
-        "invoice_updated",
-        invoiceId,
-        data.invoice_number
-      );
-
-      return this.mapInvoiceData(data);
-    } catch (error) {
-      console.error("Error updating invoice:", error);
-      return null;
-    }
-  }
-
-  static async sendInvoice(invoiceId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from("freelance_invoices")
-        .update({
-          status: "sent",
-          sent_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", invoiceId);
-
-      if (error) throw error;
-
-      const invoice = await this.getInvoice(invoiceId);
-      if (invoice) {
-        await this.logInvoiceActivity(
-          invoice.freelancerId,
-          "invoice_sent",
-          invoiceId,
-          invoice.invoiceNumber
-        );
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error sending invoice:", error);
-      return false;
-    }
-  }
-
-  static async markInvoiceAsViewed(invoiceId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from("freelance_invoices")
-        .update({
-          status: "viewed",
-          viewed_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", invoiceId);
-
-      if (error) throw error;
-      return true;
-    } catch (error) {
-      console.error("Error marking invoice as viewed:", error);
-      return false;
-    }
-  }
-
-  static async markInvoiceAsPaid(
-    invoiceId: string,
-    paidAmount?: number
-  ): Promise<boolean> {
-    try {
-      const invoice = await this.getInvoice(invoiceId);
-      if (!invoice) return false;
-
-      const status =
-        paidAmount && paidAmount < invoice.amount ? "partial" : "paid";
-
-      const { error } = await supabase
-        .from("freelance_invoices")
-        .update({
-          status,
-          paid_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", invoiceId);
-
-      if (error) throw error;
-
-      // Log the payment
-      if (status === "paid") {
-        await this.logInvoiceActivity(
-          invoice.freelancerId,
-          "invoice_paid",
-          invoiceId,
-          invoice.invoiceNumber
-        );
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error marking invoice as paid:", error);
-      return false;
-    }
-  }
-
-  static async cancelInvoice(invoiceId: string): Promise<boolean> {
-    try {
-      const { error } = await supabase
-        .from("freelance_invoices")
-        .update({
-          status: "cancelled",
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", invoiceId);
-
-      if (error) throw error;
-
-      const invoice = await this.getInvoice(invoiceId);
-      if (invoice) {
-        await this.logInvoiceActivity(
-          invoice.freelancerId,
-          "invoice_cancelled",
-          invoiceId,
-          invoice.invoiceNumber
-        );
-      }
-
-      return true;
-    } catch (error) {
-      console.error("Error cancelling invoice:", error);
-      return false;
-    }
-  }
-
-  // ============================================================================
-  // INVOICE RETRIEVAL
-  // ============================================================================
-
+  /**
+   * Get a specific invoice by ID
+   */
   static async getInvoice(invoiceId: string): Promise<Invoice | null> {
     try {
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .select("*")
-        .eq("id", invoiceId)
-        .single();
-
-      if (error) return null;
-
-      return this.mapInvoiceData(data);
-    } catch (error) {
-      console.error("Error fetching invoice:", error);
-      return null;
-    }
-  }
-
-  static async getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | null> {
-    try {
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .select("*")
-        .eq("invoice_number", invoiceNumber)
-        .single();
-
-      if (error) return null;
-
-      return this.mapInvoiceData(data);
-    } catch (error) {
-      console.error("Error fetching invoice by number:", error);
-      return null;
-    }
-  }
-
-  static async getFreelancerInvoices(
-    freelancerId: string,
-    status?: Invoice["status"]
-  ): Promise<Invoice[]> {
-    try {
-      let query = supabase
-        .from("freelance_invoices")
-        .select("*")
-        .eq("freelancer_id", freelancerId);
-
-      if (status) {
-        query = query.eq("status", status);
-      }
-
-      const { data, error } = await query.order("issue_date", {
-        ascending: false,
-      });
-
-      if (error) throw error;
-
-      return (data || []).map((inv) => this.mapInvoiceData(inv));
-    } catch (error) {
-      console.error("Error fetching invoices:", error);
-      return [];
-    }
-  }
-
-  static async getProjectInvoices(projectId: string): Promise<Invoice[]> {
-    try {
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .select("*")
-        .eq("project_id", projectId)
-        .order("issue_date", { ascending: false });
-
-      if (error) throw error;
-
-      return (data || []).map((inv) => this.mapInvoiceData(inv));
-    } catch (error) {
-      console.error("Error fetching project invoices:", error);
-      return [];
-    }
-  }
-
-  static async getClientInvoices(clientId: string): Promise<Invoice[]> {
-    try {
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .select("*")
-        .eq("client_id", clientId)
-        .order("issue_date", { ascending: false });
-
-      if (error) throw error;
-
-      return (data || []).map((inv) => this.mapInvoiceData(inv));
-    } catch (error) {
-      console.error("Error fetching client invoices:", error);
-      return [];
-    }
-  }
-
-  // ============================================================================
-  // INVOICE STATISTICS AND REPORTING
-  // ============================================================================
-
-  static async getInvoiceStats(
-    freelancerId: string
-  ): Promise<{
-    totalIssued: number;
-    totalPaid: number;
-    totalOutstanding: number;
-    totalOverdue: number;
-    averageInvoiceAmount: number;
-  } | null> {
-    try {
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .select("amount, status")
-        .eq("freelancer_id", freelancerId);
-
-      if (error) throw error;
-
-      const invoices = data || [];
-      const paidInvoices = invoices.filter((i: any) => i.status === "paid");
-      const outstandingInvoices = invoices.filter(
-        (i: any) => i.status === "sent" || i.status === "viewed" || i.status === "partial"
-      );
-      const overdueInvoices = invoices.filter((i: any) => i.status === "overdue");
-
-      const totalIssued = invoices.reduce(
-        (sum: number, i: any) => sum + (i.amount || 0),
-        0
-      );
-      const totalPaid = paidInvoices.reduce(
-        (sum: number, i: any) => sum + (i.amount || 0),
-        0
-      );
-      const totalOutstanding = outstandingInvoices.reduce(
-        (sum: number, i: any) => sum + (i.amount || 0),
-        0
-      );
-      const totalOverdue = overdueInvoices.reduce(
-        (sum: number, i: any) => sum + (i.amount || 0),
-        0
-      );
-      const averageAmount = invoices.length > 0 ? totalIssued / invoices.length : 0;
-
-      return {
-        totalIssued,
-        totalPaid,
-        totalOutstanding,
-        totalOverdue,
-        averageInvoiceAmount: averageAmount,
-      };
-    } catch (error) {
-      console.error("Error fetching invoice stats:", error);
-      return null;
-    }
-  }
-
-  static async getMonthlyInvoiceStats(
-    freelancerId: string,
-    year: number,
-    month: number
-  ): Promise<{
-    totalIssued: number;
-    totalPaid: number;
-    invoiceCount: number;
-    averageAmount: number;
-  } | null> {
-    try {
-      const startDate = new Date(year, month - 1, 1);
-      const endDate = new Date(year, month, 0);
-
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .select("amount, status")
-        .eq("freelancer_id", freelancerId)
-        .gte("issue_date", startDate.toISOString())
-        .lte("issue_date", endDate.toISOString());
-
-      if (error) throw error;
-
-      const invoices = data || [];
-      const paidInvoices = invoices.filter((i: any) => i.status === "paid");
-
-      const totalIssued = invoices.reduce(
-        (sum: number, i: any) => sum + (i.amount || 0),
-        0
-      );
-      const totalPaid = paidInvoices.reduce(
-        (sum: number, i: any) => sum + (i.amount || 0),
-        0
-      );
-      const averageAmount = invoices.length > 0 ? totalIssued / invoices.length : 0;
-
-      return {
-        totalIssued,
-        totalPaid,
-        invoiceCount: invoices.length,
-        averageAmount,
-      };
-    } catch (error) {
-      console.error("Error fetching monthly invoice stats:", error);
-      return null;
-    }
-  }
-
-  static async getOverdueInvoices(freelancerId: string): Promise<Invoice[]> {
-    try {
-      const now = new Date();
-      const { data, error } = await supabase
-        .from("freelance_invoices")
-        .select("*")
-        .eq("freelancer_id", freelancerId)
-        .in("status", ["sent", "viewed", "partial"])
-        .lt("due_date", now.toISOString())
-        .order("due_date", { ascending: true });
-
-      if (error) throw error;
-
-      return (data || []).map((inv) => this.mapInvoiceData(inv));
-    } catch (error) {
-      console.error("Error fetching overdue invoices:", error);
-      return [];
-    }
-  }
-
-  // ============================================================================
-  // INVOICE GENERATION AND EXPORT
-  // ============================================================================
-
-  static async generateInvoicePDF(invoiceId: string): Promise<string | null> {
-    try {
-      const invoice = await this.getInvoice(invoiceId);
+      const invoice = await freelanceInvoiceIntegrationService.getInvoice(invoiceId);
       if (!invoice) return null;
 
-      // Fetch HTML representation from server
-      const response = await fetch(`/api/invoices/${invoiceId}/pdf`, {
-        method: "GET",
-      });
-
-      if (response.ok) {
-        // Get the HTML content
-        const html = await response.text();
-        return html;
-      }
-      return null;
+      return this.mapToInvoiceInterface(invoice);
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error('Error fetching invoice:', error);
       return null;
     }
   }
 
+  /**
+   * Get all invoices created by a freelancer
+   */
+  static async getFreelancerInvoices(freelancerId: string): Promise<Invoice[]> {
+    try {
+      const invoices = await freelanceInvoiceIntegrationService.getFreelancerInvoices(
+        freelancerId
+      );
+      return invoices.map(inv => this.mapToInvoiceInterface(inv));
+    } catch (error) {
+      console.error('Error fetching freelancer invoices:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get all invoices that need to be paid by a client
+   */
+  static async getClientInvoices(clientId: string): Promise<Invoice[]> {
+    try {
+      const invoices = await freelanceInvoiceIntegrationService.getClientInvoices(clientId);
+      return invoices.map(inv => this.mapToInvoiceInterface(inv));
+    } catch (error) {
+      console.error('Error fetching client invoices:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get invoices for a specific project
+   */
+  static async getProjectInvoices(projectId: string): Promise<Invoice[]> {
+    try {
+      const invoices = await freelanceInvoiceIntegrationService.getProjectInvoices(projectId);
+      return invoices.map(inv => this.mapToInvoiceInterface(inv));
+    } catch (error) {
+      console.error('Error fetching project invoices:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Send invoice to client
+   */
+  static async sendInvoice(invoiceId: string): Promise<boolean> {
+    try {
+      return await freelanceInvoiceIntegrationService.sendInvoice(invoiceId);
+    } catch (error) {
+      console.error('Error sending invoice:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Mark invoice as paid
+   */
+  static async markAsPaid(invoiceId: string, amount: number, freelancerId: string): Promise<boolean> {
+    try {
+      return await freelanceInvoiceIntegrationService.markInvoiceAsPaid(
+        invoiceId,
+        freelancerId,
+        amount
+      );
+    } catch (error) {
+      console.error('Error marking invoice as paid:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Cancel an invoice
+   */
+  static async cancelInvoice(invoiceId: string): Promise<boolean> {
+    try {
+      return await freelanceInvoiceIntegrationService.cancelInvoice(invoiceId);
+    } catch (error) {
+      console.error('Error cancelling invoice:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Create a payment link for an invoice
+   */
+  static async createPaymentLink(
+    invoiceId: string,
+    freelancerId: string,
+    clientId: string,
+    amount: number,
+    description: string
+  ): Promise<string | null> {
+    try {
+      return await freelancePaymentIntegrationService.createPaymentLink({
+        invoiceId,
+        freelancerId,
+        clientId,
+        amount,
+        description,
+      });
+    } catch (error) {
+      console.error('Error creating payment link:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Generate invoice HTML for PDF download
+   */
+  static async generateInvoicePDF(invoiceId: string): Promise<string | null> {
+    try {
+      return await freelanceInvoiceIntegrationService.getInvoiceHTML(invoiceId);
+    } catch (error) {
+      console.error('Error generating invoice PDF:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Download invoice (opens print dialog)
+   */
   static async downloadInvoice(invoiceId: string): Promise<void> {
     try {
       const html = await this.generateInvoicePDF(invoiceId);
-      if (!html) throw new Error("Failed to generate invoice");
+      if (!html) throw new Error('Failed to generate invoice');
 
-      // Create a new window with the invoice HTML
+      // Open print dialog
       const printWindow = window.open('', '_blank');
-      if (!printWindow) throw new Error("Unable to open print window");
+      if (!printWindow) throw new Error('Unable to open print window');
 
       printWindow.document.write(html);
       printWindow.document.close();
-
-      // Trigger print dialog which user can save as PDF
       printWindow.print();
     } catch (error) {
-      console.error("Error downloading invoice:", error);
+      console.error('Error downloading invoice:', error);
       throw error;
     }
   }
 
-  static async getInvoiceAsHTML(invoiceId: string): Promise<any> {
-    try {
-      const response = await fetch(`/api/invoices/${invoiceId}/html`, {
-        method: "GET",
-      });
+  /**
+   * Helper: Map integration service response to Invoice interface
+   */
+  private static mapToInvoiceInterface(invoiceData: any): Invoice {
+    const items = Array.isArray(invoiceData.items) ? invoiceData.items : [];
+    const amount = invoiceData.total || invoiceData.amount || 0;
+    const subtotal = invoiceData.subtotal || 0;
+    const tax = invoiceData.tax || 0;
 
-      if (!response.ok) {
-        throw new Error("Failed to fetch invoice HTML");
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Error fetching invoice HTML:", error);
-      return null;
-    }
-  }
-
-  // ============================================================================
-  // UTILITY METHODS
-  // ============================================================================
-
-  private static async generateInvoiceNumber(freelancerId: string): Promise<string> {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const randomSuffix = Math.floor(Math.random() * 10000)
-      .toString()
-      .padStart(4, "0");
-
-    return `INV-${freelancerId.substring(0, 6)}-${year}${month}-${randomSuffix}`;
-  }
-
-  private static mapInvoiceData(data: any): Invoice {
     return {
-      id: data.id,
-      projectId: data.project_id,
-      freelancerId: data.freelancer_id,
-      clientId: data.client_id,
-      invoiceNumber: data.invoice_number,
-      amount: data.amount,
-      currency: data.currency || "USD",
-      status: data.status || "draft",
-      issueDate: new Date(data.issue_date),
-      dueDate: new Date(data.due_date),
-      lineItems: Array.isArray(data.line_items)
-        ? data.line_items.map((item: any) => ({
-            id: item.id,
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unit_price,
-            amount: item.amount,
-          }))
-        : [],
-      taxRate: data.tax_rate || 0,
-      taxAmount: data.tax_amount || 0,
-      discountAmount: data.discount_amount || 0,
-      notes: data.notes,
-      termsAndConditions: data.terms_and_conditions,
-      paymentTerms: data.payment_terms,
-      viewedAt: data.viewed_at ? new Date(data.viewed_at) : undefined,
-      paidAt: data.paid_at ? new Date(data.paid_at) : undefined,
-      metadata: data.metadata || {},
+      id: invoiceData.id,
+      projectId: invoiceData.projectId || '',
+      freelancerId: invoiceData.freelancerId || '',
+      clientId: invoiceData.clientId || '',
+      invoiceNumber: invoiceData.invoiceNumber || '',
+      amount,
+      currency: 'USD',
+      status: this.mapStatus(invoiceData.status),
+      issueDate: invoiceData.createdAt || new Date(),
+      dueDate: invoiceData.dueDate || new Date(),
+      lineItems: items.map((item: any, index: number) => ({
+        id: `item-${index}`,
+        description: item.description || '',
+        quantity: item.quantity || 1,
+        unitPrice: item.unitPrice || 0,
+        amount: item.amount || 0,
+      })),
+      taxRate: tax > 0 ? Math.round((tax / subtotal) * 100) : 0,
+      taxAmount: tax,
+      discountAmount: 0,
+      notes: invoiceData.notes,
+      paidAt: invoiceData.paidAt,
     };
   }
 
-  private static async logInvoiceActivity(
-    freelancerId: string,
-    activityType: string,
-    invoiceId: string,
-    invoiceNumber: string
-  ): Promise<void> {
-    try {
-      await supabase.from("freelance_activity_logs").insert([
-        {
-          user_id: freelancerId,
-          activity_type: activityType,
-          entity_type: "invoice",
-          entity_id: invoiceId,
-          description: `${activityType.replace(/_/g, " ")}: ${invoiceNumber}`,
-          created_at: new Date().toISOString(),
-        },
-      ]);
-    } catch (error) {
-      console.error("Error logging invoice activity:", error);
+  /**
+   * Helper: Map invoice status from unified system to our enum
+   */
+  private static mapStatus(
+    status: string
+  ): 'draft' | 'sent' | 'viewed' | 'partial' | 'paid' | 'overdue' | 'cancelled' {
+    switch (status) {
+      case 'draft':
+        return 'draft';
+      case 'sent':
+        return 'sent';
+      case 'paid':
+        return 'paid';
+      case 'cancelled':
+        return 'cancelled';
+      default:
+        return 'draft';
     }
   }
 }
+
+export const freelanceInvoiceService = new FreelanceInvoiceService();
