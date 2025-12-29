@@ -4,22 +4,91 @@ import type { Invoice } from "./invoiceService";
 
 /**
  * FreelanceInvoiceIntegrationService
- * 
+ *
  * Bridges freelance invoice operations with the unified wallet invoice system.
  * All freelance invoices are created in the shared 'invoices' table with type = 'freelance'
  * This ensures a single source of truth for all invoices across the platform.
+ *
+ * Currency is dynamically determined from user settings or auto-detected by location.
  */
 export class FreelanceInvoiceIntegrationService {
   /**
+   * Get user's preferred currency
+   * Checks user settings first, then falls back to automatic detection
+   *
+   * @param userId - The user's ID
+   * @returns Currency code (e.g., 'USD', 'EUR', 'GBP')
+   */
+  private static async getUserCurrency(userId: string): Promise<string> {
+    try {
+      // Try to get from user profile/settings first
+      const { data, error } = await supabase
+        .from("user_settings")
+        .select("preferred_currency")
+        .eq("user_id", userId)
+        .single();
+
+      if (!error && data?.preferred_currency) {
+        return data.preferred_currency;
+      }
+
+      // Fall back to automatic detection based on timezone/location
+      return this.detectCurrencyByLocation();
+    } catch (error) {
+      console.warn("Error getting user currency, using default:", error);
+      return "USD"; // Default fallback
+    }
+  }
+
+  /**
+   * Detect currency based on user's timezone/location
+   */
+  private static detectCurrencyByLocation(): string {
+    try {
+      if (typeof window === "undefined") return "USD";
+
+      const savedCurrency = localStorage.getItem("preferred_currency");
+      if (savedCurrency) return savedCurrency;
+
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+      const currencyMap: Record<string, string> = {
+        "Europe/": "EUR",
+        "Europe/London": "GBP",
+        "Africa/Lagos": "NGN",
+        "Africa/Accra": "GHS",
+        "Africa/Johannesburg": "ZAR",
+        "Africa/Nairobi": "KES",
+        "Asia/Tokyo": "JPY",
+        "America/New_York": "USD",
+        "America/Toronto": "CAD",
+        "America/Sao_Paulo": "BRL",
+        "Australia/Sydney": "AUD",
+      };
+
+      for (const [tzPattern, currency] of Object.entries(currencyMap)) {
+        if (timezone.includes(tzPattern)) {
+          return currency;
+        }
+      }
+
+      return "USD";
+    } catch (error) {
+      console.warn("Error detecting currency by location:", error);
+      return "USD";
+    }
+  }
+  /**
    * Create a freelance project invoice
    * Integrates with unified wallet system
-   * 
+   *
    * @param freelancerId - The freelancer's user ID
    * @param clientId - The client's user ID
    * @param projectId - The freelance project ID
    * @param projectTitle - Title of the project/work
-   * @param amount - Invoice amount in USD
+   * @param amount - Invoice amount
    * @param description - Optional description
+   * @param currency - Optional currency code (auto-detected if not provided)
    * @returns Invoice ID or null if failed
    */
   static async createProjectInvoice(
@@ -28,9 +97,12 @@ export class FreelanceInvoiceIntegrationService {
     projectId: string,
     projectTitle: string,
     amount: number,
-    description?: string
+    description?: string,
+    currency?: string
   ): Promise<string | null> {
     try {
+      const userCurrency = currency || (await this.getUserCurrency(freelancerId));
+
       const invoice = await invoiceService.createInvoice(freelancerId, {
         recipientEmail: "",
         recipientName: "",
@@ -47,6 +119,7 @@ export class FreelanceInvoiceIntegrationService {
         projectId: projectId,
         freelancerId: freelancerId,
         clientId: clientId,
+        currency: userCurrency,
       });
 
       return invoice.id;
