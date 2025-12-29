@@ -11,7 +11,7 @@ export interface Withdrawal {
   id: string;
   freelancerId: string;
   amount: number;
-  currency: string;
+  currency: string; // Dynamic currency based on user settings/location
   method: 'bank_transfer' | 'paypal' | 'crypto' | 'mobile_money';
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
   bankDetails?: {
@@ -26,6 +26,7 @@ export interface Withdrawal {
   cryptoNetwork?: string;
   mobileNumber?: string;
   mobileProvider?: string;
+  mobileCountry?: string;
   fee: number;
   netAmount: number;
   requestedAt: Date;
@@ -39,23 +40,28 @@ export class FreelanceWithdrawalService {
   /**
    * Request a withdrawal from freelance earnings
    * Uses unified wallet system
+   *
+   * Note: No minimum withdrawal amount for internal wallet transfers.
+   * For external payouts (bank, PayPal, etc.), minimums are enforced at payment processor level.
    */
   static async requestWithdrawal(
     freelancerId: string,
     amount: number,
     method: Withdrawal['method'],
-    bankDetails?: any
+    bankDetails?: any,
+    currency?: string
   ): Promise<Withdrawal | null> {
     try {
       // Prepare withdrawal details based on method
       const withdrawalDetails = this.prepareWithdrawalDetails(method, bankDetails);
 
-      // Create withdrawal via integration service
+      // Create withdrawal via integration service (currency will be auto-detected if not provided)
       const withdrawalId = await freelanceWithdrawalIntegrationService.requestWithdrawal(
         freelancerId,
         amount,
         method,
-        withdrawalDetails
+        withdrawalDetails,
+        currency
       );
 
       if (!withdrawalId) {
@@ -69,7 +75,7 @@ export class FreelanceWithdrawalService {
         id: withdrawalId,
         freelancerId,
         amount,
-        currency: 'USD',
+        currency: currency || 'USD', // Use provided currency or auto-detected
         method,
         status: 'pending',
         bankDetails: method === 'bank_transfer' ? bankDetails : undefined,
@@ -78,6 +84,7 @@ export class FreelanceWithdrawalService {
         cryptoNetwork: method === 'crypto' ? bankDetails?.cryptoNetwork : undefined,
         mobileNumber: method === 'mobile_money' ? bankDetails?.mobileNumber : undefined,
         mobileProvider: method === 'mobile_money' ? bankDetails?.mobileProvider : undefined,
+        mobileCountry: method === 'mobile_money' ? bankDetails?.country : undefined,
         fee,
         netAmount,
         requestedAt: new Date(),
@@ -98,8 +105,6 @@ export class FreelanceWithdrawalService {
   static async checkEligibility(freelancerId: string): Promise<{
     eligible: boolean;
     balance: number;
-    minimumWithdrawal: number;
-    maximumWithdrawal?: number;
     reason?: string;
   }> {
     try {
@@ -110,8 +115,6 @@ export class FreelanceWithdrawalService {
       return {
         eligible: eligibility.isEligible,
         balance: eligibility.balance,
-        minimumWithdrawal: eligibility.minimumWithdrawal,
-        maximumWithdrawal: eligibility.maximumWithdrawal,
         reason: eligibility.reason,
       };
     } catch (error) {
@@ -119,7 +122,6 @@ export class FreelanceWithdrawalService {
       return {
         eligible: false,
         balance: 0,
-        minimumWithdrawal: 10,
         reason: 'Error checking eligibility',
       };
     }
@@ -168,7 +170,7 @@ export class FreelanceWithdrawalService {
           id: w.id,
           freelancerId,
           amount: w.amount,
-          currency: 'USD',
+          currency: w.currency || w.metadata?.currency || 'USD', // Use currency from record
           method: (w.withdrawal_method || 'bank_transfer') as any,
           status: (w.status || 'pending') as any,
           fee: this.calculateFeeAmount(w.amount),
@@ -195,12 +197,12 @@ export class FreelanceWithdrawalService {
 
   /**
    * Get withdrawal statistics
+   * Tracks withdrawals from freelance earnings to unified wallet
    */
   static async getWithdrawalStats(freelancerId: string): Promise<{
     totalWithdrawn: number;
     totalPending: number;
     totalFailed: number;
-    lastWithdrawal?: Date;
   }> {
     try {
       const stats = await freelanceWithdrawalIntegrationService.getWithdrawalStats(freelancerId);
