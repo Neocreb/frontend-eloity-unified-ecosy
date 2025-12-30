@@ -244,7 +244,7 @@ export const FreelancerEarnings: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Earnings</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${stats.totalEarnings.toLocaleString()}
+                    ${(stats.totalEarnings || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
@@ -253,23 +253,23 @@ export const FreelancerEarnings: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${stats.thisMonth.toLocaleString()}
+                    ${(stats.thisMonth || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <div className="flex items-center mt-1">
-                    {stats.growthRate >= 0 ? (
+                    {(stats.growthRate || 0) >= 0 ? (
                       <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
                     ) : (
                       <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
                     )}
-                    <span className={stats.growthRate >= 0 ? "text-green-600 text-sm" : "text-red-600 text-sm"}>
-                      {stats.growthRate >= 0 ? '+' : ''}{stats.growthRate.toFixed(1)}%
+                    <span className={(stats.growthRate || 0) >= 0 ? "text-green-600 text-sm" : "text-red-600 text-sm"}>
+                      {(stats.growthRate || 0) >= 0 ? '+' : ''}{((stats.growthRate || 0)).toFixed(1)}%
                     </span>
                   </div>
                 </div>
@@ -279,14 +279,14 @@ export const FreelancerEarnings: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${stats.pending.toLocaleString()}
+                    ${(stats.pending || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
@@ -295,14 +295,14 @@ export const FreelancerEarnings: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Project</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${stats.averageProject.toLocaleString()}
+                    ${(stats.averageProject || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
