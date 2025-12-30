@@ -349,27 +349,29 @@ export const FreelancerEarnings: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {filteredEarnings.length > 0 ? (
-                  filteredEarnings.map((earning) => (
+                  filteredEarnings.map((earning) => {
+                    if (!earning || !earning.client) return null;
+                    return (
                     <div key={earning.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10">
                           <AvatarImage src={earning.client.avatar} />
                           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                            {earning.client.name.charAt(0)}
+                            {(earning.client.name || "?").charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{earning.projectTitle}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{earning.client.name}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{earning.projectTitle || "Untitled Project"}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{earning.client.name || "Unknown Client"}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-4">
                         <Badge className={getTypeColor(earning.type)}>
                           {earning.type}
                         </Badge>
                         <div className="text-right">
-                          <p className="font-bold text-gray-900 dark:text-white">${earning.amount.toFixed(2)}</p>
+                          <p className="font-bold text-gray-900 dark:text-white">${(earning.amount || 0).toFixed(2)}</p>
                           <div className="flex items-center gap-2">
                             <Badge className={getStatusColor(earning.status)}>
                               <span className="flex items-center gap-1">
@@ -384,7 +386,8 @@ export const FreelancerEarnings: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-8">
                     <DollarSign className="w-12 h-12 mx-auto text-gray-400" />
