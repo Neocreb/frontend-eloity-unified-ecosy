@@ -438,13 +438,13 @@ export const FreelancerEarnings: React.FC = () => {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Client</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{stats.topClient}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{stats.topClient || "N/A"}</span>
                 </div>
                 <div className="mt-4">
                   <Progress value={85} className="h-2" />
                   <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-1">
                     <span>85% of earnings</span>
-                    <span>${(stats.totalEarnings * 0.85).toFixed(2)}</span>
+                    <span>${((stats.totalEarnings || 0) * 0.85).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
