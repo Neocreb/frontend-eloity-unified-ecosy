@@ -166,11 +166,18 @@ export const FreelancerEarnings: React.FC = () => {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
-      Math.floor((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-      'day'
-    );
+  const formatDate = (date: Date | string | undefined) => {
+    try {
+      if (!date) return "N/A";
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return "N/A";
+      return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+        Math.floor((dateObj.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+        'day'
+      );
+    } catch (error) {
+      return "N/A";
+    }
   };
 
   const filteredEarnings = earnings.filter((earning) => {
