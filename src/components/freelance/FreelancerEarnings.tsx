@@ -55,11 +55,16 @@ interface EarningRecord {
 interface EarningsStats {
   totalEarnings: number;
   thisMonth: number;
-  lastMonth: number;
+  lastMonth?: number;
   pending: number;
   averageProject: number;
-  topClient: string;
+  topClient?: string;
   growthRate: number;
+  monthlyEarnings?: number;
+  projectCount?: number;
+  completedProjects?: number;
+  averageRating?: number;
+  successRate?: number;
 }
 
 export const FreelancerEarnings: React.FC = () => {
