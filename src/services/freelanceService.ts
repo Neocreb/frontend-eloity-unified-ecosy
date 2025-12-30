@@ -1157,10 +1157,16 @@ export class FreelanceService {
 
   static async getFreelancerEarningsStats(userId: string): Promise<{
     totalEarnings: number;
+    thisMonth: number;
     monthlyEarnings: number;
+    lastMonth: number;
+    pending: number;
     projectCount: number;
     completedProjects: number;
+    averageProject: number;
+    topClient?: string;
     averageRating: number;
+    growthRate: number;
     successRate: number;
   } | null> {
     try {
@@ -1170,26 +1176,53 @@ export class FreelanceService {
       const now = new Date();
       const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
       const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-      const monthlyEarnings = await this.calculateEarnings(userId, monthStart, monthEnd);
+      const thisMonthEarnings = await this.calculateEarnings(userId, monthStart, monthEnd);
+
+      // Calculate earnings for last month
+      const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
+      const lastMonthEarnings = await this.calculateEarnings(userId, lastMonthStart, lastMonthEnd);
+
+      // Calculate growth rate
+      const growthRate = lastMonthEarnings > 0
+        ? ((thisMonthEarnings - lastMonthEarnings) / lastMonthEarnings) * 100
+        : 0;
+
+      const totalEarnings = stats?.totalEarnings || 0;
+      const projectCount = stats?.totalProjects || 0;
+      const completedProjects = stats?.completedProjects || 0;
+      const averageProject = projectCount > 0 ? totalEarnings / projectCount : 0;
 
       if (!stats) {
         return {
           totalEarnings: 0,
-          monthlyEarnings: monthlyEarnings,
+          thisMonth: thisMonthEarnings || 0,
+          monthlyEarnings: thisMonthEarnings || 0,
+          lastMonth: lastMonthEarnings || 0,
+          pending: 0,
           projectCount: 0,
           completedProjects: 0,
+          averageProject: 0,
           averageRating: 5,
+          growthRate: 0,
           successRate: 0,
+          topClient: "N/A",
         };
       }
 
       return {
-        totalEarnings: stats.totalEarnings || 0,
-        monthlyEarnings: monthlyEarnings || 0,
-        projectCount: stats.totalProjects || 0,
-        completedProjects: stats.completedProjects || 0,
+        totalEarnings: totalEarnings,
+        thisMonth: thisMonthEarnings || 0,
+        monthlyEarnings: thisMonthEarnings || 0,
+        lastMonth: lastMonthEarnings || 0,
+        pending: 0,
+        projectCount: projectCount,
+        completedProjects: completedProjects,
+        averageProject: averageProject,
         averageRating: stats.averageRating || 5,
+        growthRate: growthRate,
         successRate: stats.successRate || 0,
+        topClient: "Top Client",
       };
     } catch (error) {
       console.error("Error fetching earnings stats:", error);
