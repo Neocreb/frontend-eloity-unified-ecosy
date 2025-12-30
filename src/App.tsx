@@ -58,6 +58,7 @@ import { DashboardRouteGuard } from "./components/freelance/DashboardRouteGuard"
 import UpdateProfile from "./pages/freelance/UpdateProfile";
 import BrowseJobs from "./pages/freelance/BrowseJobs";
 import Earnings from "./pages/freelance/Earnings";
+import UnifiedWalletDashboard from "./pages/freelance/UnifiedWalletDashboard";
 import PostJob from "./pages/freelance/PostJob";
 import PostSkill from "./pages/freelance/PostSkill";
 import FindFreelancers from "./pages/freelance/FindFreelancers";
@@ -589,6 +590,7 @@ const AppRoutes = () => {
           <Route path="freelance/update-profile" element={<UpdateProfile />} />
           <Route path="freelance/browse-jobs" element={<BrowseJobs />} />
           <Route path="freelance/earnings" element={<Earnings />} />
+          <Route path="freelance/wallet" element={<UnifiedWalletDashboard />} />
           <Route path="freelance/post-job" element={<PostJob />} />
           <Route path="freelance/post-skill" element={<PostSkill />} />
           <Route path="freelance/find-freelancers" element={<FindFreelancers />} />
