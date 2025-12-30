@@ -81,23 +81,43 @@ export const FreelancerEarnings: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!user) return;
-      
+
       setLoading(true);
       try {
         const [earningsData, statsData] = await Promise.all([
           getFreelancerEarnings(user.id),
           getFreelancerEarningsStats(user.id)
         ]);
-        
+
         setEarnings(earningsData || []);
-        setStats(statsData || null);
+
+        if (statsData) {
+          const normalizedStats: EarningsStats = {
+            totalEarnings: statsData.totalEarnings || 0,
+            thisMonth: statsData.monthlyEarnings || 0,
+            lastMonth: statsData.lastMonth || 0,
+            pending: statsData.pending || 0,
+            averageProject: statsData.projectCount ? (statsData.totalEarnings || 0) / (statsData.projectCount || 1) : 0,
+            topClient: statsData.topClient || "N/A",
+            growthRate: statsData.growthRate || 0,
+            monthlyEarnings: statsData.monthlyEarnings || 0,
+            projectCount: statsData.projectCount || 0,
+            completedProjects: statsData.completedProjects || 0,
+            averageRating: statsData.averageRating || 5,
+            successRate: statsData.successRate || 0,
+          };
+          setStats(normalizedStats);
+        } else {
+          setStats(null);
+        }
       } catch (error) {
-        console.error("Error loading earnings data:", error);
+        console.error("Error calculating earnings:", error);
+        setStats(null);
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadData();
   }, [user, getFreelancerEarnings, getFreelancerEarningsStats]);
 
