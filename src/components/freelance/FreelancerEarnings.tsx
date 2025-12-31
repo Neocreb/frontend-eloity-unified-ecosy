@@ -12,6 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -24,6 +30,9 @@ import {
   BarChart3,
   PieChart,
   Target,
+  Search,
+  FileText,
+  Bell,
 } from "lucide-react";
 import {
   Dialog,
@@ -34,6 +43,9 @@ import {
 import FreelanceWithdrawalMethods from "./FreelanceWithdrawalMethods";
 import FreelanceTaxDocuments from "./FreelanceTaxDocuments";
 import FreelanceInvoicing from "./FreelanceInvoicing";
+import AdvancedInvoiceSearch from "./AdvancedInvoiceSearch";
+import FreelanceExportPanel from "./FreelanceExportPanel";
+import PaymentRemindersManager from "./PaymentRemindersManager";
 import { useFreelance } from "@/hooks/use-freelance";
 import { useAuth } from "@/contexts/AuthContext";
 
