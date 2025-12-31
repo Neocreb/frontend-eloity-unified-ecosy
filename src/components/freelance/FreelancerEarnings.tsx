@@ -207,7 +207,7 @@ export const FreelancerEarnings: React.FC = () => {
 
   const filteredEarnings = earnings.filter((earning) => {
     const matchesStatus = statusFilter === "all" || earning.status === statusFilter;
-    
+
     let matchesTime = true;
     if (timeFilter === "thisMonth") {
       const thisMonth = new Date().getMonth();
@@ -216,9 +216,26 @@ export const FreelancerEarnings: React.FC = () => {
       const lastMonth = new Date().getMonth() - 1;
       matchesTime = earning.date.getMonth() === lastMonth;
     }
-    
+
     return matchesStatus && matchesTime;
   });
+
+  // Convert earnings to invoices format for Phase 7 components
+  const convertEarningsToInvoices = (): Invoice[] => {
+    return earnings.map((earning, index) => ({
+      id: earning.id,
+      invoiceNumber: `INV-${String(index + 1).padStart(5, '0')}`,
+      clientName: earning.client.name,
+      projectTitle: earning.projectTitle,
+      amount: earning.amount,
+      currency: "USD",
+      status: earning.status === "completed" ? "paid" : (earning.status === "pending" ? "pending" : "draft"),
+      issueDate: new Date(earning.date),
+      dueDate: new Date(new Date(earning.date).getTime() + (30 * 24 * 60 * 60 * 1000)),
+    }));
+  };
+
+  const invoices = convertEarningsToInvoices();
 
   if (loading) {
     return (
