@@ -79,6 +79,18 @@ interface EarningsStats {
   successRate?: number;
 }
 
+interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  clientName: string;
+  projectTitle: string;
+  amount: number;
+  currency: string;
+  status: "paid" | "pending" | "overdue" | "draft";
+  issueDate: Date | string;
+  dueDate: Date | string;
+}
+
 export const FreelancerEarnings: React.FC = () => {
   const [earnings, setEarnings] = useState<EarningRecord[]>([]);
   const [stats, setStats] = useState<EarningsStats | null>(null);
@@ -86,6 +98,7 @@ export const FreelancerEarnings: React.FC = () => {
   const [timeFilter, setTimeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [activeModal, setActiveModal] = useState<"withdrawal" | "tax" | "invoicing" | null>(null);
+  const [activeTab, setActiveTab] = useState("overview");
   
   const { getFreelancerEarnings, getFreelancerEarningsStats } = useFreelance();
   const { user } = useAuth();
