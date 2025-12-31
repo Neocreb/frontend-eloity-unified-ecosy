@@ -2,10 +2,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search, Download, Bell } from "lucide-react";
 import { useFreelanceUnifiedWallet } from "@/hooks/useFreelanceUnifiedWallet";
 import UnifiedWalletInvoices from "@/components/freelance/UnifiedWalletInvoices";
 import UnifiedWalletWithdrawals from "@/components/freelance/UnifiedWalletWithdrawals";
+import { AdvancedInvoiceSearch } from "@/components/freelance/AdvancedInvoiceSearch";
+import { FreelanceExportPanel } from "@/components/freelance/FreelanceExportPanel";
+import PaymentRemindersManager from "@/components/freelance/PaymentRemindersManager";
 import { Loader2 } from "lucide-react";
 
 const UnifiedWalletDashboard: React.FC = () => {
