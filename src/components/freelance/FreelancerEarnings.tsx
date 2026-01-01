@@ -84,14 +84,14 @@ interface Invoice {
 }
 
 export const FreelancerEarnings: React.FC = () => {
+  const navigate = useNavigate();
   const [earnings, setEarnings] = useState<EarningRecord[]>([]);
   const [stats, setStats] = useState<EarningsStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [activeModal, setActiveModal] = useState<"withdrawal" | "tax" | "invoicing" | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
-  
+
   const { getFreelancerEarnings, getFreelancerEarningsStats } = useFreelance();
   const { user } = useAuth();
 
