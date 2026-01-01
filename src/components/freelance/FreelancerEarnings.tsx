@@ -556,38 +556,6 @@ export const FreelancerEarnings: React.FC = () => {
         </TabsContent>
       </Tabs>
 
-      {activeModal === "withdrawal" && (
-        <Dialog open onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Withdraw Funds</DialogTitle>
-            </DialogHeader>
-            <FreelanceWithdrawalMethods />
-          </DialogContent>
-        </Dialog>
-      )}
-      
-      {activeModal === "tax" && (
-        <Dialog open onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Tax Documents</DialogTitle>
-            </DialogHeader>
-            <FreelanceTaxDocuments />
-          </DialogContent>
-        </Dialog>
-      )}
-      
-      {activeModal === "invoicing" && (
-        <Dialog open onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Invoice</DialogTitle>
-            </DialogHeader>
-            <FreelanceInvoicing />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 };
