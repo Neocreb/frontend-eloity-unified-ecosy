@@ -264,11 +264,10 @@ class CampaignSyncService {
   }
 
   // Sync with main Campaign Center
-  syncWithCampaignCenter(): void {
-    // In a real implementation, this would sync with the main campaign center API
-    // For now, we'll just simulate the sync
-    console.log("Syncing campaigns with Campaign Center...");
-    this.notify();
+  async syncWithCampaignCenter(userId?: string): Promise<void> {
+    // Fetch latest campaigns from API and refresh
+    await this.initializeFromAPI(userId);
+    console.log("Campaigns synced with Campaign Center");
   }
 
   // Export campaigns data (for analytics)
