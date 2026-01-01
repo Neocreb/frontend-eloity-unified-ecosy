@@ -302,7 +302,13 @@ export const UnifiedCampaignManager: React.FC<UnifiedCampaignManagerProps> = ({
           )}
         </div>
 
-        {displayCampaigns.length > 0 ? (
+        {loading ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="animate-pulse">Loading campaigns...</div>
+            </CardContent>
+          </Card>
+        ) : displayCampaigns.length > 0 ? (
           <div className="space-y-3">
             {displayCampaigns.map((campaign) => (
               <CampaignCard key={campaign.id} campaign={campaign} />
