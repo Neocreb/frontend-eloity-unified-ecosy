@@ -462,26 +462,26 @@ export const FreelancerEarnings: React.FC = () => {
                   <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start"
-                    onClick={() => setActiveModal("withdrawal")}
+                    onClick={() => navigate("/app/freelance/withdraw")}
                   >
                     <Wallet className="w-4 h-4 mr-2" />
                     Withdraw Funds
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start"
-                    onClick={() => setActiveModal("invoicing")}
+                    onClick={() => navigate("/app/freelance/create-invoice")}
                   >
                     <CreditCard className="w-4 h-4 mr-2" />
                     Create Invoice
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full justify-start"
-                    onClick={() => setActiveModal("tax")}
+                    onClick={() => navigate("/app/freelance/tax-documents")}
                   >
                     <PieChart className="w-4 h-4 mr-2" />
                     Tax Documents
