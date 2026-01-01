@@ -713,6 +713,7 @@ const uploadFile = async (file: File) => {
 
 | Component | Tab | Priority | Mock Type | Real Data Source | Est. Hours | Status |
 |-----------|-----|----------|-----------|------------------|-----------|--------|
+| **FreelancerEarnings Modals** | **Earnings** | **Modal** | **Modals→Pages** | **Full-page routes** | **1-2** | **✅ COMPLETED** |
 | UnifiedCampaignManager | Campaigns | P0 | Array + Service | campaignService | 2-3 | Pending |
 | FreelanceCollaborationTools | Collaboration | P0 | Array | CollaborationService | 4-5 | Pending |
 | FreelancerProposals | Proposals | P1 | Array | useFreelance.getProposals | 1.5-2 | Pending |
@@ -721,7 +722,6 @@ const uploadFile = async (file: File) => {
 | TaskTracker | Project View | P1 | Array | freelanceService | 2-3 | Pending |
 | RealTimeNotifications | Sidebar | P2 | Interval | useFreelanceNotifications | 1-2 | Pending |
 | FileUpload | Collaboration | P2 | Mock URL | Supabase Storage | 1.5-2 | Pending |
-| FreelancerEarnings | Earnings | Modal | Multiple Modals | Full-page routes | 1-2 | In Progress |
 
 ---
 
