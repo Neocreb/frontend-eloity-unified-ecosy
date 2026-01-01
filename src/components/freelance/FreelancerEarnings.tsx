@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,6 +13,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
+import {
   DollarSign,
   TrendingUp,
   TrendingDown,
@@ -24,16 +31,13 @@ import {
   BarChart3,
   PieChart,
   Target,
+  Search,
+  FileText,
+  Bell,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import FreelanceWithdrawalMethods from "./FreelanceWithdrawalMethods";
-import FreelanceTaxDocuments from "./FreelanceTaxDocuments";
-import FreelanceInvoicing from "./FreelanceInvoicing";
+import AdvancedInvoiceSearch from "./AdvancedInvoiceSearch";
+import FreelanceExportPanel from "./FreelanceExportPanel";
+import PaymentRemindersManager from "./PaymentRemindersManager";
 import { useFreelance } from "@/hooks/use-freelance";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -67,14 +71,27 @@ interface EarningsStats {
   successRate?: number;
 }
 
+interface Invoice {
+  id: string;
+  invoiceNumber: string;
+  clientName: string;
+  projectTitle: string;
+  amount: number;
+  currency: string;
+  status: "paid" | "pending" | "overdue" | "draft";
+  issueDate: Date | string;
+  dueDate: Date | string;
+}
+
 export const FreelancerEarnings: React.FC = () => {
+  const navigate = useNavigate();
   const [earnings, setEarnings] = useState<EarningRecord[]>([]);
   const [stats, setStats] = useState<EarningsStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeFilter, setTimeFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [activeModal, setActiveModal] = useState<"withdrawal" | "tax" | "invoicing" | null>(null);
-  
+  const [activeTab, setActiveTab] = useState("overview");
+
   const { getFreelancerEarnings, getFreelancerEarningsStats } = useFreelance();
   const { user } = useAuth();
 
@@ -195,6 +212,23 @@ export const FreelancerEarnings: React.FC = () => {
     return matchesStatus && matchesTime;
   });
 
+  // Convert earnings to invoices format for Phase 7 components
+  const convertEarningsToInvoices = (): Invoice[] => {
+    return earnings.map((earning, index) => ({
+      id: earning.id,
+      invoiceNumber: `INV-${String(index + 1).padStart(5, '0')}`,
+      clientName: earning.client.name,
+      projectTitle: earning.projectTitle,
+      amount: earning.amount,
+      currency: "USD",
+      status: earning.status === "completed" ? "paid" : (earning.status === "pending" ? "pending" : "draft"),
+      issueDate: new Date(earning.date),
+      dueDate: new Date(new Date(earning.date).getTime() + (30 * 24 * 60 * 60 * 1000)),
+    }));
+  };
+
+  const invoices = convertEarningsToInvoices();
+
   if (loading) {
     return (
       <div className="space-y-6">
@@ -233,268 +267,295 @@ export const FreelancerEarnings: React.FC = () => {
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Earnings</h1>
-          <p className="text-gray-600 dark:text-gray-400">Track your income and payment history</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          <p className="text-gray-600 dark:text-gray-400">Track your income, invoices, and payment history</p>
         </div>
       </div>
 
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Earnings</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${(stats.totalEarnings || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
-                  <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="overview" className="flex items-center gap-2">
+            <BarChart3 className="w-4 h-4" />
+            <span className="hidden sm:inline">Overview</span>
+          </TabsTrigger>
+          <TabsTrigger value="search" className="flex items-center gap-2">
+            <Search className="w-4 h-4" />
+            <span className="hidden sm:inline">Search</span>
+          </TabsTrigger>
+          <TabsTrigger value="export" className="flex items-center gap-2">
+            <Download className="w-4 h-4" />
+            <span className="hidden sm:inline">Export</span>
+          </TabsTrigger>
+          <TabsTrigger value="reminders" className="flex items-center gap-2">
+            <Bell className="w-4 h-4" />
+            <span className="hidden sm:inline">Reminders</span>
+          </TabsTrigger>
+        </TabsList>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${(stats.thisMonth || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                  <div className="flex items-center mt-1">
-                    {(stats.growthRate || 0) >= 0 ? (
-                      <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
-                    ) : (
-                      <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
-                    )}
-                    <span className={(stats.growthRate || 0) >= 0 ? "text-green-600 text-sm" : "text-red-600 text-sm"}>
-                      {(stats.growthRate || 0) >= 0 ? '+' : ''}{((stats.growthRate || 0)).toFixed(1)}%
-                    </span>
+        <TabsContent value="overview" className="space-y-6">
+          {stats && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Earnings</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        ${(stats.totalEarnings || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
+                      <DollarSign className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    </div>
                   </div>
-                </div>
-                <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
-                  <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${(stats.pending || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
-                  <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Project</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${(stats.averageProject || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </p>
-                </div>
-                <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
-                  <Target className="w-6 h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                <CardTitle>Earning History</CardTitle>
-                <div className="flex gap-2">
-                  <Select value={timeFilter} onValueChange={setTimeFilter}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Time</SelectItem>
-                      <SelectItem value="thisMonth">This Month</SelectItem>
-                      <SelectItem value="lastMonth">Last Month</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="processing">Processing</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {filteredEarnings.length > 0 ? (
-                  filteredEarnings.map((earning) => {
-                    if (!earning || !earning.client) return null;
-                    return (
-                    <div key={earning.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="w-10 h-10">
-                          <AvatarImage src={earning.client.avatar} />
-                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                            {(earning.client.name || "?").charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{earning.projectTitle || "Untitled Project"}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{earning.client.name || "Unknown Client"}</p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-4">
-                        <Badge className={getTypeColor(earning.type)}>
-                          {earning.type}
-                        </Badge>
-                        <div className="text-right">
-                          <p className="font-bold text-gray-900 dark:text-white">${(earning.amount || 0).toFixed(2)}</p>
-                          <div className="flex items-center gap-2">
-                            <Badge className={getStatusColor(earning.status)}>
-                              <span className="flex items-center gap-1">
-                                {getStatusIcon(earning.status)}
-                                {earning.status}
-                              </span>
-                            </Badge>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {formatDate(earning.date)}
-                            </span>
-                          </div>
-                        </div>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        ${(stats.thisMonth || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                      <div className="flex items-center mt-1">
+                        {(stats.growthRate || 0) >= 0 ? (
+                          <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
+                        ) : (
+                          <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
+                        )}
+                        <span className={(stats.growthRate || 0) >= 0 ? "text-green-600 text-sm" : "text-red-600 text-sm"}>
+                          {(stats.growthRate || 0) >= 0 ? '+' : ''}{((stats.growthRate || 0)).toFixed(1)}%
+                        </span>
                       </div>
                     </div>
-                    );
-                  })
-                ) : (
-                  <div className="text-center py-8">
-                    <DollarSign className="w-12 h-12 mx-auto text-gray-400" />
-                    <h3 className="mt-4 font-medium text-gray-900 dark:text-white">No earnings found</h3>
-                    <p className="mt-1 text-gray-600 dark:text-gray-400">Complete projects to start earning</p>
+                    <div className="p-3 bg-blue-100 dark:bg-blue-900/20 rounded-full">
+                      <BarChart3 className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    </div>
                   </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setActiveModal("withdrawal")}
-              >
-                <Wallet className="w-4 h-4 mr-2" />
-                Withdraw Funds
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setActiveModal("invoicing")}
-              >
-                <CreditCard className="w-4 h-4 mr-2" />
-                Create Invoice
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setActiveModal("tax")}
-              >
-                <PieChart className="w-4 h-4 mr-2" />
-                Tax Documents
-              </Button>
-            </CardContent>
-          </Card>
-          
-          {stats && (
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        ${(stats.pending || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
+                      <Clock className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Project</p>
+                      <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                        ${(stats.averageProject || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </p>
+                    </div>
+                    <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
+                      <Target className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2">
+              <Card>
+                <CardHeader>
+                  <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                    <CardTitle>Earning History</CardTitle>
+                    <div className="flex gap-2">
+                      <Select value={timeFilter} onValueChange={setTimeFilter}>
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Time</SelectItem>
+                          <SelectItem value="thisMonth">This Month</SelectItem>
+                          <SelectItem value="lastMonth">Last Month</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-[120px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="processing">Processing</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {filteredEarnings.length > 0 ? (
+                      filteredEarnings.map((earning) => {
+                        if (!earning || !earning.client) return null;
+                        return (
+                        <div key={earning.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={earning.client.avatar} />
+                              <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                                {(earning.client.name || "?").charAt(0)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-gray-900 dark:text-white">{earning.projectTitle || "Untitled Project"}</p>
+                              <p className="text-sm text-gray-600 dark:text-gray-400">{earning.client.name || "Unknown Client"}</p>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <Badge className={getTypeColor(earning.type)}>
+                              {earning.type}
+                            </Badge>
+                            <div className="text-right">
+                              <p className="font-bold text-gray-900 dark:text-white">${(earning.amount || 0).toFixed(2)}</p>
+                              <div className="flex items-center gap-2">
+                                <Badge className={getStatusColor(earning.status)}>
+                                  <span className="flex items-center gap-1">
+                                    {getStatusIcon(earning.status)}
+                                    {earning.status}
+                                  </span>
+                                </Badge>
+                                <span className="text-xs text-gray-500 dark:text-gray-400">
+                                  {formatDate(earning.date)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                        );
+                      })
+                    ) : (
+                      <div className="text-center py-8">
+                        <DollarSign className="w-12 h-12 mx-auto text-gray-400" />
+                        <h3 className="mt-4 font-medium text-gray-900 dark:text-white">No earnings found</h3>
+                        <p className="mt-1 text-gray-600 dark:text-gray-400">Complete projects to start earning</p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate("/app/freelance/withdraw")}
+                  >
+                    <Wallet className="w-4 h-4 mr-2" />
+                    Withdraw Funds
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate("/app/freelance/create-invoice")}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Create Invoice
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start"
+                    onClick={() => navigate("/app/freelance/tax-documents")}
+                  >
+                    <PieChart className="w-4 h-4 mr-2" />
+                    Tax Documents
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              {stats && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Top Client</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-600 dark:text-gray-400">Client</span>
+                      <span className="font-medium text-gray-900 dark:text-white">{stats.topClient || "N/A"}</span>
+                    </div>
+                    <div className="mt-4">
+                      <Progress value={85} className="h-2" />
+                      <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <span>85% of earnings</span>
+                        <span>${((stats.totalEarnings || 0) * 0.85).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="search" className="space-y-6">
+          {invoices.length > 0 ? (
+            <AdvancedInvoiceSearch invoices={invoices} />
+          ) : (
             <Card>
-              <CardHeader>
-                <CardTitle>Top Client</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between">
-                  <span className="text-gray-600 dark:text-gray-400">Client</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{stats.topClient || "N/A"}</span>
-                </div>
-                <div className="mt-4">
-                  <Progress value={85} className="h-2" />
-                  <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    <span>85% of earnings</span>
-                    <span>${((stats.totalEarnings || 0) * 0.85).toFixed(2)}</span>
-                  </div>
-                </div>
+              <CardContent className="p-12 text-center">
+                <Search className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">No invoices to search</h3>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">Complete projects to generate invoices</p>
               </CardContent>
             </Card>
           )}
-        </div>
-      </div>
+        </TabsContent>
 
-      {activeModal === "withdrawal" && (
-        <Dialog open onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Withdraw Funds</DialogTitle>
-            </DialogHeader>
-            <FreelanceWithdrawalMethods />
-          </DialogContent>
-        </Dialog>
-      )}
-      
-      {activeModal === "tax" && (
-        <Dialog open onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Tax Documents</DialogTitle>
-            </DialogHeader>
-            <FreelanceTaxDocuments />
-          </DialogContent>
-        </Dialog>
-      )}
-      
-      {activeModal === "invoicing" && (
-        <Dialog open onOpenChange={() => setActiveModal(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Invoice</DialogTitle>
-            </DialogHeader>
-            <FreelanceInvoicing />
-          </DialogContent>
-        </Dialog>
-      )}
+        <TabsContent value="export" className="space-y-6">
+          {invoices.length > 0 ? (
+            <FreelanceExportPanel invoices={invoices} />
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Download className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">No invoices to export</h3>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">Create invoices to enable export functionality</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="reminders" className="space-y-6">
+          {invoices.length > 0 ? (
+            <PaymentRemindersManager invoices={invoices} />
+          ) : (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <Bell className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white">No invoices for reminders</h3>
+                <p className="text-gray-600 dark:text-gray-400 mt-2">Create invoices to set up payment reminders</p>
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
     </div>
   );
 };
