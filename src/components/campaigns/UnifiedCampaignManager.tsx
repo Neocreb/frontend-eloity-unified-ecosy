@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import CampaignAnalyticsDashboard from "./CampaignAnalyticsDashboard";
 import SmartBoostSuggestions from "./SmartBoostSuggestions";
 import { campaignSyncService } from "@/services/campaignSyncService";
