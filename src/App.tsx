@@ -678,6 +678,9 @@ const AppRoutes = () => {
           <Route path="freelance/create-job" element={<CreateJob />} />
           <Route path="freelance/apply/:jobId" element={<ApplyJob />} />
           <Route path="freelance/message/:clientId" element={<MessageClient />} />
+          <Route path="freelance/withdraw" element={<WithdrawFunds />} />
+          <Route path="freelance/create-invoice" element={<CreateInvoicePage />} />
+          <Route path="freelance/tax-documents" element={<TaxDocumentsPage />} />
 
           {/* Content & Live Routes - Phase 2 Implementation COMPLETE */}
           <Route path="challenges/create" element={<CreateChallenge />} />
