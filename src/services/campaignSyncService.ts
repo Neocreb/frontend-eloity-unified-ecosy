@@ -298,7 +298,7 @@ class CampaignSyncService {
 // Export singleton instance
 export const campaignSyncService = new CampaignSyncService();
 
-// Initialize with mock data
+// Initialize with fallback mock data (will be replaced with real data when user context is available)
 campaignSyncService.initializeMockData();
 
 export default campaignSyncService;
