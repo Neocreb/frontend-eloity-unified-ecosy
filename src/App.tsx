@@ -123,6 +123,9 @@ import CryptoConvert from "./pages/crypto/CryptoConvert";
 import CreateJob from "./pages/freelance/CreateJob";
 import ApplyJob from "./pages/freelance/ApplyJob";
 import MessageClient from "./pages/freelance/MessageClient";
+import WithdrawFunds from "./pages/freelance/WithdrawFunds";
+import CreateInvoicePage from "./pages/freelance/CreateInvoicePage";
+import TaxDocumentsPage from "./pages/freelance/TaxDocumentsPage";
 // Phase 2 Modal Conversions
 import CreateChallenge from "./pages/challenges/CreateChallenge";
 import CreateBattle from "./pages/live/CreateBattle";
