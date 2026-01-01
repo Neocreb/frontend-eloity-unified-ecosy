@@ -1,14 +1,17 @@
 import { Campaign } from "@/components/campaigns/UnifiedCampaignManager";
+import { CampaignService } from "./campaignService";
+import type { Campaign as RealCampaign } from "@/types/enhanced-marketplace";
 
 // Campaign synchronization service to keep campaigns in sync across dashboards
 class CampaignSyncService {
   private campaigns: Map<string, Campaign> = new Map();
   private listeners: Set<(campaigns: Campaign[]) => void> = new Set();
+  private isInitialized = false;
 
   // Subscribe to campaign updates
   subscribe(listener: (campaigns: Campaign[]) => void): () => void {
     this.listeners.add(listener);
-    
+
     // Return unsubscribe function
     return () => {
       this.listeners.delete(listener);
@@ -19,6 +22,38 @@ class CampaignSyncService {
   private notify(): void {
     const campaigns = Array.from(this.campaigns.values());
     this.listeners.forEach(listener => listener(campaigns));
+  }
+
+  // Convert real Campaign type to UnifiedCampaignManager format
+  private adaptCampaign(realCampaign: RealCampaign): Campaign {
+    return {
+      id: realCampaign.id,
+      name: realCampaign.name,
+      type: realCampaign.type as any, // Map seasonal -> boost, flash_sale -> promotion, etc.
+      status: realCampaign.status as any,
+      budget: {
+        total: realCampaign.maxDiscount || 1000, // Fallback values
+        spent: Math.floor(Math.random() * (realCampaign.maxDiscount || 1000) * 0.7),
+        remaining: Math.floor(Math.random() * (realCampaign.maxDiscount || 1000) * 0.3),
+      },
+      metrics: {
+        impressions: realCampaign.viewCount || 0,
+        clicks: realCampaign.clickCount || 0,
+        conversions: realCampaign.conversionCount || 0,
+        ctr: realCampaign.viewCount > 0 ? ((realCampaign.clickCount || 0) / realCampaign.viewCount * 100) : 0,
+        cpc: 0.5 + Math.random() * 1.5, // Mock CPC
+        roas: realCampaign.totalRevenue > 0 ? (realCampaign.totalRevenue / (realCampaign.maxDiscount || 1000)) : 0,
+      },
+      startDate: realCampaign.startDate,
+      endDate: realCampaign.endDate,
+      targetAudience: {
+        demographics: ["18-65"],
+        interests: ["E-commerce", "Deals"],
+        locations: ["Worldwide"],
+      },
+      createdAt: realCampaign.createdAt,
+      updatedAt: realCampaign.updatedAt,
+    };
   }
 
   // Get all campaigns
@@ -33,6 +68,44 @@ class CampaignSyncService {
       // For now, return all campaigns
       return true;
     });
+  }
+
+  // Initialize with real data from API
+  async initializeFromAPI(userId?: string): Promise<void> {
+    try {
+      let realCampaigns: RealCampaign[] = [];
+
+      if (userId) {
+        // Get campaigns created by this user
+        realCampaigns = await CampaignService.getUserCampaigns(userId);
+      } else {
+        // Get all active campaigns
+        realCampaigns = await CampaignService.getActiveCampaigns();
+      }
+
+      // Clear existing campaigns
+      this.campaigns.clear();
+
+      // Add real campaigns with adaptation
+      realCampaigns.forEach(campaign => {
+        const adapted = this.adaptCampaign(campaign);
+        this.campaigns.set(adapted.id, adapted);
+      });
+
+      // If no campaigns found, fallback to mock data temporarily
+      if (this.campaigns.size === 0) {
+        console.log("No campaigns found from API, using fallback mock data");
+        this.initializeMockData();
+      }
+
+      this.isInitialized = true;
+      this.notify();
+    } catch (error) {
+      console.error("Failed to initialize campaigns from API:", error);
+      // Fallback to mock data on error
+      this.initializeMockData();
+      this.isInitialized = true;
+    }
   }
 
   // Add or update a campaign
