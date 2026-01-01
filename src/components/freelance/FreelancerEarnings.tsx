@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -34,15 +35,6 @@ import {
   FileText,
   Bell,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import FreelanceWithdrawalMethods from "./FreelanceWithdrawalMethods";
-import FreelanceTaxDocuments from "./FreelanceTaxDocuments";
-import FreelanceInvoicing from "./FreelanceInvoicing";
 import AdvancedInvoiceSearch from "./AdvancedInvoiceSearch";
 import FreelanceExportPanel from "./FreelanceExportPanel";
 import PaymentRemindersManager from "./PaymentRemindersManager";
