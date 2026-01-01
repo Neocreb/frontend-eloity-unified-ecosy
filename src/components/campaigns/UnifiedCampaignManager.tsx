@@ -94,8 +94,34 @@ export const UnifiedCampaignManager: React.FC<UnifiedCampaignManagerProps> = ({
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [activeTab, setActiveTab] = useState("campaigns");
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Initialize campaigns from real data on mount
+  useEffect(() => {
+    const initializeCampaigns = async () => {
+      setLoading(true);
+      try {
+        // Load campaigns from API using user ID
+        await campaignSyncService.initializeFromAPI(user?.id);
+      } catch (error) {
+        console.error("Failed to load campaigns:", error);
+        toast({
+          title: "Warning",
+          description: "Loaded demo campaigns. Some data may not be current.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      initializeCampaigns();
+    }
+  }, [user?.id, toast]);
 
   // Subscribe to campaign updates
   useEffect(() => {
