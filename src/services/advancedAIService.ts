@@ -521,9 +521,19 @@ export class AdvancedAIService {
   private evaluateExpression(expression: string): number {
     // Safe evaluation of mathematical expressions
     try {
-      // Remove any non-math characters and evaluate
+      // Remove any non-math characters
       const sanitized = expression.replace(/[^0-9\+\-\*\/\(\)\.\s]/g, "");
-      return eval(sanitized);
+
+      // Use Function constructor instead of eval for better security
+      // This prevents access to local scope and is more transparent
+      const evaluator = new Function('return (' + sanitized + ')');
+      const result = evaluator();
+
+      if (typeof result !== 'number' || isNaN(result)) {
+        throw new Error("Invalid expression result");
+      }
+
+      return result;
     } catch {
       throw new Error("Invalid expression");
     }

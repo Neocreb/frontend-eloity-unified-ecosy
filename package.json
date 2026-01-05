@@ -109,8 +109,8 @@
     "i18next": "^23.11.5",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-http-backend": "^3.0.2",
-    "jspdf": "^3.0.2",
     "jsonwebtoken": "^9.0.2",
+    "jspdf": "^3.0.2",
     "leaflet": "^1.9.4",
     "lovable-tagger": "^1.1.9",
     "lucide-react": "^0.454.0",
@@ -172,6 +172,7 @@
     "jest": "^29.7.0",
     "prettier": "^3.3.2",
     "supertest": "^7.1.4",
+    "terser": "^5.44.1",
     "tsx": "^4.19.2",
     "typescript": "^5.9.3",
     "vitest": "^4.0.16"
