@@ -15,21 +15,21 @@
     "esModuleInterop": true,
     "baseUrl": ".",
 
-    /* Linting */
+    
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     
-    /* Path aliases */
+    
     "paths": {
       "@/*": ["./src/*"]
     },
     
-    /* Node.js types */
-    "types": ["node", "jest"],
     
-    /* Silence deprecation warnings */
+    "types": ["node"],
+    
+    
     "ignoreDeprecations": "5.0"
   },
   "include": ["src", "server", "shared", "./*.ts", "./*.tsx"]
