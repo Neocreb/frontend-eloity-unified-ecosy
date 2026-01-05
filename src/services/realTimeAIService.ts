@@ -848,7 +848,9 @@ Markets updated in real-time.`;
       if (mathExpression) {
         // Basic safety check - only allow numbers and basic operators
         if (/^[\d\+\-\*\/\(\)\.\s]+$/.test(mathExpression)) {
-          const result = eval(mathExpression);
+          // Use Function constructor instead of eval for better security
+          const evaluator = new Function('return (' + mathExpression + ')');
+          const result = evaluator();
           const response = `${mathExpression.trim()} = ${result}`;
 
           return {
