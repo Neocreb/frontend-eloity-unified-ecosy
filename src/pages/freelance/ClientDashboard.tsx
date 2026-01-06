@@ -74,8 +74,10 @@ import { FreelanceNavigationTabs, TabItem } from "@/components/freelance/Freelan
 import { ActivityIndicator } from "@/components/freelance/RealTimeNotifications";
 import { OnboardingTour, HelpCenter, ContextualHelp, EmptyStateGuidance } from "@/components/freelance/OnboardingTour";
 import { KeyboardShortcuts, AccessibilitySettings, SkipToContent } from "@/components/freelance/KeyboardShortcuts";
-import { PerformanceMonitor, DashboardSkeleton, MemoizedCard } from "@/components/freelance/PerformanceOptimizations";
+import { PerformanceMonitor, DashboardSkeleton, MemeizedCard } from "@/components/freelance/PerformanceOptimizations";
 import ClientProposals from "@/components/freelance/ClientProposals";
+import { walletService, WalletBalance } from "@/services/walletService";
+import { FreelanceNotifications } from "@/components/freelance/FreelanceNotifications";
 import { cn } from "@/lib/utils";
 
 interface ClientStats {
@@ -214,51 +216,51 @@ export const ClientDashboard: React.FC = () => {
     }
   };
 
-  const getMockFreelancers = () => [
-    {
-      id: "1",
-      name: "Sarah Johnson",
-      title: "Frontend Developer",
-      rating: 4.9,
-      completedJobs: 47,
-      hourlyRate: 65,
-      avatar: "/api/placeholder/40/40",
-      skills: ["React", "TypeScript", "Tailwind CSS"],
-      availability: "Available now",
-    },
-    {
-      id: "2", 
-      name: "Marcus Chen",
-      title: "Full Stack Developer",
-      rating: 4.8,
-      completedJobs: 32,
-      hourlyRate: 75,
-      avatar: "/api/placeholder/40/40",
-      skills: ["Node.js", "React", "PostgreSQL"],
-      availability: "Available in 2 weeks",
-    },
-  ];
+  // Fetch real proposals and freelancers
+  const [proposals, setProposals] = useState<any[]>([]);
+  const [topFreelancers, setTopFreelancers] = useState<any[]>([]);
+  const [proposalsLoading, setProposalsLoading] = useState(false);
+  const [freelancersLoading, setFreelancersLoading] = useState(false);
 
-  const getMockProposals = () => [
-    {
-      id: "1",
-      freelancer: "Alice Thompson",
-      jobTitle: "E-commerce Website Design",
-      budget: 2500,
-      timeframe: "3 weeks",
-      rating: 4.9,
-      submittedAt: "2024-01-15",
-    },
-    {
-      id: "2",
-      freelancer: "David Rodriguez",
-      jobTitle: "Mobile App Development",
-      budget: 4000,
-      timeframe: "6 weeks", 
-      rating: 4.7,
-      submittedAt: "2024-01-14",
-    },
-  ];
+  const { searchFreelancers, getProposals: getClientProposals } = useFreelance();
+
+  useEffect(() => {
+    const loadData = async () => {
+      if (!user) return;
+
+      // Load proposals
+      setProposalsLoading(true);
+      try {
+        const proposalsData = await getClientProposals(user.id);
+        if (proposalsData) {
+          setProposals(proposalsData);
+        }
+      } catch (error) {
+        console.error("Error loading proposals:", error);
+      } finally {
+        setProposalsLoading(false);
+      }
+
+      // Load top freelancers
+      setFreelancersLoading(true);
+      try {
+        const freelancersData = await searchFreelancers({
+          limit: 5,
+          sortBy: "rating",
+          order: "desc"
+        });
+        if (freelancersData) {
+          setTopFreelancers(freelancersData.slice(0, 5));
+        }
+      } catch (error) {
+        console.error("Error loading freelancers:", error);
+      } finally {
+        setFreelancersLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, searchFreelancers, getClientProposals]);
 
   const ClientProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -608,44 +610,62 @@ export const ClientDashboard: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {getMockProposals().map((proposal) => (
-                        <div key={proposal.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <div className="flex-1">
-                            <p className="font-medium text-sm text-gray-900 dark:text-white">
-                              {proposal.freelancer}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
-                              {proposal.jobTitle}
-                            </p>
-                            <div className="flex items-center gap-4 text-xs text-gray-500">
-                              <span>${proposal.budget.toLocaleString()}</span>
-                              <span>{proposal.timeframe}</span>
-                              <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                <span>{proposal.rating}</span>
+                    {proposalsLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                          <Skeleton key={i} className="h-20 w-full" />
+                        ))}
+                      </div>
+                    ) : proposals.length > 0 ? (
+                      <div className="space-y-3">
+                        {proposals.slice(0, 5).map((proposal) => (
+                          <div key={proposal.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div className="flex-1">
+                              <p className="font-medium text-sm text-gray-900 dark:text-white">
+                                {proposal.freelancer?.name || "Unknown"}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                {proposal.job?.title || "Job"}
+                              </p>
+                              <div className="flex items-center gap-4 text-xs text-gray-500">
+                                <span>${proposal.proposed_budget?.toLocaleString() || "0"}</span>
+                                {proposal.submitted_date && (
+                                  <span>{new Date(proposal.submitted_date).toLocaleDateString()}</span>
+                                )}
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span>{proposal.freelancer?.rating || "N/A"}</span>
+                                </div>
                               </div>
                             </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline">
+                                <Eye className="w-3 h-3 mr-1" />
+                                View
+                              </Button>
+                              <Button size="sm">
+                                <ThumbsUp className="w-3 h-3 mr-1" />
+                                Accept
+                              </Button>
+                            </div>
                           </div>
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="w-3 h-3 mr-1" />
-                              View
-                            </Button>
-                            <Button size="sm">
-                              <ThumbsUp className="w-3 h-3 mr-1" />
-                              Accept
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <FileText className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-600 dark:text-gray-400">No proposals yet</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
 
               {/* Sidebar */}
               <div className="space-y-6">
+                {/* Notifications */}
+                <FreelanceNotifications maxHeight="h-[400px]" maxNotifications={5} showHeader={true} />
+
                 {/* Quick Actions */}
                 <Card>
                   <CardHeader>
@@ -679,33 +699,46 @@ export const ClientDashboard: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {getMockFreelancers().map((freelancer) => (
-                        <div key={freelancer.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <div className="flex items-center gap-3 mb-2">
-                            <Avatar className="w-10 h-10">
-                              <AvatarImage src={freelancer.avatar} />
-                              <AvatarFallback>{freelancer.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                                {freelancer.name}
-                              </p>
-                              <p className="text-xs text-gray-600 dark:text-gray-400">
-                                {freelancer.title}
-                              </p>
+                    {freelancersLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-16 w-full" />
+                        ))}
+                      </div>
+                    ) : topFreelancers.length > 0 ? (
+                      <div className="space-y-3">
+                        {topFreelancers.map((freelancer) => (
+                          <div key={freelancer.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Avatar className="w-10 h-10">
+                                <AvatarImage src={freelancer.avatar} />
+                                <AvatarFallback>{freelancer.name?.[0] || "F"}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                                  {freelancer.name}
+                                </p>
+                                <p className="text-xs text-gray-600 dark:text-gray-400">
+                                  {freelancer.title || "Freelancer"}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center justify-between text-xs text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                <span>{freelancer.rating || "N/A"}</span>
+                              </div>
+                              <span>${freelancer.hourly_rate || "N/A"}/hr</span>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <div className="flex items-center gap-1">
-                              <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                              <span>{freelancer.rating}</span>
-                            </div>
-                            <span>${freelancer.hourlyRate}/hr</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Users className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-600 dark:text-gray-400">No freelancers found</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -720,19 +753,29 @@ export const ClientDashboard: React.FC = () => {
                   <CardContent className="space-y-4">
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Jobs Posted</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">3</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {activeProjects.filter(p => p.status === "active").length}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Proposals Received</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">24</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {proposals.length}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Avg Response Time</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">&lt; 4 hours</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        &lt; 24 hours
+                      </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-sm text-gray-600 dark:text-gray-400">Project Success Rate</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white">96%</span>
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {clientStats && activeProjects.length > 0
+                          ? Math.round((clientStats.completedProjects / activeProjects.length) * 100)
+                          : 0}%
+                      </span>
                     </div>
                   </CardContent>
                 </Card>
@@ -789,11 +832,11 @@ export const ClientDashboard: React.FC = () => {
                   </Button>
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-                      <p className="text-2xl font-bold text-blue-600">3</p>
+                      <p className="text-2xl font-bold text-blue-600">{clientStats?.activeProjects || 0}</p>
                       <p className="text-gray-600 dark:text-gray-400">Active Jobs</p>
                     </div>
                     <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                      <p className="text-2xl font-bold text-green-600">24</p>
+                      <p className="text-2xl font-bold text-green-600">{proposals.length}</p>
                       <p className="text-gray-600 dark:text-gray-400">Proposals</p>
                     </div>
                   </div>
@@ -812,36 +855,46 @@ export const ClientDashboard: React.FC = () => {
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Button variant="outline" className="w-full">
+                  <Button variant="outline" className="w-full" onClick={() => navigate('/app/freelance/find-freelancers')}>
                     <Search className="w-4 h-4 mr-2" />
                     Browse Freelancers
                   </Button>
                   <div className="space-y-3">
-                    {getMockFreelancers().slice(0, 2).map((freelancer) => (
-                      <div key={freelancer.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                        <div className="flex items-center gap-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={freelancer.avatar} />
-                            <AvatarFallback>{freelancer.name[0]}</AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                              {freelancer.name}
-                            </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {freelancer.title}
-                            </p>
-                            <div className="flex items-center justify-between mt-1">
-                              <div className="flex items-center gap-1">
-                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                <span className="text-xs">{freelancer.rating}</span>
+                    {freelancersLoading ? (
+                      Array.from({ length: 2 }).map((_, i) => (
+                        <Skeleton key={i} className="h-20 w-full" />
+                      ))
+                    ) : topFreelancers.length > 0 ? (
+                      topFreelancers.slice(0, 2).map((freelancer) => (
+                        <div key={freelancer.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <Avatar className="w-10 h-10">
+                              <AvatarImage src={freelancer.avatar} />
+                              <AvatarFallback>{freelancer.name?.[0] || "F"}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-sm text-gray-900 dark:text-white truncate">
+                                {freelancer.name}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {freelancer.title || "Freelancer"}
+                              </p>
+                              <div className="flex items-center justify-between mt-1">
+                                <div className="flex items-center gap-1">
+                                  <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
+                                  <span className="text-xs">{freelancer.rating || "N/A"}</span>
+                                </div>
+                                <span className="text-xs text-gray-500">${freelancer.hourly_rate || "N/A"}/hr</span>
                               </div>
-                              <span className="text-xs text-gray-500">${freelancer.hourlyRate}/hr</span>
                             </div>
                           </div>
                         </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-6">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">No freelancers available</p>
                       </div>
-                    ))}
+                    )}
                   </div>
                 </CardContent>
               </Card>

@@ -44,6 +44,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { FreelanceProjectChat } from "@/components/freelance/FreelanceProjectChat";
 
 interface Project {
   id: string;
@@ -896,6 +897,22 @@ const ManageProjects: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Project Messages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Project Discussion</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FreelanceProjectChat
+                    projectId={selectedProject.id}
+                    projectTitle={selectedProject.title}
+                    otherUserName={selectedProject.freelancer.name}
+                    otherUserAvatar={selectedProject.freelancer.avatar}
+                    className="border-0"
+                  />
                 </CardContent>
               </Card>
 

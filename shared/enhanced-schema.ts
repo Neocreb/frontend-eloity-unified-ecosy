@@ -52,6 +52,14 @@ export const profiles = pgTable('profiles', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
+// Profiles relations for users
+export const profilesRelations = relations(profiles, ({ one, many }) => ({
+  user: one(users, {
+    fields: [profiles.user_id],
+    references: [users.id],
+  }),
+}));
+
 // Marketplace profiles table
 export const marketplace_profiles = pgTable('marketplace_profiles', {
   id: uuid('id').primaryKey().defaultRandom(),

@@ -18,7 +18,7 @@ const cryptoapisClient = axios.create({
     'Content-Type': 'application/json',
     'X-API-Key': API_KEY || ''
   },
-  timeout: 10000
+  timeout: 15000
 });
 
 // =============================================================================
