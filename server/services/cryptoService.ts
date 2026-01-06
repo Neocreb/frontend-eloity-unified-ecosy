@@ -126,7 +126,7 @@ export async function getCryptoPrices(symbols: string[], vsCurrency: string = 'u
         logger.info(`Fetching CoinGecko data from ${cgUrl}`);
 
         const r = await axios.get(cgUrl, {
-          timeout: 10000,
+          timeout: 15000,
           validateStatus: () => true, // Handle all status codes
           headers: {
             'Accept': 'application/json',

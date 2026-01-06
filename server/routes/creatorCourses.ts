@@ -5,7 +5,16 @@ import CourseDbService from '../services/courseDbService';
 const router = Router();
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseKey = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || '';
-const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Create Supabase client only if credentials are available
+let supabase: any = null;
+try {
+  if (supabaseUrl && supabaseKey) {
+    supabase = createClient(supabaseUrl, supabaseKey);
+  }
+} catch (error) {
+  console.warn('⚠️  Supabase credentials not configured. Creator course features will be limited.');
+}
 
 /**
  * Middleware to verify user is authenticated

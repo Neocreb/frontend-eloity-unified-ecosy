@@ -49,6 +49,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/components/ui/use-toast";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 import { useEnhancedMarketplace } from "@/contexts/EnhancedMarketplaceContext";
 import type { Order as EnhancedOrder } from "@/types/enhanced-marketplace";
 import { OrderService } from "@/services/orderService";
@@ -263,6 +264,13 @@ export default function BuyerDashboard() {
 
   return (
     <div className="px-4 py-6">
+      <MarketplaceBreadcrumb
+        items={[
+          { label: "Marketplace", href: "/app/marketplace" },
+          { label: "Buyer Dashboard" }
+        ]}
+      />
+
       {/* Enhanced Header with proper layout */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div>
