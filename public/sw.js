@@ -1,6 +1,9 @@
 const CACHE_NAME = "eloity-v1.0.0";
 const STATIC_CACHE = "eloity-static-v1.0.0";
 const DYNAMIC_CACHE = "eloity-dynamic-v1.0.0";
+const MARKETPLACE_CACHE = "marketplace-static-v1.0.0";
+const MARKETPLACE_IMAGES_CACHE = "marketplace-images-v1.0.0";
+const MARKETPLACE_API_CACHE = "marketplace-api-v1.0.0";
 
 // Files to cache for offline use
 const STATIC_FILES = [
@@ -13,7 +16,13 @@ const STATIC_FILES = [
   "/rewards",
   "/offline.html",
   "/manifest.json",
-  // Add critical CSS and JS files here
+];
+
+// Marketplace-specific static files
+const MARKETPLACE_STATIC_FILES = [
+  "/marketplace",
+  "/images/placeholder-product.svg",
+  "/images/placeholder-store.svg",
 ];
 
 // API endpoints that can work offline
@@ -21,7 +30,18 @@ const CACHEABLE_APIS = [
   "/api/user/profile",
   "/api/notifications",
   "/api/rewards",
+  "/api/marketplace/products",
+  "/api/marketplace/categories",
+  "/api/marketplace/sellers",
 ];
+
+// Cache strategies for different URL patterns
+const CACHE_STRATEGIES = {
+  images: "cache-first",
+  static: "cache-first",
+  api: "stale-while-revalidate",
+  marketplace: "stale-while-revalidate",
+};
 
 // Install event - cache static files
 self.addEventListener("install", (event) => {
@@ -68,7 +88,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// Fetch event - serve from cache or network
+// Fetch event - serve from cache or network based on strategy
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -76,18 +96,8 @@ self.addEventListener("fetch", (event) => {
   // Skip non-HTTP requests
   if (!request.url.startsWith("http")) return;
 
-  // Skip API requests, Bybit requests, and other external API calls
-  if (
-    url.pathname.startsWith("/api/") || 
-    url.hostname.includes("bybit.com") ||
-    url.hostname.includes("coingecko.com") ||
-    url.hostname.includes("supabase.co") ||
-    request.headers.get('accept')?.includes('application/json') ||
-    request.headers.get('content-type')?.includes('application/json')
-  ) {
-    // For API requests, bypass cache and go directly to network
-    return;
-  }
+  // Determine cache strategy based on URL pattern
+  const strategy = getStrategyForUrl(url.pathname, url.hostname);
 
   // Handle navigation requests
   if (request.mode === "navigate") {
@@ -95,9 +105,143 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Handle static assets
+  // Handle API requests based on strategy
+  if (url.pathname.startsWith("/api/")) {
+    if (strategy === "stale-while-revalidate") {
+      event.respondWith(staleWhileRevalidate(request, MARKETPLACE_API_CACHE));
+    } else if (strategy === "network-first") {
+      event.respondWith(networkFirst(request, MARKETPLACE_API_CACHE));
+    } else {
+      // Skip external APIs and cache-requiring APIs
+      if (!isCacheableAPI(url.pathname)) {
+        return;
+      }
+      event.respondWith(cacheFirst(request, MARKETPLACE_API_CACHE));
+    }
+    return;
+  }
+
+  // Handle image requests with cache-first
+  if (request.destination === "image") {
+    event.respondWith(cacheFirst(request, MARKETPLACE_IMAGES_CACHE));
+    return;
+  }
+
+  // Handle other static assets
   event.respondWith(handleStaticRequest(request));
 });
+
+/**
+ * Determine cache strategy based on URL pattern
+ */
+function getStrategyForUrl(pathname, hostname) {
+  // Images always cache-first
+  if (pathname.includes("/images/") || pathname.match(/\.(jpg|jpeg|png|gif|webp|svg)$/i)) {
+    return "cache-first";
+  }
+
+  // Marketplace API uses stale-while-revalidate
+  if (pathname.includes("/api/marketplace/")) {
+    return "stale-while-revalidate";
+  }
+
+  // User-specific data is network-first
+  if (pathname.includes("/api/user/") || pathname.includes("/api/account/")) {
+    return "network-first";
+  }
+
+  // Notifications and rewards cache but check network
+  if (pathname.includes("/api/notifications/") || pathname.includes("/api/rewards/")) {
+    return "stale-while-revalidate";
+  }
+
+  // External APIs are not cached
+  if (hostname.includes("bybit.com") || hostname.includes("coingecko.com") || hostname.includes("supabase.co")) {
+    return "network-only";
+  }
+
+  // Default to cache-first for static assets
+  return "cache-first";
+}
+
+/**
+ * Check if API is cacheable
+ */
+function isCacheableAPI(pathname) {
+  return CACHEABLE_APIS.some((api) => pathname.startsWith(api));
+}
+
+/**
+ * Cache-first strategy: Check cache first, network as fallback
+ */
+async function cacheFirst(request, cacheName) {
+  try {
+    const cached = await caches.match(request);
+    if (cached) {
+      return cached;
+    }
+
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.log("SW: Cache-first failed for", request.url);
+    return new Response("Offline", { status: 503 });
+  }
+}
+
+/**
+ * Network-first strategy: Try network first, fallback to cache
+ */
+async function networkFirst(request, cacheName) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(cacheName);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    console.log("SW: Network failed, checking cache for", request.url);
+    const cached = await caches.match(request);
+    if (cached) {
+      return cached;
+    }
+    return new Response(JSON.stringify({ error: "Offline" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+}
+
+/**
+ * Stale-while-revalidate strategy: Return cache, update in background
+ */
+async function staleWhileRevalidate(request, cacheName) {
+  const cached = await caches.match(request);
+
+  const fetchPromise = fetch(request).then((response) => {
+    if (response.ok) {
+      const cache = caches.open(cacheName);
+      cache.then((c) => c.put(request, response.clone()));
+    }
+    return response;
+  }).catch(() => {
+    // Network failed, return cached or error
+    if (cached) {
+      return cached;
+    }
+    return new Response(JSON.stringify({ error: "Offline" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+
+  return cached || fetchPromise;
+}
 
 // Handle navigation requests with network-first strategy
 async function handleNavigationRequest(request) {
