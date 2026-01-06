@@ -18,6 +18,7 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/utils/utils';
 import VirtualGiftsAndTips from '@/components/premium/VirtualGiftsAndTips';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
@@ -405,7 +406,7 @@ const PostDetail: React.FC = () => {
           }
         }
       } catch (error) {
-        console.error('Error fetching post:', error);
+        console.error('Error fetching post:', getErrorMessage(error));
         // Fall back to mock data
         const foundPost = allPosts[postId];
         if (foundPost) {

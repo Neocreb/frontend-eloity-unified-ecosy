@@ -288,28 +288,28 @@ const DashboardInner = () => {
       </div>
 
       {/* Lower Zone - White Content Area with Curved Top */}
-      <div className="relative w-full bg-white pt-2 min-h-screen">
-        {/* Curved divider */}
-        <div className="absolute -top-12 left-0 right-0 h-24 bg-white" style={{
+      <div className="relative w-full bg-white min-h-screen" style={{
+        marginTop: '-8px',
+        borderRadius: '48px 48px 0 0',
+      }}>
+        {/* Ad Carousel Banner - Full Bleed with Curved Top */}
+        <div className="w-full" style={{
           borderRadius: '48px 48px 0 0',
-          backgroundColor: 'white',
-        }}></div>
+          overflow: 'hidden',
+        }}>
+          <AdCarousel
+            ads={ads}
+            autoScroll={true}
+            scrollInterval={6000}
+            onAdClick={(ad) => {
+              if (ad.ctaUrl) {
+                navigate(ad.ctaUrl);
+              }
+            }}
+          />
+        </div>
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12">
-
-          {/* Ad Carousel Banner - Positioned to eliminate white space */}
-          <div className="mt-0">
-            <AdCarousel
-              ads={ads}
-              autoScroll={true}
-              scrollInterval={6000}
-              onAdClick={(ad) => {
-                if (ad.ctaUrl) {
-                  navigate(ad.ctaUrl);
-                }
-              }}
-            />
-          </div>
+        <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 space-y-4 md:space-y-6 pb-12 pt-4">
 
           {/* Wallet Services Grid with Customizable Favorites */}
           <WalletServicesGrid />
