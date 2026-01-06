@@ -219,7 +219,7 @@ async function loadCryptoRates(): Promise<void> {
           'X-API-Key': CRYPTOAPIS_API_KEY,
           'Content-Type': 'application/json'
         },
-        timeout: 10000
+        timeout: 15000
       }
     );
     

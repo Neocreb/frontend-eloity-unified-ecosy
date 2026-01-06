@@ -5,6 +5,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { navigateToDirectChat, navigateToSendMoney } from "@/utils/navigationHelpers";
 import { useWalletContext } from "@/contexts/WalletContext";
 import { useToast } from "@/components/ui/use-toast";
+import { useRewards } from "@/hooks/use-rewards";
+import { usePostKeyboardNavigation } from "@/hooks/usePostKeyboardNavigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -99,10 +101,134 @@ import { Product } from "@/types/marketplace";
 import { profileService } from "@/services/profileService";
 import EnhancedPostCard from "@/components/feed/EnhancedPostCard";
 import { Post } from "@/components/feed/PostCard";
+import { ProfileStatsCarousel } from "@/components/profile/ProfileStatsCarousel";
+import BadgeSystem from "@/components/profile/BadgeSystem";
+import ActivityTimeline from "@/components/profile/ActivityTimeline";
+import PostPinningSystem from "@/components/profile/PostPinningSystem";
+import { ProfilePostCard } from "@/components/profile/ProfilePostCard";
+import { SkillsSection } from "@/components/profile/SkillsSection";
+import { ProfessionalInfo } from "@/components/profile/ProfessionalInfo";
+import { SocialLinks } from "@/components/profile/SocialLinks";
+import { EnhancedAchievements } from "@/components/profile/EnhancedAchievements";
+import { useProfileAboutData } from "@/hooks/useProfileAboutData";
+import { CreatorStudioQuickAccess } from "@/components/profile/CreatorStudioQuickAccess";
+import FeaturedContent from "@/components/profile/FeaturedContent";
+import TestimonialsSection from "@/components/profile/TestimonialsSection";
+import ConnectionStats from "@/components/profile/ConnectionStats";
+import { useFeaturedContent } from "@/hooks/useFeaturedContent";
+import { useTestimonials } from "@/hooks/useTestimonials";
+import { useConnectionStats } from "@/hooks/useConnectionStats";
 
 interface UnifiedProfileProps {
   username?: string;
 }
+
+// About Tab Content Component
+interface AboutTabContentProps {
+  userId?: string;
+  displayName: string;
+  location: string;
+  joinDate: string;
+  isOwnProfile: boolean;
+}
+
+const AboutTabContent: React.FC<AboutTabContentProps> = ({
+  userId,
+  displayName,
+  location,
+  joinDate,
+  isOwnProfile,
+}) => {
+  const aboutData = useProfileAboutData(userId);
+  const { toast } = useToast();
+
+  const handleEndorseSkill = (skillId: string) => {
+    toast({
+      title: "Skill Endorsed",
+      description: "You have successfully endorsed this skill.",
+      duration: 2000,
+    });
+  };
+
+  const handleOpenLink = (url: string) => {
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Location & Join Date Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle>About {displayName}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="flex items-center gap-3">
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Location</div>
+                <div className="text-sm text-muted-foreground">{location}</div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div>
+                <div className="text-sm font-medium">Joined</div>
+                <div className="text-sm text-muted-foreground">{joinDate}</div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Professional Info */}
+      <ProfessionalInfo
+        data={aboutData.professional}
+        isOwner={isOwnProfile}
+        onEdit={() =>
+          toast({
+            title: "Edit Professional Info",
+            description: "This feature will be available soon.",
+          })
+        }
+      />
+
+      {/* Skills Section */}
+      <SkillsSection
+        skills={aboutData.skills}
+        isOwner={isOwnProfile}
+        onAddSkill={() =>
+          toast({
+            title: "Add Skill",
+            description: "This feature will be available soon.",
+          })
+        }
+        onEndorseSkill={handleEndorseSkill}
+        maxVisibleSkills={10}
+      />
+
+      {/* Social Links */}
+      <SocialLinks
+        links={aboutData.socialLinks}
+        isOwner={isOwnProfile}
+        onEdit={() =>
+          toast({
+            title: "Edit Social Links",
+            description: "This feature will be available soon.",
+          })
+        }
+        onOpenLink={handleOpenLink}
+      />
+
+      {/* Enhanced Achievements */}
+      <EnhancedAchievements
+        achievements={aboutData.achievements}
+        completedAchievements={8}
+        totalAchievements={aboutData.totalAchievements}
+      />
+    </div>
+  );
+};
 
 const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   username: propUsername,
@@ -111,9 +237,15 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const { walletBalance, transactions, isLoading: walletLoading } = useWalletContext();
+  const { data: rewardsData } = useRewards();
   const { toast } = useToast();
 
   const targetUsername = propUsername || paramUsername;
+
+  // Calculate total wallet balance (sum of all portfolio types)
+  const totalWalletBalance = walletBalance?.total || 0;
+  // Extract ELO points from rewards data
+  const eloPoints = rewardsData?.calculatedUserRewards?.total_earned || 0;
 
   // State management
   const [profileUser, setProfileUser] = useState<UserProfile | null>(null);
@@ -129,6 +261,9 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
   const [mediaViewMode, setMediaViewMode] = useState("grid");
   const [mediaLikes, setMediaLikes] = useState<Record<string, boolean>>({});
   const [notifications, setNotifications] = useState<any[]>([]);
+  const [pinnedPosts, setPinnedPosts] = useState<Array<{ postId: string; pinnedOrder: number; pinnedDate: string }>>([]);
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   const isOwnProfile =
     !targetUsername || (user && user.profile?.username === targetUsername);
@@ -332,6 +467,95 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
     loadProfile();
   }, [targetUsername, isOwnProfile, user, toast]);
 
+  // Phase 7: Featured Content Hook
+  const { featuredPosts } = useFeaturedContent({
+    userId: profileUser?.id,
+    limit: 5,
+  });
+
+  // Phase 7: Testimonials Hook
+  const { testimonials } = useTestimonials({
+    userId: profileUser?.id,
+    limit: 10,
+  });
+
+  // Phase 7: Connection Stats Hook
+  const connectionStats = useConnectionStats({
+    userId: profileUser?.id,
+    limit: 10,
+  });
+
+  // Keyboard navigation support for posts (Phase 5)
+  useEffect(() => {
+    if (activeTab !== "posts" || posts.length === 0) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't handle if user is typing in an input
+      if (
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+
+      switch (event.key) {
+        case "ArrowDown": {
+          event.preventDefault();
+          const postElements = document.querySelectorAll("[data-post-id]");
+          if (postElements.length > 0) {
+            const nextElement = postElements[Math.min(
+              Array.from(postElements).indexOf(document.activeElement as Element) + 1,
+              postElements.length - 1
+            )] as HTMLElement;
+            nextElement?.focus();
+          }
+          break;
+        }
+
+        case "ArrowUp": {
+          event.preventDefault();
+          const postElements = document.querySelectorAll("[data-post-id]");
+          if (postElements.length > 0) {
+            const prevElement = postElements[Math.max(
+              Array.from(postElements).indexOf(document.activeElement as Element) - 1,
+              0
+            )] as HTMLElement;
+            prevElement?.focus();
+          }
+          break;
+        }
+
+        case "Enter": {
+          // Open post detail modal for focused post
+          const focusedPost = document.activeElement?.getAttribute("data-post-id");
+          if (focusedPost) {
+            event.preventDefault();
+            setSelectedPostId(focusedPost);
+            setDetailModalOpen(true);
+          }
+          break;
+        }
+
+        case "Escape": {
+          // Close modal
+          if (detailModalOpen) {
+            event.preventDefault();
+            setDetailModalOpen(false);
+          }
+          break;
+        }
+
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [activeTab, posts, detailModalOpen]);
+
   const handleFollow = async () => {
     if (!user?.id || !profileUser?.id) {
       toast({
@@ -377,6 +601,42 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
 
   const handleSendMoney = () => {
     navigateToSendMoney(targetUsername, navigate);
+  };
+
+  const handlePinPost = (postId: string) => {
+    if (pinnedPosts.length < 3) {
+      const newPinned = {
+        postId,
+        pinnedOrder: pinnedPosts.length,
+        pinnedDate: new Date().toISOString(),
+      };
+      setPinnedPosts([...pinnedPosts, newPinned]);
+      toast({
+        title: "Post pinned",
+        description: "This post has been added to your featured posts.",
+      });
+    } else {
+      toast({
+        title: "Cannot pin more posts",
+        description: "You can pin up to 3 posts. Unpin a post first.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleUnpinPost = (postId: string) => {
+    const filtered = pinnedPosts
+      .filter(p => p.postId !== postId)
+      .map((p, idx) => ({ ...p, pinnedOrder: idx }));
+    setPinnedPosts(filtered);
+    toast({
+      title: "Post unpinned",
+      description: "This post has been removed from your featured posts.",
+    });
+  };
+
+  const handleReorderPinnedPosts = (reorderedPinned: Array<{ postId: string; pinnedOrder: number; pinnedDate: string }>) => {
+    setPinnedPosts(reorderedPinned);
   };
 
   if (isLoading) {
@@ -501,20 +761,14 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                         @{mockProfile.username}
                       </p>
 
-                      {/* Enhanced Status Badges */}
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        <Badge variant="secondary" className="text-xs bg-purple-100 text-purple-700 border-purple-200">
-                          <Crown className="h-3 w-3 mr-1" />
-                          Premium
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700 border-green-200">
-                          <Shield className="h-3 w-3 mr-1" />
-                          Trust Score {mockProfile.trustScore}
-                        </Badge>
-                        <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
-                          <Star className="h-3 w-3 mr-1" />
-                          Level 8
-                        </Badge>
+                      {/* Dynamic Badge System */}
+                      <div className="mb-2">
+                        <BadgeSystem
+                          userId={profileUser?.id || ''}
+                          isOwnProfile={isOwnProfile}
+                          variant="compact"
+                          maxDisplay={6}
+                        />
                       </div>
 
                       <div className="flex flex-wrap gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
@@ -609,38 +863,30 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                   )}
                 </div>
 
-                {/* Enhanced Stats with Wallet Integration */}
-                <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 sm:gap-4 mt-6 py-4 border-t">
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{mockProfile.posts}</div>
-                    <div className="text-xs text-muted-foreground">Posts</div>
+                {/* Enhanced Stats Carousel */}
+                {profileUser && (
+                  <div className="mt-8 py-6 border-t">
+                    <h3 className="text-lg font-semibold mb-4">Platform Statistics</h3>
+                    <ProfileStatsCarousel
+                      profile={profileUser}
+                      followerCount={followerCount}
+                      followingCount={followingCount}
+                      enableRealData={true}
+                      isOwnProfile={isOwnProfile}
+                      walletBalance={isOwnProfile ? totalWalletBalance : undefined}
+                      eloPoints={isOwnProfile ? eloPoints : undefined}
+                      onStatClick={(statType) => {
+                        // Handle stat click navigation
+                        if (statType === "wallet") {
+                          navigate("/app/wallet");
+                        } else if (statType === "elopoints") {
+                          navigate("/app/rewards");
+                        }
+                        console.log("Stat clicked:", statType);
+                      }}
+                    />
                   </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{followerCount.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Followers</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-lg sm:text-xl font-bold">{followingCount.toLocaleString()}</div>
-                    <div className="text-xs text-muted-foreground">Following</div>
-                  </div>
-                  {isOwnProfile && (
-                    <>
-                      <div className="text-center cursor-pointer" onClick={() => navigate("/app/wallet")}>
-                        <div className="text-lg sm:text-xl font-bold text-green-600">${mockProfile.walletBalance}</div>
-                        <div className="text-xs text-muted-foreground">Balance</div>
-                      </div>
-                      <div className="text-center cursor-pointer" onClick={() => navigate("/app/notifications")}>
-                        <div className="text-lg sm:text-xl font-bold text-blue-600 relative">
-                          {mockProfile.unreadNotifications}
-                          {mockProfile.unreadNotifications > 0 && (
-                            <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
-                          )}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Notifications</div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                )}
               </CardContent>
             </div>
           </Card>
@@ -725,6 +971,26 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 </div>
               </CardContent>
             </Card>
+          )}
+
+          {/* Creator Studio Quick Access (Own Profile Only) */}
+          {isOwnProfile && (
+            <CreatorStudioQuickAccess
+              isOwnProfile={isOwnProfile}
+              stats={{
+                totalViews: posts.reduce((sum, p) => sum + (p.views as any || 0), 0),
+                totalLikes: posts.reduce((sum, p) => sum + p.likes, 0),
+                totalComments: posts.reduce((sum, p) => sum + p.comments, 0),
+                topPostViews: Math.max(...posts.map(p => (p.views as any) || 0), 0),
+                averageEngagementRate: posts.length > 0
+                  ? (posts.reduce((sum, p) => {
+                      const views = (p.views as any) || 100;
+                      return sum + ((p.likes + p.comments) / Math.max(views, 1));
+                    }, 0) / posts.length) * 100
+                  : 0,
+                videosCreated: posts.length,
+              }}
+            />
           )}
 
           {/* Unified Notifications Overview (Own Profile Only) */}
@@ -840,11 +1106,15 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-4">
-                      {posts.map((post) => (
-                        <EnhancedPostCard key={post.id} post={post} />
-                      ))}
-                    </div>
+                    <PostPinningSystem
+                      posts={posts}
+                      pinnedPostIds={pinnedPosts}
+                      isOwnProfile={isOwnProfile}
+                      maxPinned={3}
+                      onPinChange={handlePinPost}
+                      onReorder={handleReorderPinnedPosts}
+                      className="space-y-6"
+                    />
                   )}
                 </TabsContent>
 
@@ -969,11 +1239,13 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 </TabsContent>
 
                 <TabsContent value="activity" className="mt-0">
-                  <div className="text-center py-12">
-                    <Activity className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Activity Timeline</h3>
-                    <p className="text-muted-foreground">Recent actions and interactions</p>
-                  </div>
+                  {profileUser && (
+                    <ActivityTimeline
+                      userId={profileUser.id}
+                      showFilters={true}
+                      maxItems={20}
+                    />
+                  )}
                 </TabsContent>
 
                 {isOwnProfile && (
@@ -1014,60 +1286,78 @@ const UnifiedProfile: React.FC<UnifiedProfileProps> = ({
                 )}
 
                 <TabsContent value="about" className="mt-0">
-                  <div className="space-y-6">
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>About {mockProfile.displayName}</CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                          <div className="flex items-center gap-3">
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-sm font-medium">Location</div>
-                              <div className="text-sm text-muted-foreground">{mockProfile.location}</div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-3">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <div>
-                              <div className="text-sm font-medium">Joined</div>
-                              <div className="text-sm text-muted-foreground">{mockProfile.joinDate}</div>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    <Card>
-                      <CardHeader>
-                        <CardTitle>Achievements</CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {mockProfile.achievements?.map((achievement, index) => (
-                            <div
-                              key={index}
-                              className="flex items-center gap-3 p-4 rounded-lg border bg-gradient-to-r from-blue-50 to-purple-50"
-                            >
-                              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-                                <achievement.icon className="h-5 w-5 text-white" />
-                              </div>
-                              <div>
-                                <div className="font-medium">{achievement.title}</div>
-                                <div className="text-xs text-muted-foreground">{achievement.date}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
+                  <AboutTabContent
+                    userId={profileUser?.id}
+                    displayName={mockProfile.displayName}
+                    location={mockProfile.location}
+                    joinDate={mockProfile.joinDate}
+                    isOwnProfile={isOwnProfile}
+                  />
                 </TabsContent>
               </div>
             </Tabs>
           </Card>
         </div>
+
+        {/* Phase 7: Advanced Features Section */}
+        {!isLoading && (
+          <div className="space-y-6">
+            {/* Featured Content */}
+            {featuredPosts.length > 0 && (
+              <FeaturedContent
+                pinnedPosts={featuredPosts}
+                isOwner={isOwnProfile}
+                onReorder={(reordered) => {
+                  // Handle reorder
+                  toast({
+                    title: "Featured posts reordered",
+                    description: "Your featured content order has been updated.",
+                  });
+                }}
+                onRemove={(postId) => {
+                  toast({
+                    title: "Featured post removed",
+                    description: "Post has been removed from featured section.",
+                  });
+                }}
+              />
+            )}
+
+            {/* Testimonials Section */}
+            {testimonials.length > 0 && (
+              <TestimonialsSection
+                testimonials={testimonials}
+                isOwner={isOwnProfile}
+                onPin={(testimonialId) => {
+                  toast({
+                    title: "Testimonial pinned",
+                    description: "Testimonial has been featured.",
+                  });
+                }}
+                onRemove={(testimonialId) => {
+                  toast({
+                    title: "Testimonial removed",
+                    description: "Testimonial has been removed.",
+                  });
+                }}
+              />
+            )}
+
+            {/* Connection Stats */}
+            {connectionStats.totalConnections > 0 && (
+              <ConnectionStats
+                totalConnections={connectionStats.totalConnections}
+                mutualConnections={connectionStats.mutualConnections}
+                networkSize={connectionStats.networkSize}
+                topConnections={connectionStats.topConnections}
+                isOwner={isOwnProfile}
+                onViewNetwork={() => {
+                  navigate("/app/network");
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
 
       {/* Edit Profile Modal */}

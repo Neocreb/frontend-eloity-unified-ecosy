@@ -51,8 +51,8 @@ export const TestimonialsSection: React.FC = () => {
     const fetchTestimonials = async () => {
       try {
         timeoutId = setTimeout(() => {
-          controller.abort('Request timeout');
-        }, 5000);
+          controller.abort();
+        }, 15000);
 
         const response = await fetch('/api/landing/testimonials?featured=true', {
           signal: controller.signal,
@@ -79,6 +79,10 @@ export const TestimonialsSection: React.FC = () => {
       } catch (err) {
         // Ignore abort errors from cleanup
         if (err instanceof Error && err.name === 'AbortError') {
+          console.debug('Testimonials request timeout after 15s, using defaults');
+          if (isMounted) {
+            setTestimonials(defaultTestimonials);
+          }
           return;
         }
         // Log other errors

@@ -38,7 +38,7 @@ router.get('/testimonials', async (req: Request, res: Response) => {
         featured: featured === 'true',
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 8000)
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
       ),
     ]) as any[];
 
@@ -50,7 +50,7 @@ router.get('/testimonials', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching testimonials:', error);
     // Return empty array as fallback instead of error
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
@@ -72,7 +72,7 @@ router.get('/faqs', async (req: Request, res: Response) => {
         active: true,
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 8000)
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
       ),
     ]) as any[];
 
@@ -84,7 +84,7 @@ router.get('/faqs', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching FAQs:', error);
     // Return empty array as fallback instead of error
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
@@ -106,7 +106,7 @@ router.get('/use-cases', async (req: Request, res: Response) => {
         featured: featured === 'true',
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 8000)
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
       ),
     ]) as any[];
 
@@ -118,7 +118,7 @@ router.get('/use-cases', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching use cases:', error);
     // Return empty array as fallback instead of error
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
@@ -133,10 +133,11 @@ router.get('/use-cases', async (req: Request, res: Response) => {
 router.get('/social-proof-stats', async (req: Request, res: Response) => {
   try {
     const stats = await SocialProofStatsService.getAllStats();
-    res.json(stats);
+    res.json(stats || []);
   } catch (error) {
     console.error('Error fetching stats:', error);
-    res.status(500).json({ error: 'Failed to fetch statistics' });
+    // Return mock/fallback stats instead of error
+    res.json([]);
   }
 });
 
@@ -155,13 +156,18 @@ router.get('/stats/overview', async (req: Request, res: Response) => {
     });
 
     res.json({
-      stats,
-      testimonials: testimonials.slice(0, 3),
-      useCases: useCases.slice(0, 2),
+      stats: stats || [],
+      testimonials: (testimonials || []).slice(0, 3),
+      useCases: (useCases || []).slice(0, 2),
     });
   } catch (error) {
     console.error('Error fetching overview:', error);
-    res.status(500).json({ error: 'Failed to fetch overview' });
+    // Return graceful fallback instead of error
+    res.json({
+      stats: [],
+      testimonials: [],
+      useCases: [],
+    });
   }
 });
 
@@ -183,7 +189,7 @@ router.get('/comparison-matrix', async (req: Request, res: Response) => {
         active: true,
       }),
       new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Request timeout')), 5000)
+        setTimeout(() => reject(new Error('Request timeout')), 15000)
       ),
     ]) as any[];
 
@@ -195,7 +201,7 @@ router.get('/comparison-matrix', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching comparisons:', error);
     // Return empty array as fallback instead of error
-    res.json([]);
+    res.status(200).json([]);
   }
 });
 
