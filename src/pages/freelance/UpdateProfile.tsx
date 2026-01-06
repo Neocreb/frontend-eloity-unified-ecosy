@@ -38,6 +38,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+// Phase 4 Integrations
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceErrorBoundary } from "@/components/freelance/FreelanceErrorBoundary";
 
 interface FreelancerProfile {
   id: string;
@@ -312,7 +315,32 @@ const UpdateProfile: React.FC = () => {
     try {
       // Here you would save to your backend
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast.success("Profile updated successfully!");
+
+      // Phase 4: Award rewards for profile completion
+      if (user) {
+        try {
+          // Check if profile is complete enough to award completion reward
+          const isProfileComplete = profile.bio && profile.skills.length > 0 &&
+                                   profile.title && profile.experience.years > 0;
+
+          if (isProfileComplete) {
+            // Award profile completion reward (150 points)
+            await FreelanceRewardsIntegrationService.rewardProfileCompletion(
+              user.id
+            );
+            toast.success("Profile complete! You earned 150 reward points! 🎉");
+          } else {
+            // Award profile creation reward (100 points) for first save
+            await FreelanceRewardsIntegrationService.rewardProfileCreation(
+              user.id
+            );
+            toast.success("Profile updated! You earned 100 reward points! ✨");
+          }
+        } catch (rewardError) {
+          console.error("Reward integration error:", rewardError);
+          toast.success("Profile updated successfully!");
+        }
+      }
     } catch (error) {
       toast.error("Failed to update profile");
     } finally {
@@ -321,6 +349,7 @@ const UpdateProfile: React.FC = () => {
   };
 
   return (
+    <FreelanceErrorBoundary>
     <div className="container mx-auto px-4 py-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-6">
@@ -891,6 +920,7 @@ const UpdateProfile: React.FC = () => {
         </div>
       </div>
     </div>
+    </FreelanceErrorBoundary>
   );
 };
 

@@ -35,7 +35,7 @@ export async function syncExchangeRates(pairs: ExchangeRatePair[] = []) {
       const response = await axios.get(
         `${CRYPTOAPIS_BASE_URL}/market-data/exchange-rates/realtime/${base}/${quote}`,
         {
-          timeout: 10000,
+          timeout: 15000,
           headers: {
             'X-API-Key': API_KEY,
             'Content-Type': 'application/json',
@@ -91,7 +91,7 @@ export async function syncWalletBalances() {
         const response = await axios.get(
           `${CRYPTOAPIS_BASE_URL}/blockchain-data/${walletAddr.blockchain}/${walletAddr.network}/addresses/${walletAddr.address}`,
           {
-            timeout: 10000,
+            timeout: 15000,
             headers: {
               'X-API-Key': API_KEY,
               'Content-Type': 'application/json',

@@ -232,6 +232,27 @@ export const freelance_stats = pgTable('freelance_stats', {
   updated_at: timestamp('updated_at').defaultNow(),
 });
 
+// Freelance notifications table
+export const freelance_notifications = pgTable('freelance_notifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  user_id: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  project_id: uuid('project_id').references(() => freelance_projects.id, { onDelete: 'cascade' }),
+  proposal_id: uuid('proposal_id').references(() => freelance_proposals.id, { onDelete: 'cascade' }),
+  contract_id: uuid('contract_id').references(() => freelance_contracts.id, { onDelete: 'cascade' }),
+  type: text('type').notNull(), // 'proposal_received', 'proposal_accepted', 'proposal_rejected', 'milestone_created', 'milestone_approved', 'payment_released', 'message_received', 'review_posted', 'dispute_filed', 'withdrawal_completed', 'deadline_reminder'
+  title: text('title').notNull(),
+  description: text('description'),
+  actor_id: uuid('actor_id'), // User who triggered the notification
+  actor_name: text('actor_name'),
+  actor_avatar: text('actor_avatar'),
+  is_read: boolean('is_read').default(false),
+  read_at: timestamp('read_at'),
+  action_url: text('action_url'), // URL to navigate to when clicked
+  metadata: jsonb('metadata'), // Additional context data
+  created_at: timestamp('created_at').defaultNow(),
+  updated_at: timestamp('updated_at').defaultNow(),
+});
+
 // Relations
 export const freelanceProjectsRelations = relations(freelance_projects, ({ one, many }) => ({
   client: one(users, {
@@ -395,5 +416,30 @@ export const freelanceStatsRelations = relations(freelance_stats, ({ one }) => (
   user: one(users, {
     fields: [freelance_stats.user_id],
     references: [users.id],
+  }),
+}));
+
+// Relations for freelance_notifications
+export const freelanceNotificationsRelations = relations(freelance_notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [freelance_notifications.user_id],
+    references: [users.id],
+  }),
+  project: one(freelance_projects, {
+    fields: [freelance_notifications.project_id],
+    references: [freelance_projects.id],
+  }),
+  proposal: one(freelance_proposals, {
+    fields: [freelance_notifications.proposal_id],
+    references: [freelance_proposals.id],
+  }),
+  contract: one(freelance_contracts, {
+    fields: [freelance_notifications.contract_id],
+    references: [freelance_contracts.id],
+  }),
+  actor: one(users, {
+    fields: [freelance_notifications.actor_id],
+    references: [users.id],
+    relationName: 'notificationActors',
   }),
 }));

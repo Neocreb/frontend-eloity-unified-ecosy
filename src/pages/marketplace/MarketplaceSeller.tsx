@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ import ProductCard from "@/components/marketplace/ProductCard";
 import { useToast } from "@/components/ui/use-toast";
 import { SellerProfile } from "@/types/marketplace";
 import { useAuth } from "@/contexts/AuthContext";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
 
 const MarketplaceSeller = () => {
   const { username } = useParams<{ username: string }>();
@@ -94,7 +94,14 @@ const MarketplaceSeller = () => {
   
   return (
     <div className="container py-6">
-      <Button variant="ghost" className="mb-4" onClick={() => navigate('/marketplace')}>
+      <MarketplaceBreadcrumb
+        items={[
+          { label: "Marketplace", href: "/app/marketplace" },
+          { label: `Store: ${seller.name}` }
+        ]}
+      />
+
+      <Button variant="ghost" className="mb-4 mt-4" onClick={() => navigate('/app/marketplace')}>
         <ChevronLeft className="h-4 w-4 mr-1" />
         Back to Marketplace
       </Button>
