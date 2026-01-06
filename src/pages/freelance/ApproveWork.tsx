@@ -36,6 +36,9 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
 
 interface WorkSubmission {
   id: string;
@@ -296,31 +299,73 @@ const ApproveWork: React.FC = () => {
 
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      const newStatus = action === "approve" ? "approved" : 
+      const submission = submissions.find(s => s.id === submissionId);
+      if (!submission) throw new Error("Submission not found");
+
+      const newStatus = action === "approve" ? "approved" :
                        action === "reject" ? "rejected" : "revision-requested";
-      
-      setSubmissions(prev => prev.map(submission => 
-        submission.id === submissionId 
-          ? { 
-              ...submission, 
+
+      // If approving, integrate wallet and rewards services
+      if (action === "approve") {
+        try {
+          // Release milestone payment via wallet service
+          const walletResult = await FreelanceWalletIntegrationService.releaseMilestonePayment(
+            submission.projectId,
+            submission.milestone.id,
+            submission.freelancer.id,
+            user?.id || "",
+            submission.milestone.amount,
+            submission.milestone.title
+          );
+
+          if (!walletResult.success) {
+            throw new Error(walletResult.error || "Failed to release payment");
+          }
+
+          // Award rewards for milestone completion
+          await FreelanceRewardsIntegrationService.rewardMilestoneCompletion(
+            submission.freelancer.id,
+            submission.projectId,
+            1, // milestone number (simplified)
+            submission.milestone.amount
+          );
+
+          // Send real-time notification to freelancer
+          await FreelanceNotificationsService.notifyMilestoneApproved(
+            submission.freelancer.id,
+            submission.projectTitle,
+            submission.milestone.title,
+            submission.projectId,
+            submission.milestone.amount
+          );
+        } catch (serviceError) {
+          console.error("Service integration error:", serviceError);
+          toast.error(`Approval processed but service error: ${(serviceError as Error).message}`);
+          // Continue with status update even if services fail
+        }
+      }
+
+      setSubmissions(prev => prev.map(submission =>
+        submission.id === submissionId
+          ? {
+              ...submission,
               status: newStatus as any,
               clientFeedback: feedback.trim() || undefined,
               revisionCount: action === "revision" ? submission.revisionCount + 1 : submission.revisionCount
             }
           : submission
       ));
-      
-      const actionText = action === "approve" ? "approved" : 
+
+      const actionText = action === "approve" ? "approved" :
                         action === "reject" ? "rejected" : "revision requested";
       toast.success(`Work ${actionText} successfully!`);
-      
+
       setShowFeedbackModal(false);
       setFeedback("");
       setSelectedSubmission(null);
     } catch (error) {
-      toast.error(`Failed to ${action} work`);
+      console.error("Error handling work action:", error);
+      toast.error(`Failed to ${action} work: ${(error as Error).message}`);
     } finally {
       setLoading(false);
     }

@@ -611,31 +611,126 @@ const UnifiedHeader = ({
 
           {/* Center section - Main Navigation (Desktop Only) */}
           <nav className="hidden lg:flex items-center gap-1 ml-8">
-            {mainNavItems.map((item) => (
-              <Link
-                key={item.href}
-                to={item.href}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-muted/60 relative",
-                  item.active
-                    ? "bg-primary/10 text-primary border border-primary/20"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <item.icon
-                  className={cn("h-4 w-4", item.active ? "text-primary" : "")}
-                />
-                <span className="hidden xl:block">{item.label}</span>
-                {item.badge && (
-                  <Badge
-                    variant="destructive"
-                    className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center"
-                  >
-                    {item.badge}
-                  </Badge>
-                )}
-              </Link>
-            ))}
+            {mainNavItems.map((item) => {
+              // Market item as dropdown menu instead of simple link
+              if (item.label === "Market") {
+                return (
+                  <DropdownMenu key={item.href}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        className={cn(
+                          "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-muted/60 relative",
+                          item.active
+                            ? "bg-primary/10 text-primary border border-primary/20"
+                            : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <item.icon
+                          className={cn("h-4 w-4", item.active ? "text-primary" : "")}
+                        />
+                        <span className="hidden xl:block">{item.label}</span>
+                        <ChevronDown className="h-3 w-3 hidden xl:block opacity-50" />
+                        {item.badge && (
+                          <Badge
+                            variant="destructive"
+                            className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center"
+                          >
+                            {item.badge}
+                          </Badge>
+                        )}
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-56">
+                      <DropdownMenuLabel>Marketplace</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/app/marketplace")}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <ShoppingBag className="h-4 w-4" />
+                          <span>Browse Products</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/app/marketplace/my")}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Package className="h-4 w-4" />
+                          <span>My Dashboard</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/app/marketplace/orders")}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Package className="h-4 w-4" />
+                          <span>My Orders</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/app/marketplace/wishlist")}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Heart className="h-4 w-4" />
+                          <span>Wishlist</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/app/marketplace/cart")}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <ShoppingCart className="h-4 w-4" />
+                          <span>Shopping Cart</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/app/marketplace/sell")}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <Store className="h-4 w-4 text-green-600" />
+                          <span className="font-medium">Sell Items</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => navigate("/app/marketplace/seller")}
+                          className="flex items-center gap-2 cursor-pointer"
+                        >
+                          <BarChart3 className="h-4 w-4 text-blue-600" />
+                          <span className="font-medium">Seller Dashboard</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                );
+              }
+
+              return (
+                <Link
+                  key={item.href}
+                  to={item.href}
+                  className={cn(
+                    "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-muted/60 relative",
+                    item.active
+                      ? "bg-primary/10 text-primary border border-primary/20"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <item.icon
+                    className={cn("h-4 w-4", item.active ? "text-primary" : "")}
+                  />
+                  <span className="hidden xl:block">{item.label}</span>
+                  {item.badge && (
+                    <Badge
+                      variant="destructive"
+                      className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs flex items-center justify-center"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </Link>
+              );
+            })}
           </nav>
 
           {/* Right section - Search, Actions, User */}

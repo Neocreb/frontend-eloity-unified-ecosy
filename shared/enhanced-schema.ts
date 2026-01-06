@@ -1,5 +1,5 @@
 import { pgTable, uuid, text, timestamp, boolean, jsonb, numeric, integer, varchar, serial } from 'drizzle-orm/pg-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 import { users, followers } from './schema';
 import { freelance_payments } from './freelance-schema.js';
 
@@ -48,9 +48,25 @@ export const profiles = pgTable('profiles', {
   auto_play_videos: boolean('auto_play_videos').default(true),
   reduced_motion: boolean('reduced_motion').default(false),
   high_contrast: boolean('high_contrast').default(false),
+  // About tab fields - Phase 5
+  skills: text('skills').array().default(sql`ARRAY[]::text[]`),
+  social_links: jsonb('social_links'),
+  professional_info: jsonb('professional_info'),
+  linkedin_url: text('linkedin_url'),
+  github_url: text('github_url'),
+  twitter_url: text('twitter_url'),
+  portfolio_url: text('portfolio_url'),
   created_at: timestamp('created_at').defaultNow(),
   updated_at: timestamp('updated_at').defaultNow(),
 });
+
+// Profiles relations for users
+export const profilesRelations = relations(profiles, ({ one, many }) => ({
+  user: one(users, {
+    fields: [profiles.user_id],
+    references: [users.id],
+  }),
+}));
 
 // Marketplace profiles table
 export const marketplace_profiles = pgTable('marketplace_profiles', {

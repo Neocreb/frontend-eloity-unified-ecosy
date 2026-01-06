@@ -157,6 +157,14 @@ class ChatPersistenceService {
     metadata?: Record<string, unknown>;
   }): Promise<ChatMessage | null> {
     try {
+      if (!content || !content.trim()) {
+        throw new Error('Message content cannot be empty');
+      }
+
+      if (!conversationId) {
+        throw new Error('Conversation ID is required');
+      }
+
       const payload = {
         conversationId,
         content,
@@ -166,6 +174,8 @@ class ChatPersistenceService {
         metadata: options?.metadata,
       };
 
+      console.log('[ChatPersistenceService] Sending message to API:', { conversationId, messageType: payload.messageType });
+
       const message = await this.request<any>('/messages', {
         method: 'POST',
         body: JSON.stringify(payload),
@@ -173,7 +183,13 @@ class ChatPersistenceService {
 
       return this.transformMessageToChat(message);
     } catch (error) {
-      console.error('Error sending message:', error);
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error('[ChatPersistenceService] Error sending message:', errorMessage);
+
+      if (errorMessage.includes('Chat service is not available')) {
+        throw new Error('Chat service is temporarily unavailable. Please try again later.');
+      }
+
       throw error;
     }
   }
@@ -470,10 +486,19 @@ export const realtimeService = {
             filter: `conversation_id=eq.${conversationId}`,
           },
           (payload: any) => {
-            const message = chatPersistenceService.transformMessageToChat(
-              payload.new
-            );
-            callback(message);
+            try {
+              if (!payload || !payload.new) {
+                console.warn('[Chat] Received invalid message payload', payload);
+                return;
+              }
+              const message = chatPersistenceService.transformMessageToChat(
+                payload.new
+              );
+              callback(message);
+            } catch (error) {
+              console.error('[Chat] Error processing new message:', error);
+              if (onError) onError(error as Error);
+            }
           }
         )
         .on(
@@ -485,10 +510,19 @@ export const realtimeService = {
             filter: `conversation_id=eq.${conversationId}`,
           },
           (payload: any) => {
-            const message = chatPersistenceService.transformMessageToChat(
-              payload.new
-            );
-            callback(message);
+            try {
+              if (!payload || !payload.new) {
+                console.warn('[Chat] Received invalid message update payload', payload);
+                return;
+              }
+              const message = chatPersistenceService.transformMessageToChat(
+                payload.new
+              );
+              callback(message);
+            } catch (error) {
+              console.error('[Chat] Error processing message update:', error);
+              if (onError) onError(error as Error);
+            }
           }
         )
         .subscribe((status: any) => {
@@ -527,11 +561,16 @@ export const realtimeService = {
             filter: `conversation_id=eq.${conversationId}`,
           },
           async (payload: any) => {
-            // Fetch fresh typing indicators
-            const indicators = await chatPersistenceService.getTypingIndicators(
-              conversationId
-            );
-            callback(indicators);
+            try {
+              // Fetch fresh typing indicators
+              const indicators = await chatPersistenceService.getTypingIndicators(
+                conversationId
+              );
+              callback(indicators);
+            } catch (error) {
+              console.error('[Chat] Error processing typing indicators:', error);
+              if (onError) onError(error as Error);
+            }
           }
         )
         .subscribe((status: any) => {

@@ -48,6 +48,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useFreelance } from "@/hooks/use-freelance";
 import { Project } from "@/types/freelance";
 import { toast } from "sonner";
+import { FreelanceProjectChat } from "@/components/freelance/FreelanceProjectChat";
 
 const FreelancerManageProjects: React.FC = () => {
   const navigate = useNavigate();
@@ -472,6 +473,22 @@ const FreelancerManageProjects: React.FC = () => {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Project Messages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Client Communication</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FreelanceProjectChat
+                    projectId={selectedProject.id}
+                    projectTitle={selectedProject.job.title}
+                    otherUserName={selectedProject.client.name}
+                    otherUserAvatar={selectedProject.client.avatar}
+                    className="border-0"
+                  />
+                </CardContent>
+              </Card>
 
               {/* Quick Actions */}
               <div className="flex gap-2 pt-4 border-t">

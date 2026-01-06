@@ -10,7 +10,7 @@ export const useSendMessage = (threadId: string) => {
 
   const sendTextMessage = useCallback(
     async (content: string, replyTo?: string): Promise<ChatMessage | null> => {
-      if (!content.trim()) return null;
+      if (!content || typeof content !== 'string' || !content.trim()) return null;
 
       try {
         setSending(true);
@@ -285,6 +285,14 @@ export const useSendMessage = (threadId: string) => {
 
   const sendFiles = useCallback(
     async (files: FileList | File[]): Promise<void> => {
+      if (!files) {
+        toast({
+          title: "Error",
+          description: "No files selected",
+          variant: "destructive",
+        });
+        return;
+      }
       const fileArray = Array.from(files);
 
       // Validate all files first
