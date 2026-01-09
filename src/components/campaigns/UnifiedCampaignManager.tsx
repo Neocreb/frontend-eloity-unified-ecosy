@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import CampaignAnalyticsDashboard from "./CampaignAnalyticsDashboard";
 import SmartBoostSuggestions from "./SmartBoostSuggestions";
 import { campaignSyncService } from "@/services/campaignSyncService";
@@ -93,8 +94,34 @@ export const UnifiedCampaignManager: React.FC<UnifiedCampaignManagerProps> = ({
   const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(null);
   const [showAnalytics, setShowAnalytics] = useState(false);
   const [activeTab, setActiveTab] = useState("campaigns");
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  // Initialize campaigns from real data on mount
+  useEffect(() => {
+    const initializeCampaigns = async () => {
+      setLoading(true);
+      try {
+        // Load campaigns from API using user ID
+        await campaignSyncService.initializeFromAPI(user?.id);
+      } catch (error) {
+        console.error("Failed to load campaigns:", error);
+        toast({
+          title: "Warning",
+          description: "Loaded demo campaigns. Some data may not be current.",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user?.id) {
+      initializeCampaigns();
+    }
+  }, [user?.id, toast]);
 
   // Subscribe to campaign updates
   useEffect(() => {
@@ -275,7 +302,13 @@ export const UnifiedCampaignManager: React.FC<UnifiedCampaignManagerProps> = ({
           )}
         </div>
 
-        {displayCampaigns.length > 0 ? (
+        {loading ? (
+          <Card>
+            <CardContent className="p-6 text-center">
+              <div className="animate-pulse">Loading campaigns...</div>
+            </CardContent>
+          </Card>
+        ) : displayCampaigns.length > 0 ? (
           <div className="space-y-3">
             {displayCampaigns.map((campaign) => (
               <CampaignCard key={campaign.id} campaign={campaign} />
@@ -360,7 +393,13 @@ export const UnifiedCampaignManager: React.FC<UnifiedCampaignManagerProps> = ({
         </TabsList>
 
         <TabsContent value="campaigns" className="space-y-4">
-          {displayCampaigns.length > 0 ? (
+          {loading ? (
+            <Card>
+              <CardContent className="p-12 text-center">
+                <div className="animate-pulse">Loading campaigns...</div>
+              </CardContent>
+            </Card>
+          ) : displayCampaigns.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {displayCampaigns.map((campaign) => (
                 <CampaignCard key={campaign.id} campaign={campaign} />
