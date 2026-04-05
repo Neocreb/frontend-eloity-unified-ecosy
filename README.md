@@ -4,7 +4,7 @@
 
 Eloity is a comprehensive super-app combining social networking, fintech, marketplace, freelance services, content creation, crypto, and more — purpose-built for Africa and optimized as a Progressive Web App (PWA) for low-data and offline-first usage.
 
-**Live:** [https://eloity-app.lovable.app](https://eloity-app.lovable.app)
+**Live:** [https://eloity.com](https://eloity.com)
 
 ---
 
