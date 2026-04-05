@@ -4,7 +4,7 @@
 
 Eloity is a comprehensive super-app combining social networking, fintech, marketplace, freelance services, content creation, crypto, and more — purpose-built for Africa and optimized as a Progressive Web App (PWA) for low-data and offline-first usage.
 
-**Live:** [https://eloity.com)
+**Live:** [https://eloity-app.lovable.app](https://eloity-app.lovable.app)
 
 ---
 
@@ -57,6 +57,24 @@ Eloity is a comprehensive super-app combining social networking, fintech, market
 - Community groups with roles, rules, and moderation
 - Group chat with invite links
 - Platform announcements
+
+### 📄 Personal Pages & Branding
+- **Create Custom Pages** — Separate branded pages for businesses, creators, or personal brands
+- **Page Management** — Page settings, cover images, descriptions, and metadata
+- **Discover Pages** — Browse and follow pages across the platform
+- **Page Announcements** — Post announcements exclusive to page followers
+- **Page Analytics** — Track page views, followers, engagement metrics
+- **Follow/Unfollow** — Users can follow pages to see updates in their feed
+- **Search & Filter** — Discover pages by category or search query
+
+### 🔍 Explore & Discovery
+- **Trending Content** — Discover most popular posts with real-time trending algorithm
+- **Trending Users** — Find rising creators and power users on the platform
+- **Trending Hashtags** — Explore popular topics and conversations
+- **Topic Pages** — Dedicated pages for specific topics with filtered content
+- **Posts by Tag** — Browse all posts associated with specific hashtags
+- **Featured Content** — Admin-curated featured posts and creators
+- **Category Browsing** — Explore content organized by categories
 
 ### 💬 Messaging & Communication
 - Real-time 1:1 and group messaging via Supabase Realtime
@@ -128,6 +146,12 @@ Eloity is a comprehensive super-app combining social networking, fintech, market
 - Team invites for collaborative projects
 - Client and freelancer rating system
 - Freelance settings and preferences
+- **Advanced Analytics Tools**:
+  - **Rate Negotiation** — Compare your rates against market averages by skill and identify earning potential
+  - **Timeline Estimator** — AI-powered project duration estimation based on scope and complexity
+  - **Risk Assessment** — Evaluate project risks and mitigation strategies
+  - **ROI Calculator** — Calculate return on investment for projects and services
+  - **Capacity Planning** — Plan workload and manage project capacity
 
 ### 🎥 Video & Live Streaming
 - HLS video playback with adaptive quality
@@ -175,6 +199,24 @@ Eloity is a comprehensive super-app combining social networking, fintech, market
 - Achievement rules engine
 - Badge icons and visual indicators
 
+### 👁️ Account & Content Management
+- **Activity Log** — Comprehensive audit trail of all account activities with filtering by type, date range, and keywords
+  - Tracks: posts, likes, comments, products, orders, follows, messages, purchases, profile updates, logins, logouts
+  - Activity statistics (total, today, this week, this month)
+  - Pagination and full-text search
+- **Archive** — Organize and archive old content
+  - Archive posts, messages, notifications, and completed orders
+  - Auto-archive settings for automatic archiving by age
+  - Restore archived items anytime
+  - Download archives as backup
+- **View As** — Preview profile appearance from different perspectives
+  - Public view (visible to everyone)
+  - Followers only view
+  - Friends only view
+  - Private view (only you)
+  - Profile preview with all visible information
+  - Quick access to privacy settings
+
 ### ⚙️ Settings & Preferences
 - **Account Settings** — Profile editing, email, display name
 - **Notification Settings** — Granular email, push, and in-app notification controls per category (followers, messages, likes, comments, marketplace, freelance, promotional); quiet hours scheduling
@@ -185,6 +227,13 @@ Eloity is a comprehensive super-app combining social networking, fintech, market
 - **Freelance Settings** — Skills, rates, availability
 - **Data Export** — GDPR/NDPR-compliant data export (JSON/CSV)
 - **Account Deletion** — Self-service account deletion with confirmation
+
+### 👥 User Growth & Invitations
+- **Invite People** — Dedicated invitation system to grow your network
+  - Share invite links with friends
+  - Track invitation status
+  - Reward system for successful invites
+  - Referral code system integrated with wallet
 
 ### 🚀 Startup Showcase
 - Submit startup projects with pitch, category, team info, and media
@@ -234,6 +283,18 @@ Eloity is a comprehensive super-app combining social networking, fintech, market
 - Offline-resilient authentication (cached auth state)
 - Install prompt for Add to Home Screen
 - Low-data optimization
+- **App Installation** — Dedicated installation page with platform-specific instructions
+  - One-click install on Android
+  - Step-by-step guide for iOS (Share → Add to Home Screen)
+  - Installation status detection
+  - Full app functionality with native app feel
+- **Guest Cart Management** — Automatic cart merging when users sign in
+  - Guest cart items preserved and merged with user's cart
+  - Seamless shopping experience across sessions
+- **Payment Callbacks** — Real-time payment status updates
+  - Webhook integration for payment verification
+  - Automatic order status updates
+  - Transaction history tracking
 
 ### 🔗 Legal & Static Pages
 - Database-managed legal pages (Terms of Service, Privacy Policy)
@@ -377,7 +438,7 @@ npm run build
 Create a `.env.local` file:
 
 ```env
-# Supabase (auto-populated )
+# Supabase (auto-populated by Lovable)
 VITE_SUPABASE_URL=<your-supabase-url>
 VITE_SUPABASE_PUBLISHABLE_KEY=<your-supabase-anon-key>
 
@@ -395,6 +456,9 @@ VITE_SUPABASE_PUBLISHABLE_KEY=<your-supabase-anon-key>
 
 ## Deployment
 
+### Frontend
+The app is deployed via **Lovable** with automatic builds on push. Custom domain: `eloity-app.lovable.app`.
+
 Can also be deployed to Vercel, Netlify, or any static hosting:
 ```bash
 npm run build
@@ -402,7 +466,7 @@ npm run build
 ```
 
 ### Backend
-- Supabase edge functions deploy automatically
+- Supabase edge functions deploy automatically via Lovable
 - Database migrations managed through Supabase dashboard
 - Secrets configured in Supabase Functions settings
 
@@ -425,20 +489,25 @@ npm run build
 - [x] Full social feed with post analytics
 - [x] Marketplace with escrow and order management
 - [x] Wallet with Flutterwave integration
-- [x] Freelance platform with contracts and milestones
-- [x] Events and contests with voting
+- [x] Freelance platform with contracts, milestones, and advanced analytics tools
+- [x] Events and contests with voting and live streaming
 - [x] Creator Studio with comprehensive analytics
 - [x] Admin panel with 40+ management pages
-- [x] PWA with offline support
+- [x] PWA with offline support and app installation
 - [x] Notification system with 20+ email types
 - [x] Crypto portfolio tracking
 - [x] Blog with comments and SEO
 - [x] Achievement and rewards system
 - [x] Ad campaign management
-- [x] Privacy, notification, and security settings
+- [x] Privacy, notification, and security settings with "View As" preview
 - [x] Data export (GDPR/NDPR compliance)
 - [x] Terms acceptance on sign-up
 - [x] Startup Showcase with admin review and founder analytics
+- [x] Personal Pages with discovery and follow system
+- [x] Advanced discovery with trending content, users, and hashtags
+- [x] Activity Log with comprehensive audit trail
+- [x] Content Archive and management features
+- [x] User invitation and referral system
 
 ### 🔜 In Progress
 - [ ] Enhanced offline message queue
@@ -446,12 +515,12 @@ npm run build
 - [ ] Advanced marketplace search (full-text)
 - [ ] Real-time online presence system
 
-### 📋 Planned
+### 📋 Planned / Not Prioritized
 - [ ] Advanced crypto trading integration
 - [ ] AI-powered content recommendations
 - [ ] Content scheduling and automation
-- [ ] Multi-language support
-- [ ] Production error monitoring (Sentry)
+- [ ] Multi-language support (not prioritized — Africa-first focus currently)
+- [ ] Production error monitoring (Sentry) — using alternative monitoring
 - [ ] Advanced analytics with ML insights
 
 ---
