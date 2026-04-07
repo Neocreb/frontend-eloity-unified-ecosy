@@ -10,7 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Camera, ChevronLeft, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { Camera, ChevronLeft, Save, AlertCircle, CheckCircle, X, Upload } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface ProfileData {
@@ -58,8 +58,11 @@ export default function EditProfile() {
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string>(profile.avatar);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string>(profile.banner);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [dragOverBanner, setDragOverBanner] = useState(false);
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
@@ -91,6 +94,64 @@ export default function EditProfile() {
       reader.onload = () => setAvatarPreview(reader.result as string);
       reader.readAsDataURL(file);
     }
+  };
+
+  const processBannerFile = (file: File) => {
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please select a cover photo smaller than 10MB",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please select an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+    setBannerFile(file);
+    const reader = new FileReader();
+    reader.onload = () => setBannerPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const handleBannerSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
+    if (file) {
+      processBannerFile(file);
+    }
+  };
+
+  const handleBannerDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverBanner(true);
+  };
+
+  const handleBannerDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverBanner(false);
+  };
+
+  const handleBannerDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverBanner(false);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const file = files[0];
+      processBannerFile(file);
+    }
+  };
+
+  const removeBanner = () => {
+    setBannerFile(null);
+    setBannerPreview('');
   };
 
   const validateForm = () => {
@@ -137,6 +198,9 @@ export default function EditProfile() {
     setSaving(true);
     try {
       let avatar_url: string | null = null;
+      let banner_url: string | null = null;
+
+      // Upload avatar if selected
       if (avatarFile) {
         const bucket = 'avatars';
         const path = `${user.id}/${Date.now()}-${avatarFile.name}`;
@@ -150,6 +214,23 @@ export default function EditProfile() {
         avatar_url = data.publicUrl;
       }
 
+      // Upload banner if selected or removed
+      if (bannerFile) {
+        const bucket = 'banners';
+        const path = `${user.id}/${Date.now()}-${bannerFile.name}`;
+        const { error: uploadError } = await supabase.storage.from(bucket).upload(path, bannerFile, {
+          upsert: false,
+          cacheControl: '3600',
+          contentType: bannerFile.type,
+        });
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+        banner_url = data.publicUrl;
+      } else if (bannerPreview === '' && profile.banner) {
+        // User intentionally removed banner
+        banner_url = null;
+      }
+
       const updates: any = {
         full_name: formData.displayName,
         username: formData.username,
@@ -160,6 +241,7 @@ export default function EditProfile() {
         education: formData.education,
       };
       if (avatar_url) updates.avatar_url = avatar_url;
+      if (banner_url !== null) updates.banner_url = banner_url;
 
       const { error } = await supabase
         .from('profiles')
@@ -185,7 +267,7 @@ export default function EditProfile() {
     }
   };
 
-  const hasChanges = 
+  const hasChanges =
     formData.displayName !== profile.displayName ||
     formData.username !== profile.username ||
     formData.bio !== profile.bio ||
@@ -193,7 +275,9 @@ export default function EditProfile() {
     formData.website !== profile.website ||
     formData.company !== profile.company ||
     formData.education !== profile.education ||
-    !!avatarFile;
+    !!avatarFile ||
+    !!bannerFile ||
+    bannerPreview !== profile.banner;
 
   return (
     <div className="min-h-screen bg-background flex flex-col dark:bg-gray-950">
@@ -223,6 +307,73 @@ export default function EditProfile() {
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto px-4 py-6 sm:py-8">
           <div className="space-y-6 sm:space-y-8">
+            {/* Cover Photo Section */}
+            <Card className="border-purple-200 bg-purple-50/50 dark:bg-purple-900/20 dark:border-purple-900/50 overflow-hidden">
+              <CardContent className="p-0">
+                <div className="space-y-4">
+                  {/* Banner Preview */}
+                  <div className="relative h-40 sm:h-48 md:h-56 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+                    {bannerPreview ? (
+                      <>
+                        <img
+                          src={bannerPreview}
+                          alt="Cover preview"
+                          className="w-full h-full object-cover"
+                        />
+                        <Button
+                          size="icon"
+                          variant="destructive"
+                          className="absolute top-2 right-2 h-8 w-8 rounded-full shadow-lg"
+                          onClick={removeBanner}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 flex items-center justify-center">
+                        <div className="text-center">
+                          <div className="text-muted-foreground text-sm">No cover photo</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Banner Upload Area */}
+                  <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id="banner-input"
+                      onChange={handleBannerSelect}
+                    />
+                    <div
+                      onDragOver={handleBannerDragOver}
+                      onDragLeave={handleBannerDragLeave}
+                      onDrop={handleBannerDrop}
+                      onClick={() => document.getElementById('banner-input')?.click()}
+                      className={cn(
+                        "relative border-2 border-dashed rounded-lg p-6 sm:p-8 cursor-pointer transition-all duration-200",
+                        dragOverBanner
+                          ? "border-purple-500 bg-purple-50/50 dark:bg-purple-900/20"
+                          : "border-gray-300 dark:border-gray-700 hover:border-purple-400 hover:bg-purple-50/30 dark:hover:bg-purple-900/10"
+                      )}
+                    >
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Upload className="h-8 w-8 text-muted-foreground" />
+                        <div className="text-center">
+                          <p className="font-semibold text-sm sm:text-base">Drag and drop your cover photo</p>
+                          <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                            or click to select. Recommended: 1500 × 500px, under 10MB
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
             {/* Profile Picture Section */}
             <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-900/20 dark:border-blue-900/50">
               <CardContent className="p-4 sm:p-6">
