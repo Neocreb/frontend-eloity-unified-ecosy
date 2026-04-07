@@ -39,6 +39,7 @@ import {
   Shield,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFreelance } from "@/hooks/use-freelance";
 import { toast } from "sonner";
 
 interface Freelancer {
@@ -98,175 +99,70 @@ const FindFreelancers: React.FC = () => {
   
   const [sortBy, setSortBy] = useState("relevance");
   const [message, setMessage] = useState("");
+  const { searchFreelancers } = useFreelance();
+  const [freelancersLoading, setFreelancersLoading] = useState(true);
 
-  const [freelancers, setFreelancers] = useState<Freelancer[]>([
-    {
-      id: "f1",
-      name: "Sarah Johnson",
-      title: "Full Stack React Developer",
-      avatar: "",
-      bio: "Passionate full-stack developer with 6+ years of experience building scalable web applications using React, Node.js, and cloud technologies. I help businesses transform their ideas into powerful digital solutions.",
-      location: "San Francisco, CA",
-      hourlyRate: 85,
-      rating: 4.9,
-      totalReviews: 127,
-      completedJobs: 89,
-      successRate: 98,
-      responseTime: "< 1 hour",
-      availability: "available",
-      skills: ["React", "Node.js", "TypeScript", "AWS", "MongoDB", "Python"],
-      languages: ["English (Native)", "Spanish (Conversational)"],
-      experience: 6,
-      level: "top-rated",
-      badges: ["Top Rated", "Rising Talent", "Expert Vetted"],
-      portfolio: [
-        { id: "p1", title: "E-commerce Platform", category: "Web Development" },
-        { id: "p2", title: "SaaS Dashboard", category: "UI/UX Design" },
-        { id: "p3", title: "Mobile Banking App", category: "Mobile Development" },
-      ],
-      categories: ["Web Development", "Mobile Development"],
-      lastActive: new Date(Date.now() - 30 * 60 * 1000),
-      totalEarnings: 125000,
-      featured: true,
-      isOnline: true,
-      verified: true,
-      saved: false,
-    },
-    {
-      id: "f2",
-      name: "Alex Chen",
-      title: "UI/UX Designer & Frontend Developer",
-      avatar: "",
-      bio: "Creative designer and frontend developer specializing in user-centered design and modern web technologies. I create beautiful, intuitive interfaces that users love.",
-      location: "Austin, TX",
-      hourlyRate: 65,
-      rating: 4.8,
-      totalReviews: 89,
-      completedJobs: 67,
-      successRate: 96,
-      responseTime: "< 2 hours",
-      availability: "available",
-      skills: ["Figma", "React", "CSS", "JavaScript", "Adobe Creative Suite", "Prototyping"],
-      languages: ["English (Native)", "Mandarin (Native)"],
-      experience: 4,
-      level: "experienced",
-      badges: ["Rising Talent", "Design Expert"],
-      portfolio: [
-        { id: "p4", title: "Fintech Mobile App", category: "UI/UX Design" },
-        { id: "p5", title: "Corporate Website", category: "Web Design" },
-      ],
-      categories: ["Design", "Web Development"],
-      lastActive: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      totalEarnings: 78000,
-      featured: false,
-      isOnline: true,
-      verified: true,
-      saved: true,
-    },
-    {
-      id: "f3",
-      name: "Maria Rodriguez",
-      title: "Python Data Scientist & ML Engineer",
-      avatar: "",
-      bio: "Data scientist with expertise in machine learning, statistical analysis, and predictive modeling. I help businesses make data-driven decisions and build intelligent systems.",
-      location: "New York, NY",
-      hourlyRate: 95,
-      rating: 4.9,
-      totalReviews: 156,
-      completedJobs: 123,
-      successRate: 99,
-      responseTime: "< 30 minutes",
-      availability: "busy",
-      skills: ["Python", "Machine Learning", "TensorFlow", "Pandas", "SQL", "AWS"],
-      languages: ["English (Fluent)", "Spanish (Native)", "French (Intermediate)"],
-      experience: 8,
-      level: "top-rated",
-      badges: ["Top Rated", "Expert Vetted", "Python Expert"],
-      portfolio: [
-        { id: "p6", title: "Fraud Detection System", category: "Data Science" },
-        { id: "p7", title: "Customer Analytics Dashboard", category: "Analytics" },
-        { id: "p8", title: "Recommendation Engine", category: "Machine Learning" },
-      ],
-      categories: ["Data Science", "Machine Learning"],
-      lastActive: new Date(Date.now() - 15 * 60 * 1000),
-      totalEarnings: 210000,
-      featured: true,
-      isOnline: true,
-      verified: true,
-      saved: false,
-    },
-    {
-      id: "f4",
-      name: "David Kim",
-      title: "Mobile App Developer (iOS & Android)",
-      avatar: "",
-      bio: "Mobile development specialist with 5+ years creating high-performance native and cross-platform applications. Expert in Swift, Kotlin, and React Native.",
-      location: "Seattle, WA",
-      hourlyRate: 75,
-      rating: 4.7,
-      totalReviews: 94,
-      completedJobs: 72,
-      successRate: 94,
-      responseTime: "< 3 hours",
-      availability: "available",
-      skills: ["React Native", "Swift", "Kotlin", "Flutter", "Firebase", "GraphQL"],
-      languages: ["English (Fluent)", "Korean (Native)"],
-      experience: 5,
-      level: "experienced",
-      badges: ["Mobile Expert", "Rising Talent"],
-      portfolio: [
-        { id: "p9", title: "Fitness Tracking App", category: "Mobile Development" },
-        { id: "p10", title: "Food Delivery Platform", category: "Mobile Development" },
-      ],
-      categories: ["Mobile Development"],
-      lastActive: new Date(Date.now() - 1 * 60 * 60 * 1000),
-      totalEarnings: 89000,
-      featured: false,
-      isOnline: false,
-      verified: true,
-      saved: false,
-    },
-    {
-      id: "f5",
-      name: "Emma Thompson",
-      title: "DevOps Engineer & Cloud Architect",
-      avatar: "",
-      bio: "DevOps engineer specializing in cloud infrastructure, CI/CD pipelines, and containerization. I help teams deploy faster and scale efficiently.",
-      location: "London, UK",
-      hourlyRate: 90,
-      rating: 4.8,
-      totalReviews: 78,
-      completedJobs: 56,
-      successRate: 97,
-      responseTime: "< 4 hours",
-      availability: "available",
-      skills: ["AWS", "Docker", "Kubernetes", "Terraform", "Jenkins", "Python"],
-      languages: ["English (Native)"],
-      experience: 7,
-      level: "top-rated",
-      badges: ["Top Rated", "DevOps Expert", "AWS Certified"],
-      portfolio: [
-        { id: "p11", title: "Microservices Architecture", category: "DevOps" },
-        { id: "p12", title: "Cloud Migration Project", category: "Cloud Computing" },
-      ],
-      categories: ["DevOps", "Cloud Computing"],
-      lastActive: new Date(Date.now() - 6 * 60 * 60 * 1000),
-      totalEarnings: 156000,
-      featured: false,
-      isOnline: false,
-      verified: true,
-      saved: false,
-    },
-  ]);
+  const [freelancers, setFreelancers] = useState<Freelancer[]>([]);
 
   useEffect(() => {
+    const loadData = async () => {
+      try {
+        setFreelancersLoading(true);
+        const freelancersData = await searchFreelancers({
+          limit: 50,
+          offset: 0,
+          sortBy: "rating",
+          order: "desc"
+        });
+
+        if (freelancersData && Array.isArray(freelancersData)) {
+          const formattedFreelancers = freelancersData.map((freelancer: any) => ({
+            id: freelancer.id,
+            name: freelancer.name || "Unknown",
+            title: freelancer.title || "Freelancer",
+            avatar: freelancer.avatar || "",
+            bio: freelancer.bio || "",
+            location: freelancer.location || "Remote",
+            hourlyRate: freelancer.hourly_rate || 50,
+            rating: freelancer.rating || 4.5,
+            totalReviews: freelancer.total_reviews || 0,
+            completedJobs: freelancer.completed_jobs || 0,
+            successRate: freelancer.success_rate || 95,
+            responseTime: freelancer.response_time || "< 24 hours",
+            availability: freelancer.availability || "available",
+            skills: freelancer.skills || [],
+            languages: freelancer.languages || ["English"],
+            experience: freelancer.experience_years || 1,
+            level: freelancer.level || "rising-talent",
+            badges: freelancer.badges || [],
+            portfolio: freelancer.portfolio || [],
+            categories: freelancer.categories || [],
+            lastActive: freelancer.last_active ? new Date(freelancer.last_active) : new Date(),
+            totalEarnings: freelancer.total_earnings || 0,
+            featured: freelancer.is_featured || false,
+            isOnline: freelancer.is_online || false,
+            verified: freelancer.is_verified || false,
+            saved: false,
+          }));
+          setFreelancers(formattedFreelancers);
+        }
+      } catch (error) {
+        console.error("Error loading freelancers:", error);
+        toast.error("Failed to load freelancers");
+      } finally {
+        setFreelancersLoading(false);
+      }
+    };
+
     // Load saved freelancers from localStorage
     const saved = localStorage.getItem("savedFreelancers");
     const contacted = localStorage.getItem("contactedFreelancers");
-    
+
     if (saved) setSavedFreelancers(new Set(JSON.parse(saved)));
     if (contacted) setContactedFreelancers(new Set(JSON.parse(contacted)));
-  }, []);
+
+    loadData();
+  }, [searchFreelancers]);
 
   const filteredFreelancers = freelancers.filter(freelancer => {
     const matchesSearch = freelancer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -703,7 +599,29 @@ const FindFreelancers: React.FC = () => {
 
       {/* Freelancer Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {sortedFreelancers.length > 0 ? (
+        {freelancersLoading ? (
+          <>
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="pt-6 space-y-4">
+                  <div className="flex gap-3">
+                    <div className="w-14 h-14 bg-gray-200 rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                      <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                    </div>
+                  </div>
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="flex gap-2">
+                    <div className="h-8 bg-gray-200 rounded w-20"></div>
+                    <div className="h-8 bg-gray-200 rounded w-20"></div>
+                  </div>
+                  <div className="h-10 bg-gray-200 rounded w-full"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </>
+        ) : sortedFreelancers.length > 0 ? (
           sortedFreelancers.map((freelancer) => (
             <FreelancerCard key={freelancer.id} freelancer={freelancer} />
           ))

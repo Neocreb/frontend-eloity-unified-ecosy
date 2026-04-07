@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut, X, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import OptimizedImage from './OptimizedImage';
 
 interface ProductGalleryProps {
   images: string[];
@@ -131,17 +132,21 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
         onTouchEnd={handleTouchEnd}
       >
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
-          <img
-            ref={mainImageRef}
-            src={currentImage}
-            alt={`${productName} - Image ${selectedImageIndex + 1}`}
-            loading="lazy"
-            className="w-full h-full object-cover transition-transform duration-300"
+          <div
+            className="w-full h-full transition-transform duration-300"
             style={{
               transform: `scale(${zoomLevel})`,
               cursor: zoomLevel > 1 ? 'grab' : 'zoom-in'
             }}
-          />
+          >
+            <OptimizedImage
+              src={currentImage}
+              alt={`${productName} - Image ${selectedImageIndex + 1}`}
+              quality="high"
+              priority={true}
+              containerClassName="w-full h-full rounded-lg"
+            />
+          </div>
         </div>
 
         {/* Image Counter */}
@@ -242,11 +247,11 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
                   }}
                   title={`View image ${index + 1}`}
                 >
-                  <img
+                  <OptimizedImage
                     src={image}
                     alt={`Thumbnail ${index + 1}`}
-                    loading="lazy"
-                    className="w-full h-full object-cover"
+                    quality="medium"
+                    containerClassName="w-full h-full"
                   />
                 </button>
               ))}
@@ -330,15 +335,21 @@ const ProductGallery: React.FC<ProductGalleryProps> = ({
             className="relative flex items-center justify-center max-w-4xl max-h-[90vh]"
             onClick={(e) => e.stopPropagation()}
           >
-            <img
-              src={currentImage}
-              alt={`${productName} - Fullscreen`}
-              className="max-w-full max-h-full object-contain"
+            <div
+              className="w-full h-full flex items-center justify-center"
               style={{
                 transform: `scale(${zoomLevel})`,
                 cursor: zoomLevel > 1 ? 'grab' : 'default'
               }}
-            />
+            >
+              <OptimizedImage
+                src={currentImage}
+                alt={`${productName} - Fullscreen`}
+                quality="high"
+                priority={true}
+                containerClassName="max-w-full max-h-full"
+              />
+            </div>
           </div>
 
           {/* Lightbox Controls */}

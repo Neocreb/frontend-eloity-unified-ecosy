@@ -509,6 +509,208 @@ export class ProfileService {
       badges: data.badges || [],
     };
   }
+
+  // Stats fetching for profile carousel
+  async getProfileStats(userId: string) {
+    try {
+      // Try API first
+      try {
+        const response = await apiClient.getProfileStats?.(userId) as any;
+        if (response) {
+          return response;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+      }
+
+      // Fallback to direct database queries
+      const [
+        { count: likes_count },
+        { count: shares_count },
+        { count: marketplace_sales },
+        { count: crypto_trades },
+      ] = await Promise.all([
+        supabase
+          .from("post_likes")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId),
+        supabase
+          .from("posts")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .gt("share_count", 0),
+        supabase
+          .from("marketplace_orders")
+          .select("*", { count: "exact", head: true })
+          .eq("seller_id", userId)
+          .eq("status", "completed"),
+        supabase
+          .from("crypto_trades")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", userId)
+          .eq("status", "completed"),
+      ]);
+
+      return {
+        likes_count: likes_count || 0,
+        shares_count: shares_count || 0,
+        marketplace_sales: marketplace_sales || 0,
+        crypto_trades: crypto_trades || 0,
+      };
+    } catch (error: any) {
+      console.warn("Error fetching profile stats:", error?.message || error);
+      return {
+        likes_count: 0,
+        shares_count: 0,
+        marketplace_sales: 0,
+        crypto_trades: 0,
+      };
+    }
+  }
+
+  // Get profile views count
+  async getProfileViewsCount(userId: string): Promise<number> {
+    try {
+      // Try API first
+      try {
+        const response = await apiClient.getProfileViews?.(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+      }
+
+      // Fallback to direct database query
+      const { count, error } = await supabase
+        .from("profile_views")
+        .select("*", { count: "exact", head: true })
+        .eq("profile_id", userId);
+
+      if (error) {
+        return 0;
+      }
+      return count || 0;
+    } catch (error: any) {
+      return 0;
+    }
+  }
+
+  // Get marketplace sales count
+  async getMarketplaceSalesCount(userId: string): Promise<number> {
+    try {
+      // Try API first
+      try {
+        const response = await apiClient.getMarketplaceSales?.(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+      }
+
+      // Fallback to direct database query
+      const { count, error } = await supabase
+        .from("marketplace_orders")
+        .select("*", { count: "exact", head: true })
+        .eq("seller_id", userId)
+        .eq("status", "completed");
+
+      if (error) {
+        return 0;
+      }
+      return count || 0;
+    } catch (error: any) {
+      return 0;
+    }
+  }
+
+  // Get crypto trades count
+  async getCryptoTradesCount(userId: string): Promise<number> {
+    try {
+      // Try API first
+      try {
+        const response = await apiClient.getCryptoTrades?.(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+      }
+
+      // Fallback to direct database query
+      const { count, error } = await supabase
+        .from("crypto_trades")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId)
+        .eq("status", "completed");
+
+      if (error) {
+        return 0;
+      }
+      return count || 0;
+    } catch (error: any) {
+      return 0;
+    }
+  }
+
+  // Get likes count
+  async getLikesCount(userId: string): Promise<number> {
+    try {
+      // Try API first
+      try {
+        const response = await apiClient.getLikes?.(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+      }
+
+      // Fallback to direct database query - count likes on user's posts
+      const { count, error } = await supabase
+        .from("post_likes")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+
+      if (error) {
+        return 0;
+      }
+      return count || 0;
+    } catch (error: any) {
+      return 0;
+    }
+  }
+
+  // Get shares count
+  async getSharesCount(userId: string): Promise<number> {
+    try {
+      // Try API first
+      try {
+        const response = await apiClient.getShares?.(userId) as any;
+        if (response?.count !== undefined) {
+          return response.count;
+        }
+      } catch (apiError) {
+        // API failed, will use Supabase fallback
+      }
+
+      // Fallback to direct database query - count shares of user's posts
+      const { data, error } = await supabase
+        .from("posts")
+        .select("share_count")
+        .eq("user_id", userId);
+
+      if (error) {
+        return 0;
+      }
+
+      const totalShares = data?.reduce((sum, post) => sum + (post.share_count || 0), 0) || 0;
+      return totalShares;
+    } catch (error: any) {
+      return 0;
+    }
+  }
 }
 
 // Export singleton instance

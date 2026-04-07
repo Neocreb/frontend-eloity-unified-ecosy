@@ -161,6 +161,8 @@ import SellerDashboard from "./pages/marketplace/SellerDashboard";
 import MarketplaceWishlist from "./pages/marketplace/MarketplaceWishlist";
 import MarketplaceDashboard from "./pages/marketplace/MarketplaceDashboard";
 import MarketplaceOrders from "./pages/marketplace/MarketplaceOrders";
+import MarketplaceSell from "./pages/marketplace/MarketplaceSell";
+import DetailedProductPage from "./pages/marketplace/DetailedProductPage";
 
 // Delivery system imports
 // import DeliveryHub from "./pages/DeliveryHub";
@@ -232,6 +234,10 @@ import AdminReloadlyReports from "./pages/admin/AdminReloadlyReports";
 import AdminPartnerships from "./pages/admin/AdminPartnerships";
 import AdminChallenges from "./pages/admin/AdminChallenges";
 import AdminReferrals from "./pages/admin/AdminReferrals";
+import FlashSalesManagement from "./pages/admin/FlashSalesManagement";
+import PromotionalCodesManagement from "./pages/admin/PromotionalCodesManagement";
+import MarketplaceAnalytics from "./pages/admin/MarketplaceAnalytics";
+import ReviewModeration from "./pages/admin/ReviewModeration";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
@@ -242,7 +248,6 @@ import CameraPermissionTest from "./components/debug/CameraPermissionTest";
 import FreelanceDashboardRouteTest from "./components/debug/FreelanceDashboardRouteTest";
 import RouteTest from "./components/debug/RouteTest";
 import DetailedJobPage from "./pages/DetailedJobPage";
-import DetailedProductPage from "./pages/DetailedProductPage";
 import DetailedEventPage from "./pages/DetailedEventPage";
 import CreatorStudio from "./pages/CreatorStudio";
 import EnhancedDashboardDemo from "./components/freelance/EnhancedDashboardDemo";
@@ -323,7 +328,6 @@ import CampaignCenter from "./components/campaigns/CampaignCenter";
 import MemeGifTest from "./components/debug/MemeGifTest";
 
 // Import missing components
-import MarketplaceSell from "./pages/marketplace/MarketplaceSell";
 import VideoDetail from "./pages/VideoDetail";
 import LiveStreamPage from "./pages/LiveStreamPage";
 import BattlePage from "./pages/BattlePage";
@@ -886,6 +890,10 @@ const AppRoutes = () => {
         <Route path="settings" element={<PlatformSettings />} />
         <Route path="moderation" element={<ContentModeration />} />
         <Route path="marketplace" element={<AdminMarketplace />} />
+        <Route path="marketplace/flash-sales" element={<FlashSalesManagement />} />
+        <Route path="marketplace/promotional-codes" element={<PromotionalCodesManagement />} />
+        <Route path="marketplace/analytics" element={<MarketplaceAnalytics />} />
+        <Route path="marketplace/reviews" element={<ReviewModeration />} />
         <Route path="delivery" element={<DeliveryProvidersAdmin />} />
         <Route path="delivery/tracking" element={<DeliveryTrackingAdmin />} />
         <Route path="crypto" element={<AdminCrypto />} />

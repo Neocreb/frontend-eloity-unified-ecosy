@@ -4,6 +4,9 @@
   "description": "Eloity Unified Ecosystem Platform",
   "main": "server/enhanced-index.ts",
   "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npx cross-env NODE_ENV=development npx tsx server/enhanced-index.ts",
@@ -83,7 +86,7 @@
     "@types/uuid": "^10.0.0",
     "@types/ws": "^8.5.10",
     "@vitejs/plugin-react": "^4.7.0",
-    "autoprefixer": "^10.4.19",
+    "autoprefixer": "^10.4.23",
     "axios": "^1.7.2",
     "bcryptjs": "^2.4.3",
     "chart.js": "^4.4.3",
@@ -97,6 +100,7 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "drizzle-orm": "^0.33.0",
+    "embla-carousel-react": "^8.6.0",
     "express": "^5.2.1",
     "express-rate-limit": "^7.3.1",
     "express-session": "^1.18.0",
@@ -136,7 +140,6 @@
     "sonner": "^1.5.0",
     "stripe": "^20.1.0",
     "striptags": "^3.2.0",
-    "supabase": "^2.51.0",
     "tailwind-merge": "^2.3.0",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
