@@ -1,5 +1,5 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDeliveryProvider } from "@/hooks/use-delivery-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -93,7 +93,9 @@ const FacebookStyleSidebar: React.FC<FacebookStyleSidebarProps> = ({
 }) => {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const providerStatus = useDeliveryProvider();
+  const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
 
   const isActive = (path: string) => location.pathname === path;
 

@@ -53,17 +53,22 @@ export function useSocketEvent<T extends keyof WebSocketEvents>(
   dependencies: any[] = []
 ) {
   const handlerRef = useRef(handler);
+  const wrappedHandlerRef = useRef<((data: WebSocketEvents[T]) => void) | null>(null);
+
   handlerRef.current = handler;
 
   useEffect(() => {
     const wrappedHandler = (data: WebSocketEvents[T]) => {
       handlerRef.current(data);
     };
+    wrappedHandlerRef.current = wrappedHandler;
 
     websocketService.on(event, wrappedHandler);
 
     return () => {
-      websocketService.off(event);
+      if (wrappedHandlerRef.current) {
+        websocketService.off(event as string, wrappedHandlerRef.current);
+      }
     };
   }, [event, ...dependencies]);
 }
