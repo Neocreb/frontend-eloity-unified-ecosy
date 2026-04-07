@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { PlusCircle, ImageIcon, DollarSign, Package, Truck } from 'lucide-react';
 import { MarketplaceService } from '@/services/marketplaceService';
+import MarketplaceBreadcrumb from '@/components/marketplace/MarketplaceBreadcrumb';
 
 const MarketplaceSell: React.FC = () => {
   const [categories, setCategories] = useState<any[]>([]);
@@ -45,6 +46,14 @@ const MarketplaceSell: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
+      <MarketplaceBreadcrumb
+        items={[
+          { label: 'Marketplace', href: '/app/marketplace' },
+          { label: 'Sell Items' },
+        ]}
+        className="mb-6"
+      />
+
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center gap-4">

@@ -1,6 +1,6 @@
 // @ts-nocheck
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   ShoppingCart,
@@ -20,8 +20,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useEnhancedMarketplace } from "@/contexts/EnhancedMarketplaceContext";
 import { MobileProductCard } from "@/components/marketplace/MobileProductCard";
-
-import ProductQuickView from "@/components/marketplace/ProductQuickView";
 
 import ResponsiveProductCarousel from "@/components/marketplace/ResponsiveProductCarousel";
 import CategoryBrowser from "@/components/marketplace/CategoryBrowser";
@@ -48,6 +46,7 @@ interface FlashSaleProduct extends Product {
 }
 
 const MarketplaceHomepage: React.FC = () => {
+  const navigate = useNavigate();
   const { products, categories, addToCart, addToWishlist } =
     useEnhancedMarketplace();
   const [searchQuery, setSearchQuery] = useState("");
@@ -59,9 +58,6 @@ const MarketplaceHomepage: React.FC = () => {
     minutes: 19,
     seconds: 56,
   });
-  const [selectedProduct, setSelectedProduct] =
-    useState<FlashSaleProduct | null>(null);
-  const [showQuickView, setShowQuickView] = useState(false);
   const [flashSaleProducts, setFlashSaleProducts] = useState<FlashSaleProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState<{name: string, hasSubmenu: boolean}[]>([]);
@@ -239,10 +235,9 @@ const MarketplaceHomepage: React.FC = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Quick view handlers
-  const handleProductQuickView = (product: FlashSaleProduct) => {
-    setSelectedProduct(product);
-    setShowQuickView(true);
+  // Product view handler - navigate to full product detail page
+  const handleProductClick = (product: FlashSaleProduct) => {
+    navigate(`/app/marketplace/product/${product.id}`);
   };
 
   const handleAddToCart = (productId: string, quantity: number = 1) => {
@@ -473,7 +468,7 @@ const MarketplaceHomepage: React.FC = () => {
                           variant="outline"
                           size="icon"
                           className="bg-white w-8 h-8 rounded-full shadow-sm"
-                          onClick={() => handleProductQuickView(product)}
+                          onClick={() => handleProductClick(product)}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
@@ -558,10 +553,10 @@ const MarketplaceHomepage: React.FC = () => {
                   isNew: Math.random() > 0.7,
                   category: "Electronics",
                 }))}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 autoplay={true}
                 autoplayInterval={4000}
                 itemsPerView={{
@@ -586,10 +581,10 @@ const MarketplaceHomepage: React.FC = () => {
                     : undefined,
                   category: "Fashion",
                 }))}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 showPagination={true}
                 itemsPerView={{
                   mobile: 1.5,
@@ -613,10 +608,10 @@ const MarketplaceHomepage: React.FC = () => {
                     : undefined,
                   category: "Home & Garden",
                 }))}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 autoplay={false}
                 itemsPerView={{
                   mobile: 1.3,
@@ -636,10 +631,10 @@ const MarketplaceHomepage: React.FC = () => {
                   priceRange: [50, 500],
                   brands: ["Apple", "Samsung", "Nike", "Sony"],
                 }}
-                onProductClick={handleProductQuickView}
+                onProductClick={handleProductClick}
                 onAddToCart={(productId) => handleAddToCart(productId, 1)}
                 onAddToWishlist={handleAddToWishlist}
-                onQuickView={handleProductQuickView}
+                onQuickView={handleProductClick}
                 maxItems={8}
                 enableRealTimeUpdates={true}
               />
@@ -648,41 +643,6 @@ const MarketplaceHomepage: React.FC = () => {
         </div>
       </div>
 
-      {/* Product Quick View Modal */}
-      {selectedProduct && (
-        <ProductQuickView
-          product={{
-            ...selectedProduct,
-            description: `High-quality ${selectedProduct.name} with excellent features and great value for money.`,
-            highlights: [
-              "Premium quality materials",
-              "Fast shipping available",
-              "30-day return policy",
-              "Customer satisfaction guaranteed",
-            ],
-            seller: {
-              name: "Premium Electronics Store",
-              rating: 4.8,
-              verified: true,
-            },
-            shipping: {
-              freeShipping: true,
-              estimatedDays: 3,
-            },
-            warranty: "1 year manufacturer warranty",
-            returnPolicy: "30-day hassle-free returns",
-          }}
-          isOpen={showQuickView}
-          onClose={() => {
-            setShowQuickView(false);
-            setSelectedProduct(null);
-          }}
-          onAddToCart={handleAddToCart}
-          onAddToWishlist={handleAddToWishlist}
-          isInWishlist={false}
-          isInCart={false}
-        />
-      )}
     </div>
   );
 };

@@ -251,7 +251,7 @@ const ChatRoomContent = () => {
         description: "Chat took too long to load. Please try again.",
         variant: "destructive",
       });
-    }, 5000);
+    }, 15000);
 
     const loadChatData = async () => {
       try {
