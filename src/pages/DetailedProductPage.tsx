@@ -26,6 +26,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotification } from '@/hooks/use-notification';
 import { UnifiedActivityService } from '@/services/unifiedActivityService';
+import MarketplaceBreadcrumb from '@/components/marketplace/MarketplaceBreadcrumb';
 
 interface ProductDetails {
   id: string;
@@ -385,6 +386,15 @@ const DetailedProductPage: React.FC = () => {
   return (
     <div className="container mx-auto p-6">
       <div className="max-w-6xl mx-auto">
+        <MarketplaceBreadcrumb
+          items={[
+            { label: 'Marketplace', href: '/app/marketplace' },
+            { label: 'Products', href: '/app/marketplace' },
+            { label: product?.name || 'Product' },
+          ]}
+          className="mb-4"
+        />
+
         <Button
           variant="ghost"
           onClick={() => navigate(-1)}

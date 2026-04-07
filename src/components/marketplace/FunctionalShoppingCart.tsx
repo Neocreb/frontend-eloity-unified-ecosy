@@ -36,6 +36,8 @@ import { useEnhancedMarketplace } from "@/contexts/EnhancedMarketplaceContext";
 import { useToast } from "@/components/ui/use-toast";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { cn } from "@/lib/utils";
+import MarketplaceBreadcrumb from "@/components/marketplace/MarketplaceBreadcrumb";
+import { EmptyCartState } from "@/components/marketplace/EmptyStates";
 
 interface FunctionalShoppingCartProps {
   isOpen?: boolean;
@@ -101,7 +103,14 @@ export const FunctionalShoppingCart: React.FC<FunctionalShoppingCartProps> = ({
       return;
     }
 
-    updateCartItem(cartItemId, { quantity: newQuantity });
+    const cartItem = cart.find((item) => item.id === cartItemId);
+    if (cartItem) {
+      updateCartItem(cartItemId, { quantity: newQuantity });
+      toast({
+        title: "Quantity Updated",
+        description: `${cartItem.product?.name || "Product"} quantity updated to ${newQuantity}`,
+      });
+    }
   };
 
   const handleRemoveItem = (cartItemId: string) => {
@@ -292,27 +301,25 @@ export const FunctionalShoppingCart: React.FC<FunctionalShoppingCartProps> = ({
           </div>
         </div>
 
-        <Card className="text-center py-16">
-          <CardContent>
-            <ShoppingCart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Your cart is empty</h3>
-            <p className="text-gray-600 mb-6">
-              Add some amazing products to get started!
-            </p>
-            <Button
-              onClick={() => navigate("/app/marketplace")}
-              className="bg-black hover:bg-gray-800 text-white"
-            >
-              Continue Shopping
-            </Button>
-          </CardContent>
-        </Card>
+        <EmptyCartState
+          onContinueShopping={() => navigate("/app/marketplace")}
+          onViewWishlist={() => navigate("/app/marketplace/wishlist")}
+        />
       </div>
     );
   }
 
   return (
     <div className={cn("max-w-6xl mx-auto p-6", className)}>
+      {/* Breadcrumb Navigation */}
+      <MarketplaceBreadcrumb
+        items={[
+          { label: 'Marketplace', href: '/app/marketplace' },
+          { label: 'Shopping Cart' },
+        ]}
+        className="mb-6"
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">

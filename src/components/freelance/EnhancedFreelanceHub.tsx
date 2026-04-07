@@ -53,6 +53,7 @@ import {
   Shield,
   Globe,
   Coffee,
+  Loader2,
 } from "lucide-react";
 import { JobPosting } from "@/types/freelance";
 import JobList from "./JobList";
@@ -62,6 +63,7 @@ import TalentProfile from "./TalentProfile";
 import { useFreelance } from "@/hooks/use-freelance";
 import { useAuth } from "@/contexts/AuthContext";
 import CompactFreelanceFilters from "./CompactFreelanceFilters";
+import FreelanceAnalyticsService from "@/services/freelanceAnalyticsService";
 
 export const EnhancedFreelanceHub: React.FC = () => {
   const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null);
@@ -73,6 +75,51 @@ export const EnhancedFreelanceHub: React.FC = () => {
   const [filters, setFilters] = useState({});
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  // State for real data
+  const [stats, setStats] = useState<{
+    activeJobs: { value: number; change: number; trend: string };
+    newToday: { value: number; change: number; trend: string };
+    avgBudget: { value: number; change: number; trend: string };
+    successRate: { value: number; change: number; trend: string };
+  } | null>(null);
+  const [trendingCategories, setTrendingCategories] = useState<Array<{ name: string; jobs: number; growth: string }>>([]);
+  const [recentActivity, setRecentActivity] = useState<Array<{ type: 'application' | 'message' | 'job'; title: string; time: string; status: string }>>([]);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // Load real data
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        setStatsLoading(true);
+
+        // Load platform stats
+        const platformStats = await FreelanceAnalyticsService.getPlatformStats();
+        if (platformStats) {
+          setStats({
+            activeJobs: { value: platformStats.activeJobs, change: platformStats.changes.activeJobs, trend: "up" },
+            newToday: { value: platformStats.newToday, change: platformStats.changes.newToday, trend: "up" },
+            avgBudget: { value: platformStats.avgBudget, change: platformStats.changes.avgBudget, trend: "up" },
+            successRate: { value: platformStats.successRate, change: platformStats.changes.successRate, trend: "up" },
+          });
+        }
+
+        // Load trending categories
+        const categories = await FreelanceAnalyticsService.getTrendingCategories(5);
+        setTrendingCategories(categories);
+
+        // Load recent activity
+        const activities = await FreelanceAnalyticsService.getRecentActivity(user?.id);
+        setRecentActivity(activities);
+      } catch (error) {
+        console.error('Error loading hub data:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user?.id]);
 
   const handleJobSelect = (job: JobPosting) => {
     setSelectedJob(job);
@@ -95,44 +142,6 @@ export const EnhancedFreelanceHub: React.FC = () => {
   const handleHire = (talentId: string) => {
     setSelectedTalent(null);
   };
-
-  // Enhanced stats with trending indicators
-  const stats = {
-    activeJobs: { value: 1247, change: +12, trend: "up" },
-    newToday: { value: 23, change: +3, trend: "up" },
-    avgBudget: { value: 2850, change: +150, trend: "up" },
-    successRate: { value: 94, change: +2, trend: "up" },
-  };
-
-
-  const trendingCategories = [
-    { name: "AI/ML Development", jobs: 234, growth: "+23%" },
-    { name: "Mobile Apps", jobs: 189, growth: "+18%" },
-    { name: "Web Design", jobs: 156, growth: "+15%" },
-    { name: "Content Writing", jobs: 143, growth: "+12%" },
-    { name: "Data Analysis", jobs: 98, growth: "+28%" },
-  ];
-
-  const recentActivity = [
-    {
-      type: "application",
-      title: "Applied to React Developer position",
-      time: "2 hours ago",
-      status: "pending",
-    },
-    {
-      type: "message",
-      title: "New message from TechCorp Inc.",
-      time: "4 hours ago",
-      status: "unread",
-    },
-    {
-      type: "job",
-      title: "New job matches your profile",
-      time: "6 hours ago",
-      status: "new",
-    },
-  ];
 
   const RenderTabs = () => (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -304,81 +313,96 @@ export const EnhancedFreelanceHub: React.FC = () => {
           <div className="lg:col-span-3 space-y-6">
             {/* Stats Overview */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Active Jobs</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {stats.activeJobs.value.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        +{stats.activeJobs.change}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {statsLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <Card key={i} className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : stats ? (
+                <>
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Active Jobs</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {stats.activeJobs.value.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${stats.activeJobs.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stats.activeJobs.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          <span className="text-sm font-medium">
+                            {stats.activeJobs.change >= 0 ? '+' : ''}{stats.activeJobs.change}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">New Today</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {stats.newToday.value}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        +{stats.newToday.change}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">New Today</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {stats.newToday.value}
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${stats.newToday.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stats.newToday.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          <span className="text-sm font-medium">
+                            {stats.newToday.change >= 0 ? '+' : ''}{stats.newToday.change}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Avg Budget</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        ${stats.avgBudget.value.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        +${stats.avgBudget.change}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Avg Budget</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            ${stats.avgBudget.value.toLocaleString()}
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${stats.avgBudget.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stats.avgBudget.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          <span className="text-sm font-medium">
+                            {stats.avgBudget.change >= 0 ? '+' : ''}${stats.avgBudget.change}
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
 
-              <Card className="shadow-sm">
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-gray-600">Success Rate</p>
-                      <p className="text-2xl font-bold text-gray-900">
-                        {stats.successRate.value}%
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-600">
-                      <ArrowUpRight className="w-4 h-4" />
-                      <span className="text-sm font-medium">
-                        +{stats.successRate.change}%
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  <Card className="shadow-sm">
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm text-gray-600">Success Rate</p>
+                          <p className="text-2xl font-bold text-gray-900">
+                            {stats.successRate.value}%
+                          </p>
+                        </div>
+                        <div className={`flex items-center gap-1 ${stats.successRate.change >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {stats.successRate.change >= 0 ? <ArrowUpRight className="w-4 h-4" /> : <ArrowDownRight className="w-4 h-4" />}
+                          <span className="text-sm font-medium">
+                            {stats.successRate.change >= 0 ? '+' : ''}{stats.successRate.change}%
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </>
+              ) : null}
             </div>
 
             {/* Compact Advanced Filters */}
@@ -405,27 +429,37 @@ export const EnhancedFreelanceHub: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {trendingCategories.map((category, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                  >
-                    <div>
-                      <p className="font-medium text-gray-900">
-                        {category.name}
-                      </p>
-                      <p className="text-sm text-gray-600">
-                        {category.jobs} jobs
-                      </p>
-                    </div>
-                    <Badge
-                      variant="secondary"
-                      className="bg-green-100 text-green-800"
+                {statsLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-16 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                  ))
+                ) : trendingCategories.length > 0 ? (
+                  trendingCategories.map((category, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer"
                     >
-                      {category.growth}
-                    </Badge>
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">
+                          {category.name}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
+                          {category.jobs} jobs
+                        </p>
+                      </div>
+                      <Badge
+                        variant="secondary"
+                        className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
+                      >
+                        {category.growth}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-gray-500">
+                    <p>No trending categories available</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
 
@@ -438,38 +472,48 @@ export const EnhancedFreelanceHub: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {recentActivity.map((activity, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"
-                  >
+                {statsLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="h-12 bg-gray-100 dark:bg-gray-700 rounded animate-pulse"></div>
+                  ))
+                ) : recentActivity.length > 0 ? (
+                  recentActivity.map((activity, index) => (
                     <div
-                      className={`p-1 rounded-full ${
-                        activity.type === "application"
-                          ? "bg-blue-100"
-                          : activity.type === "message"
-                            ? "bg-green-100"
-                            : "bg-yellow-100"
-                      }`}
+                      key={index}
+                      className="flex items-start gap-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                     >
-                      {activity.type === "application" && (
-                        <FileText className="w-3 h-3 text-blue-600" />
-                      )}
-                      {activity.type === "message" && (
-                        <MessageSquare className="w-3 h-3 text-green-600" />
-                      )}
-                      {activity.type === "job" && (
-                        <Briefcase className="w-3 h-3 text-yellow-600" />
-                      )}
+                      <div
+                        className={`p-1 rounded-full flex-shrink-0 ${
+                          activity.type === "application"
+                            ? "bg-blue-100 dark:bg-blue-900/30"
+                            : activity.type === "message"
+                              ? "bg-green-100 dark:bg-green-900/30"
+                              : "bg-yellow-100 dark:bg-yellow-900/30"
+                        }`}
+                      >
+                        {activity.type === "application" && (
+                          <FileText className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                        )}
+                        {activity.type === "message" && (
+                          <MessageSquare className="w-3 h-3 text-green-600 dark:text-green-400" />
+                        )}
+                        {activity.type === "job" && (
+                          <Briefcase className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {activity.title}
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">{activity.time}</p>
+                      </div>
                     </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium text-gray-900">
-                        {activity.title}
-                      </p>
-                      <p className="text-xs text-gray-600">{activity.time}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                    <p>No recent activity</p>
                   </div>
-                ))}
+                )}
               </CardContent>
             </Card>
 

@@ -142,6 +142,45 @@ export interface RewardsData {
 }
 
 export const rewardsService = {
+  // Record activity/reward transaction
+  async recordActivity(
+    userId: string,
+    actionType: string,
+    amount: number = 0,
+    description: string = "",
+    sourceType: string = "",
+    sourceId: string = "",
+    multiplier: number = 1
+  ): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('reward_transactions')
+        .insert([{
+          user_id: userId,
+          type: actionType,
+          amount: Math.floor(amount * multiplier),
+          description: description || `Activity: ${actionType}`,
+          source_type: sourceType,
+          source_id: sourceId,
+          base_amount: amount,
+          multiplier: multiplier,
+          status: 'completed',
+          processed_at: new Date().toISOString(),
+          created_at: new Date().toISOString()
+        }]);
+
+      if (error) {
+        console.error("Error recording activity reward:", error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error recording activity:", error);
+      return false;
+    }
+  },
+
   // Calculate user rewards from transactions
   async calculateUserRewards(userId: string): Promise<CalculatedUserRewards | null> {
     try {

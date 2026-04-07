@@ -177,6 +177,12 @@ export const useFreelance = () => {
       () => handleAsync(() => freelanceService.getSkills()),
       [handleAsync],
     ),
+
+    getActivityLog: useCallback(
+      (userId: string, limit?: number) =>
+        handleAsync(() => freelanceService.getActivityLog(userId, limit)),
+      [handleAsync],
+    ),
   };
 };
 
