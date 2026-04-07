@@ -90,12 +90,12 @@ export class MarketplaceService {
       if (error) {
         const errorMsg = error instanceof Error ? error.message : JSON.stringify(error);
         console.warn("Supabase categories fetch failed, using defaults:", errorMsg);
-        return this.DEFAULT_CATEGORIES;
+        return MarketplaceService.DEFAULT_CATEGORIES;
       }
 
       if (!data || data.length === 0) {
         console.info("No categories found in database, using defaults");
-        return this.DEFAULT_CATEGORIES;
+        return MarketplaceService.DEFAULT_CATEGORIES;
       }
 
       return data.map(category => ({
@@ -110,7 +110,7 @@ export class MarketplaceService {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.warn("Error in getCategories (using defaults):", errorMsg);
-      return this.DEFAULT_CATEGORIES;
+      return MarketplaceService.DEFAULT_CATEGORIES;
     }
   }
 
@@ -613,7 +613,7 @@ export class MarketplaceService {
       }
 
       // Update product rating and review count
-      await this.updateProductRating(reviewData.productId);
+      await MarketplaceService.updateProductRating(reviewData.productId);
 
       return {
         id: data.id,
@@ -1505,7 +1505,7 @@ export class MarketplaceService {
   // Advanced Search Methods
 
   // Get all unique brands from products
-  static async getBrands(): Promise<{ name: string; count: number }[]> {
+  async getBrands(): Promise<{ name: string; count: number }[]> {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -1535,7 +1535,7 @@ export class MarketplaceService {
   }
 
   // Get all product conditions
-  static async getProductConditions(): Promise<{ condition: string; count: number }[]> {
+  async getProductConditions(): Promise<{ condition: string; count: number }[]> {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -1569,7 +1569,7 @@ export class MarketplaceService {
   }
 
   // Get price statistics
-  static async getPriceStatistics(): Promise<{ min: number; max: number; avg: number }> {
+  async getPriceStatistics(): Promise<{ min: number; max: number; avg: number }> {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -1596,7 +1596,7 @@ export class MarketplaceService {
   }
 
   // Get rating distribution for filtering
-  static async getRatingStatistics(): Promise<{ rating: number; count: number }[]> {
+  async getRatingStatistics(): Promise<{ rating: number; count: number }[]> {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -1626,7 +1626,7 @@ export class MarketplaceService {
   }
 
   // Advanced search with faceted filters
-  static async advancedSearch(filters: {
+  async advancedSearch(filters: {
     searchQuery?: string;
     categoryId?: string;
     brands?: string[];
@@ -1755,7 +1755,7 @@ export class MarketplaceService {
   }
 
   // Get search suggestions
-  static async getSearchSuggestions(query: string, limit: number = 10): Promise<{
+  async getSearchSuggestions(query: string, limit: number = 10): Promise<{
     products: string[];
     brands: string[];
     categories: string[];
@@ -1811,7 +1811,7 @@ export class MarketplaceService {
   }
 
   // Get faceted search results with aggregations
-  static async getFacetedSearch(filters: {
+  async getFacetedSearch(filters: {
     searchQuery?: string;
     categoryId?: string;
   }): Promise<{
@@ -1898,7 +1898,7 @@ export class MarketplaceService {
   }
 
   // Count products matching filters (for pagination)
-  static async countProducts(filters: {
+  async countProducts(filters: {
     searchQuery?: string;
     categoryId?: string;
     brands?: string[];
@@ -1964,5 +1964,3 @@ export class MarketplaceService {
     }
   }
 }
-
-export const marketplaceService = new MarketplaceService();

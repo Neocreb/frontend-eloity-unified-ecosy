@@ -281,7 +281,7 @@ export const chatService = {
         const rows = messages.map((msg) => [
           msg.id,
           msg.senderId,
-          msg.content.replace(/"/g, '""'), // Escape quotes
+          (msg.content || '').replace(/"/g, '""'), // Escape quotes, handle undefined
           msg.timestamp,
           msg.messageType,
         ]);
