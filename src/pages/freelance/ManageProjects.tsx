@@ -44,6 +44,10 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
+import { FreelanceProjectChat } from "@/components/freelance/FreelanceProjectChat";
+import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
 
 interface Project {
   id: string;
@@ -409,18 +413,72 @@ const ManageProjects: React.FC = () => {
   const handleProjectAction = async (projectId: string, action: string) => {
     setLoading(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      setProjects(prev => prev.map(project => 
-        project.id === projectId 
+      const project = projects.find(p => p.id === projectId);
+      if (!project) throw new Error("Project not found");
+
+      // If completing a project, integrate wallet and rewards services
+      if (action === "completed") {
+        try {
+          // Record earnings from project completion
+          const earningsResult = await FreelanceWalletIntegrationService.recordFreelancerEarnings(
+            project.freelancer.id,
+            project.id,
+            project.budget.remaining, // Remaining amount being paid
+            `Project completed: ${project.title}`
+          );
+
+          if (!earningsResult.success) {
+            throw new Error(earningsResult.error || "Failed to record earnings");
+          }
+
+          // Award project completion rewards
+          const rating = project.clientSatisfaction || 4.0;
+          await FreelanceRewardsIntegrationService.rewardProjectCompletion(
+            project.freelancer.id,
+            project.id,
+            project.budget.total,
+            rating
+          );
+
+          // Check for earnings milestone
+          const balance = await FreelanceWalletIntegrationService.getFreelanceWalletBalance(project.freelancer.id);
+
+          await FreelanceRewardsIntegrationService.rewardEarningsMilestone(
+            project.freelancer.id,
+            balance.total
+          );
+
+          // Notify both parties
+          await FreelanceNotificationsService.notifyProjectCompleted(
+            project.freelancer.id,
+            project.title,
+            project.id,
+            true // is freelancer
+          );
+
+          await FreelanceNotificationsService.notifyProjectCompleted(
+            user?.id || "",
+            project.title,
+            project.id,
+            false // is client
+          );
+        } catch (serviceError) {
+          console.error("Service integration error:", serviceError);
+          toast.error(`Completion processed but service error: ${(serviceError as Error).message}`);
+          // Continue with status update even if services fail
+        }
+      }
+
+      setProjects(prev => prev.map(project =>
+        project.id === projectId
           ? { ...project, status: action as any }
           : project
       ));
-      
+
       toast.success(`Project ${action} successfully`);
     } catch (error) {
-      toast.error(`Failed to ${action} project`);
+      console.error("Error handling project action:", error);
+      toast.error(`Failed to ${action} project: ${(error as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -429,10 +487,54 @@ const ManageProjects: React.FC = () => {
   const handleMilestoneAction = async (projectId: string, milestoneId: string, action: string) => {
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setProjects(prev => prev.map(project => 
-        project.id === projectId 
+      const project = projects.find(p => p.id === projectId);
+      if (!project) throw new Error("Project not found");
+
+      const milestone = project.milestones.find(m => m.id === milestoneId);
+      if (!milestone) throw new Error("Milestone not found");
+
+      // If approving a milestone, integrate wallet and rewards services
+      if (action === "approved") {
+        try {
+          // Release milestone payment via wallet service
+          const walletResult = await FreelanceWalletIntegrationService.releaseMilestonePayment(
+            project.id,
+            milestone.id,
+            project.freelancer.id,
+            user?.id || "",
+            milestone.amount,
+            milestone.title
+          );
+
+          if (!walletResult.success) {
+            throw new Error(walletResult.error || "Failed to release payment");
+          }
+
+          // Award rewards for milestone completion
+          await FreelanceRewardsIntegrationService.rewardMilestoneCompletion(
+            project.freelancer.id,
+            project.id,
+            1, // milestone number (simplified)
+            milestone.amount
+          );
+
+          // Send real-time notification to freelancer
+          await FreelanceNotificationsService.notifyMilestoneApproved(
+            project.freelancer.id,
+            project.title,
+            milestone.title,
+            project.id,
+            milestone.amount
+          );
+        } catch (serviceError) {
+          console.error("Service integration error:", serviceError);
+          toast.error(`Approval processed but service error: ${(serviceError as Error).message}`);
+          // Continue with status update even if services fail
+        }
+      }
+
+      setProjects(prev => prev.map(project =>
+        project.id === projectId
           ? {
               ...project,
               milestones: project.milestones.map(milestone =>
@@ -443,10 +545,11 @@ const ManageProjects: React.FC = () => {
             }
           : project
       ));
-      
+
       toast.success(`Milestone ${action} successfully`);
     } catch (error) {
-      toast.error(`Failed to ${action} milestone`);
+      console.error("Error handling milestone action:", error);
+      toast.error(`Failed to ${action} milestone: ${(error as Error).message}`);
     } finally {
       setLoading(false);
     }
@@ -896,6 +999,22 @@ const ManageProjects: React.FC = () => {
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+
+              {/* Project Messages */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Project Discussion</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <FreelanceProjectChat
+                    projectId={selectedProject.id}
+                    projectTitle={selectedProject.title}
+                    otherUserName={selectedProject.freelancer.name}
+                    otherUserAvatar={selectedProject.freelancer.avatar}
+                    className="border-0"
+                  />
                 </CardContent>
               </Card>
 

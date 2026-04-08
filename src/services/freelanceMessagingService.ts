@@ -171,16 +171,37 @@ export const freelanceMessagingService = {
     projectId: string,
   ): Promise<MessageAttachment> {
     try {
-      // In a real implementation, this would upload to storage
-      // For now, we'll return a mock attachment
-      const mockAttachment: MessageAttachment = {
-        id: `att_${Date.now()}`,
+      const timestamp = Date.now();
+      const fileExtension = file.name.split('.').pop() || '';
+      const fileName = `${projectId}/${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+      // Upload file to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('freelance-attachments')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        });
+
+      if (uploadError) {
+        console.error('Error uploading file to storage:', uploadError);
+        throw uploadError;
+      }
+
+      // Get the public URL for the uploaded file
+      const { data: publicUrlData } = supabase.storage
+        .from('freelance-attachments')
+        .getPublicUrl(fileName);
+
+      const attachment: MessageAttachment = {
+        id: `att_${timestamp}`,
         name: file.name,
-        url: URL.createObjectURL(file),
+        url: publicUrlData.publicUrl,
         type: file.type,
         size: file.size,
       };
-      return mockAttachment;
+
+      return attachment;
     } catch (error) {
       console.error('Error uploading attachment:', error);
       throw error;

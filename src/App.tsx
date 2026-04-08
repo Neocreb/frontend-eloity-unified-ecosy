@@ -13,6 +13,7 @@ import {
 import { setupGlobalErrorHandlers } from "@/lib/error-handler";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AdminProvider } from "./contexts/AdminContext";
+import { OnboardingProvider } from "./contexts/OnboardingContext";
 import { MarketplaceProvider } from "./contexts/MarketplaceContext";
 import { EnhancedMarketplaceProvider } from "./contexts/EnhancedMarketplaceContext";
 import { ChatProvider } from "./contexts/ChatContext";
@@ -33,6 +34,7 @@ import {
   ReadingGuide,
 } from "./components/accessibility/AccessibilityFeatures";
 import { OnboardingTour } from "./components/onboarding/OnboardingTour";
+import { OnboardingRouteGuard } from "./components/onboarding/OnboardingRouteGuard";
 import { NotificationSystem } from "./components/notifications/NotificationSystem";
 import { GiftTipEventManager } from "./components/rewards/GiftTipEventManager";
 import {
@@ -45,6 +47,7 @@ import AppLayout from "./components/layout/AppLayout";
 import Auth from "./pages/Auth";
 import Join from "./pages/Join";
 import Home from "./pages/Home";
+import OnboardingPage from "./pages/onboarding/OnboardingPage";
 import Feed from "./pages/Feed";
 import CreatePost from "./pages/CreatePost";
 import EnhancedFreelance from "./pages/EnhancedFreelance";
@@ -55,6 +58,7 @@ import { DashboardRouteGuard } from "./components/freelance/DashboardRouteGuard"
 import UpdateProfile from "./pages/freelance/UpdateProfile";
 import BrowseJobs from "./pages/freelance/BrowseJobs";
 import Earnings from "./pages/freelance/Earnings";
+import UnifiedWalletDashboard from "./pages/freelance/UnifiedWalletDashboard";
 import PostJob from "./pages/freelance/PostJob";
 import PostSkill from "./pages/freelance/PostSkill";
 import FindFreelancers from "./pages/freelance/FindFreelancers";
@@ -161,6 +165,8 @@ import SellerDashboard from "./pages/marketplace/SellerDashboard";
 import MarketplaceWishlist from "./pages/marketplace/MarketplaceWishlist";
 import MarketplaceDashboard from "./pages/marketplace/MarketplaceDashboard";
 import MarketplaceOrders from "./pages/marketplace/MarketplaceOrders";
+import MarketplaceSell from "./pages/marketplace/MarketplaceSell";
+import DetailedProductPage from "./pages/marketplace/DetailedProductPage";
 
 // Delivery system imports
 // import DeliveryHub from "./pages/DeliveryHub";
@@ -232,6 +238,10 @@ import AdminReloadlyReports from "./pages/admin/AdminReloadlyReports";
 import AdminPartnerships from "./pages/admin/AdminPartnerships";
 import AdminChallenges from "./pages/admin/AdminChallenges";
 import AdminReferrals from "./pages/admin/AdminReferrals";
+import FlashSalesManagement from "./pages/admin/FlashSalesManagement";
+import PromotionalCodesManagement from "./pages/admin/PromotionalCodesManagement";
+import MarketplaceAnalytics from "./pages/admin/MarketplaceAnalytics";
+import ReviewModeration from "./pages/admin/ReviewModeration";
 import AdminRoute from "./components/admin/AdminRoute";
 import AdminLayout from "./components/layout/AdminLayout";
 
@@ -242,7 +252,6 @@ import CameraPermissionTest from "./components/debug/CameraPermissionTest";
 import FreelanceDashboardRouteTest from "./components/debug/FreelanceDashboardRouteTest";
 import RouteTest from "./components/debug/RouteTest";
 import DetailedJobPage from "./pages/DetailedJobPage";
-import DetailedProductPage from "./pages/DetailedProductPage";
 import DetailedEventPage from "./pages/DetailedEventPage";
 import CreatorStudio from "./pages/CreatorStudio";
 import EnhancedDashboardDemo from "./components/freelance/EnhancedDashboardDemo";
@@ -323,7 +332,6 @@ import CampaignCenter from "./components/campaigns/CampaignCenter";
 import MemeGifTest from "./components/debug/MemeGifTest";
 
 // Import missing components
-import MarketplaceSell from "./pages/marketplace/MarketplaceSell";
 import VideoDetail from "./pages/VideoDetail";
 import LiveStreamPage from "./pages/LiveStreamPage";
 import BattlePage from "./pages/BattlePage";
@@ -507,6 +515,16 @@ const AppRoutes = () => {
       {/* Join route - for referral links */}
       <Route path="/join" element={<Join />} />
 
+      {/* Onboarding route - new user registration flow with route protection */}
+      <Route
+        path="/onboarding"
+        element={
+          <OnboardingRouteGuard>
+            <OnboardingPage />
+          </OnboardingRouteGuard>
+        }
+      />
+
       {/* Public payment link route - accessible to everyone without authentication */}
       <Route path="/pay/:code" element={<PaymentLinkView />} />
 
@@ -572,6 +590,7 @@ const AppRoutes = () => {
           <Route path="freelance/update-profile" element={<UpdateProfile />} />
           <Route path="freelance/browse-jobs" element={<BrowseJobs />} />
           <Route path="freelance/earnings" element={<Earnings />} />
+          <Route path="freelance/wallet" element={<UnifiedWalletDashboard />} />
           <Route path="freelance/post-job" element={<PostJob />} />
           <Route path="freelance/post-skill" element={<PostSkill />} />
           <Route path="freelance/find-freelancers" element={<FindFreelancers />} />
@@ -886,6 +905,10 @@ const AppRoutes = () => {
         <Route path="settings" element={<PlatformSettings />} />
         <Route path="moderation" element={<ContentModeration />} />
         <Route path="marketplace" element={<AdminMarketplace />} />
+        <Route path="marketplace/flash-sales" element={<FlashSalesManagement />} />
+        <Route path="marketplace/promotional-codes" element={<PromotionalCodesManagement />} />
+        <Route path="marketplace/analytics" element={<MarketplaceAnalytics />} />
+        <Route path="marketplace/reviews" element={<ReviewModeration />} />
         <Route path="delivery" element={<DeliveryProvidersAdmin />} />
         <Route path="delivery/tracking" element={<DeliveryTrackingAdmin />} />
         <Route path="crypto" element={<AdminCrypto />} />
@@ -1015,28 +1038,29 @@ const App = () => {
     <BrowserRouter>
       <QueryClientProvider client={queryClient}>
         <SafeThemeProvider>
-          <ErrorBoundary
-            fallback={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold mb-2">
-                    Application Error
-                  </h2>
-                  <p className="text-muted-foreground mb-4">
-                    Something went wrong. Please refresh the page.
-                  </p>
-                  <button
-                    onClick={() => window.location.reload()}
-                    className="px-4 py-2 bg-primary text-primary-foreground rounded"
-                  >
-                    Refresh Page
-                  </button>
-                </div>
+        <ErrorBoundary
+          fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <h2 className="text-xl font-semibold mb-2">
+                  Application Error
+                </h2>
+                <p className="text-muted-foreground mb-4">
+                  Something went wrong. Please refresh the page.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded"
+                >
+                  Refresh Page
+                </button>
               </div>
-            }
-          >
-            <SafeI18nProvider>
-              <AuthProvider>
+            </div>
+          }
+        >
+          <SafeI18nProvider>
+            <AuthProvider>
+              <OnboardingProvider>
                 <SafeCurrencyProvider>
                   <UserCollectionsProvider>
                     <UnifiedNotificationProvider>
@@ -1067,9 +1091,10 @@ const App = () => {
                     </UnifiedNotificationProvider>
                   </UserCollectionsProvider>
                 </SafeCurrencyProvider>
-              </AuthProvider>
-            </SafeI18nProvider>
-          </ErrorBoundary>
+              </OnboardingProvider>
+            </AuthProvider>
+          </SafeI18nProvider>
+        </ErrorBoundary>
         </SafeThemeProvider>
       </QueryClientProvider>
     </BrowserRouter>

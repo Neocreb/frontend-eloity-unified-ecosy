@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => ({
       },
     },
   },
+  define: {
+    'process.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || ''),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
@@ -38,6 +41,8 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: "dist",
     emptyOutDir: true,
+    // Image optimization settings
+    assetsInlineLimit: 4096, // Inline small assets (< 4KB)
     rollupOptions: {
       output: {
         manualChunks: (id) => {
@@ -45,14 +50,11 @@ export default defineConfig(({ mode }) => ({
           if (
             id.includes("node_modules/react") ||
             id.includes("node_modules/react-dom") ||
-            id.includes("node_modules/react-router-dom")
+            id.includes("node_modules/react-router-dom") ||
+            id.includes("@radix-ui") ||
+            id.includes("lucide-react")
           ) {
-            return "react-vendor"; // Separate stable chunk for React libraries
-          }
-
-          // Keep UI frameworks together
-          if (id.includes("@radix-ui") || id.includes("lucide-react")) {
-            return "ui-vendor";
+            return "react-vendor";
           }
 
           // Optional splitting for large vendor libraries
@@ -62,9 +64,27 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("@tanstack/react-query")) {
             return "query";
           }
+
+          // Marketplace-specific code splitting
+          if (id.includes("src/pages/marketplace") || id.includes("src/components/marketplace")) {
+            return "marketplace";
+          }
+
+          // Admin dashboard splitting
+          if (id.includes("src/pages/admin") || id.includes("src/components/admin")) {
+            return "admin";
+          }
+
+          // Chat features splitting
+          if (id.includes("src/chat") || id.includes("src/components/chat")) {
+            return "chat";
+          }
         },
       },
     },
     chunkSizeWarningLimit: 1000,
+    // Use esbuild minifier (default) - terser is optional in Vite v3+
+    minify: 'esbuild',
+    sourcemap: mode !== 'production',
   },
 }));

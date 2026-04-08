@@ -38,7 +38,7 @@ async function callBybitAPI(method: string, path: string, query: string = '', bo
       method,
       headers,
       data: bodyString || undefined,
-      timeout: 10000,
+      timeout: 15000,
       validateStatus: () => true
     });
 
@@ -68,7 +68,7 @@ async function callBybitPublicAPI(path: string, query: string = '') {
     const fullUrl = `${BYBIT_BASE_URL}${path}${query ? `?${query}` : ''}`;
 
     const response = await axios.get(fullUrl, {
-      timeout: 10000,
+      timeout: 15000,
       validateStatus: () => true
     });
 

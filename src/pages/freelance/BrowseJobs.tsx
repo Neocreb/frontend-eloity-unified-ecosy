@@ -42,7 +42,11 @@ import {
   Filter as FilterIcon,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useFreelance } from "@/hooks/use-freelance";
 import { toast } from "sonner";
+// Phase 4 Integrations
+import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
 
 interface Job {
   id: string;
@@ -99,131 +103,9 @@ const BrowseJobs: React.FC = () => {
   
   const [sortBy, setSortBy] = useState("newest");
   const [viewMode, setViewMode] = useState<"list" | "card">("card");
-
-  const [jobs, setJobs] = useState<Job[]>([
-    {
-      id: "1",
-      title: "React Developer for E-commerce Platform",
-      description: "We're looking for an experienced React developer to help build our new e-commerce platform. You'll work with our existing team to create responsive, user-friendly interfaces and integrate with our backend APIs.",
-      budget: { type: "fixed", amount: 5000, currency: "USD" },
-      duration: "2-3 months",
-      postedDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      client: {
-        id: "c1",
-        name: "TechCorp Inc.",
-        avatar: "",
-        rating: 4.8,
-        jobsPosted: 23,
-        paymentVerified: true,
-        location: "San Francisco, CA",
-      },
-      skills: ["React", "TypeScript", "Node.js", "MongoDB"],
-      category: "Web Development",
-      experienceLevel: "intermediate",
-      proposals: 12,
-      status: "open",
-      featured: true,
-      urgent: false,
-      savedByUser: false,
-    },
-    {
-      id: "2",
-      title: "Mobile App UI/UX Design",
-      description: "Need a talented designer to create beautiful, intuitive UI/UX for our mobile fitness app. Looking for someone with experience in health & fitness apps.",
-      budget: { type: "hourly", amount: 45, currency: "USD" },
-      duration: "1-2 months",
-      postedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      client: {
-        id: "c2",
-        name: "FitLife Solutions",
-        rating: 4.6,
-        jobsPosted: 8,
-        paymentVerified: true,
-        location: "Austin, TX",
-      },
-      skills: ["UI/UX Design", "Figma", "Mobile Design", "Prototyping"],
-      category: "Design",
-      experienceLevel: "intermediate",
-      proposals: 8,
-      status: "open",
-      featured: false,
-      urgent: true,
-      savedByUser: true,
-    },
-    {
-      id: "3",
-      title: "Python Data Analysis & Visualization",
-      description: "Looking for a Python expert to analyze our sales data and create interactive dashboards. Experience with pandas, matplotlib, and Plotly required.",
-      budget: { type: "fixed", amount: 2500, currency: "USD" },
-      duration: "3-4 weeks",
-      postedDate: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      client: {
-        id: "c3",
-        name: "DataDriven Co.",
-        rating: 4.9,
-        jobsPosted: 15,
-        paymentVerified: true,
-        location: "New York, NY",
-      },
-      skills: ["Python", "Pandas", "Data Visualization", "Plotly"],
-      category: "Data Science",
-      experienceLevel: "expert",
-      proposals: 5,
-      status: "open",
-      featured: false,
-      urgent: false,
-      savedByUser: false,
-    },
-    {
-      id: "4",
-      title: "Content Writer for Tech Blog",
-      description: "We need a skilled content writer to create engaging articles about emerging technologies, AI, and software development trends.",
-      budget: { type: "hourly", amount: 25, currency: "USD" },
-      duration: "Ongoing",
-      postedDate: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-      client: {
-        id: "c4",
-        name: "TechInsights Media",
-        rating: 4.4,
-        jobsPosted: 42,
-        paymentVerified: true,
-        location: "Remote",
-      },
-      skills: ["Content Writing", "Technical Writing", "SEO", "Research"],
-      category: "Writing",
-      experienceLevel: "entry",
-      proposals: 23,
-      status: "open",
-      featured: false,
-      urgent: false,
-      savedByUser: false,
-    },
-    {
-      id: "5",
-      title: "Full Stack Developer - SaaS Platform",
-      description: "Join our team to build a cutting-edge SaaS platform. We need someone proficient in React, Node.js, and cloud technologies.",
-      budget: { type: "fixed", amount: 8000, currency: "USD" },
-      duration: "4-6 months",
-      postedDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      client: {
-        id: "c5",
-        name: "CloudTech Innovations",
-        rating: 4.7,
-        jobsPosted: 12,
-        paymentVerified: true,
-        location: "Seattle, WA",
-      },
-      skills: ["React", "Node.js", "AWS", "PostgreSQL", "Docker"],
-      category: "Web Development",
-      experienceLevel: "expert",
-      proposals: 7,
-      status: "open",
-      featured: true,
-      urgent: true,
-      savedByUser: false,
-    },
-  ]);
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(true);
+  const { searchJobs } = useFreelance();
 
   const [proposal, setProposal] = useState({
     coverLetter: "",
@@ -233,13 +115,61 @@ const BrowseJobs: React.FC = () => {
   });
 
   useEffect(() => {
-    // Load saved and applied jobs from localStorage or API
+    const loadData = async () => {
+      try {
+        setJobsLoading(true);
+        const jobsData = await searchJobs({
+          limit: 50,
+          offset: 0,
+          status: "open"
+        });
+
+        if (jobsData && Array.isArray(jobsData)) {
+          const formattedJobs = jobsData.map((job: any) => ({
+            id: job.id,
+            title: job.title,
+            description: job.description,
+            budget: job.budget || { type: "fixed", amount: 0, currency: "USD" },
+            duration: job.duration || "Not specified",
+            postedDate: new Date(job.created_at),
+            deadline: job.deadline ? new Date(job.deadline) : undefined,
+            client: {
+              id: job.client?.id || "",
+              name: job.client?.name || "Unknown Client",
+              avatar: job.client?.avatar || "",
+              rating: job.client?.rating || 4.5,
+              jobsPosted: job.client?.jobs_posted || 0,
+              paymentVerified: job.client?.payment_verified || false,
+              location: job.client?.location || "Remote",
+            },
+            skills: job.required_skills || [],
+            category: job.category || "General",
+            experienceLevel: job.experience_level || "intermediate",
+            proposals: job.proposal_count || 0,
+            status: job.status || "open",
+            featured: job.is_featured || false,
+            urgent: job.is_urgent || false,
+            savedByUser: false,
+          }));
+          setJobs(formattedJobs);
+        }
+      } catch (error) {
+        console.error("Error loading jobs:", error);
+        toast.error("Failed to load jobs");
+      } finally {
+        setJobsLoading(false);
+      }
+    };
+
+    // Load saved and applied jobs from localStorage
     const saved = localStorage.getItem("savedJobs");
     const applied = localStorage.getItem("appliedJobs");
-    
+
     if (saved) setSavedJobs(new Set(JSON.parse(saved)));
     if (applied) setAppliedJobs(new Set(JSON.parse(applied)));
-  }, []);
+
+    loadData();
+  }, [searchJobs]);
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -577,25 +507,30 @@ const BrowseJobs: React.FC = () => {
 
       {/* Job Listings */}
       <div className="space-y-4">
-        {sortedJobs.length > 0 ? (
+        {jobsLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Card key={i} className="animate-pulse">
+                <CardContent className="pt-6 space-y-4">
+                  <div className="h-6 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-4 bg-gray-200 rounded w-full"></div>
+                  <div className="flex gap-2">
+                    <div className="h-8 bg-gray-200 rounded w-20"></div>
+                    <div className="h-8 bg-gray-200 rounded w-20"></div>
+                  </div>
+                  <div className="h-10 bg-gray-200 rounded w-full"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : sortedJobs.length > 0 ? (
           sortedJobs.map((job) => (
             <JobCard key={job.id} job={job} />
           ))
         ) : (
-          <Card>
-            <CardContent className="pt-6">
-              <div className="text-center py-12">
-                <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">No jobs found</h3>
-                <p className="text-muted-foreground mb-4">
-                  Try adjusting your search terms or filters to find more opportunities
-                </p>
-                <Button variant="outline" onClick={() => setSearchTerm("")}>
-                  Clear Search
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <FreelanceEmptyStates.EmptyJobs
+            onPostJob={() => navigate("/app/freelance/post-job")}
+          />
         )}
       </div>
 

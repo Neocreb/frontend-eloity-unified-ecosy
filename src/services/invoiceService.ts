@@ -23,6 +23,12 @@ export interface Invoice {
   createdAt: string;
   updatedAt: string;
   paidAt?: string;
+  type?: 'general' | 'freelance' | 'marketplace' | 'service';
+  sourceType?: 'direct' | 'freelance_project' | 'marketplace_order' | 'payment_link';
+  projectId?: string;
+  freelancerId?: string;
+  clientId?: string;
+  currency?: string; // Dynamic currency based on user settings/location
 }
 
 export interface CreateInvoiceInput {
@@ -32,6 +38,12 @@ export interface CreateInvoiceInput {
   tax?: number;
   notes?: string;
   dueDate?: Date;
+  type?: 'general' | 'freelance' | 'marketplace' | 'service';
+  sourceType?: 'direct' | 'freelance_project' | 'marketplace_order' | 'payment_link';
+  projectId?: string;
+  freelancerId?: string;
+  clientId?: string;
+  currency?: string; // Dynamic currency based on user settings/location
 }
 
 class InvoiceService {
@@ -60,6 +72,12 @@ class InvoiceService {
             status: 'draft',
             notes: input.notes,
             due_date: input.dueDate?.toISOString(),
+            type: input.type || 'general',
+            source_type: input.sourceType,
+            project_id: input.projectId,
+            freelancer_id: input.freelancerId,
+            client_id: input.clientId,
+            currency: input.currency || 'USD', // Default to USD if not provided
           },
         ])
         .select()
@@ -117,6 +135,33 @@ class InvoiceService {
       return (data || []).map(invoice => this.mapFromDatabase(invoice));
     } catch (error) {
       console.error('Error fetching user invoices:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Get freelance invoices (as freelancer or client)
+   */
+  async getFreelanceInvoices(userId: string, role: 'freelancer' | 'client'): Promise<Invoice[]> {
+    try {
+      let query = supabase
+        .from('invoices')
+        .select('*')
+        .eq('type', 'freelance');
+
+      if (role === 'freelancer') {
+        query = query.eq('freelancer_id', userId);
+      } else {
+        query = query.eq('client_id', userId);
+      }
+
+      const { data, error } = await query.order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return (data || []).map(invoice => this.mapFromDatabase(invoice));
+    } catch (error) {
+      console.error('Error fetching freelance invoices:', error);
       return [];
     }
   }
@@ -532,6 +577,12 @@ class InvoiceService {
       createdAt: data.created_at,
       updatedAt: data.updated_at,
       paidAt: data.paid_at,
+      type: data.type,
+      sourceType: data.source_type,
+      projectId: data.project_id,
+      freelancerId: data.freelancer_id,
+      clientId: data.client_id,
+      currency: data.currency || 'USD', // Dynamic currency or default USD
     };
   }
 }

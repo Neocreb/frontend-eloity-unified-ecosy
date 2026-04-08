@@ -78,7 +78,16 @@ import NegotiationChat from "@/components/freelance/NegotiationChat";
 import ReviewForm from "@/components/freelance/ReviewForm";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UnifiedCampaignManager } from "@/components/campaigns/UnifiedCampaignManager";
+import { walletService, WalletBalance } from "@/services/walletService";
+import { FreelanceNotifications } from "@/components/freelance/FreelanceNotifications";
 import { cn } from "@/lib/utils";
+// Phase 4 Integrations
+import { FreelanceWalletIntegrationService } from "@/services/freelanceWalletIntegrationService";
+import { FreelanceRewardsIntegrationService } from "@/services/freelanceRewardsIntegrationService";
+import { FreelanceNotificationsService } from "@/services/freelanceNotificationsService";
+import { FreelanceErrorBoundary, FreelanceErrorMessage, FreelanceSuccessMessage } from "@/components/freelance/FreelanceErrorBoundary";
+import { FreelanceEmptyStates } from "@/components/freelance/FreelanceEmptyStates";
+import { FreelanceSkeletons } from "@/components/freelance/FreelanceSkeletons";
 
 // Navigation items for the tabs
 const navigationItems: TabItem[] = [
@@ -145,8 +154,15 @@ export const FreelanceDashboard: React.FC = () => {
   const [hasSeenTour, setHasSeenTour] = useState(() => {
     return localStorage.getItem('freelance-tour-completed') === 'true';
   });
+  const [walletBalance, setWalletBalance] = useState<WalletBalance | null>(null);
+  const [walletLoading, setWalletLoading] = useState(false);
+  // Phase 4 State
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { getProjects, getFreelanceStats, loading } = useFreelance();
+  const { getProjects, getFreelanceStats, getActivityLog, loading } = useFreelance();
   const { getUserEscrows } = useEscrow();
   const { formatCurrency } = useCurrency();
   const { user } = useAuth();
@@ -165,13 +181,22 @@ export const FreelanceDashboard: React.FC = () => {
     const loadData = async () => {
       if (!user) return;
 
-      const [projectsData, statsData] = await Promise.all([
-        getProjects(user.id, "freelancer"),
-        getFreelanceStats(user.id),
-      ]);
+      try {
+        setWalletLoading(true);
+        const [projectsData, statsData, walletData] = await Promise.all([
+          getProjects(user.id, "freelancer"),
+          getFreelanceStats(user.id),
+          walletService.getWalletBalance(),
+        ]);
 
-      if (projectsData) setActiveProjects(projectsData);
-      if (statsData) setStats(statsData);
+        if (projectsData) setActiveProjects(projectsData);
+        if (statsData) setStats(statsData);
+        if (walletData) setWalletBalance(walletData);
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setWalletLoading(false);
+      }
     };
 
     loadData();
@@ -205,56 +230,80 @@ export const FreelanceDashboard: React.FC = () => {
     }
   };
 
-  const getUrgentTasks = () => {
-    // TODO: Fetch real urgent tasks from the backend
-    return [
-      {
-        id: "1",
-        title: "Submit wireframes for review",
-        project: "E-commerce Platform",
-        dueDate: "2024-01-18",
-        priority: "high",
-      },
-      {
-        id: "2",
-        title: "Client feedback response needed",
-        project: "Mobile App Design",
-        dueDate: "2024-01-19",
-        priority: "medium",
-      },
-    ];
-  };
+  const [urgentTasks, setUrgentTasks] = useState<any[]>([]);
+  const [recentActivities, setRecentActivities] = useState<any[]>([]);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
 
-  const getRecentActivities = () => {
-    // TODO: Fetch real recent activities from the backend
-    return [
-      {
-        id: "1",
-        type: "message",
-        title: "New message from Alice Johnson",
-        project: "E-commerce Platform",
-        timestamp: "2 hours ago",
-      },
-      {
-        id: "2",
-        type: "payment",
-        title: "Payment received: $1,500",
-        project: "Mobile App Design",
-        timestamp: "1 day ago",
-      },
-      {
-        id: "3",
-        type: "milestone",
-        title: "Milestone approved",
-        project: "Website Redesign",
-        timestamp: "2 days ago",
-      },
-    ];
-  };
+  // Load urgent tasks and recent activities from backend
+  useEffect(() => {
+    const loadActivities = async () => {
+      if (!user) return;
 
-  // Local derived values from helper functions to avoid ReferenceError
-  const recentActivities = getRecentActivities();
-  const urgentTasks = getUrgentTasks();
+      setActivitiesLoading(true);
+      try {
+        // Load activity log
+        const activityData = await getActivityLog(user.id);
+        if (activityData && activityData.length > 0) {
+          setRecentActivities(activityData.slice(0, 5));
+
+          // Extract urgent tasks from projects with upcoming deadlines
+          const urgentList = activeProjects
+            .filter((p: Project) => {
+              const deadline = new Date(p.deadline || '');
+              const today = new Date();
+              const daysUntil = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+              return daysUntil > 0 && daysUntil <= 7;
+            })
+            .map((p: Project) => ({
+              id: p.id,
+              title: `Complete "${p.job.title}"`,
+              project: p.job.title,
+              dueDate: p.deadline,
+              priority: Math.ceil((new Date(p.deadline || '').getTime() - Date.now()) / (1000 * 60 * 60 * 24)) <= 3 ? 'high' : 'medium',
+            }));
+
+          setUrgentTasks(urgentList);
+        }
+      } catch (error) {
+        console.error("Error loading activities:", error);
+      } finally {
+        setActivitiesLoading(false);
+      }
+    };
+
+    loadActivities();
+  }, [user, activeProjects]);
+
+  // Phase 4: Real-time notifications subscription
+  useEffect(() => {
+    if (!user?.id) return;
+
+    try {
+      const subscription = FreelanceNotificationsService.subscribeToNotifications(
+        user.id,
+        (notification) => {
+          // Add notification to list
+          setNotifications(prev => [notification, ...prev].slice(0, 20));
+
+          // Auto-dismiss notification after 5 seconds
+          setTimeout(() => {
+            setNotifications(prev => prev.filter(n => n.id !== notification.id));
+          }, 5000);
+        },
+        (error) => {
+          console.error("Notification subscription error:", error);
+          setErrorMessage("Failed to connect to notifications");
+        }
+      );
+
+      // Cleanup subscription on unmount
+      return () => {
+        subscription?.unsubscribe?.();
+      };
+    } catch (error) {
+      console.error("Error setting up notifications:", error);
+    }
+  }, [user?.id]);
 
   const ProjectCard: React.FC<{ project: Project }> = ({ project }) => (
     <Card className="group hover:shadow-lg transition-all duration-200 cursor-pointer border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
@@ -495,6 +544,7 @@ export const FreelanceDashboard: React.FC = () => {
 
   // Main dashboard view
   return (
+    <FreelanceErrorBoundary>
     <div className="min-h-screen bg-gray-50/50 dark:bg-gray-900/50">
       <FreelanceHeader />
       
@@ -529,6 +579,13 @@ export const FreelanceDashboard: React.FC = () => {
                   change="+12% this month"
                   icon={<DollarSign className="w-6 h-6 text-white" />}
                   color="bg-gradient-to-br from-green-500 to-emerald-600"
+                />
+                <StatCard
+                  title="Wallet Balance"
+                  value={walletBalance ? formatCurrency(walletBalance.freelance) : formatCurrency(0)}
+                  change="Available for withdrawal"
+                  icon={<Wallet className="w-6 h-6 text-white" />}
+                  color="bg-gradient-to-br from-emerald-500 to-teal-600"
                 />
                 <StatCard
                   title="Active Projects"
@@ -606,34 +663,51 @@ export const FreelanceDashboard: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {recentActivities.map((activity) => (
-                        <div key={activity.id} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-                            {activity.type === "message" && <MessageCircle className="w-4 h-4 text-blue-600" />}
-                            {activity.type === "payment" && <DollarSign className="w-4 h-4 text-green-600" />}
-                            {activity.type === "milestone" && <Target className="w-4 h-4 text-purple-600" />}
-                          </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-sm text-gray-900 dark:text-white">
-                              {activity.title}
+                    {activitiesLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 3 }).map((_, i) => (
+                          <Skeleton key={i} className="h-16 w-full" />
+                        ))}
+                      </div>
+                    ) : recentActivities.length > 0 ? (
+                      <div className="space-y-3">
+                        {recentActivities.map((activity) => (
+                          <div key={activity.id} className="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <div className="p-2 bg-blue-50 dark:bg-blue-900/20 rounded-full">
+                              {activity.activity_type === "message" && <MessageCircle className="w-4 h-4 text-blue-600" />}
+                              {activity.activity_type === "payment" && <DollarSign className="w-4 h-4 text-green-600" />}
+                              {activity.activity_type === "milestone" && <Target className="w-4 h-4 text-purple-600" />}
+                              {!activity.activity_type && <Activity className="w-4 h-4 text-gray-600" />}
+                            </div>
+                            <div className="flex-1">
+                              <p className="font-medium text-sm text-gray-900 dark:text-white">
+                                {activity.description || activity.title}
+                              </p>
+                              <p className="text-xs text-gray-600 dark:text-gray-400">
+                                {activity.project_title || activity.project || "Activity"}
+                              </p>
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {activity.created_at ? new Date(activity.created_at).toLocaleDateString() : "Recent"}
                             </p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {activity.project}
-                            </p>
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {activity.timestamp}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <Activity className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+                        <p className="text-gray-600 dark:text-gray-400">No recent activity</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               </div>
 
               {/* Sidebar */}
               <div className="space-y-6">
+                {/* Notifications */}
+                <FreelanceNotifications maxHeight="h-[400px]" maxNotifications={5} showHeader={true} />
+
                 {/* Urgent Tasks */}
                 <Card>
                   <CardHeader>
@@ -643,26 +717,39 @@ export const FreelanceDashboard: React.FC = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      {urgentTasks.map((task) => (
-                        <div key={task.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <p className="font-medium text-sm mb-1 text-gray-900 dark:text-white">
-                            {task.title}
-                          </p>
-                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                            {task.project}
-                          </p>
-                          <div className="flex items-center justify-between">
-                            <Badge variant={task.priority === "high" ? "destructive" : "secondary"}>
-                              {task.priority}
-                            </Badge>
-                            <p className="text-xs text-gray-500 dark:text-gray-400">
-                              Due: {new Date(task.dueDate).toLocaleDateString()}
+                    {activitiesLoading ? (
+                      <div className="space-y-3">
+                        {Array.from({ length: 2 }).map((_, i) => (
+                          <Skeleton key={i} className="h-20 w-full" />
+                        ))}
+                      </div>
+                    ) : urgentTasks.length > 0 ? (
+                      <div className="space-y-3">
+                        {urgentTasks.map((task) => (
+                          <div key={task.id} className="p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <p className="font-medium text-sm mb-1 text-gray-900 dark:text-white">
+                              {task.title}
                             </p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                              {task.project}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <Badge variant={task.priority === "high" ? "destructive" : "secondary"}>
+                                {task.priority}
+                              </Badge>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Due: {new Date(task.dueDate || new Date()).toLocaleDateString()}
+                              </p>
+                            </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                        <p className="text-gray-600 dark:text-gray-400">All tasks completed!</p>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
 
@@ -819,6 +906,42 @@ export const FreelanceDashboard: React.FC = () => {
         onComplete={handleTourComplete}
       />
 
+      {/* Phase 4: Notifications Display */}
+      {notifications.length > 0 && (
+        <div className="fixed top-4 right-4 z-50 space-y-2 max-w-sm">
+          {notifications.map((notification) => (
+            <FreelanceSuccessMessage
+              key={notification.id}
+              title={notification.title}
+              message={notification.message}
+              onDismiss={() => setNotifications(prev => prev.filter(n => n.id !== notification.id))}
+              autoClose={false}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Phase 4: Error Messages */}
+      {errorMessage && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <FreelanceErrorMessage
+            message={errorMessage}
+            onDismiss={() => setErrorMessage(null)}
+          />
+        </div>
+      )}
+
+      {/* Phase 4: Success Messages */}
+      {showSuccessMessage && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <FreelanceSuccessMessage
+            message={successMessage}
+            autoClose={true}
+            onDismiss={() => setShowSuccessMessage(false)}
+          />
+        </div>
+      )}
+
       {/* Review Modal */}
       {showReviewModal && selectedProject && (
         <ReviewForm
@@ -833,6 +956,7 @@ export const FreelanceDashboard: React.FC = () => {
         />
       )}
     </div>
+    </FreelanceErrorBoundary>
   );
 };
 

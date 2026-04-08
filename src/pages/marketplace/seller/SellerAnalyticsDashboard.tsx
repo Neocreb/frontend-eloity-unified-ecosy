@@ -49,8 +49,82 @@ export const SellerAnalyticsDashboard: React.FC = () => {
   };
 
   const handleExport = (format: "csv" | "pdf") => {
-    // TODO: Implement export functionality
-    alert(`Export as ${format.toUpperCase()} functionality coming soon`);
+    if (!dashboardData) return;
+
+    if (format === "csv") {
+      exportAsCSV();
+    } else {
+      exportAsPDF();
+    }
+  };
+
+  const exportAsCSV = () => {
+    const { kpis, topProducts, salesTrend, recentOrders } = dashboardData;
+    const timestamp = new Date().toISOString().split('T')[0];
+
+    let csvContent = "Seller Analytics Export\n";
+    csvContent += `Exported: ${new Date().toLocaleString()}\n`;
+    csvContent += `Period: Last ${selectedPeriod} days\n\n`;
+
+    csvContent += "KEY PERFORMANCE INDICATORS\n";
+    csvContent += "Metric,Value\n";
+    csvContent += `Total Revenue,$${kpis.totalRevenue.toLocaleString()}\n`;
+    csvContent += `Total Orders,${kpis.totalOrders}\n`;
+    csvContent += `Average Order Value,$${kpis.averageOrderValue.toFixed(2)}\n`;
+    csvContent += `Conversion Rate,${kpis.conversionRate.toFixed(2)}%\n`;
+    csvContent += `Active Listings,${kpis.activeListings}\n\n`;
+
+    csvContent += "TOP PERFORMING PRODUCTS\n";
+    csvContent += "Product,Views,Sales,Revenue,Rating,Conversion Rate\n";
+    topProducts?.forEach((product: any) => {
+      csvContent += `${product.productName},${product.views},${product.conversions},$${product.revenue.toFixed(2)},${product.rating.toFixed(1)},${product.conversionRate.toFixed(2)}%\n`;
+    });
+
+    csvContent += "\nSALES TREND\n";
+    csvContent += "Date,Revenue,Orders\n";
+    salesTrend?.forEach((data: any) => {
+      csvContent += `${data.date},${data.revenue},${data.orders}\n`;
+    });
+
+    csvContent += "\nRECENT ORDERS\n";
+    csvContent += "Order ID,Customer,Amount,Status,Date\n";
+    recentOrders?.forEach((order: any) => {
+      const date = order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A';
+      csvContent += `${order.id},${order.customer_name || 'Customer'},$${order.total_amount.toFixed(2)},${order.status},${date}\n`;
+    });
+
+    const element = document.createElement('a');
+    element.setAttribute('href', `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`);
+    element.setAttribute('download', `seller-analytics-${timestamp}.csv`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
+  };
+
+  const exportAsPDF = () => {
+    const { kpis, topProducts } = dashboardData;
+    const timestamp = new Date().toISOString().split('T')[0];
+
+    let pdfContent = `Seller Analytics Report - ${new Date().toLocaleDateString()}\n\n`;
+    pdfContent += `Period: Last ${selectedPeriod} days\n\n`;
+    pdfContent += `Total Revenue: $${kpis.totalRevenue.toLocaleString()}\n`;
+    pdfContent += `Total Orders: ${kpis.totalOrders}\n`;
+    pdfContent += `Average Order Value: $${kpis.averageOrderValue.toFixed(2)}\n`;
+    pdfContent += `Conversion Rate: ${kpis.conversionRate.toFixed(2)}%\n`;
+    pdfContent += `Active Listings: ${kpis.activeListings}\n\n`;
+    pdfContent += `Top Products:\n`;
+    topProducts?.slice(0, 5).forEach((product: any, index: number) => {
+      pdfContent += `${index + 1}. ${product.productName} - $${product.revenue.toFixed(2)} (${product.conversions} sales)\n`;
+    });
+
+    const element = document.createElement('a');
+    element.setAttribute('href', `data:text/plain;charset=utf-8,${encodeURIComponent(pdfContent)}`);
+    element.setAttribute('download', `seller-analytics-${timestamp}.txt`);
+    element.style.display = 'none';
+    document.body.appendChild(element);
+    element.click();
+    document.body.removeChild(element);
   };
 
   if (isLoading || !dashboardData) {

@@ -49,8 +49,7 @@ const FeaturedProducts = ({
 
   const handleViewProduct = (product: any) => {
     setActiveProduct(product);
-    // TODO: Navigate to product detail page once created
-    // navigate(`/marketplace/product/${product.id}`);
+    navigate(`/app/marketplace/product/${product.id}`);
   };
 
   const handleMessageSeller = (sellerId: string, productId: string) => {

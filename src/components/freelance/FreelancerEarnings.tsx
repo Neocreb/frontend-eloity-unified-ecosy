@@ -55,11 +55,16 @@ interface EarningRecord {
 interface EarningsStats {
   totalEarnings: number;
   thisMonth: number;
-  lastMonth: number;
+  lastMonth?: number;
   pending: number;
   averageProject: number;
-  topClient: string;
+  topClient?: string;
   growthRate: number;
+  monthlyEarnings?: number;
+  projectCount?: number;
+  completedProjects?: number;
+  averageRating?: number;
+  successRate?: number;
 }
 
 export const FreelancerEarnings: React.FC = () => {
@@ -76,23 +81,43 @@ export const FreelancerEarnings: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       if (!user) return;
-      
+
       setLoading(true);
       try {
         const [earningsData, statsData] = await Promise.all([
           getFreelancerEarnings(user.id),
           getFreelancerEarningsStats(user.id)
         ]);
-        
+
         setEarnings(earningsData || []);
-        setStats(statsData || null);
+
+        if (statsData) {
+          const normalizedStats: EarningsStats = {
+            totalEarnings: statsData.totalEarnings || 0,
+            thisMonth: statsData.monthlyEarnings || 0,
+            lastMonth: statsData.lastMonth || 0,
+            pending: statsData.pending || 0,
+            averageProject: statsData.projectCount ? (statsData.totalEarnings || 0) / (statsData.projectCount || 1) : 0,
+            topClient: statsData.topClient || "N/A",
+            growthRate: statsData.growthRate || 0,
+            monthlyEarnings: statsData.monthlyEarnings || 0,
+            projectCount: statsData.projectCount || 0,
+            completedProjects: statsData.completedProjects || 0,
+            averageRating: statsData.averageRating || 5,
+            successRate: statsData.successRate || 0,
+          };
+          setStats(normalizedStats);
+        } else {
+          setStats(null);
+        }
       } catch (error) {
-        console.error("Error loading earnings data:", error);
+        console.error("Error calculating earnings:", error);
+        setStats(null);
       } finally {
         setLoading(false);
       }
     };
-    
+
     loadData();
   }, [user, getFreelancerEarnings, getFreelancerEarningsStats]);
 
@@ -141,11 +166,18 @@ export const FreelancerEarnings: React.FC = () => {
     }
   };
 
-  const formatDate = (date: Date) => {
-    return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
-      Math.floor((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-      'day'
-    );
+  const formatDate = (date: Date | string | undefined) => {
+    try {
+      if (!date) return "N/A";
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) return "N/A";
+      return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(
+        Math.floor((dateObj.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
+        'day'
+      );
+    } catch (error) {
+      return "N/A";
+    }
   };
 
   const filteredEarnings = earnings.filter((earning) => {
@@ -219,7 +251,7 @@ export const FreelancerEarnings: React.FC = () => {
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Earnings</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${stats.totalEarnings.toLocaleString()}
+                    ${(stats.totalEarnings || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="p-3 bg-green-100 dark:bg-green-900/20 rounded-full">
@@ -228,23 +260,23 @@ export const FreelancerEarnings: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">This Month</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${stats.thisMonth.toLocaleString()}
+                    ${(stats.thisMonth || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                   <div className="flex items-center mt-1">
-                    {stats.growthRate >= 0 ? (
+                    {(stats.growthRate || 0) >= 0 ? (
                       <TrendingUp className="w-4 h-4 text-green-500 mr-1" />
                     ) : (
                       <TrendingDown className="w-4 h-4 text-red-500 mr-1" />
                     )}
-                    <span className={stats.growthRate >= 0 ? "text-green-600 text-sm" : "text-red-600 text-sm"}>
-                      {stats.growthRate >= 0 ? '+' : ''}{stats.growthRate.toFixed(1)}%
+                    <span className={(stats.growthRate || 0) >= 0 ? "text-green-600 text-sm" : "text-red-600 text-sm"}>
+                      {(stats.growthRate || 0) >= 0 ? '+' : ''}{((stats.growthRate || 0)).toFixed(1)}%
                     </span>
                   </div>
                 </div>
@@ -254,14 +286,14 @@ export const FreelancerEarnings: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${stats.pending.toLocaleString()}
+                    ${(stats.pending || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="p-3 bg-yellow-100 dark:bg-yellow-900/20 rounded-full">
@@ -270,14 +302,14 @@ export const FreelancerEarnings: React.FC = () => {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Project</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    ${stats.averageProject.toLocaleString()}
+                    ${(stats.averageProject || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </p>
                 </div>
                 <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full">
@@ -324,27 +356,29 @@ export const FreelancerEarnings: React.FC = () => {
             <CardContent>
               <div className="space-y-4">
                 {filteredEarnings.length > 0 ? (
-                  filteredEarnings.map((earning) => (
+                  filteredEarnings.map((earning) => {
+                    if (!earning || !earning.client) return null;
+                    return (
                     <div key={earning.id} className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
                       <div className="flex items-center gap-3">
                         <Avatar className="w-10 h-10">
                           <AvatarImage src={earning.client.avatar} />
                           <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white">
-                            {earning.client.name.charAt(0)}
+                            {(earning.client.name || "?").charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-gray-900 dark:text-white">{earning.projectTitle}</p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">{earning.client.name}</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{earning.projectTitle || "Untitled Project"}</p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">{earning.client.name || "Unknown Client"}</p>
                         </div>
                       </div>
-                      
+
                       <div className="flex items-center gap-4">
                         <Badge className={getTypeColor(earning.type)}>
                           {earning.type}
                         </Badge>
                         <div className="text-right">
-                          <p className="font-bold text-gray-900 dark:text-white">${earning.amount.toFixed(2)}</p>
+                          <p className="font-bold text-gray-900 dark:text-white">${(earning.amount || 0).toFixed(2)}</p>
                           <div className="flex items-center gap-2">
                             <Badge className={getStatusColor(earning.status)}>
                               <span className="flex items-center gap-1">
@@ -359,7 +393,8 @@ export const FreelancerEarnings: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="text-center py-8">
                     <DollarSign className="w-12 h-12 mx-auto text-gray-400" />
@@ -413,13 +448,13 @@ export const FreelancerEarnings: React.FC = () => {
               <CardContent>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600 dark:text-gray-400">Client</span>
-                  <span className="font-medium text-gray-900 dark:text-white">{stats.topClient}</span>
+                  <span className="font-medium text-gray-900 dark:text-white">{stats.topClient || "N/A"}</span>
                 </div>
                 <div className="mt-4">
                   <Progress value={85} className="h-2" />
                   <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400 mt-1">
                     <span>85% of earnings</span>
-                    <span>${(stats.totalEarnings * 0.85).toFixed(2)}</span>
+                    <span>${((stats.totalEarnings || 0) * 0.85).toFixed(2)}</span>
                   </div>
                 </div>
               </CardContent>
