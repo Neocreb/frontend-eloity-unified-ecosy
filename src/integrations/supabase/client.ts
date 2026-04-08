@@ -3,29 +3,40 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 // Check if we're in a browser environment before accessing import.meta.env
-const SUPABASE_URL = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_URL : process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = typeof import.meta !== 'undefined' && import.meta.env ? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY : process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY;
+const SUPABASE_URL = typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_URL
+  ? import.meta.env.VITE_SUPABASE_URL
+  : typeof process !== 'undefined'
+    ? process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL
+    : undefined;
+
+const SUPABASE_PUBLISHABLE_KEY = typeof import.meta !== 'undefined' && import.meta.env?.VITE_SUPABASE_PUBLISHABLE_KEY
+  ? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
+  : typeof process !== 'undefined'
+    ? process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_PUBLISHABLE_KEY
+    : undefined;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
 
-let _supabase: any;
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  console.error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.');
-  // Provide a defensive stub to avoid runtime "Failed to fetch" errors when
-  // code attempts to call supabase methods while the env is not set.
-  const missingMsg = 'Supabase client not initialized: missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY.';
-  const thrower = () => { throw new Error(missingMsg); };
-  // Minimal proxy that throws on any usage and helps callers fail fast with a clear message.
-  // This prevents attempts to perform network fetches to an invalid URL (which cause the generic "Failed to fetch").
-  // Consumers should handle this error or configure the environment correctly.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  _supabase = new Proxy({}, {
-    get() { return thrower; },
-    apply() { return thrower; },
-  });
-} else {
-  _supabase = createClient<Database>(
+// Initialize supabase client
+const initializeClient = (): any => {
+  if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+    console.error('Supabase is not configured. Set VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY.');
+    // Provide a defensive stub to avoid runtime "Failed to fetch" errors when
+    // code attempts to call supabase methods while the env is not set.
+    const missingMsg = 'Supabase client not initialized: missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY.';
+    const thrower = () => { throw new Error(missingMsg); };
+    // Minimal proxy that throws on any usage and helps callers fail fast with a clear message.
+    // This prevents attempts to perform network fetches to an invalid URL (which cause the generic "Failed to fetch").
+    // Consumers should handle this error or configure the environment correctly.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return new Proxy({}, {
+      get() { return thrower; },
+      apply() { return thrower; },
+    });
+  }
+
+  return createClient<Database>(
     SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY,
     {
@@ -37,9 +48,10 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       },
     }
   );
-}
+};
 
-export const supabase = _supabase;
+// Create and export the supabase instance
+export const supabase = initializeClient();
 
 // Export createClient for re-export compatibility
 export { createClient };

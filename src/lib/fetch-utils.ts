@@ -15,7 +15,7 @@ export async function fetchWithTimeout(
   url: string,
   options: FetchOptions = {},
 ): Promise<Response> {
-  const { timeout = 10000, ...fetchOptions } = options;
+  const { timeout = 15000, ...fetchOptions } = options;
 
   // Create abort controller for this request
   const controller = new AbortController();

@@ -43,12 +43,28 @@ interface Profile {
 export const liveStreamService = {
   async getActiveLiveStreams(): Promise<LiveStream[]> {
     try {
-      const { data, error } = await supabase
-        .from('live_streams')
-        .select('id, user_id, title, description, viewer_count, is_active, started_at, ended_at, category, stream_key')
-        .eq('is_active', true)
-        .order('viewer_count', { ascending: false })
-        .limit(20);
+      let data: any[] = [];
+      let error: any = null;
+
+      // Wrap the query in try-catch to handle network errors
+      try {
+        const result = await supabase
+          .from('live_streams')
+          .select('id, user_id, title, description, viewer_count, is_active, started_at, ended_at, category, stream_key')
+          .eq('is_active', true)
+          .order('viewer_count', { ascending: false })
+          .limit(20);
+
+        data = result.data || [];
+        error = result.error;
+      } catch (fetchErr) {
+        // Network error occurred - log and return empty array
+        console.warn('Network error fetching live streams, returning empty array:', {
+          message: fetchErr instanceof Error ? fetchErr.message : 'Unknown network error',
+          type: fetchErr instanceof Error ? fetchErr.constructor.name : typeof fetchErr
+        });
+        return [];
+      }
 
       if (error) {
         // Check if table doesn't exist (PGRST116 or similar error codes)
@@ -118,30 +134,44 @@ export const liveStreamService = {
   },
 
   async getLiveStreamById(id: string): Promise<LiveStream | null> {
-    const { data, error } = await supabase
-      .from('live_streams')
-      .select('*')
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('live_streams')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) throw error;
-    if (!data) return null;
+      if (error) {
+        // Handle missing data gracefully
+        if (error.code === 'PGRST116' || error.message?.includes('no rows')) {
+          return null;
+        }
+        throw error;
+      }
+      if (!data) return null;
 
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('username, full_name, avatar_url, is_verified')
-      .eq('user_id', data.user_id)
-      .single();
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, full_name, avatar_url, is_verified')
+        .eq('user_id', data.user_id)
+        .single();
 
-    return {
-      ...data,
-      user: profile ? {
-        username: (profile as Profile).username || 'unknown',
-        full_name: (profile as Profile).full_name || 'Unknown User',
-        avatar_url: (profile as Profile).avatar_url || '',
-        is_verified: (profile as Profile).is_verified || false
-      } : undefined
-    };
+      return {
+        ...data,
+        user: profile ? {
+          username: (profile as Profile).username || 'unknown',
+          full_name: (profile as Profile).full_name || 'Unknown User',
+          avatar_url: (profile as Profile).avatar_url || '',
+          is_verified: (profile as Profile).is_verified || false
+        } : undefined
+      };
+    } catch (error) {
+      console.warn('Error loading live stream by ID:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        id
+      });
+      return null;
+    }
   },
 
   async createLiveStream(streamData: {
@@ -149,44 +179,81 @@ export const liveStreamService = {
     description?: string;
     category?: string;
   }): Promise<LiveStream> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
 
-    const { data, error } = await supabase
-      .from('live_streams')
-      .insert({
-        user_id: user.id,
-        title: streamData.title,
-        description: streamData.description,
-        category: streamData.category,
-        // Let the database generate the ID and stream_key
-      })
-      .select()
-      .single();
+      const { data, error } = await supabase
+        .from('live_streams')
+        .insert({
+          user_id: user.id,
+          title: streamData.title,
+          description: streamData.description,
+          category: streamData.category,
+          // Let the database generate the ID and stream_key
+        })
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data;
+      if (error) throw error;
+      return data;
+    } catch (error) {
+      console.error('Error creating live stream:', {
+        message: error instanceof Error ? error.message : 'Unknown error'
+      });
+      throw error;
+    }
   },
 
   async updateViewerCount(streamId: string, count: number): Promise<void> {
-    const { error } = await supabase
-      .from('live_streams')
-      .update({ viewer_count: count })
-      .eq('id', streamId);
+    try {
+      const { error } = await supabase
+        .from('live_streams')
+        .update({ viewer_count: count })
+        .eq('id', streamId);
 
-    if (error) throw error;
+      if (error) {
+        console.warn('Error updating viewer count:', {
+          message: error.message,
+          code: error.code,
+          streamId
+        });
+        // Don't throw - this is a non-critical update
+      }
+    } catch (error) {
+      console.warn('Exception updating viewer count:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        streamId
+      });
+      // Don't throw - silently fail for viewer count updates
+    }
   },
 
   async endLiveStream(streamId: string): Promise<void> {
-    const { error } = await supabase
-      .from('live_streams')
-      .update({ 
-        is_active: false,
-        ended_at: new Date().toISOString()
-      })
-      .eq('id', streamId);
+    try {
+      const { error } = await supabase
+        .from('live_streams')
+        .update({
+          is_active: false,
+          ended_at: new Date().toISOString()
+        })
+        .eq('id', streamId);
 
-    if (error) throw error;
+      if (error) {
+        console.error('Error ending live stream:', {
+          message: error.message,
+          code: error.code,
+          streamId
+        });
+        throw error;
+      }
+    } catch (error) {
+      console.error('Exception ending live stream:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        streamId
+      });
+      throw error;
+    }
   },
 
   async getActiveBattles(): Promise<(LiveStream & { battle: Battle })[]> {

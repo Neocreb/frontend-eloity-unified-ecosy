@@ -207,14 +207,14 @@ const CreatorEconomy = () => {
           <div className="flex gap-2 sm:gap-2.5 md:gap-3 justify-center max-w-md mx-auto">
             <button
               onClick={() => navigate("/app/rewards/withdraw")}
-              className="flex-1 bg-white text-purple-600 rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 dark:bg-slate-900 dark:text-purple-400"
+              className="action-glass-button flex-1"
             >
               <ArrowUp className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
               <span>Withdraw</span>
             </button>
             <button
               onClick={() => navigate("/app/rewards/send-gifts")}
-              className="flex-1 bg-white text-purple-600 rounded-lg sm:rounded-xl md:rounded-2xl py-2 sm:py-3 px-2 sm:px-3 md:px-4 font-semibold text-2xs sm:text-xs md:text-sm flex flex-col items-center gap-1 shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 dark:bg-slate-900 dark:text-purple-400"
+              className="action-glass-button flex-1"
             >
               <Gift className="h-5 sm:h-5 md:h-6 w-5 sm:w-5 md:w-6" />
               <span>Send Gifts</span>
